@@ -16,7 +16,13 @@ const indexRoute = createRoute({
   component: App,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute])
+const callbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/callback',
+  component: App,
+})
+
+const routeTree = rootRoute.addChildren([indexRoute, callbackRoute])
 
 export const router = createRouter({ routeTree })
 
