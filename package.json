@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "route:gen": "tsr generate",
+    "build": "tsr generate && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit"
+    "typecheck": "tsr generate && tsc -p tsconfig.app.json --noEmit"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",
@@ -29,6 +30,8 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@tailwindcss/vite": "^4.2.2",
+    "@tanstack/router-cli": "^1.166.25",
+    "@tanstack/router-plugin": "^1.167.12",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
