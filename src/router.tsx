@@ -4,7 +4,8 @@ import {
   createRoute,
   createRouter,
 } from '@tanstack/react-router'
-import App from './App'
+import MainPage from './routes/Main'
+import LoginPage from './routes/Login'
 
 const rootRoute = createRootRoute({
   component: Outlet,
@@ -13,16 +14,22 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: App,
+  component: MainPage,
 })
 
 const callbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/callback',
-  component: App,
+  component: LoginPage,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, callbackRoute])
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/login',
+  component: LoginPage,
+})
+
+const routeTree = rootRoute.addChildren([indexRoute, callbackRoute, loginRoute])
 
 export const router = createRouter({ routeTree })
 

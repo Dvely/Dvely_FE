@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import './App.css'
+import { Button } from '@/components/ui/button'
 
 type AuthPayload = {
   code?: string
@@ -7,7 +7,7 @@ type AuthPayload = {
   error?: string
 }
 
-function App() {
+function LoginPage() {
   const isHandledRef = useRef(false)
   const [authMessage, setAuthMessage] = useState<string>('')
   const [authPayload, setAuthPayload] = useState<AuthPayload | null>(null)
@@ -16,7 +16,7 @@ function App() {
   const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID as string | undefined
   const redirectUri =
     (import.meta.env.VITE_GITHUB_REDIRECT_URI as string | undefined) ||
-    `${window.location.origin}/`
+    `${window.location.origin}/callback`
   const scope =
     (import.meta.env.VITE_GITHUB_SCOPE as string | undefined) ||
     'read:user user:email'
@@ -73,9 +73,7 @@ function App() {
       return
     }
 
-    setAuthMessage(
-      'GitHub 인증 코드 수신 완료.',
-    )
+    setAuthMessage('GitHub 인증 코드 수신 완료.')
     sessionStorage.setItem('github_last_query_params', JSON.stringify(entries))
     window.history.replaceState({}, document.title, window.location.pathname)
   }, [])
@@ -100,86 +98,79 @@ function App() {
   }
 
   return (
-    <main className="home">
-      <header className="home-header">
-        <p className="eyebrow">DVELY</p>
-        <h1>AI 웹서비스 수정·배포 에이전트</h1>
-        <p className="description">
+    <main className="mx-auto grid min-h-screen w-full max-w-6xl gap-8 px-6 py-14 text-left">
+      <header className="grid gap-4">
+        <p className="w-fit rounded-full border border-slate-300 px-3 py-1 text-xs font-bold tracking-[0.08em] text-slate-700">
+          DVELY
+        </p>
+        <h1 className="text-3xl font-bold text-slate-900">AI 웹서비스 수정·배포 에이전트</h1>
+        <p className="max-w-3xl text-slate-600">
           자연어 요청만으로 웹서비스를 만들고 수정하고 배포까지 이어지는 경험을
           제공합니다.
         </p>
-        <div className="actions">
-          <button type="button" className="btn primary" onClick={handleGithubLogin}>
+        <div className="flex flex-wrap gap-3">
+          <Button type="button" size="lg" onClick={handleGithubLogin}>
             GitHub로 로그인
-          </button>
-          <button type="button" className="btn ghost">
+          </Button>
+          <Button type="button" variant="outline" size="lg">
             데모 보기
-          </button>
+          </Button>
         </div>
-        <p className="auth-note">
+        <p className="text-sm text-slate-600">
           {clientId
             ? 'GitHub OAuth 연동 준비 완료'
             : '환경변수 VITE_GITHUB_CLIENT_ID를 설정하면 로그인 버튼이 활성 동작합니다.'}
         </p>
-        {authMessage && <p className="auth-result">{authMessage}</p>}
+        {authMessage && (
+          <p className="border-l-2 border-slate-400 pl-3 text-sm font-medium text-slate-800">
+            {authMessage}
+          </p>
+        )}
+
         {queryParams.length > 0 && (
-          <div className="auth-payload">
-            <p className="auth-payload-title">URL 파라미터</p>
-            <table className="auth-table">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="mb-2 text-sm font-semibold text-slate-800">URL 파라미터</p>
+            <table className="w-full border-collapse text-sm">
               <tbody>
                 {queryParams.map(([key, value]) => (
-                  <tr key={`${key}-${value}`}>
-                    <th scope="row">{key}</th>
-                    <td>{maskValue(value)}</td>
+                  <tr key={`${key}-${value}`} className="border-b border-dashed border-slate-300">
+                    <th className="w-24 py-1 text-left font-semibold text-slate-700">{key}</th>
+                    <td className="py-1 font-mono text-slate-700">{maskValue(value)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
+
         {authPayload && (authPayload.code || authPayload.error) && (
-          <div className="auth-payload">
-            <p className="auth-payload-title">수신된 인증 정보</p>
-            <table className="auth-table">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="mb-2 text-sm font-semibold text-slate-800">수신된 인증 정보</p>
+            <table className="w-full border-collapse text-sm">
               <tbody>
-                <tr>
-                  <th scope="row">code</th>
-                  <td>{maskValue(authPayload.code)}</td>
+                <tr className="border-b border-dashed border-slate-300">
+                  <th className="w-24 py-1 text-left font-semibold text-slate-700">code</th>
+                  <td className="py-1 font-mono text-slate-700">{maskValue(authPayload.code)}</td>
+                </tr>
+                <tr className="border-b border-dashed border-slate-300">
+                  <th className="w-24 py-1 text-left font-semibold text-slate-700">state</th>
+                  <td className="py-1 font-mono text-slate-700">{maskValue(authPayload.state)}</td>
                 </tr>
                 <tr>
-                  <th scope="row">state</th>
-                  <td>{maskValue(authPayload.state)}</td>
-                </tr>
-                <tr>
-                  <th scope="row">error</th>
-                  <td>{authPayload.error ?? '-'}</td>
+                  <th className="w-24 py-1 text-left font-semibold text-slate-700">error</th>
+                  <td className="py-1 font-mono text-slate-700">{authPayload.error ?? '-'}</td>
                 </tr>
               </tbody>
             </table>
-            <p className="auth-payload-desc">
+            <p className="mt-3 text-sm text-slate-600">
               현재는 콜백 파라미터 수신 단계입니다. 사용자 프로필은 서버에서 access
               token 교환 후 가져옵니다.
             </p>
           </div>
         )}
       </header>
-
-      <section className="feature-grid" aria-label="핵심 기능">
-        <article className="feature-card">
-          <h2>프로젝트 생성</h2>
-          <p>새 프로젝트, ZIP 업로드, GitHub 저장소 불러오기를 지원합니다.</p>
-        </article>
-        <article className="feature-card">
-          <h2>AI 수정</h2>
-          <p>자연어로 UI/기능/오류 수정을 요청하고 즉시 미리보기를 확인합니다.</p>
-        </article>
-        <article className="feature-card">
-          <h2>승인 기반 배포</h2>
-          <p>변경사항, 배포, 도메인 연결을 안전한 승인 흐름으로 제어합니다.</p>
-        </article>
-      </section>
     </main>
   )
 }
 
-export default App
+export default LoginPage

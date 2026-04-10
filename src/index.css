@@ -1,5 +1,9 @@
-@import "tailwindcss/preflight";
-@import "tailwindcss/utilities";
+@import "tailwindcss";
 
 @import "tw-animate-css";
-@import "@fontsource-variable/geist";
+@import "pretendard/dist/web/static/pretendard.css";
+
+html,
+body {
+  font-family: "Pretendard", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
