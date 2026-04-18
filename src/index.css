@@ -5,11 +5,12 @@
 
 @theme inline {
   --color-primary: #7c3aed;
-  --color-primary-foreground: #ffffff;
+  --color-primary-foreground: #0B0C12;
 }
 
 html,
 body {
   font-family: "Pretendard", system-ui, -apple-system, "Segoe UI", sans-serif;
   background-color: #FAFAFB;
+  color: #0B0C12;
 }

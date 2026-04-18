@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
+import { Button } from '@/components/ui/button'
 
 function HeaderContainer() {
   const [isVisible, setIsVisible] = useState(true)
@@ -40,18 +41,15 @@ function HeaderContainer() {
           DVELY
         </Link>
         <nav className="flex items-center gap-2">
-          <Link
-            to="/"
-            className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          <Button
+            variant={"outline"}
           >
-            홈
-          </Link>
-          <Link
-            to="/auth/login"
-            className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            도입 문의
+          </Button>
+          <Button
           >
-            로그인
-          </Link>
+            무료로 시작
+          </Button>
         </nav>
       </div>
     </header>
