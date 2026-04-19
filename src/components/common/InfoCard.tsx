@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 
 type InfoCardProps = {
     title: ReactNode
-    description: ReactNode
+    description?: ReactNode
     className?: string
     titleClassName?: string
     descriptionClassName?: string
