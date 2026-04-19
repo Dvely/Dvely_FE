@@ -36,10 +36,72 @@ function HeaderContainer() {
     <header
       className={`sticky top-0 z-20 border-b border-slate-200 backdrop-blur transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}
     >
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-6">
+      <div className="mx-auto flex items-center justify-between py-3.5 px-40 w-[1440px]">
         <Link to="/" className="text-sm font-bold tracking-[0.08em] text-slate-900">
           DVELY
         </Link>
+        <nav className="flex items-center gap-0.5 text-[#64748B]">
+          <Button
+            variant={"ghost"}
+            size={"sm"}
+          >
+            프로그램
+          </Button>
+          <Button
+            variant={"ghost"}
+            size={"sm"}
+          >
+            고민
+          </Button>
+          <Button
+            variant={"ghost"}
+            size={"sm"}
+          >
+            추천
+          </Button>
+          <Button
+            variant={"ghost"}
+            size={"sm"}
+          >
+            기능
+          </Button>
+          <Button
+            variant={"ghost"}
+            size={"sm"}
+          >
+            혜택
+          </Button>
+          <Button
+            variant={"ghost"}
+            size={"sm"}
+          >
+            진행 과정
+          </Button>
+          <Button
+            variant={"ghost"}
+            size={"sm"}
+          >
+            결과물
+          </Button>
+          <Button
+            variant={"ghost"}
+            size={"sm"}
+          >
+            후기
+          </Button>
+          <Button
+            variant={"ghost"}
+            size={"sm"}
+          >
+            요금
+          </Button>
+          <Button
+            variant={"ghost"}
+            size={"sm"}
+          >
+            FAQ
+          </Button>
+        </nav>
         <nav className="flex items-center gap-2">
           <Button
             variant={"outline"}
