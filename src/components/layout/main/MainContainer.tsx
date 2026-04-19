@@ -5,6 +5,7 @@ import RoleSpecificUsage from "./RoleSpecificUsage"
 import ServiceIntro from "./ServiceIntro"
 import OutputShowcase from "./OutputShowcase"
 import UserReviews from "./UserReviews"
+import ServiceStats from "./ServiceStats"
 
 function MainContainer() {
   return (
@@ -16,6 +17,7 @@ function MainContainer() {
         <ServiceIntro />
         <OutputShowcase />
         <UserReviews />
+        <ServiceStats />
     </main>
   )
 }

@@ -82,7 +82,7 @@ function ShowcaseCard({
 
 function OutputShowcase() {
     return (
-        <section className="w-full bg-[#F8FAFC]">
+        <section className="w-full bg-white">
             <div className="flex flex-col gap-2 items-start justify-center py-16 px-52">
                 <p className="text-[#7C3AED] text-lg font-extrabold">만들 수 있는 결과물</p>
                 <p className="text-[#111827] text-[40px] font-bold">다양한 웹 서비스 유형</p>

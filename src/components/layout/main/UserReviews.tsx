@@ -2,7 +2,7 @@ import InfoCard from "@/components/common/InfoCard"
 
 function UserReviews() {
     return (
-        <section className="w-full bg-white">
+        <section className="w-full bg-white border-t border-[#E2E8F0]">
             <div className="flex flex-col gap-2 items-start justify-center py-16 px-52">
                 <p className="text-[#7C3AED] text-lg font-extrabold">이용 후기</p>
                 <p className="text-[#111827] text-[40px] font-bold">팀에서 남긴 한 줄 평가</p>
