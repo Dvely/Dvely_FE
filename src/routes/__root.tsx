@@ -11,10 +11,8 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <React.Fragment>
-        <HeaderContainer />
-        <div className="pt-[70px]">
-            <Outlet />
-        </div>
+      <HeaderContainer />
+      <Outlet />
     </React.Fragment>
   );
 }

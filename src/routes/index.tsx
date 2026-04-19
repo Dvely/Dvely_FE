@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import MainPage from "../components/layout/Main";
+import MainContainer from "@/components/layout/main/MainContainer";
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  return <MainPage />;
+  return <MainContainer />;
 }
