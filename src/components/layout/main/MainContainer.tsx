@@ -4,6 +4,7 @@ import PainPointsSection from "./PainPointsSection"
 import RoleSpecificUsage from "./RoleSpecificUsage"
 import ServiceIntro from "./ServiceIntro"
 import OutputShowcase from "./OutputShowcase"
+import UserReviews from "./UserReviews"
 
 function MainContainer() {
   return (
@@ -14,6 +15,7 @@ function MainContainer() {
         <RoleSpecificUsage />
         <ServiceIntro />
         <OutputShowcase />
+        <UserReviews />
     </main>
   )
 }
