@@ -3,6 +3,7 @@ import HighlightSection from "./HighlightSection"
 import PainPointsSection from "./PainPointsSection"
 import RoleSpecificUsage from "./RoleSpecificUsage"
 import ServiceIntro from "./ServiceIntro"
+import OutputShowcase from "./OutputShowcase"
 
 function MainContainer() {
   return (
@@ -12,6 +13,7 @@ function MainContainer() {
         <PainPointsSection />
         <RoleSpecificUsage />
         <ServiceIntro />
+        <OutputShowcase />
     </main>
   )
 }
