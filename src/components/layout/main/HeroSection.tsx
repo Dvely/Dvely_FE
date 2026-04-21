@@ -18,7 +18,7 @@ function HeroSection() {
       <div className="relative z-10 flex justify-center items-center gap-9 py-49">
         <div className="flex flex-col gap-2.5 w-[662px]">
           <p className="text-[#5B21B6] text-lg font-semibold">AI 웹 제작 · 프롬프트부터 배포까지</p>
-          <p className="text-[56px] font-semibold leading-tight">
+          <p className="typo-h1-bd leading-tight">
             <span className={`block w-max max-w-full ${headlineGradientBg}`}>
               기획서 없이도 괜찮아요,
             </span>

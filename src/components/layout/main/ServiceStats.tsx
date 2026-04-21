@@ -6,7 +6,7 @@ type StatBlockProps = {
 function StatBlock({ emphasis, caption }: StatBlockProps) {
   return (
     <div className="flex flex-col gap-1 items-center justify-center w-[241px] h-[104px]">
-      <p className="text-[40px] font-bold">{emphasis}</p>
+      <p className="typo-h2-bd">{emphasis}</p>
       <p className="text-[#94A3B8] text-sm font-semibold">{caption}</p>
     </div>
   );

@@ -6,6 +6,7 @@ import ServiceIntro from './ServiceIntro';
 import OutputShowcase from './OutputShowcase';
 import UserReviews from './UserReviews';
 import ServiceStats from './ServiceStats';
+import ProcessSection from './ProcessSection';
 
 function MainContainer() {
   return (
@@ -18,6 +19,7 @@ function MainContainer() {
       <OutputShowcase />
       <UserReviews />
       <ServiceStats />
+      <ProcessSection />
     </main>
   );
 }

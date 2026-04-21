@@ -68,7 +68,7 @@ function ShowcaseCard({
     >
       <div
         className={cn(
-          'rounded-full font-semibold text-[13px] py-2 px-3 w-fit',
+          'rounded-full typo-b5-sb py-2 px-3 w-fit',
           badgeBackgroundClassName,
           badgeTextClassName,
         )}
@@ -84,7 +84,7 @@ function OutputShowcase() {
     <section className="w-full bg-white">
       <div className="flex flex-col gap-2 items-start justify-center py-16 px-52">
         <p className="text-[#7C3AED] text-lg font-extrabold">만들 수 있는 결과물</p>
-        <p className="text-[#111827] text-[40px] font-bold">다양한 웹 서비스 유형</p>
+        <p className="text-[#111827] typo-h2-bd">다양한 웹 서비스 유형</p>
         <div className="flex justify-between w-full">
           <p className="text-[#64748B] text-lg font-medium">
             아래는 스타일 레퍼런스용 목업입니다. 실제 생성물은 프롬프트

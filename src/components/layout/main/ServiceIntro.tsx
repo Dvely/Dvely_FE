@@ -1,14 +1,14 @@
 import InfoCard from '@/components/common/InfoCard';
 
 const infoCardClassName = 'w-[330px] shadow-[0_10px_40px_-8px_rgba(15,23,42,0.12)] h-[172px]';
-const descriptionClassName = 'text-[13px] font-regular';
+const descriptionClassName = 'typo-b5-rg';
 
 function ServiceIntro() {
   return (
     <section className="w-full bg-[linear-gradient(180deg,#FDFBFF_0%,#F3EEFF_100%)]">
       <div className="flex flex-col gap-2 items-start justify-center py-16 px-52">
         <p className="text-[#7C3AED] text-lg font-extrabold">Dvely란?</p>
-        <p className="text-[#111827] text-[40px] font-bold">
+        <p className="text-[#111827] typo-h2-bd">
           아이디어부터 출시까지, AI와 함께하는 웹 제작
         </p>
         <p className="text-[#64748B] text-lg font-medium">
