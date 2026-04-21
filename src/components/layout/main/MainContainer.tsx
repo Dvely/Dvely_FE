@@ -8,6 +8,7 @@ import UserReviews from './UserReviews';
 import ServiceStats from './ServiceStats';
 import ProcessSection from './ProcessSection';
 import StartNowSection from './StartNowSection';
+import PricingSection from './PricingSection';
 
 function MainContainer() {
   return (
@@ -22,6 +23,7 @@ function MainContainer() {
       <ServiceStats />
       <ProcessSection />
       <StartNowSection />
+      <PricingSection />
     </main>
   );
 }
