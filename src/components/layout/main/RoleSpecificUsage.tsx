@@ -16,7 +16,7 @@ function RoleSpecificUsage() {
         <div className="grid grid-cols-2 gap-4 pt-5">
           <InfoCard
             title={
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col w-[504px] gap-2.5">
                 <p className="text-[#7C3AED] text-lg font-extrabold">기획 · PM</p>
                 <p className="text-[#475569] text-sm font-semibold">
                   IA 없이도 섹션 순서를 대화로 바꾸고, CTA 문구·가격 표현을 A/B 느낌/
