@@ -8,7 +8,7 @@ function PainPointsSection() {
       <div className="flex flex-col gap-2 items-start justify-center py-16 px-52">
         <p className="text-[#7C3AED] text-lg font-extrabold">이런 고민 없으신가요?</p>
         <p className="text-[#111827] typo-h2-bd">혼자 만들기엔 막막한 순간들</p>
-        <div className="flex items-center justify-center gap-4 w-full">
+        <div className="flex items-center justify-between w-full">
           <InfoCard
             title="강의만 듣다가... 막상 랜딩을 만드려니 어디서부터 할지 모르겠어요"
             description="프롬프트 한 줄이면 섹션 구조와 톤이 잡히고, 수정은 대화로 이어갑니다."
