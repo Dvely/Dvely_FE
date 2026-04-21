@@ -47,8 +47,8 @@ function ProcessSection() {
               key={card.step}
               title={
                 <div className="flex flex-col">
-                  <div className="w-[64px] h-[64px] bg-gray-400"></div>
-                  {/* <img src={processSection_icon_1} alt={card.step} className="w-[64px] h-[64px]" /> */}
+                  {/* <div className="w-[64px] h-[64px] bg-gray-400"></div> */}
+                  <img src={processSection_icon_1} alt={card.step} className="w-[64px] h-[64px]" />
                   <p className="text-[#7C3AED] typo-b3-sb font-extrabold">{card.step}</p>
                   <p className="text-[#111827] text-lg font-extrabold">{card.title}</p>
                   <p className="text-[#475569] text-sm font-semibold">{card.description}</p>
