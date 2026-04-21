@@ -1,36 +1,36 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link } from '@tanstack/react-router'
-import { Button } from '@/components/ui/button'
+import { useEffect, useRef, useState } from 'react';
+import { Link } from '@tanstack/react-router';
+import { Button } from '@/components/ui/button';
 
 function HeaderContainer() {
-  const [isVisible, setIsVisible] = useState(true)
-  const lastScrollY = useRef(0)
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY
+      const currentScrollY = window.scrollY;
 
       if (currentScrollY <= 8) {
-        setIsVisible(true)
-        lastScrollY.current = currentScrollY
-        return
+        setIsVisible(true);
+        lastScrollY.current = currentScrollY;
+        return;
       }
 
       if (currentScrollY > lastScrollY.current) {
-        setIsVisible(false)
+        setIsVisible(false);
       } else {
-        setIsVisible(true)
+        setIsVisible(true);
       }
 
-      lastScrollY.current = currentScrollY
-    }
+      lastScrollY.current = currentScrollY;
+    };
 
-    window.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      window.removeEventListener('scroll', handleScroll)
-    }
-  }, [])
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   return (
     <header
@@ -41,81 +41,44 @@ function HeaderContainer() {
           DVELY
         </Link>
         <nav className="flex items-center gap-0.5 text-[#64748B]">
-          <Button
-            variant={"ghost"}
-            size={"sm"}
-          >
+          <Button variant={'ghost'} size={'sm'}>
             프로그램
           </Button>
-          <Button
-            variant={"ghost"}
-            size={"sm"}
-          >
+          <Button variant={'ghost'} size={'sm'}>
             고민
           </Button>
-          <Button
-            variant={"ghost"}
-            size={"sm"}
-          >
+          <Button variant={'ghost'} size={'sm'}>
             추천
           </Button>
-          <Button
-            variant={"ghost"}
-            size={"sm"}
-          >
+          <Button variant={'ghost'} size={'sm'}>
             기능
           </Button>
-          <Button
-            variant={"ghost"}
-            size={"sm"}
-          >
+          <Button variant={'ghost'} size={'sm'}>
             혜택
           </Button>
-          <Button
-            variant={"ghost"}
-            size={"sm"}
-          >
+          <Button variant={'ghost'} size={'sm'}>
             진행 과정
           </Button>
-          <Button
-            variant={"ghost"}
-            size={"sm"}
-          >
+          <Button variant={'ghost'} size={'sm'}>
             결과물
           </Button>
-          <Button
-            variant={"ghost"}
-            size={"sm"}
-          >
+          <Button variant={'ghost'} size={'sm'}>
             후기
           </Button>
-          <Button
-            variant={"ghost"}
-            size={"sm"}
-          >
+          <Button variant={'ghost'} size={'sm'}>
             요금
           </Button>
-          <Button
-            variant={"ghost"}
-            size={"sm"}
-          >
+          <Button variant={'ghost'} size={'sm'}>
             FAQ
           </Button>
         </nav>
         <nav className="flex items-center gap-2">
-          <Button
-            variant={"outline"}
-          >
-            도입 문의
-          </Button>
-          <Button
-          >
-            무료로 시작
-          </Button>
+          <Button variant={'outline'}>도입 문의</Button>
+          <Button>무료로 시작</Button>
         </nav>
       </div>
     </header>
-  )
+  );
 }
 
-export default HeaderContainer
+export default HeaderContainer;

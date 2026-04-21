@@ -1,16 +1,21 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-@import "tw-animate-css";
-@import "pretendard/dist/web/static/pretendard.css";
+@import 'tw-animate-css';
+@import 'pretendard/dist/web/static/pretendard.css';
 
 @theme inline {
   --color-primary: #7c3aed;
-  --color-primary-foreground: #0B0C12;
+  --color-primary-foreground: #0b0c12;
 }
 
 html,
 body {
-  font-family: "Pretendard", system-ui, -apple-system, "Segoe UI", sans-serif;
-  background-color: #FAFAFB;
-  color: #0B0C12;
+  font-family:
+    'Pretendard',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  background-color: #fafafb;
+  color: #0b0c12;
 }

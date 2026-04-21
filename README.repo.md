@@ -7,28 +7,32 @@ React 19 + Vite 8 + TypeScript 기반의 프론트엔드 프로젝트이며, Bun
 # 실행 방법 (Bun 기준)
 
 ## 의존성 설치
+
 bun install
 
 ## 개발 서버 실행
+
 bun dev
 기본 주소: http://localhost:5173
 
 ## 프로덕션 빌드
+
 bun run build
 
 ## 빌드 결과 미리보기
+
 bun run preview
 
 ---
 
 # 폴더 / 파일 구조 (핵심)
 
-src/            앱 소스 (컴포넌트, 페이지, 로직)  
-public/         정적 자원  
-index.html      Vite 엔트리 HTML  
-vite.config.ts  Vite 설정  
-tsconfig*.json  TypeScript 설정  
-bun.lock        Bun 락파일  
+src/ 앱 소스 (컴포넌트, 페이지, 로직)  
+public/ 정적 자원  
+index.html Vite 엔트리 HTML  
+vite.config.ts Vite 설정  
+tsconfig\*.json TypeScript 설정  
+bun.lock Bun 락파일
 
 ---
 
