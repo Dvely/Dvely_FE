@@ -12,7 +12,7 @@ import PricingSection from './PricingSection';
 
 function MainContainer() {
   return (
-    <main className="w-[1440px] mx-auto flex flex-col">
+    <main className="m-w-[1440px] mx-auto flex flex-col">
       <HeroSection />
       <HighlightSection />
       <PainPointsSection />
