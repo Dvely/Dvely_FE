@@ -9,6 +9,7 @@ import ServiceStats from './ServiceStats';
 import ProcessSection from './ProcessSection';
 import StartNowSection from './StartNowSection';
 import PricingSection from './PricingSection';
+import Footer from '../footer/Footer';
 
 function MainContainer() {
   return (
@@ -24,6 +25,7 @@ function MainContainer() {
       <ProcessSection />
       <StartNowSection />
       <PricingSection />
+      <Footer />
     </main>
   );
 }
