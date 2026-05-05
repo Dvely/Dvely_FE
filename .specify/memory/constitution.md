@@ -13,8 +13,11 @@ Sync Impact Report
 ## Core Principles
 
 ### [PRINCIPLE_1_NAME]
+
 <!-- Example: I. Library-First -->
+
 [PRINCIPLE_1_DESCRIPTION]
+
 <!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
 
 - **MUST** `eslint .`, `tsc` 기반 타입 검사(`typecheck` 스크립트), Prettier(`format:check`)가 CI 또는 머지 전에 통과해야 한다.
@@ -25,37 +28,53 @@ Sync Impact Report
 - **SHOULD** AI가 수정한 코드에는 유지보수에 필요한 짧은 의도 설명 주석을 추가한다. 자명한 코드 설명 주석은 피하고, 규칙/예외/비직관 분기 위주로 작성한다.
 
 ### [PRINCIPLE_3_NAME]
+
 <!-- Example: III. Test-First (NON-NEGOTIABLE) -->
+
 [PRINCIPLE_3_DESCRIPTION]
+
 <!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
 
 ### [PRINCIPLE_4_NAME]
+
 <!-- Example: IV. Integration Testing -->
+
 [PRINCIPLE_4_DESCRIPTION]
+
 <!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
 
 ### [PRINCIPLE_5_NAME]
+
 <!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
+
 [PRINCIPLE_5_DESCRIPTION]
+
 <!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
 
 ## [SECTION_2_NAME]
+
 <!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
 
 [SECTION_2_CONTENT]
+
 <!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
 
 ## [SECTION_3_NAME]
+
 <!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
 
 [SECTION_3_CONTENT]
+
 <!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
 
 ## Governance
+
 <!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
 [GOVERNANCE_RULES]
+
 <!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
 
 **Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
+
 <!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
