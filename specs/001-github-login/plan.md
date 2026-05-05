@@ -44,7 +44,7 @@ specs/001-github-login/
 ├── data-model.md
 ├── quickstart.md
 ├── contracts/
-│   └── github-auth.openapi.yaml
+│   └── github-auth.openapi.json
 └── tasks.md
 ```
 
