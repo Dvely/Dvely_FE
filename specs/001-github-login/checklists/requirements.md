@@ -1,8 +1,8 @@
-# Specification Quality Checklist: AI 웹서비스 수정·배포 에이전트
+# Specification Quality Checklist: GitHub 로그인 연동
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning  
 **Created**: 2026-05-05  
-**Feature**: `specs/001-ai-deploy-agent/spec.md`
+**Feature**: `specs/001-github-login/spec.md`
 
 ## Content Quality
 
@@ -31,5 +31,5 @@
 
 ## Notes
 
-- README의 MVP 흐름과 비기능 목표를 스펙의 사용자 시나리오/요구사항/성공지표로 정합화함.
+- GitHub OAuth 로그인/연동 상태/연동 해제의 MVP 범위를 사용자 시나리오와 요구사항으로 정합화함.
 - 추가 Clarification 없이 `/speckit-plan` 진행 가능 상태.
