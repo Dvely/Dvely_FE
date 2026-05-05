@@ -31,7 +31,13 @@
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-[Gates determined based on constitution file]
+검토 대상: `.specify/memory/constitution.md` (Dvely FE Constitution).
+
+- **코드 품질**: 포맷·타입체크 게이트와 모듈 경계가 플랜의 구조·파일 배치와 맞는가? `any`/데드 코드 누적 위험이 있는가?
+- **테스트**: 수용 시나리오가 추적 가능한 검증(수동 시나리오 또는 자동 테스트 계획)으로 연결되는가? 테스트 러너 미도입 시 도입 과제가 플랜에 있는가?
+- **UX 일관성**: 상태(로딩/빈/에러)·접근성·디자인 시스템 사용이 스펙의 사용자 여정과 모순 없는가?
+- **성능**: 라우팅·번들·데이터 패칭 전략이 스코프와 트래픽에 적합한가? 회귀 위험이 있으면 측정·완화 방안이 있는가?
+- **스펙–플랜 정합성**: 사용자 스토리·수용 시나리오와 기술 접근이 1:1로 매핑되는가? 헌법 위반은 Complexity Tracking 또는 승인된 예외로 남는가?
 
 ## Project Structure
 
