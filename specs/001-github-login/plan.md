@@ -77,7 +77,7 @@ src/
 ## Phase 1: Design Outputs
 
 - `data-model.md`: User Account, OAuth Session, GitHub Connection, Service Session 모델 정의
-- `contracts/github-auth.openapi.yaml`: 인증/연동 상태/해제 API 계약 정의
+- `contracts/github-auth.openapi.json`: 인증/연동 상태/해제 API 계약 정의
 - `quickstart.md`: 로컬 확인 순서와 검증 시나리오 정의
 
 ## Complexity Tracking
