@@ -1,7 +1,7 @@
 import {
   BarChart2,
   FolderKanban,
-  LayoutDashboard,
+  SquarePen,
   LayoutTemplate,
   PanelLeft,
   PanelRight,
@@ -10,7 +10,7 @@ import {
 import { useState } from 'react';
 
 const navItems = [
-  { id: 'tasks', label: '작업', icon: LayoutDashboard, active: true },
+  { id: 'tasks', label: '작업', icon: SquarePen, active: true },
   { id: 'projects', label: '프로젝트', icon: FolderKanban, active: false },
   { id: 'templates', label: '템플릿', icon: LayoutTemplate, active: false },
   { id: 'analytics', label: '분석', icon: BarChart2, active: false },
