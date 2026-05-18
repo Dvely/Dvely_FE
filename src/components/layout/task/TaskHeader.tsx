@@ -1,0 +1,36 @@
+import { Bell } from 'lucide-react';
+import profile from '@/assets/icons/profile.svg';
+
+function TaskHeader() {
+  return (
+    <header className="flex items-center justify-between px-[18px] py-3.5">
+      <button
+        type="button"
+        className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[14px] font-bold tracking-[-0.14px] text-[#0f172a] transition hover:bg-[#f8fafc]"
+        style={{ fontFamily: 'system-ui, Roboto, sans-serif' }}
+      >
+        Devely 1.0 Lite
+      </button>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="flex size-[34px] items-center justify-center rounded-[9px] transition cursor-pointer"
+          aria-label="알림"
+        >
+          <Bell className="size-[18px]" />
+        </button>
+
+        <button
+          type="button"
+          className="flex size-[30px] items-center justify-center rounded-[15px]"
+          aria-label="프로필"
+        >
+          <img src={profile} alt="" className="size-[30px]" />
+        </button>
+      </div>
+    </header>
+  );
+}
+
+export default TaskHeader;
