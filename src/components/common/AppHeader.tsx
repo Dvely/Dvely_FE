@@ -1,7 +1,7 @@
 import { Bell } from 'lucide-react';
 import profile from '@/assets/icons/profile.svg';
 
-function TaskHeader() {
+function AppHeader() {
   return (
     <header className="flex items-center justify-between px-[18px] py-3.5">
       <button
@@ -33,4 +33,4 @@ function TaskHeader() {
   );
 }
 
-export default TaskHeader;
+export default AppHeader;
