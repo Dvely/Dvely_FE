@@ -1,35 +1,45 @@
 import { Bell } from 'lucide-react';
+import { useState } from 'react';
 import profile from '@/assets/icons/profile.svg';
+import ProfileSettingsModal from '@/features/settings/ProfileSettingsModal';
 
 function AppHeader() {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   return (
-    <header className="flex items-center justify-between px-[18px] py-3.5">
-      <button
-        type="button"
-        className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[14px] font-bold tracking-[-0.14px] text-[#0f172a] transition hover:bg-[#f8fafc]"
-        style={{ fontFamily: 'system-ui, Roboto, sans-serif' }}
-      >
-        Devely 1.0 Lite
-      </button>
-
-      <div className="flex items-center gap-2">
+    <>
+      <header className="flex items-center justify-between px-[18px] py-3.5">
         <button
           type="button"
-          className="flex size-[34px] items-center justify-center rounded-[9px] transition cursor-pointer"
-          aria-label="알림"
+          className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[14px] font-bold tracking-[-0.14px] text-[#0f172a] transition hover:bg-[#f8fafc]"
+          style={{ fontFamily: 'system-ui, Roboto, sans-serif' }}
         >
-          <Bell className="size-[18px]" />
+          Devely 1.0 Lite
         </button>
 
-        <button
-          type="button"
-          className="flex size-[30px] items-center justify-center rounded-[15px]"
-          aria-label="프로필"
-        >
-          <img src={profile} alt="" className="size-[30px]" />
-        </button>
-      </div>
-    </header>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="flex size-[34px] items-center justify-center rounded-[9px] transition cursor-pointer"
+            aria-label="알림"
+          >
+            <Bell className="size-[18px]" />
+          </button>
+
+          <button
+            type="button"
+            className="flex size-[30px] items-center justify-center rounded-[15px] cursor-pointer"
+            aria-label="프로필"
+            aria-expanded={settingsOpen}
+            onClick={() => setSettingsOpen(true)}
+          >
+            <img src={profile} alt="" className="size-[30px]" />
+          </button>
+        </div>
+      </header>
+
+      <ProfileSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    </>
   );
 }
 
