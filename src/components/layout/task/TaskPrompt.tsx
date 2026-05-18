@@ -20,7 +20,7 @@ const quickActions = [
   { label: '더보기', icon: MoreHorizontal },
 ] as const;
 
-export default function TaskPrompt() {
+function TaskPrompt() {
   const [promptText, setPromptText] = useState('');
 
   return (
@@ -111,3 +111,4 @@ export default function TaskPrompt() {
     </section>
   );
 }
+export default TaskPrompt;
