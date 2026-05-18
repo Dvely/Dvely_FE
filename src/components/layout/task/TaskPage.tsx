@@ -1,6 +1,6 @@
 import TaskPrompt from './TaskPrompt';
 import AppSidebar from '../../common/AppSidebar';
-import DashboardTemplateGallery from './DashboardTemplateGallery';
+import TaskTemplate from './TaskTemplate';
 import TaskPageHeader from './TaskHeader';
 
 function TaskPage() {
@@ -11,7 +11,7 @@ function TaskPage() {
         <TaskPageHeader />
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <TaskPrompt />
-          <DashboardTemplateGallery />
+          <TaskTemplate />
         </div>
       </div>
     </div>
