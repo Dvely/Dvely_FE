@@ -1,7 +1,6 @@
 import { Bell } from 'lucide-react';
 import { useState } from 'react';
 import profile from '@/assets/icons/profile.svg';
-import ProfileSettingsModal from '@/features/settings/ProfileSettingsModal';
 
 function AppHeader() {
   const [settingsOpen, setSettingsOpen] = useState(false);
