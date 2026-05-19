@@ -29,7 +29,7 @@ export default function AppSidebar() {
 
   return (
     <aside
-      className={`flex flex-col border-r border-[#0F172A]/8 bg-white transition-[width] duration-200 ease-out ${
+      className={`flex flex-col border-r border-[#0F172A]/8 bg-[#EBEBEB] transition-[width] duration-200 ease-out ${
         collapsed ? 'w-[76px]' : 'w-[260px]'
       }`}
     >
@@ -37,7 +37,6 @@ export default function AppSidebar() {
         className={`flex items-center py-5 ${collapsed ? 'flex-col gap-3 px-2' : 'justify-between px-4'}`}
       >
         <div className={`flex items-center ${collapsed ? 'flex-col gap-1' : 'gap-3'}`}>
-          <div className="size-9 rounded-xl border border-[#7C3AED]/20 bg-[linear-gradient(135deg,rgba(192,132,252,0.95)_0%,rgba(109,40,217,0.75)_100%)] shadow-[0_8px_20px_rgba(124,58,237,0.2)]" />
           {!collapsed ? (
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-[15px] font-semibold tracking-tight text-[#0B0C12]">
@@ -73,11 +72,7 @@ export default function AppSidebar() {
               title={collapsed ? label : undefined}
               className={`flex w-full items-center rounded-xl text-[13px] font-medium transition ${
                 collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5 text-left'
-              } ${
-                active
-                  ? 'bg-[linear-gradient(135deg,rgba(192,132,252,0.95)_0%,rgba(109,40,217,0.75)_100%)] text-white shadow-sm'
-                  : 'text-[#475569] hover:bg-[linear-gradient(135deg,rgba(192,132,252,0.95)_0%,rgba(109,40,217,0.75)_100%)] hover:text-[#0B0C12]'
-              }`}
+              } ${active ? 'bg-[#E4E4E4] text-[#34322D]' : ' hover:bg-[#E4E4E4]'}`}
             >
               <Icon className="size-[18px] shrink-0 opacity-90" strokeWidth={active ? 2 : 1.75} />
               {!collapsed ? <span>{label}</span> : <span className="sr-only">{label}</span>}
