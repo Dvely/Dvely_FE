@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import githubIcon from '@/assets/icons/github.svg';
 import heroSectionImage from '@/assets/images/heroSection_img.svg';
@@ -7,6 +8,8 @@ const headlineGradientBg =
   'bg-[linear-gradient(90deg,#6D28D9_0%,#7C3AED_42%,#A855F7_100%)] bg-clip-text text-transparent';
 
 function HeroSection() {
+  const navigate = useNavigate();
+
   return (
     <section className="relative w-full">
       <img
@@ -40,6 +43,7 @@ function HeroSection() {
             variant="outline"
             size="sm"
             className="border-[#767676] py-2.5 text-md font-semibold rounded-2xl w-[578px]"
+            onClick={() => navigate({ to: '/auth/login' })}
           >
             <div className="flex items-center gap-4.5">
               <img src={githubIcon} alt="GitHub" className="w-[38px] h-[38px]" />
