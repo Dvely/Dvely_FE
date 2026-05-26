@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/_app/templates')({
+export const Route = createFileRoute('/_authenticated/analytics')({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  return <div>템플릿</div>;
+  return <div>분석</div>;
 }

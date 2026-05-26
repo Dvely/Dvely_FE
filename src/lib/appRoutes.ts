@@ -17,3 +17,8 @@ export function isAppShellPath(pathname: string): boolean {
 export function isAuthPath(pathname: string): boolean {
   return pathname === '/auth' || pathname.startsWith('/auth/');
 }
+
+/** 로그인·OAuth 콜백 등 — 사이드바·헤더 없이 본문만 */
+export function isAuthLayoutPath(pathname: string): boolean {
+  return isAuthPath(pathname) || pathname === '/callback';
+}

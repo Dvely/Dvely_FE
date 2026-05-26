@@ -1,9 +1,10 @@
-import { Fragment, useEffect } from 'react';
+import { useEffect } from 'react';
 import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router';
 import NotFoundPage from '@/components/layout/NotFoundPage';
+import AppSidebar from '@/components/common/AppSidebar';
 import HeaderContainer from '@/components/layout/header/HeaderContainer';
 import { GITHUB_OAUTH_SUCCESS_MESSAGE } from '@/constants/githubOAuth';
-import { isAppShellPath, isAuthPath } from '@/lib/appRoutes';
+import { isAuthLayoutPath } from '@/lib/appRoutes';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -12,7 +13,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const showMarketingHeader = !isAppShellPath(pathname) && !isAuthPath(pathname);
+  const showAppChrome = !isAuthLayoutPath(pathname);
 
   useEffect(() => {
     const handleOAuthSuccess = (event: MessageEvent) => {
@@ -25,10 +26,21 @@ function RootComponent() {
     return () => window.removeEventListener('message', handleOAuthSuccess);
   }, []);
 
+  if (!showAppChrome) {
+    return (
+      <div className="min-h-screen w-full bg-[#f8fafc] text-[#0f172a]">
+        <Outlet />
+      </div>
+    );
+  }
+
   return (
-    <Fragment>
-      {showMarketingHeader ? <HeaderContainer /> : null}
-      <Outlet />
-    </Fragment>
+    <div className="flex h-screen w-full overflow-hidden bg-[#f8fafc] text-[#0f172a]">
+      <AppSidebar />
+      <main id="app-main-scroll" className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+        <HeaderContainer />
+        <Outlet />
+      </main>
+    </div>
   );
 }

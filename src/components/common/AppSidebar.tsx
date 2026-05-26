@@ -24,12 +24,12 @@ const navItems: {
 ];
 
 export default function AppSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
     <aside
-      className={`flex flex-col border-r border-[#0F172A]/8 bg-[#EBEBEB] transition-[width] duration-200 ease-out ${
+      className={`flex h-full shrink-0 flex-col border-r border-[#0F172A]/8 bg-[#EBEBEB] transition-[width] duration-200 ease-out ${
         collapsed ? 'w-[76px]' : 'w-[260px]'
       }`}
     >
@@ -61,7 +61,9 @@ export default function AppSidebar() {
         </button>
       </div>
 
-      <nav className={`flex flex-1 flex-col gap-1 ${collapsed ? 'px-2' : 'px-3'}`}>
+      <nav
+        className={`flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto ${collapsed ? 'px-2' : 'px-3'}`}
+      >
         {navItems.map(({ to, label, icon: Icon }) => {
           const active = pathname === to;
 

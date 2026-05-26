@@ -2,13 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 
+const MAIN_SCROLL_ID = 'app-main-scroll';
+
 function HeaderContainer() {
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
 
   useEffect(() => {
+    const scrollElement = document.getElementById(MAIN_SCROLL_ID);
+    if (!scrollElement) return;
+
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      const currentScrollY = scrollElement.scrollTop;
 
       if (currentScrollY <= 8) {
         setIsVisible(true);
@@ -25,18 +30,20 @@ function HeaderContainer() {
       lastScrollY.current = currentScrollY;
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    scrollElement.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      scrollElement.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
   return (
     <header
-      className={`sticky top-0 z-20 border-b border-slate-200 backdrop-blur transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}
+      className={`sticky top-0 z-20 border-b border-slate-200/80 bg-white/75 backdrop-blur-md transition-transform duration-300 ${
+        isVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}
     >
-      <div className="mx-auto flex items-center justify-between py-3.5 px-40 w-[1440px]">
+      <div className="mx-auto flex w-[1440px] items-center justify-between px-40 py-3.5">
         <Link to="/" className="text-sm font-bold tracking-[0.08em] text-slate-900">
           DVELY
         </Link>
