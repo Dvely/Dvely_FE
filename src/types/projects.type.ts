@@ -1,16 +1,14 @@
 import { z } from 'zod';
-
-/**
- * 프로젝트 배포 상태
- * @example "DRAFT"
- */
-const projectDeployStatusSchema = z.enum(['DRAFT']);
-
-/**
- * 프로젝트 상태
- * @example "DRAFT"
- */
-const projectStatusSchema = z.enum(['DRAFT']);
+import {
+  deployStatusSchema,
+  projectDeleteModeSchema,
+  projectStatusSchema,
+  repositoryBindingStatusSchema,
+  repositoryHealthStatusSchema,
+  repositoryModeSchema,
+  repositoryVisibilitySchema,
+  startModeSchema,
+} from '@/types/common.enum';
 
 /**
  * 프로젝트 목록 항목
@@ -21,7 +19,7 @@ const projectListItemSchema = z.object({
   /** 프로젝트 이름 */
   name: z.string().min(1, '프로젝트 이름이 없습니다.').prefault(''),
   /** 현재 배포 상태 */
-  deployStatus: projectDeployStatusSchema,
+  deployStatus: deployStatusSchema,
   /** 현재 배포 URL. 배포 전이면 null */
   currentUrl: z.string().nullable().prefault(''),
   /** 프로젝트 마지막 수정 시각 (ISO 8601 date-time) */
@@ -54,7 +52,7 @@ const getProjectDetailResSchema = z.object({
   /** 프로젝트 상태 */
   status: projectStatusSchema,
   /** 프로젝트 시작 방식 */
-  startMode: z.string().min(1, '프로젝트 시작 방식이 없습니다.').prefault(''),
+  startMode: startModeSchema,
   /** 템플릿 유형 */
   templateType: z.string().nullable().prefault(''),
   /** 초안 생성 방식 */
@@ -64,12 +62,6 @@ const getProjectDetailResSchema = z.object({
   /** 프로젝트 마지막 수정 시각 (ISO 8601 date-time) */
   updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
 });
-
-/**
- * 프로젝트 삭제 범위
- * @example "PROJECT_ONLY"
- */
-const projectDeleteModeSchema = z.enum(['PROJECT_ONLY', 'PROJECT_AND_REPOSITORY']);
 
 /**
  * DELETE /projects/{projectId} 프로젝트 삭제 요청 (path + query)
@@ -96,7 +88,7 @@ const postProjectCreateReqSchema = z.object({
   /** 프로젝트 이름 */
   name: z.string().min(1, '프로젝트 이름을 입력해주세요.').prefault(''),
   /** 프로젝트 시작 방식 */
-  startMode: z.string().min(1, '프로젝트 시작 방식을 선택해주세요.').prefault(''),
+  startMode: startModeSchema,
   /** 템플릿 유형. startMode가 템플릿 기반일 때 사용 */
   templateType: z.string().nullable().prefault(''),
   /** 초안 생성 방식. 값이 없으면 fast로 보정됩니다. */
@@ -116,20 +108,11 @@ const postProjectCreateResSchema = z.object({
 });
 
 /**
- * 저장소 공개 범위
- * @example "PRIVATE"
- */
-const repositoryVisibilitySchema = z.enum(['PRIVATE']);
-
-/**
  * POST /projects/{projectId}/repository 프로젝트 GitHub 저장소 연결 요청
  */
 const postProjectRepositoryReqSchema = z.object({
-  /**
-   * 저장소 연결 방식.
-   * create/create_new/new 또는 existing/import/import_existing 지원
-   */
-  repositoryMode: z.string().min(1, '저장소 연결 방식을 선택해주세요.').prefault(''),
+  /** 저장소 연결 방식 */
+  repositoryMode: repositoryModeSchema,
   /** 새 저장소 생성 시 사용할 저장소 이름 */
   repositoryName: z.string().nullable().prefault(''),
   /** 기존 저장소 연결 시 owner/repo 형식의 전체 이름 */
@@ -139,23 +122,11 @@ const postProjectRepositoryReqSchema = z.object({
 });
 
 /**
- * 저장소 연결 상태
- * @example "BOUND"
- */
-const repositoryBindingStatusSchema = z.enum(['BOUND']);
-
-/**
- * 저장소 health 상태
- * @example "HEALTHY"
- */
-const repositoryHealthSchema = z.enum(['HEALTHY']);
-
-/**
  * GET /projects/{projectId}/repository-healty 프로젝트 저장소 health 응답
  */
 const getProjectRepositoryHealthResSchema = z.object({
   /** 저장소 접근 상태 */
-  health: repositoryHealthSchema,
+  health: repositoryHealthStatusSchema,
 });
 
 /**
@@ -205,7 +176,7 @@ const getProjectActivityLogListResSchema = z.array(projectActivityLogSchema);
  */
 const projectRepositoryHealthSummarySchema = z.object({
   /** 저장소 접근 상태 */
-  health: repositoryHealthSchema,
+  health: repositoryHealthStatusSchema,
 });
 
 /**
@@ -215,7 +186,7 @@ const getProjectOverviewResSchema = z.object({
   /** 현재 배포 URL. 배포 전이면 null */
   currentUrl: z.string().nullable().prefault(''),
   /** 현재 배포 상태 */
-  deployStatus: projectDeployStatusSchema,
+  deployStatus: deployStatusSchema,
   /** 현재 배포 버전 */
   currentVersion: z.string().min(1, '배포 버전이 없습니다.').prefault(''),
   /** 최근 프로젝트 변경 요약 */
@@ -243,14 +214,8 @@ const postProjectRepositoryResSchema = z.object({
   /** 저장소 연결 상태 */
   bindingStatus: repositoryBindingStatusSchema,
   /** 저장소 health 상태 */
-  repositoryHealth: repositoryHealthSchema,
+  repositoryHealth: repositoryHealthStatusSchema,
 });
-
-/**
- * GitHub 저장소 공개 범위
- * @example "PUBLIC"
- */
-const githubRepositoryVisibilitySchema = z.enum(['PUBLIC', 'PRIVATE']);
 
 /**
  * GitHub 저장소 정보
@@ -265,7 +230,7 @@ const githubRepositorySchema = z.object({
   /** GitHub 저장소 설명 */
   description: z.string().nullable().prefault(''),
   /** 저장소 공개 범위 */
-  visibility: githubRepositoryVisibilitySchema,
+  visibility: repositoryVisibilitySchema,
   /** 기본 브랜치명 */
   defaultBranch: z.string().min(1, '기본 브랜치명이 없습니다.').prefault(''),
   /** GitHub 저장소 마지막 수정 시각 (ISO 8601 date-time) */
@@ -277,8 +242,6 @@ const githubRepositorySchema = z.object({
  */
 const getGithubRepositoryListResSchema = z.array(githubRepositorySchema);
 
-/** 프로젝트 배포 상태 */
-type ProjectDeployStatus = z.infer<typeof projectDeployStatusSchema>;
 /** 프로젝트 목록 항목 */
 type ProjectListItem = z.infer<typeof projectListItemSchema>;
 /** GET /projects 프로젝트 목록 조회 응답 */
@@ -287,26 +250,16 @@ type GetProjectListResType = z.infer<typeof getProjectListResSchema>;
 type GetProjectDetailParamsType = z.infer<typeof getProjectDetailParamsSchema>;
 /** GET /projects/{projectId} 프로젝트 상세 조회 응답 */
 type GetProjectDetailResType = z.infer<typeof getProjectDetailResSchema>;
-/** 프로젝트 삭제 범위 */
-type ProjectDeleteMode = z.infer<typeof projectDeleteModeSchema>;
 /** DELETE /projects/{projectId} 프로젝트 삭제 요청 (path + query) */
 type DeleteProjectParamsType = z.infer<typeof deleteProjectParamsSchema>;
 /** PATCH /projects/{projectId} 프로젝트 수정 요청 */
 type PatchProjectReqType = z.infer<typeof patchProjectReqSchema>;
 /** POST /projects 프로젝트 생성 요청 */
 type PostProjectCreateReqType = z.infer<typeof postProjectCreateReqSchema>;
-/** 프로젝트 상태 */
-type ProjectStatus = z.infer<typeof projectStatusSchema>;
 /** POST /projects 프로젝트 생성 응답 */
 type PostProjectCreateResType = z.infer<typeof postProjectCreateResSchema>;
-/** 저장소 공개 범위 */
-type RepositoryVisibility = z.infer<typeof repositoryVisibilitySchema>;
 /** POST /projects/{projectId}/repository 프로젝트 GitHub 저장소 연결 요청 */
 type PostProjectRepositoryReqType = z.infer<typeof postProjectRepositoryReqSchema>;
-/** 저장소 연결 상태 */
-type RepositoryBindingStatus = z.infer<typeof repositoryBindingStatusSchema>;
-/** 저장소 health 상태 */
-type RepositoryHealth = z.infer<typeof repositoryHealthSchema>;
 /** GET /projects/{projectId}/repository-healty 프로젝트 저장소 health 응답 */
 type GetProjectRepositoryHealthResType = z.infer<typeof getProjectRepositoryHealthResSchema>;
 /** 프로젝트 저장소 커밋 정보 */
@@ -325,29 +278,21 @@ type ProjectRepositoryHealthSummary = z.infer<typeof projectRepositoryHealthSumm
 type GetProjectOverviewResType = z.infer<typeof getProjectOverviewResSchema>;
 /** POST /projects/{projectId}/repository 프로젝트 GitHub 저장소 연결 응답 */
 type PostProjectRepositoryResType = z.infer<typeof postProjectRepositoryResSchema>;
-/** GitHub 저장소 공개 범위 */
-type GithubRepositoryVisibility = z.infer<typeof githubRepositoryVisibilitySchema>;
 /** GitHub 저장소 정보 */
 type GithubRepository = z.infer<typeof githubRepositorySchema>;
 /** GET /projects/github/repositories GitHub 저장소 목록 조회 응답 */
 type GetGithubRepositoryListResType = z.infer<typeof getGithubRepositoryListResSchema>;
 
 export {
-  projectDeployStatusSchema,
   projectListItemSchema,
   getProjectListResSchema,
   getProjectDetailParamsSchema,
   getProjectDetailResSchema,
-  projectDeleteModeSchema,
   deleteProjectParamsSchema,
   patchProjectReqSchema,
   postProjectCreateReqSchema,
-  projectStatusSchema,
   postProjectCreateResSchema,
-  repositoryVisibilitySchema,
   postProjectRepositoryReqSchema,
-  repositoryBindingStatusSchema,
-  repositoryHealthSchema,
   getProjectRepositoryHealthResSchema,
   projectLatestCommitSchema,
   getProjectCommitListResSchema,
@@ -357,24 +302,17 @@ export {
   projectRepositoryHealthSummarySchema,
   getProjectOverviewResSchema,
   postProjectRepositoryResSchema,
-  githubRepositoryVisibilitySchema,
   githubRepositorySchema,
   getGithubRepositoryListResSchema,
-  type ProjectDeployStatus,
   type ProjectListItem,
   type GetProjectListResType,
   type GetProjectDetailParamsType,
   type GetProjectDetailResType,
-  type ProjectDeleteMode,
   type DeleteProjectParamsType,
   type PatchProjectReqType,
   type PostProjectCreateReqType,
-  type ProjectStatus,
   type PostProjectCreateResType,
-  type RepositoryVisibility,
   type PostProjectRepositoryReqType,
-  type RepositoryBindingStatus,
-  type RepositoryHealth,
   type GetProjectRepositoryHealthResType,
   type ProjectLatestCommit,
   type GetProjectCommitListResType,
@@ -384,7 +322,6 @@ export {
   type ProjectRepositoryHealthSummary,
   type GetProjectOverviewResType,
   type PostProjectRepositoryResType,
-  type GithubRepositoryVisibility,
   type GithubRepository,
   type GetGithubRepositoryListResType,
 };
