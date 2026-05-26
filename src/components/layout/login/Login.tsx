@@ -1,42 +1,8 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { fetchGitHubAuthUrl } from '@/api/auth';
-import {
-  clearOAuthCodeProcessed,
-  extractStateFromOAuthUrl,
-  saveOAuthState,
-} from '@/services/auth/oauthState';
+import { useGitHubLogin } from '@/hooks/useGitHubLogin';
 
 function LoginPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const handleGitHubLogin = async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const { data } = await fetchGitHubAuthUrl();
-      const url = data?.url;
-
-      if (!url) {
-        throw new Error('GitHub 로그인 URL을 받지 못했습니다.');
-      }
-
-      clearOAuthCodeProcessed();
-
-      const state = extractStateFromOAuthUrl(url);
-      if (state) saveOAuthState(state);
-
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'GitHub 로그인을 시작하지 못했습니다.',
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { startGitHubLogin, isLoading, errorMessage } = useGitHubLogin();
 
   return (
     <main className="mx-auto grid min-h-screen w-full max-w-6xl gap-8 px-6 py-14 text-left">
@@ -49,12 +15,11 @@ function LoginPage() {
           자연어 요청만으로 웹서비스를 만들고 수정하고 배포까지 이어지는 경험을 제공합니다.
         </p>
         <div className="flex flex-wrap gap-3">
-          <Button type="button" size="lg" disabled={isLoading} onClick={handleGitHubLogin}>
+          <Button type="button" size="lg" disabled={isLoading} onClick={startGitHubLogin}>
             {isLoading ? 'GitHub 로그인 준비 중...' : 'GitHub로 로그인'}
           </Button>
           {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
         </div>
-
       </header>
     </main>
   );

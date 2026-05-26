@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as CallbackRouteImport } from './routes/callback'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AppTemplatesRouteImport } from './routes/_app/templates'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
@@ -32,11 +31,6 @@ const AppRoute = AppRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/auth/login',
-  path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -79,7 +73,6 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof AppTasksRoute
   '/templates': typeof AppTemplatesRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/auth/login': typeof AuthLoginRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -90,7 +83,6 @@ export interface FileRoutesByTo {
   '/tasks': typeof AppTasksRoute
   '/templates': typeof AppTemplatesRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/auth/login': typeof AuthLoginRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -103,7 +95,6 @@ export interface FileRoutesById {
   '/_app/tasks': typeof AppTasksRoute
   '/_app/templates': typeof AppTemplatesRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/auth/login': typeof AuthLoginRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -116,7 +107,6 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/templates'
     | '/auth/callback'
-    | '/auth/login'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -127,7 +117,6 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/templates'
     | '/auth/callback'
-    | '/auth/login'
   id:
     | '__root__'
     | '/'
@@ -139,7 +128,6 @@ export interface FileRouteTypes {
     | '/_app/tasks'
     | '/_app/templates'
     | '/auth/callback'
-    | '/auth/login'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -147,7 +135,6 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   CallbackRoute: typeof CallbackRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
-  AuthLoginRoute: typeof AuthLoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -171,13 +158,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/login': {
-      id: '/auth/login'
-      path: '/auth/login'
-      fullPath: '/auth/login'
-      preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
@@ -248,7 +228,6 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   CallbackRoute: CallbackRoute,
   AuthCallbackRoute: AuthCallbackRoute,
-  AuthLoginRoute: AuthLoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

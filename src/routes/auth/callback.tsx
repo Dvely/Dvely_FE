@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { completeGitHubCallback } from '@/api/auth';
 import type { GitHubCallbackResult } from '@/types/auth.type';
+import { finishGitHubLogin } from '@/lib/finishGitHubLogin';
 import {
   clearOAuthState,
   getOAuthState,
@@ -36,16 +37,6 @@ function persistAuthTokens(data?: GitHubCallbackResult) {
   }
 }
 
-function goHome() {
-  if (window.opener && !window.opener.closed) {
-    window.opener.location.assign('/');
-    window.close();
-    return;
-  }
-
-  window.location.assign('/');
-}
-
 function RouteComponent() {
   const navigate = useNavigate();
   const { code, state } = Route.useSearch();
@@ -59,7 +50,7 @@ function RouteComponent() {
       }
 
       if (isOAuthCodeProcessed(code)) {
-        goHome();
+        finishGitHubLogin();
         return;
       }
 
@@ -83,7 +74,7 @@ function RouteComponent() {
         persistAuthTokens(response.data);
         markOAuthCodeProcessed(code);
         clearOAuthState();
-        goHome();
+        finishGitHubLogin();
       } catch (error) {
         exchangingOAuthCode = null;
         setErrorMessage(
@@ -105,9 +96,9 @@ function RouteComponent() {
         <button
           type="button"
           className="text-sm text-slate-600 underline"
-          onClick={() => navigate({ to: '/auth/login' })}
+          onClick={() => navigate({ to: '/' })}
         >
-          로그인 화면으로 돌아가기
+          홈 화면으로 돌아가기
         </button>
       </div>
     );
