@@ -92,6 +92,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 3. Load and analyze the implementation context:
    - **REQUIRED**: Read tasks.md for the complete task list and execution plan
    - **REQUIRED**: Read plan.md for tech stack, architecture, and file structure
+   - **REQUIRED** (API/types 작업 시): Read `.specify/standards/zod-api-schema.md` and apply every rule when creating `src/types/*.type.ts` or `src/api/*.ts` (reference: `.specify/templates/api-types.template.ts`)
    - **IF EXISTS**: Read data-model.md for entities and relationships
    - **IF EXISTS**: Read contracts/ for API specifications and test requirements
    - **IF EXISTS**: Read research.md for technical decisions and constraints

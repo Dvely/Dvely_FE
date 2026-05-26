@@ -38,6 +38,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 - **UX 일관성**: 상태(로딩/빈/에러)·접근성·디자인 시스템 사용이 스펙의 사용자 여정과 모순 없는가?
 - **성능**: 라우팅·번들·데이터 패칭 전략이 스코프와 트래픽에 적합한가? 회귀 위험이 있으면 측정·완화 방안이 있는가?
 - **스펙–플랜 정합성**: 사용자 스토리·수용 시나리오와 기술 접근이 1:1로 매핑되는가? 헌법 위반은 Complexity Tracking 또는 승인된 예외로 남는가?
+- **API 스키마**: `src/types`·`src/api` 추가 시 `.specify/standards/zod-api-schema.md`의 Zod 체이닝·export·주석 규칙을 플랜 구조에 반영했는가?
 
 ## Project Structure
 

@@ -1,10 +1,9 @@
 <!--
 Sync Impact Report
-- Version: 1.1.0 → 1.2.0
-- Modified Principles: Placeholder 기반 원칙 섹션 → 확정된 5대 원칙 문구
-- Added sections: Additional Constraints, Development Workflow 상세화
-- Removed sections: 템플릿 플레이스홀더/예시 코멘트
-- Templates: .specify/templates/plan-template.md (Constitution Check) ✅ aligned
+- Version: 1.2.0 → 1.3.0
+- Modified Principles: I. 코드 품질 — API Zod 스키마 표준 MUST 추가
+- Added sections: .specify/standards/zod-api-schema.md, .specify/templates/api-types.template.ts
+- Templates: plan-template.md (API 스키마 체크), specify-rules.mdc, speckit-implement SKILL
 - Follow-up TODOs: 없음
 -->
 
@@ -15,6 +14,10 @@ Sync Impact Report
 ### I. 코드 품질 및 안정성
 
 - **MUST** 코드 변경 시 `bun run format`과 `bun run typecheck`를 작업 종료 전에 실행한다.
+- **MUST** API Zod 스키마(`src/types/*.type.ts`)는 `.specify/standards/zod-api-schema.md` 규칙을 따른다.
+  - 필수 문자열: `.min(1, '한국어 에러 메시지').prefault('')`
+  - 비필수 필드(문자열·enum 등): `.nullable()` 필수 (문자열은 `.nullable().prefault('')`)
+  - export는 파일 하단 일괄, 객체 필드 사이 빈 줄 없음
 - **MUST** 새로운 공용 모듈/훅/유틸은 단일 책임 원칙과 명시적 입력/출력을 가진다.
 - **MUST NOT** 불필요한 `any`, 미사용 export, 데드 코드를 기본 브랜치에 남긴다.
 - **SHOULD** 복잡한 분기와 예외 처리 로직은 작은 순수 함수로 분리한다.
@@ -71,4 +74,4 @@ Sync Impact Report
   - **PATCH**: 문구 개선, 오탈자 수정, 비의미적 정리
 - 본 문서는 기능 개발 흐름의 변화가 있을 때 즉시 갱신한다.
 
-**Version**: 1.2.0 | **Ratified**: 2026-05-05 | **Last Amended**: 2026-05-05
+**Version**: 1.3.0 | **Ratified**: 2026-05-05 | **Last Amended**: 2026-05-26

@@ -5,4 +5,8 @@ alwaysApply: true
 <!-- SPECKIT START -->
 For additional context about technologies, project structure, and execution
 details, read `specs/001-github-login/plan.md` first.
+
+When creating or editing API Zod schemas (`src/types/*.type.ts`) or API clients
+(`src/api/*.ts`), you **MUST** follow `.specify/standards/zod-api-schema.md`.
+Use `.specify/templates/api-types.template.ts` as the structural reference.
 <!-- SPECKIT END -->
