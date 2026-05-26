@@ -36,8 +36,6 @@ function AppHeader() {
           </button>
         </div>
       </header>
-
-      <ProfileSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </>
   );
 }
