@@ -9,7 +9,7 @@ import {
   SendHorizontal,
   Share2,
 } from 'lucide-react';
-import type { ProjectItem } from '@/mocks/projects/projectTypes';
+import type { GetProjectDetailResType } from '@/types/projects.type';
 
 const suggestedPrompts = [
   { label: 'UI 수정 요청', prompt: '히어로 섹션 CTA를 더 눈에 띄게 수정해줘' },
@@ -17,10 +17,11 @@ const suggestedPrompts = [
 ] as const;
 
 type ProjectAgentPageProps = {
-  project: ProjectItem;
+  projectId: number;
+  project: GetProjectDetailResType;
 };
 
-function ProjectAgentPage({ project }: ProjectAgentPageProps) {
+function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [input, setInput] = useState('');
 
   return (
@@ -35,7 +36,7 @@ function ProjectAgentPage({ project }: ProjectAgentPageProps) {
 
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-4">
           <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3.5 py-3 text-[13px] leading-relaxed text-[#475569]">
-            안녕하세요! <span className="font-semibold text-[#0f172a]">{project.slug}</span>{' '}
+            안녕하세요! <span className="font-semibold text-[#0f172a]">{project.name}</span>{' '}
             워크스페이스입니다. 추천 프롬프트를 눌러 보면 수정과 배포가 어떻게 이루어지는지 데모로
             확인할 수 있어요.
           </div>
@@ -79,7 +80,7 @@ function ProjectAgentPage({ project }: ProjectAgentPageProps) {
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <Link
               to="/project/$slug"
-              params={{ slug: project.slug }}
+              params={{ slug: String(projectId) }}
               className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#64748b] transition hover:bg-[#f8fafc]"
               aria-label="프로젝트 상세로"
             >

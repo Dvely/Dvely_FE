@@ -122,7 +122,7 @@ const postProjectRepositoryReqSchema = z.object({
 });
 
 /**
- * GET /projects/{projectId}/repository-healty 프로젝트 저장소 health 응답
+ * GET /projects/{projectId}/repository-health 프로젝트 저장소 health 응답
  */
 const getProjectRepositoryHealthResSchema = z.object({
   /** 저장소 접근 상태 */

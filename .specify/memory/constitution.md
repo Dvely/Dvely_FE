@@ -1,9 +1,9 @@
 <!--
 Sync Impact Report
-- Version: 1.2.0 → 1.3.0
-- Modified Principles: I. 코드 품질 — API Zod 스키마 표준 MUST 추가
-- Added sections: .specify/standards/zod-api-schema.md, .specify/templates/api-types.template.ts
-- Templates: plan-template.md (API 스키마 체크), specify-rules.mdc, speckit-implement SKILL
+- Version: 1.3.0 → 1.4.0
+- Modified Principles: III. UX 일관성 — 로딩 상태 스켈레톤 UI MUST 추가
+- Added sections: .specify/standards/loading-ui.md
+- Templates: plan-template.md (로딩 UX 체크), specify-rules.mdc, speckit-implement SKILL
 - Follow-up TODOs: 없음
 -->
 
@@ -34,6 +34,7 @@ Sync Impact Report
 
 - **MUST** 로그인/오류/재시도 안내 문구는 한국어 우선 정책을 따른다.
 - **MUST** 실패 상태에서 사용자가 다음 행동(재시도, 재로그인, 재연동)을 선택할 수 있어야 한다.
+- **MUST** 모든 `isLoading` 상태는 텍스트 플레이스홀더 대신 스켈레톤 UI로 표현한다.
 - **SHOULD** 인증/연동 관련 상태 표현은 동일한 용어와 상태값을 재사용한다.
 - **SHOULD** 사용자 혼란을 줄이기 위해 화면마다 핵심 상태 메시지를 하나의 기준으로 유지한다.
 
@@ -74,4 +75,4 @@ Sync Impact Report
   - **PATCH**: 문구 개선, 오탈자 수정, 비의미적 정리
 - 본 문서는 기능 개발 흐름의 변화가 있을 때 즉시 갱신한다.
 
-**Version**: 1.3.0 | **Ratified**: 2026-05-05 | **Last Amended**: 2026-05-26
+**Version**: 1.4.0 | **Ratified**: 2026-05-05 | **Last Amended**: 2026-05-27

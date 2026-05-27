@@ -1,26 +1,47 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft, Play, Settings } from 'lucide-react';
+import type {
+  GetProjectActivityLogListResType,
+  GetProjectCommitListResType,
+  GetProjectDetailResType,
+  GetProjectOverviewResType,
+  GetProjectRepositoryHealthResType,
+} from '@/types/projects.type';
 
-import { DEPLOY_STATUS_LABEL, type ProjectItem } from '@/mocks/projects/projectTypes';
-
-const deployBadgeClass: Record<ProjectItem['deployStatus'], string> = {
-  pending: 'bg-[#f1f5f9] text-[#64748b] border-[#e2e8f0]',
-  deploying: 'bg-[#fef9c3] text-[#854d0e] border-[#fde68a]',
-  deployed: 'bg-[#dcfce7] text-[#166534] border-[#bbf7d0]',
+const projectStatusLabel: Record<GetProjectDetailResType['status'], string> = {
+  DRAFT: '초안',
+  ACTIVE: '활성',
+  ARCHIVED: '보관됨',
 };
 
-const recentHistory = [
-  { label: '프리뷰 브랜치 빌드 성공', time: '10분 전', status: '미배포' },
-  { label: '배포 승인 대기 (main merge 전)', time: '방금', status: '미배포' },
-  { label: 'DNS 레코드 안내 발송', time: '1시간 전', status: '미배포' },
-] as const;
+const projectStatusBadgeClass: Record<GetProjectDetailResType['status'], string> = {
+  DRAFT: 'bg-[#f1f5f9] text-[#64748b] border-[#e2e8f0]',
+  ACTIVE: 'bg-[#dcfce7] text-[#166534] border-[#bbf7d0]',
+  ARCHIVED: 'bg-[#fef3c7] text-[#92400e] border-[#fcd34d]',
+};
 
 type ProjectDetailPageProps = {
-  project: ProjectItem;
+  projectId: number;
+  project: GetProjectDetailResType;
+  overview?: GetProjectOverviewResType;
+  commits?: GetProjectCommitListResType;
+  activityLogs?: GetProjectActivityLogListResType;
+  repositoryHealth?: GetProjectRepositoryHealthResType;
+  isRelatedLoading?: boolean;
 };
 
-function ProjectDetailPage({ project }: ProjectDetailPageProps) {
-  const isPending = project.deployStatus === 'pending';
+function ProjectDetailPage({
+  projectId,
+  project,
+  overview,
+  commits = [],
+  activityLogs = [],
+  repositoryHealth,
+  isRelatedLoading = false,
+}: ProjectDetailPageProps) {
+  const isPending = project.status === 'DRAFT';
+  const latestCommit = commits[0] ?? overview?.latestCommit ?? null;
+  const activityRows = activityLogs.slice(0, 5);
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#f8fafc]">
@@ -39,19 +60,19 @@ function ProjectDetailPage({ project }: ProjectDetailPageProps) {
             <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-[28px] font-bold tracking-tight text-[#0f172a]">
-                  {project.slug}
+                  {project.name}
                 </h1>
                 <span
-                  className={`rounded-full border px-2.5 py-0.5 text-[12px] font-semibold ${deployBadgeClass[project.deployStatus]}`}
+                  className={`rounded-full border px-2.5 py-0.5 text-[12px] font-semibold ${projectStatusBadgeClass[project.status]}`}
                 >
-                  {DEPLOY_STATUS_LABEL[project.deployStatus]}
+                  {projectStatusLabel[project.status]}
                 </span>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 <Link
                   to="/project/$slug/agent"
-                  params={{ slug: project.slug }}
+                  params={{ slug: String(projectId) }}
                   className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#7c3aed] px-4 text-[13px] font-semibold text-white shadow-[0_4px_14px_rgba(124,58,237,0.35)] transition hover:bg-[#6d28d9]"
                 >
                   <Play className="size-4 fill-current" />
@@ -85,10 +106,10 @@ function ProjectDetailPage({ project }: ProjectDetailPageProps) {
               </div>
             ) : (
               <div className="flex flex-col items-center py-10 text-center">
-                <p className="text-[14px] text-[#64748b]">{project.subtitle}</p>
+                <p className="text-[14px] text-[#64748b]">프로젝트 상태: {projectStatusLabel[project.status]}</p>
                 <Link
                   to="/project/$slug/agent"
-                  params={{ slug: project.slug }}
+                  params={{ slug: String(projectId) }}
                   className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg bg-[#7c3aed] px-5 text-[13px] font-semibold text-white"
                 >
                   <Play className="size-4 fill-current" />
@@ -102,11 +123,13 @@ function ProjectDetailPage({ project }: ProjectDetailPageProps) {
           <div className="mt-6 grid gap-5 lg:grid-cols-3">
             <section className="rounded-xl border border-[#e2e8f0] bg-white p-5 lg:col-span-2">
               <h3 className="text-[14px] font-bold text-[#0f172a]">현재 URL</h3>
-              <p className="mt-2 text-[13px] leading-relaxed text-[#64748b]">
-                {project.deployStatus === 'deployed'
-                  ? project.subtitle
-                  : '프로젝트가 라이브되면 여기에 URL이 표시됩니다.'}
-              </p>
+              {isRelatedLoading ? (
+                <div className="mt-2 h-4 w-2/3 animate-pulse rounded bg-[#e2e8f0]" />
+              ) : (
+                <p className="mt-2 text-[13px] leading-relaxed text-[#64748b]">
+                  {overview?.currentUrl ?? '프로젝트가 라이브되면 여기에 URL이 표시됩니다.'}
+                </p>
+              )}
 
               <h3 className="mt-6 text-[14px] font-bold text-[#0f172a]">최근 반영 이력</h3>
               <div className="mt-3 overflow-hidden rounded-lg border border-[#f1f5f9]">
@@ -119,17 +142,31 @@ function ProjectDetailPage({ project }: ProjectDetailPageProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#f1f5f9]">
-                    {recentHistory.map((row) => (
-                      <tr key={row.label} className="text-[#334155]">
-                        <td className="px-4 py-3">{row.label}</td>
-                        <td className="px-4 py-3 text-[#64748b]">{row.time}</td>
-                        <td className="px-4 py-3">
-                          <span className="rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
-                            {row.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {isRelatedLoading
+                      ? Array.from({ length: 3 }, (_, index) => (
+                          <tr key={`activity-skeleton-${index}`} className="text-[#334155]">
+                            <td className="px-4 py-3">
+                              <div className="h-4 w-5/6 animate-pulse rounded bg-[#e2e8f0]" />
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="h-4 w-16 animate-pulse rounded bg-[#e2e8f0]" />
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="h-4 w-14 animate-pulse rounded bg-[#e2e8f0]" />
+                            </td>
+                          </tr>
+                        ))
+                      : activityRows.map((row) => (
+                          <tr key={`${row.type}-${row.occurredAt}`} className="text-[#334155]">
+                            <td className="px-4 py-3">{row.message}</td>
+                            <td className="px-4 py-3 text-[#64748b]">{row.occurredAt}</td>
+                            <td className="px-4 py-3">
+                              <span className="rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
+                                {row.type}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
                   </tbody>
                 </table>
               </div>
@@ -138,15 +175,39 @@ function ProjectDetailPage({ project }: ProjectDetailPageProps) {
             <div className="flex flex-col gap-5">
               <section className="rounded-xl border border-[#e2e8f0] bg-white p-5">
                 <h3 className="text-[14px] font-bold text-[#0f172a]">가장 최근 커밋</h3>
-                <p className="mt-3 font-mono text-[13px] font-semibold text-[#7c3aed]">d524530</p>
-                <p className="mt-1 text-[12px] text-[#94a3b8]">어제에 푸시됨</p>
+                {isRelatedLoading ? (
+                  <>
+                    <div className="mt-3 h-4 w-24 animate-pulse rounded bg-[#e2e8f0]" />
+                    <div className="mt-2 h-3 w-24 animate-pulse rounded bg-[#e2e8f0]" />
+                  </>
+                ) : latestCommit ? (
+                  <>
+                    <p className="mt-3 font-mono text-[13px] font-semibold text-[#7c3aed]">
+                      {latestCommit.sha}
+                    </p>
+                    <p className="mt-1 text-[12px] text-[#64748b]">{latestCommit.message}</p>
+                    <p className="mt-1 text-[12px] text-[#94a3b8]">{latestCommit.committedAt}</p>
+                  </>
+                ) : (
+                  <p className="mt-3 text-[12px] text-[#94a3b8]">표시할 커밋이 없습니다.</p>
+                )}
               </section>
 
               <section className="rounded-xl border border-[#e2e8f0] bg-white p-5">
-                <h3 className="text-[14px] font-bold text-[#0f172a]">트래픽 현황</h3>
-                <p className="mt-3 text-[13px] leading-relaxed text-[#94a3b8]">
-                  GA4 연동 후 방문자·페이지뷰를 확인할 수 있습니다.
-                </p>
+                <h3 className="text-[14px] font-bold text-[#0f172a]">프로젝트 요약</h3>
+                {isRelatedLoading ? (
+                  <>
+                    <div className="mt-3 h-4 w-5/6 animate-pulse rounded bg-[#e2e8f0]" />
+                    <div className="mt-2 h-4 w-2/3 animate-pulse rounded bg-[#e2e8f0]" />
+                    <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-[#e2e8f0]" />
+                  </>
+                ) : (
+                  <div className="mt-3 space-y-2 text-[13px] leading-relaxed text-[#94a3b8]">
+                    <p>{overview?.trafficSummary ?? '트래픽 요약 정보가 없습니다.'}</p>
+                    <p>{overview?.domainSummary ?? '도메인 요약 정보가 없습니다.'}</p>
+                    <p>저장소 상태: {repositoryHealth?.health ?? '확인 불가'}</p>
+                  </div>
+                )}
               </section>
             </div>
           </div>

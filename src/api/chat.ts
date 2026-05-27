@@ -1,4 +1,5 @@
 import Http from '@/utils/httpClients';
+import { useQuery } from '@tanstack/react-query';
 import { errorResponse, succesResponse } from '@/utils/response';
 import {
   deleteConversationParamsSchema,
@@ -30,7 +31,7 @@ const conversationsEndpoint = '/conversations';
 const trashEndpoint = '/trash';
 
 /** 대화 상세 조회 API GET */
-export async function getConversationDetail(conversationId: number) {
+async function getConversationDetail(conversationId: number) {
   const { conversationId: id } = getConversationDetailParamsSchema.parse({
     conversationId,
   });
@@ -45,7 +46,7 @@ export async function getConversationDetail(conversationId: number) {
 }
 
 /** 대화 메시지 목록 조회 API GET */
-export async function getConversationMessageList(conversationId: number) {
+async function getConversationMessageList(conversationId: number) {
   const { conversationId: id } = getConversationMessageListParamsSchema.parse({
     conversationId,
   });
@@ -62,7 +63,7 @@ export async function getConversationMessageList(conversationId: number) {
 }
 
 /** 대화 메시지 생성 API POST */
-export async function postConversationMessageCreate(
+async function postConversationMessageCreate(
   conversationId: number,
   params: PostConversationMessageCreateReqType,
 ) {
@@ -84,7 +85,7 @@ export async function postConversationMessageCreate(
 }
 
 /** 프로젝트 대화 목록 조회 API GET */
-export async function getProjectConversationList(projectId: number) {
+async function getProjectConversationList(projectId: number) {
   const params = getProjectConversationListParamsSchema.parse({ projectId });
 
   return Http.instance
@@ -99,7 +100,7 @@ export async function getProjectConversationList(projectId: number) {
 }
 
 /** 프로젝트 대화 생성 API POST */
-export async function postProjectConversationCreate(projectId: number) {
+async function postProjectConversationCreate(projectId: number) {
   const { projectId: id } = postProjectConversationCreateParamsSchema.parse({
     projectId,
   });
@@ -116,7 +117,7 @@ export async function postProjectConversationCreate(projectId: number) {
 }
 
 /** 대화 삭제 API DELETE */
-export async function deleteConversation(conversationId: number) {
+async function deleteConversation(conversationId: number) {
   const { conversationId: id } = deleteConversationParamsSchema.parse({
     conversationId,
   });
@@ -128,7 +129,7 @@ export async function deleteConversation(conversationId: number) {
 }
 
 /** 휴지통 대화 목록 조회 API GET */
-export async function getTrashConversationList() {
+async function getTrashConversationList() {
   return Http.instance
     .get<GetTrashConversationListResType>(`${trashEndpoint}/conversations`)
     .then((response) => {
@@ -139,7 +140,7 @@ export async function getTrashConversationList() {
 }
 
 /** 휴지통 대화 복구 API POST */
-export async function postTrashConversationRestore(conversationId: number) {
+async function postTrashConversationRestore(conversationId: number) {
   const { conversationId: id } = postTrashConversationRestoreParamsSchema.parse({
     conversationId,
   });
@@ -154,3 +155,61 @@ export async function postTrashConversationRestore(conversationId: number) {
     })
     .catch(errorResponse());
 }
+
+/** 대화 상세 조회 Query Hook */
+function useConversationDetailQuery(queryKey: unknown, conversationId: number) {
+  if (!queryKey) throw new Error('queryKey is required');
+  return useQuery({
+    queryKey: ['conversation-detail', queryKey, conversationId],
+    queryFn: () => getConversationDetail(conversationId),
+    enabled: Number.isInteger(conversationId),
+    gcTime: 0,
+  });
+}
+
+/** 대화 메시지 목록 조회 Query Hook */
+function useConversationMessageListQuery(queryKey: unknown, conversationId: number) {
+  if (!queryKey) throw new Error('queryKey is required');
+  return useQuery({
+    queryKey: ['conversation-message-list', queryKey, conversationId],
+    queryFn: () => getConversationMessageList(conversationId),
+    enabled: Number.isInteger(conversationId),
+    gcTime: 0,
+  });
+}
+
+/** 프로젝트 대화 목록 조회 Query Hook */
+function useProjectConversationListQuery(queryKey: unknown, projectId: number) {
+  if (!queryKey) throw new Error('queryKey is required');
+  return useQuery({
+    queryKey: ['project-conversation-list', queryKey, projectId],
+    queryFn: () => getProjectConversationList(projectId),
+    enabled: Number.isInteger(projectId),
+    gcTime: 0,
+  });
+}
+
+/** 휴지통 대화 목록 조회 Query Hook */
+function useTrashConversationListQuery(queryKey: unknown) {
+  if (!queryKey) throw new Error('queryKey is required');
+  return useQuery({
+    queryKey: ['trash-conversation-list', queryKey],
+    queryFn: getTrashConversationList,
+    gcTime: 0,
+  });
+}
+
+export {
+  getConversationDetail,
+  getConversationMessageList,
+  postConversationMessageCreate,
+  getProjectConversationList,
+  postProjectConversationCreate,
+  deleteConversation,
+  getTrashConversationList,
+  postTrashConversationRestore,
+  useConversationDetailQuery,
+  useConversationMessageListQuery,
+  useProjectConversationListQuery,
+  useTrashConversationListQuery,
+};

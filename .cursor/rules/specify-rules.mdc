@@ -9,4 +9,8 @@ details, read `specs/001-github-login/plan.md` first.
 When creating or editing API Zod schemas (`src/types/*.type.ts`) or API clients
 (`src/api/*.ts`), you **MUST** follow `.specify/standards/zod-api-schema.md`.
 Use `.specify/templates/api-types.template.ts` as the structural reference.
+
+When implementing loading states in UI components, you **MUST** follow
+`.specify/standards/loading-ui.md`.
+In particular, all `isLoading` states must render skeleton UI instead of text-only placeholders.
 <!-- SPECKIT END -->

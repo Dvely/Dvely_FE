@@ -87,7 +87,7 @@ function ProjectCard({ project }: ProjectCardProps) {
   return (
     <Link
       to="/project/$slug"
-      params={{ slug: project.slug }}
+      params={{ slug: project.id }}
       className="flex flex-col overflow-hidden rounded-lg border border-[#e5e7eb] bg-white transition hover:border-[#c4b5fd] hover:shadow-[0_8px_24px_rgba(99,102,241,0.1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
     >
       <div className="border-b border-[#f1f5f9] bg-gradient-to-b from-[#f8fafc] to-white px-3 pb-3 pt-3">
