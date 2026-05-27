@@ -14,13 +14,7 @@ const projectStatusSchema = z.enum(['DRAFT', 'ACTIVE', 'ARCHIVED']);
  * 배포 상태
  * @example "DRAFT"
  */
-const deployStatusSchema = z.enum([
-  'DRAFT',
-  'IN_PROGRESS',
-  'PREVIEW_READY',
-  'LIVE',
-  'FAILED',
-]);
+const deployStatusSchema = z.enum(['DRAFT', 'IN_PROGRESS', 'PREVIEW_READY', 'LIVE', 'FAILED']);
 
 /**
  * 저장소 공개 범위
@@ -84,10 +78,7 @@ const buildStatusSchema = z.enum(['queued', 'in_progress', 'completed']);
  * 빌드 결과. 값이 없으면 null
  * @example "success"
  */
-const buildConclusionSchema = z
-  .enum(['success', 'failure', 'cancelled'])
-  .nullable()
-  .prefault(null);
+const buildConclusionSchema = z.enum(['success', 'failure', 'cancelled']).nullable().prefault(null);
 
 /* -------------------------------------------------------------------------- */
 /* CloudConnection                                                            */

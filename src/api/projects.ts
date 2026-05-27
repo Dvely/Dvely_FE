@@ -164,10 +164,7 @@ async function getProjectRepositoryHealth(projectId: number) {
 }
 
 /** 프로젝트 GitHub 저장소 연결 API POST */
-async function postProjectRepository(
-  projectId: number,
-  params: PostProjectRepositoryReqType,
-) {
+async function postProjectRepository(projectId: number, params: PostProjectRepositoryReqType) {
   const payload = postProjectRepositoryReqSchema.parse(params);
 
   return Http.instance

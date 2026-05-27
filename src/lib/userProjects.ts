@@ -75,7 +75,8 @@ export function createUserProject(input: {
   const preview = startTypeToPreview(input.startType);
   const slug = uniqueSlug(input.name);
   const subtitle =
-    input.description?.trim() || (input.startType === 'blank' ? 'AI 초안 준비 중' : '배포되지 않음');
+    input.description?.trim() ||
+    (input.startType === 'blank' ? 'AI 초안 준비 중' : '배포되지 않음');
 
   const project: ProjectItem = {
     id: crypto.randomUUID(),

@@ -45,7 +45,10 @@ function ProjectsView() {
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
         {isLoading
           ? skeletonItems.map((key) => (
-              <div key={key} className="overflow-hidden rounded-lg border border-[#e5e7eb] bg-white">
+              <div
+                key={key}
+                className="overflow-hidden rounded-lg border border-[#e5e7eb] bg-white"
+              >
                 <div className="h-[140px] animate-pulse bg-[#f1f5f9]" />
                 <div className="space-y-3 px-5 py-4">
                   <div className="h-4 w-24 animate-pulse rounded bg-[#e2e8f0]" />

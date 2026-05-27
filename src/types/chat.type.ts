@@ -137,49 +137,33 @@ type GetConversationDetailResType = z.infer<typeof getConversationDetailResSchem
 /** DELETE /conversations/{conversationId} 대화 삭제 요청 (path) */
 type DeleteConversationParamsType = z.infer<typeof deleteConversationParamsSchema>;
 /** GET /projects/conversations 프로젝트 대화 목록 조회 요청 (query) */
-type GetProjectConversationListParamsType = z.infer<
-  typeof getProjectConversationListParamsSchema
->;
+type GetProjectConversationListParamsType = z.infer<typeof getProjectConversationListParamsSchema>;
 /** GET /projects/conversations 프로젝트 대화 목록 조회 응답 */
-type GetProjectConversationListResType = z.infer<
-  typeof getProjectConversationListResSchema
->;
+type GetProjectConversationListResType = z.infer<typeof getProjectConversationListResSchema>;
 /** POST /projects/{projectId}/conversations 프로젝트 대화 생성 요청 (path) */
 type PostProjectConversationCreateParamsType = z.infer<
   typeof postProjectConversationCreateParamsSchema
 >;
 /** POST /projects/{projectId}/conversations 프로젝트 대화 생성 응답 */
-type PostProjectConversationCreateResType = z.infer<
-  typeof postProjectConversationCreateResSchema
->;
+type PostProjectConversationCreateResType = z.infer<typeof postProjectConversationCreateResSchema>;
 /** POST /trash/conversations/{conversationId}/restore 휴지통 대화 복구 요청 (path) */
 type PostTrashConversationRestoreParamsType = z.infer<
   typeof postTrashConversationRestoreParamsSchema
 >;
 /** POST /trash/conversations/{conversationId}/restore 휴지통 대화 복구 응답 */
-type PostTrashConversationRestoreResType = z.infer<
-  typeof postTrashConversationRestoreResSchema
->;
+type PostTrashConversationRestoreResType = z.infer<typeof postTrashConversationRestoreResSchema>;
 /** GET /trash/conversations 휴지통 대화 목록 조회 응답 */
 type GetTrashConversationListResType = z.infer<typeof getTrashConversationListResSchema>;
 /** 대화 메시지 정보 */
 type ConversationMessage = z.infer<typeof conversationMessageSchema>;
 /** GET /conversations/{conversationId}/messages 대화 메시지 목록 조회 요청 (path) */
-type GetConversationMessageListParamsType = z.infer<
-  typeof getConversationMessageListParamsSchema
->;
+type GetConversationMessageListParamsType = z.infer<typeof getConversationMessageListParamsSchema>;
 /** GET /conversations/{conversationId}/messages 대화 메시지 목록 조회 응답 */
-type GetConversationMessageListResType = z.infer<
-  typeof getConversationMessageListResSchema
->;
+type GetConversationMessageListResType = z.infer<typeof getConversationMessageListResSchema>;
 /** POST /conversations/{conversationId}/messages 대화 메시지 생성 요청 */
-type PostConversationMessageCreateReqType = z.infer<
-  typeof postConversationMessageCreateReqSchema
->;
+type PostConversationMessageCreateReqType = z.infer<typeof postConversationMessageCreateReqSchema>;
 /** POST /conversations/{conversationId}/messages 대화 메시지 생성 응답 */
-type PostConversationMessageCreateResType = z.infer<
-  typeof postConversationMessageCreateResSchema
->;
+type PostConversationMessageCreateResType = z.infer<typeof postConversationMessageCreateResSchema>;
 
 export {
   conversationResponseSchema,

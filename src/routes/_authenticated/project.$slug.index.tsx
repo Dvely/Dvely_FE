@@ -10,10 +10,7 @@ export const Route = createFileRoute('/_authenticated/project/$slug/')({
 function ProjectDetailRoute() {
   const { slug } = ProjectSlugRoute.useParams();
   const parsedProjectId = Number(slug);
-  const { data, isLoading } = useProjectDetailBundleQuery(
-    'project-detail-page',
-    parsedProjectId,
-  );
+  const { data, isLoading } = useProjectDetailBundleQuery('project-detail-page', parsedProjectId);
 
   if (isLoading) {
     return <div className="p-6 text-sm text-[#94a3b8]">프로젝트 상세를 불러오는 중...</div>;

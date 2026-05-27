@@ -16,13 +16,13 @@ src/api/{domain}.ts          # Http 호출, 요청 parse / 응답 parse
 
 ## Zod v4 체이닝 규칙
 
-| 구분 | 규칙 | 예시 |
-|------|------|------|
-| 문자열 **필수** | `.min(1, '한국어 에러 메시지')` 후 `.prefault('')` (`.nullable()` 없음) | `z.string().min(1, '프로젝트 이름을 입력해주세요.').prefault('')` |
-| 문자열 **비필수** | **반드시** `.nullable()` 후 `.prefault('')` (`.optional()` 지양) | `z.string().nullable().prefault('')` |
-| enum **비필수** | `.nullable().prefault(null)` (`.optional()` 지양) | `statusSchema.nullable().prefault(null)` |
-| 숫자·enum·boolean **필수** | `prefault('')` **사용하지 않음** | `z.number().int()`, `z.enum([...])` |
-| 배열·객체 | 상위 스키마에서 정의, 문자열 규칙은 하위 필드에 적용 | `z.array(itemSchema)` |
+| 구분                       | 규칙                                                                    | 예시                                                              |
+| -------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| 문자열 **필수**            | `.min(1, '한국어 에러 메시지')` 후 `.prefault('')` (`.nullable()` 없음) | `z.string().min(1, '프로젝트 이름을 입력해주세요.').prefault('')` |
+| 문자열 **비필수**          | **반드시** `.nullable()` 후 `.prefault('')` (`.optional()` 지양)        | `z.string().nullable().prefault('')`                              |
+| enum **비필수**            | `.nullable().prefault(null)` (`.optional()` 지양)                       | `statusSchema.nullable().prefault(null)`                          |
+| 숫자·enum·boolean **필수** | `prefault('')` **사용하지 않음**                                        | `z.number().int()`, `z.enum([...])`                               |
+| 배열·객체                  | 상위 스키마에서 정의, 문자열 규칙은 하위 필드에 적용                    | `z.array(itemSchema)`                                             |
 
 > **주의**: `prefault`는 `default`와 달리 파싱 **전** 입력을 보정한다. 체이닝 순서는 항상  
 > `z.string().min(1, '메시지').prefault('')` 또는 `z.string().nullable().prefault('')` 이다.  
@@ -30,9 +30,9 @@ src/api/{domain}.ts          # Http 호출, 요청 parse / 응답 parse
 
 ## 요청 / 응답 스키마 네이밍
 
-| 용도 | 스키마 이름 | 타입 이름 |
-|------|-------------|-----------|
-| GET 응답 | `get{Resource}{Action}ResSchema` | `Get{Resource}{Action}ResType` |
+| 용도      | 스키마 이름                       | 타입 이름                       |
+| --------- | --------------------------------- | ------------------------------- |
+| GET 응답  | `get{Resource}{Action}ResSchema`  | `Get{Resource}{Action}ResType`  |
 | POST 요청 | `post{Resource}{Action}ReqSchema` | `Post{Resource}{Action}ReqType` |
 | POST 응답 | `post{Resource}{Action}ResSchema` | `Post{Resource}{Action}ResType` |
 
@@ -65,11 +65,7 @@ const getItemListResSchema = z.array(itemSchema);
 
 type GetItemListResType = z.infer<typeof getItemListResSchema>;
 
-export {
-  itemSchema,
-  getItemListResSchema,
-  type GetItemListResType,
-};
+export { itemSchema, getItemListResSchema, type GetItemListResType };
 ```
 
 ## 체크리스트 (구현 완료 전)

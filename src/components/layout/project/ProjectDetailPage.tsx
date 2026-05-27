@@ -106,7 +106,9 @@ function ProjectDetailPage({
               </div>
             ) : (
               <div className="flex flex-col items-center py-10 text-center">
-                <p className="text-[14px] text-[#64748b]">프로젝트 상태: {projectStatusLabel[project.status]}</p>
+                <p className="text-[14px] text-[#64748b]">
+                  프로젝트 상태: {projectStatusLabel[project.status]}
+                </p>
                 <Link
                   to="/project/$slug/agent"
                   params={{ slug: String(projectId) }}

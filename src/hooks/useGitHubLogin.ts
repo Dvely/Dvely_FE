@@ -1,9 +1,6 @@
 import { useCallback, useState } from 'react';
 import { fetchGitHubAuthUrl } from '@/api/auth';
-import {
-  GITHUB_OAUTH_POPUP_FEATURES,
-  GITHUB_OAUTH_POPUP_NAME,
-} from '@/constants/githubOAuth';
+import { GITHUB_OAUTH_POPUP_FEATURES, GITHUB_OAUTH_POPUP_NAME } from '@/constants/githubOAuth';
 import {
   clearOAuthCodeProcessed,
   extractStateFromOAuthUrl,

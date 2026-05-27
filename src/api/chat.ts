@@ -52,9 +52,7 @@ async function getConversationMessageList(conversationId: number) {
   });
 
   return Http.instance
-    .get<GetConversationMessageListResType>(
-      `${conversationsEndpoint}/${id}/messages`,
-    )
+    .get<GetConversationMessageListResType>(`${conversationsEndpoint}/${id}/messages`)
     .then((response) => {
       const data = succesResponse<GetConversationMessageListResType>(response);
       return getConversationMessageListResSchema.parse(data);
@@ -73,10 +71,7 @@ async function postConversationMessageCreate(
   const payload = postConversationMessageCreateReqSchema.parse(params);
 
   return Http.instance
-    .post<PostConversationMessageCreateResType>(
-      `${conversationsEndpoint}/${id}/messages`,
-      payload,
-    )
+    .post<PostConversationMessageCreateResType>(`${conversationsEndpoint}/${id}/messages`, payload)
     .then((response) => {
       const data = succesResponse<PostConversationMessageCreateResType>(response);
       return postConversationMessageCreateResSchema.parse(data);
@@ -106,9 +101,7 @@ async function postProjectConversationCreate(projectId: number) {
   });
 
   return Http.instance
-    .post<PostProjectConversationCreateResType>(
-      `${projectsEndpoint}/${id}/conversations`,
-    )
+    .post<PostProjectConversationCreateResType>(`${projectsEndpoint}/${id}/conversations`)
     .then((response) => {
       const data = succesResponse<PostProjectConversationCreateResType>(response);
       return postProjectConversationCreateResSchema.parse(data);
@@ -146,9 +139,7 @@ async function postTrashConversationRestore(conversationId: number) {
   });
 
   return Http.instance
-    .post<PostTrashConversationRestoreResType>(
-      `${trashEndpoint}/conversations/${id}/restore`,
-    )
+    .post<PostTrashConversationRestoreResType>(`${trashEndpoint}/conversations/${id}/restore`)
     .then((response) => {
       const data = succesResponse<PostTrashConversationRestoreResType>(response);
       return postTrashConversationRestoreResSchema.parse(data);

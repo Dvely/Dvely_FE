@@ -77,9 +77,7 @@ function RouteComponent() {
         finishGitHubLogin();
       } catch (error) {
         exchangingOAuthCode = null;
-        setErrorMessage(
-          error instanceof Error ? error.message : '로그인 처리에 실패했습니다.',
-        );
+        setErrorMessage(error instanceof Error ? error.message : '로그인 처리에 실패했습니다.');
       }
     }
 
