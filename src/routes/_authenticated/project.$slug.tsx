@@ -1,5 +1,4 @@
-import { createFileRoute, notFound } from '@tanstack/react-router';
-import ProjectDetailPage from '@/components/layout/project/ProjectDetailPage';
+import { createFileRoute, notFound, Outlet } from '@tanstack/react-router';
 import { getProjectBySlug } from '@/mocks/projects/projectTypes';
 
 export const Route = createFileRoute('/_authenticated/project/$slug')({
@@ -8,10 +7,9 @@ export const Route = createFileRoute('/_authenticated/project/$slug')({
     if (!project) throw notFound();
     return { project };
   },
-  component: ProjectDetailRoute,
+  component: ProjectSlugLayout,
 });
 
-function ProjectDetailRoute() {
-  const { project } = Route.useLoaderData();
-  return <ProjectDetailPage project={project} />;
+function ProjectSlugLayout() {
+  return <Outlet />;
 }

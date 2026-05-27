@@ -50,7 +50,8 @@ function ProjectDetailPage({ project }: ProjectDetailPageProps) {
 
               <div className="flex flex-wrap items-center gap-2">
                 <Link
-                  to="/tasks"
+                  to="/project/$slug/agent"
+                  params={{ slug: project.slug }}
                   className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#7c3aed] px-4 text-[13px] font-semibold text-white shadow-[0_4px_14px_rgba(124,58,237,0.35)] transition hover:bg-[#6d28d9]"
                 >
                   <Play className="size-4 fill-current" />
@@ -86,7 +87,8 @@ function ProjectDetailPage({ project }: ProjectDetailPageProps) {
               <div className="flex flex-col items-center py-10 text-center">
                 <p className="text-[14px] text-[#64748b]">{project.subtitle}</p>
                 <Link
-                  to="/tasks"
+                  to="/project/$slug/agent"
+                  params={{ slug: project.slug }}
                   className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg bg-[#7c3aed] px-5 text-[13px] font-semibold text-white"
                 >
                   <Play className="size-4 fill-current" />
