@@ -80,7 +80,6 @@ export function createUserProject(input: {
   const project: ProjectItem = {
     id: crypto.randomUUID(),
     slug,
-    name: input.name.trim(),
     deployStatus: 'pending',
     category,
     subtitle,
