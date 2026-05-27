@@ -1,6 +1,7 @@
 import {
   BarChart2,
   FolderKanban,
+  Home,
   SquarePen,
   LayoutTemplate,
   PanelLeft,
@@ -16,6 +17,7 @@ const navItems: {
   label: string;
   icon: typeof SquarePen;
 }[] = [
+  { to: '/home', label: '홈', icon: Home },
   { to: '/tasks', label: '작업', icon: SquarePen },
   { to: '/project', label: '프로젝트', icon: FolderKanban },
   { to: '/templates', label: '템플릿', icon: LayoutTemplate },
