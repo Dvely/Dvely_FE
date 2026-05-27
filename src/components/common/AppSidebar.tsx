@@ -65,7 +65,7 @@ export default function AppSidebar() {
         className={`flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto ${collapsed ? 'px-2' : 'px-3'}`}
       >
         {navItems.map(({ to, label, icon: Icon }) => {
-          const active = pathname === to;
+          const active = pathname === to || pathname.startsWith(`${to}/`);
 
           return (
             <Link

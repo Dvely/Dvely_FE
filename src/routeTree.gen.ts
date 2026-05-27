@@ -18,6 +18,8 @@ import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProjectRouteImport } from './routes/_authenticated/project'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedProjectIndexRouteImport } from './routes/_authenticated/project.index'
+import { Route as AuthenticatedProjectSlugRouteImport } from './routes/_authenticated/project.$slug'
 
 const CallbackRoute = CallbackRouteImport.update({
   id: '/callback',
@@ -63,26 +65,41 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedProjectIndexRoute =
+  AuthenticatedProjectIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedProjectRoute,
+  } as any)
+const AuthenticatedProjectSlugRoute =
+  AuthenticatedProjectSlugRouteImport.update({
+    id: '/$slug',
+    path: '/$slug',
+    getParentRoute: () => AuthenticatedProjectRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
-  '/project': typeof AuthenticatedProjectRoute
+  '/project': typeof AuthenticatedProjectRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/project/$slug': typeof AuthenticatedProjectSlugRoute
+  '/project/': typeof AuthenticatedProjectIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
-  '/project': typeof AuthenticatedProjectRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/project/$slug': typeof AuthenticatedProjectSlugRoute
+  '/project': typeof AuthenticatedProjectIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -90,11 +107,13 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/callback': typeof CallbackRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
-  '/_authenticated/project': typeof AuthenticatedProjectRoute
+  '/_authenticated/project': typeof AuthenticatedProjectRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/_authenticated/project/$slug': typeof AuthenticatedProjectSlugRoute
+  '/_authenticated/project/': typeof AuthenticatedProjectIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,16 +126,19 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/templates'
     | '/auth/callback'
+    | '/project/$slug'
+    | '/project/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/callback'
     | '/analytics'
-    | '/project'
     | '/settings'
     | '/tasks'
     | '/templates'
     | '/auth/callback'
+    | '/project/$slug'
+    | '/project'
   id:
     | '__root__'
     | '/'
@@ -128,6 +150,8 @@ export interface FileRouteTypes {
     | '/_authenticated/tasks'
     | '/_authenticated/templates'
     | '/auth/callback'
+    | '/_authenticated/project/$slug'
+    | '/_authenticated/project/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -202,12 +226,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/project/': {
+      id: '/_authenticated/project/'
+      path: '/'
+      fullPath: '/project/'
+      preLoaderRoute: typeof AuthenticatedProjectIndexRouteImport
+      parentRoute: typeof AuthenticatedProjectRoute
+    }
+    '/_authenticated/project/$slug': {
+      id: '/_authenticated/project/$slug'
+      path: '/$slug'
+      fullPath: '/project/$slug'
+      preLoaderRoute: typeof AuthenticatedProjectSlugRouteImport
+      parentRoute: typeof AuthenticatedProjectRoute
+    }
   }
 }
 
+interface AuthenticatedProjectRouteChildren {
+  AuthenticatedProjectSlugRoute: typeof AuthenticatedProjectSlugRoute
+  AuthenticatedProjectIndexRoute: typeof AuthenticatedProjectIndexRoute
+}
+
+const AuthenticatedProjectRouteChildren: AuthenticatedProjectRouteChildren = {
+  AuthenticatedProjectSlugRoute: AuthenticatedProjectSlugRoute,
+  AuthenticatedProjectIndexRoute: AuthenticatedProjectIndexRoute,
+}
+
+const AuthenticatedProjectRouteWithChildren =
+  AuthenticatedProjectRoute._addFileChildren(AuthenticatedProjectRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
-  AuthenticatedProjectRoute: typeof AuthenticatedProjectRoute
+  AuthenticatedProjectRoute: typeof AuthenticatedProjectRouteWithChildren
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
@@ -215,7 +266,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
-  AuthenticatedProjectRoute: AuthenticatedProjectRoute,
+  AuthenticatedProjectRoute: AuthenticatedProjectRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,

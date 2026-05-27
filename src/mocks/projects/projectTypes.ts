@@ -107,3 +107,7 @@ export const DEMO_PROJECTS: ProjectItem[] = [
     preview: 'landing',
   },
 ];
+
+export function getProjectBySlug(slug: string): ProjectItem | undefined {
+  return DEMO_PROJECTS.find((project) => project.slug === slug);
+}
