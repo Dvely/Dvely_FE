@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { ArrowLeft, CheckCircle2, LayoutTemplate, Monitor, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { postProjectCreate } from '@/api/projects';
 import {
-  createUserProject,
   START_TYPE_DESCRIPTION,
   START_TYPE_LABEL,
   type ProjectStartType,
@@ -27,30 +27,58 @@ const goalSuggestions: Record<ProjectStartType, string[]> = {
   blank: ['빠른 MVP 제작', 'AI 초안 생성', '직접 커스터마이징'],
 };
 
+function buildProjectCreatePayload(name: string, startType: ProjectStartType) {
+  if (startType === 'blank') {
+    return {
+      name,
+      startMode: 'blank' as const,
+      templateType: null,
+      draftMode: 'fast',
+    };
+  }
+
+  return {
+    name,
+    startMode: 'template' as const,
+    templateType: startType,
+    draftMode: 'fast',
+  };
+}
+
 function ProjectCreatePage() {
   const { type: startType } = useSearch({ from: '/_authenticated/project/new' });
   const navigate = useNavigate();
   const Icon = typeIcons[startType];
 
   const [name, setName] = useState(defaultNames[startType]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const isValid = name.trim().length >= 2;
+  const trimmedName = name.trim();
+  const isValid = trimmedName.length >= 2;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!isValid) return;
+    if (!isValid || isSubmitting) return;
 
-    const project = createUserProject({
-      name,
-      startType,
-    });
+    setErrorMessage('');
+    setIsSubmitting(true);
 
-    if (startType === 'blank') {
-      navigate({ to: '/project/$slug/agent', params: { slug: project.slug } });
-      return;
+    try {
+      const project = await postProjectCreate(buildProjectCreatePayload(trimmedName, startType));
+      const projectSlug = String(project.projectId);
+
+      if (startType === 'blank') {
+        navigate({ to: '/project/$slug/agent', params: { slug: projectSlug } });
+        return;
+      }
+
+      navigate({ to: '/project/$slug', params: { slug: projectSlug } });
+    } catch {
+      setErrorMessage('프로젝트 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    navigate({ to: '/project/$slug', params: { slug: project.slug } });
   };
 
   return (
@@ -109,6 +137,7 @@ function ProjectCreatePage() {
                 placeholder="예: 카페 랜딩, 디자이너 포트폴리오"
                 className="mt-2 w-full rounded-xl border border-[#dbe3ef] bg-[#fbfdff] px-4 py-3 text-[15px] text-[#0f172a] outline-none transition placeholder:text-[#94a3b8] focus:border-[#93c5fd] focus:ring-2 focus:ring-[#dbeafe]"
                 autoFocus
+                disabled={isSubmitting}
               />
             </div>
 
@@ -138,16 +167,28 @@ function ProjectCreatePage() {
             </li>
           </ul>
 
+          {errorMessage ? (
+            <p className="rounded-xl border border-[#fecaca] bg-[#fff1f2] px-4 py-3 text-[13px] text-[#b91c1c]">
+              {errorMessage}
+            </p>
+          ) : null}
+
           <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="outline" className="h-11 rounded-xl" asChild>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 rounded-xl"
+              asChild
+              disabled={isSubmitting}
+            >
               <Link to="/home">취소</Link>
             </Button>
             <Button
               type="submit"
-              disabled={!isValid}
+              disabled={!isValid || isSubmitting}
               className="h-11 rounded-xl border-[#2563eb] bg-[#2563eb] px-6 text-white shadow-[0_8px_20px_rgba(37,99,235,0.2)] hover:bg-[#1d4ed8]"
             >
-              프로젝트 만들기
+              {isSubmitting ? '생성 중...' : '프로젝트 만들기'}
             </Button>
           </div>
         </form>
