@@ -227,7 +227,7 @@ function useProjectDetailQuery(queryKey: unknown, projectId: number) {
   return useQuery({
     queryKey: ['project-detail', queryKey, projectId],
     queryFn: () => getProjectDetail(projectId),
-    enabled: Number.isInteger(projectId),
+    enabled: !!projectId,
     ...defaultQueryOptions,
   });
 }
@@ -238,7 +238,7 @@ function useProjectActivityLogListQuery(queryKey: unknown, projectId: number) {
   return useQuery({
     queryKey: ['project-activity-log-list', queryKey, projectId],
     queryFn: () => getProjectActivityLogList(projectId),
-    enabled: Number.isInteger(projectId),
+    enabled: !!projectId,
     ...defaultQueryOptions,
   });
 }
@@ -249,7 +249,7 @@ function useProjectCommitListQuery(queryKey: unknown, projectId: number) {
   return useQuery({
     queryKey: ['project-commit-list', queryKey, projectId],
     queryFn: () => getProjectCommitList(projectId),
-    enabled: Number.isInteger(projectId),
+    enabled: !!projectId,
     ...defaultQueryOptions,
   });
 }
@@ -260,7 +260,7 @@ function useProjectOverviewQuery(queryKey: unknown, projectId: number) {
   return useQuery({
     queryKey: ['project-overview', queryKey, projectId],
     queryFn: () => getProjectOverview(projectId),
-    enabled: Number.isInteger(projectId),
+    enabled: !!projectId,
     ...defaultQueryOptions,
   });
 }
@@ -271,7 +271,7 @@ function useProjectRepositoryHealthQuery(queryKey: unknown, projectId: number) {
   return useQuery({
     queryKey: ['project-repository-health', queryKey, projectId],
     queryFn: () => getProjectRepositoryHealth(projectId),
-    enabled: Number.isInteger(projectId),
+    enabled: !!projectId,
     ...defaultQueryOptions,
   });
 }
@@ -281,7 +281,7 @@ function useProjectDetailBundleQuery(queryKey: unknown, projectId: number) {
   return useQuery({
     queryKey: ['project-detail-bundle', queryKey, projectId],
     queryFn: () => getProjectDetailBundle(projectId),
-    enabled: Number.isInteger(projectId),
+    enabled: !!projectId,
     ...defaultQueryOptions,
   });
 }
