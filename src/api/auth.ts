@@ -24,3 +24,13 @@ export async function completeGitHubCallback(params: { code: string; state: stri
     })
     .catch(errorResponse());
 }
+
+/** 3) GET /auth/logout — 로그아웃 */
+export async function logout() {
+  return Http.instance
+    .get<ApiResponse<void>>(`${endpoint}/logout`)
+    .then((response) => {
+      return succesResponse<ApiResponse<void>>(response);
+    })
+    .catch(errorResponse());
+}
