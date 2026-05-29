@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft, Play, Settings } from 'lucide-react';
+import { formatProjectDisplayName } from '@/components/layout/project/agentChat.utils';
 import type {
   GetProjectActivityLogListResType,
   GetProjectCommitListResType,
@@ -60,7 +61,7 @@ function ProjectDetailPage({
             <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-[28px] font-bold tracking-tight text-[#0f172a]">
-                  {project.name}
+                  {formatProjectDisplayName(project.name, project.projectId)}
                 </h1>
                 <span
                   className={`rounded-full border px-2.5 py-0.5 text-[12px] font-semibold ${projectStatusBadgeClass[project.status]}`}

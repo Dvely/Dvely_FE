@@ -81,12 +81,10 @@ async function postConversationMessageCreate(
 
 /** 프로젝트 대화 목록 조회 API GET */
 async function getProjectConversationList(projectId: number) {
-  const params = getProjectConversationListParamsSchema.parse({ projectId });
+  const { projectId: id } = getProjectConversationListParamsSchema.parse({ projectId });
 
   return Http.instance
-    .get<GetProjectConversationListResType>(`${projectsEndpoint}/conversations`, {
-      params,
-    })
+    .get<GetProjectConversationListResType>(`${projectsEndpoint}/${id}/conversations`)
     .then((response) => {
       const data = succesResponse<GetProjectConversationListResType>(response);
       return getProjectConversationListResSchema.parse(data);
@@ -153,7 +151,7 @@ function useConversationDetailQuery(queryKey: unknown, conversationId: number) {
   return useQuery({
     queryKey: ['conversation-detail', queryKey, conversationId],
     queryFn: () => getConversationDetail(conversationId),
-    enabled: Number.isInteger(conversationId),
+    enabled: Number.isInteger(conversationId) && conversationId > 0,
     gcTime: 0,
   });
 }
@@ -164,7 +162,7 @@ function useConversationMessageListQuery(queryKey: unknown, conversationId: numb
   return useQuery({
     queryKey: ['conversation-message-list', queryKey, conversationId],
     queryFn: () => getConversationMessageList(conversationId),
-    enabled: Number.isInteger(conversationId),
+    enabled: Number.isInteger(conversationId) && conversationId > 0,
     gcTime: 0,
   });
 }
@@ -181,11 +179,12 @@ function useProjectConversationListQuery(queryKey: unknown, projectId: number) {
 }
 
 /** 휴지통 대화 목록 조회 Query Hook */
-function useTrashConversationListQuery(queryKey: unknown) {
+function useTrashConversationListQuery(queryKey: unknown, enabled = true) {
   if (!queryKey) throw new Error('queryKey is required');
   return useQuery({
     queryKey: ['trash-conversation-list', queryKey],
     queryFn: getTrashConversationList,
+    enabled,
     gcTime: 0,
   });
 }

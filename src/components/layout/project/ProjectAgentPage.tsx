@@ -1,21 +1,34 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ChevronLeft,
   ChevronRight,
+  MessageSquare,
   Pencil,
   RefreshCw,
   RotateCcw,
-  SendHorizontal,
   Share2,
+  Trash2,
 } from 'lucide-react';
+import {
+  deleteConversation,
+  getConversationMessageList,
+  postTrashConversationRestore,
+  useProjectConversationListQuery,
+  useTrashConversationListQuery,
+} from '@/api/chat';
 import type { GetProjectDetailResType, GithubRepository } from '@/types/projects.type';
+import {
+  AGENT_CHAT_QUERY_KEY,
+  formatProjectDisplayName,
+} from '@/components/layout/project/agentChat.utils';
+import AgentChatListPanel from '@/components/layout/project/AgentChatListPanel';
+import AgentConversationPanel from '@/components/layout/project/AgentConversationPanel';
+import AgentTrashListPanel from '@/components/layout/project/AgentTrashListPanel';
 import GithubRepositoryPicker from '@/components/layout/project/GithubRepositoryPicker';
 
-const suggestedPrompts = [
-  { label: 'UI 수정 요청', prompt: '히어로 섹션 CTA를 더 눈에 띄게 수정해줘' },
-  { label: '도메인 & 배포 요청', prompt: '커스텀 도메인 연결하고 프로덕션에 배포해줘' },
-] as const;
+type AgentSidebarTab = 'list' | 'conversation' | 'trash';
 
 type ProjectAgentPageProps = {
   projectId: number;
@@ -23,8 +36,99 @@ type ProjectAgentPageProps = {
 };
 
 function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
-  const [input, setInput] = useState('');
+  const [sidebarTab, setSidebarTab] = useState<AgentSidebarTab>('conversation');
+  const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
+  const [isNewConversation, setIsNewConversation] = useState(false);
+  const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
+  const [restoringConversationId, setRestoringConversationId] = useState<number | null>(null);
   const [connectedRepo, setConnectedRepo] = useState<GithubRepository | null>(null);
+
+  const queryClient = useQueryClient();
+
+  const { data: conversations = [], isLoading: isConversationsLoading } =
+    useProjectConversationListQuery(AGENT_CHAT_QUERY_KEY, projectId);
+
+  const { data: trashConversations = [], isLoading: isTrashLoading } =
+    useTrashConversationListQuery(AGENT_CHAT_QUERY_KEY, sidebarTab === 'trash');
+
+  const activeConversations = useMemo(
+    () =>
+      [...conversations]
+        .filter((conversation) => !conversation.deleted)
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
+    [conversations],
+  );
+
+  const projectTrashConversations = useMemo(
+    () =>
+      [...trashConversations]
+        .filter((conversation) => conversation.projectId === projectId)
+        .sort(
+          (a, b) =>
+            new Date(b.deletedAt || b.updatedAt).getTime() -
+            new Date(a.deletedAt || a.updatedAt).getTime(),
+        ),
+    [trashConversations, projectId],
+  );
+
+  const invalidateConversationQueries = () => {
+    void queryClient.invalidateQueries({
+      queryKey: ['project-conversation-list', AGENT_CHAT_QUERY_KEY, projectId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ['trash-conversation-list', AGENT_CHAT_QUERY_KEY],
+    });
+  };
+
+  const deleteConversationMutation = useMutation({
+    mutationFn: deleteConversation,
+    onMutate: (conversationId) => {
+      setDeletingConversationId(conversationId);
+    },
+    onSuccess: (_, conversationId) => {
+      if (activeConversationId === conversationId) {
+        setActiveConversationId(null);
+        setIsNewConversation(false);
+        if (sidebarTab === 'conversation') {
+          setSidebarTab('list');
+        }
+      }
+      invalidateConversationQueries();
+    },
+    onSettled: () => {
+      setDeletingConversationId(null);
+    },
+  });
+
+  const restoreConversationMutation = useMutation({
+    mutationFn: postTrashConversationRestore,
+    onMutate: (conversationId) => {
+      setRestoringConversationId(conversationId);
+    },
+    onSuccess: () => {
+      invalidateConversationQueries();
+    },
+    onSettled: () => {
+      setRestoringConversationId(null);
+    },
+  });
+
+  const handleDeleteChat = (conversationId: number) => {
+    if (deletingConversationId !== null) return;
+    deleteConversationMutation.mutate(conversationId);
+  };
+
+  const handleRestoreChat = (conversationId: number) => {
+    if (restoringConversationId !== null) return;
+    restoreConversationMutation.mutate(conversationId);
+  };
+
+  const tabButtonClass = (isActive: boolean) =>
+    `flex flex-1 items-center justify-center gap-1 border-b-2 px-1.5 py-2.5 text-[11px] font-semibold transition ${
+      isActive
+        ? 'border-[#7c3aed] text-[#7c3aed]'
+        : 'border-transparent text-[#94a3b8] hover:text-[#64748b]'
+    }`;
 
   return (
     <div className="flex h-[calc(100vh)] min-h-0 w-full overflow-hidden bg-[#f4f5f7]">
@@ -36,45 +140,84 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           </button>
         </header>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-4">
-          <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3.5 py-3 text-[13px] leading-relaxed text-[#475569]">
-            안녕하세요! <span className="font-semibold text-[#0f172a]">{project.name}</span>{' '}
-            워크스페이스입니다. 추천 프롬프트를 눌러 보면 수정과 배포가 어떻게 이루어지는지 데모로
-            확인할 수 있어요.
-          </div>
+        <div
+          role="tablist"
+          aria-label="에이전트 사이드바"
+          className="flex border-b border-[#f1f5f9] px-2"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={sidebarTab === 'list'}
+            onClick={() => setSidebarTab('list')}
+            className={tabButtonClass(sidebarTab === 'list')}
+          >
+            <MessageSquare className="size-3.5 shrink-0" />
+            채팅 목록
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={sidebarTab === 'conversation'}
+            onClick={() => setSidebarTab('conversation')}
+            className={tabButtonClass(sidebarTab === 'conversation')}
+          >
+            대화
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={sidebarTab === 'trash'}
+            onClick={() => setSidebarTab('trash')}
+            className={tabButtonClass(sidebarTab === 'trash')}
+          >
+            <Trash2 className="size-3.5 shrink-0" />
+            휴지통
+          </button>
         </div>
 
-        <footer className="border-t border-[#f1f5f9] p-3">
-          <div className="mb-2 flex flex-wrap gap-2">
-            {suggestedPrompts.map(({ label, prompt }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => setInput(prompt)}
-                className="rounded-full border border-[#e2e8f0] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#475569] transition hover:border-[#c4b5fd] hover:text-[#7c3aed]"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-end gap-2 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 focus-within:border-[#a5b4fc] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#6366f1]/15">
-            <textarea
-              rows={2}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="직접 입력하거나 위 추천 버튼을 누르세요"
-              className="min-h-[40px] flex-1 resize-none bg-transparent text-[13px] text-[#0f172a] outline-none placeholder:text-[#94a3b8]"
-            />
-            <button
-              type="button"
-              disabled={!input.trim()}
-              className="mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#2563eb] text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="전송"
-            >
-              <SendHorizontal className="size-4" />
-            </button>
-          </div>
-        </footer>
+        {sidebarTab === 'list' ? (
+          <AgentChatListPanel
+            conversations={activeConversations}
+            isLoading={isConversationsLoading}
+            deletingConversationId={deletingConversationId}
+            activeConversationId={activeConversationId}
+            onSelectChat={(conversationId) => {
+              setIsNewConversation(false);
+              setActiveConversationId(conversationId);
+              setSidebarTab('conversation');
+              void queryClient.prefetchQuery({
+                queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, conversationId],
+                queryFn: () => getConversationMessageList(conversationId),
+              });
+            }}
+            onDeleteChat={handleDeleteChat}
+            onNewChat={() => {
+              setIsNewConversation(true);
+              setActiveConversationId(null);
+              setSidebarTab('conversation');
+            }}
+          />
+        ) : sidebarTab === 'trash' ? (
+          <AgentTrashListPanel
+            conversations={projectTrashConversations}
+            isLoading={isTrashLoading}
+            restoringConversationId={restoringConversationId}
+            onRestore={handleRestoreChat}
+          />
+        ) : (
+          <AgentConversationPanel
+            key={isNewConversation ? 'new' : String(activeConversationId ?? 'empty')}
+            projectId={projectId}
+            projectName={formatProjectDisplayName(project.name, project.projectId)}
+            conversationId={activeConversationId}
+            isNewConversation={isNewConversation}
+            onConversationCreated={(conversationId) => {
+              setActiveConversationId(conversationId);
+              setIsNewConversation(false);
+            }}
+          />
+        )}
       </section>
 
       <section className="flex min-w-0 flex-1 flex-col bg-[#ececee]">

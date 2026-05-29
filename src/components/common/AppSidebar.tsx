@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import { useCallback, useEffect, useState } from 'react';
+import { useGitHubLogin } from '@/hooks/useGitHubLogin';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 import type { AppShellPath } from '@/lib/appRoutes';
 import { logoutSession } from '@/lib/logout';
@@ -34,6 +35,11 @@ export default function AppSidebar() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [isLoggedIn, syncAuthState] = useIsLoggedIn();
+  const {
+    startGitHubLogin,
+    isLoading: isLoggingIn,
+    errorMessage: loginErrorMessage,
+  } = useGitHubLogin();
 
   const handleLogout = useCallback(async () => {
     if (isLoggingOut) return;
@@ -47,6 +53,19 @@ export default function AppSidebar() {
       void navigate({ to: '/', replace: true });
     }
   }, [isLoggingOut, navigate, syncAuthState]);
+
+  const handleLogin = useCallback(() => {
+    if (isLoggingIn) return;
+    void startGitHubLogin();
+  }, [isLoggingIn, startGitHubLogin]);
+
+  const authButtonLabel = isLoggedIn
+    ? isLoggingOut
+      ? '로그아웃 중...'
+      : '로그아웃'
+    : isLoggingIn
+      ? '로그인 중...'
+      : '로그인';
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -110,23 +129,24 @@ export default function AppSidebar() {
         })}
       </nav>
 
-      {isLoggedIn ? (
-        <div className={`shrink-0 border-t border-[#0F172A]/8 py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
-          <button
-            type="button"
-            onClick={() => void handleLogout()}
-            disabled={isLoggingOut}
-            title={collapsed ? '로그아웃' : undefined}
-            className={`flex w-full items-center rounded-xl text-[13px] font-medium text-[#64748B] transition hover:bg-[#E4E4E4] hover:text-[#34322D] disabled:cursor-not-allowed disabled:opacity-50 ${
-              collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5 text-left'
-            }`}
-          >
-            <span className={collapsed ? 'text-center text-[11px] leading-tight' : undefined}>
-              {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-            </span>
-          </button>
-        </div>
-      ) : null}
+      <div className={`shrink-0 border-t border-[#0F172A]/8 py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
+        <button
+          type="button"
+          onClick={() => (isLoggedIn ? void handleLogout() : handleLogin())}
+          disabled={isLoggingOut || isLoggingIn}
+          title={collapsed ? authButtonLabel : undefined}
+          className={`flex w-full items-center rounded-xl text-[13px] font-medium text-[#64748B] transition hover:bg-[#E4E4E4] hover:text-[#34322D] disabled:cursor-not-allowed disabled:opacity-50 ${
+            collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5 text-left'
+          }`}
+        >
+          <span className={collapsed ? 'text-center text-[11px] leading-tight' : undefined}>
+            {authButtonLabel}
+          </span>
+        </button>
+        {!collapsed && !isLoggedIn && loginErrorMessage ? (
+          <p className="mt-2 px-1 text-[11px] leading-snug text-red-600">{loginErrorMessage}</p>
+        ) : null}
+      </div>
     </aside>
   );
 }

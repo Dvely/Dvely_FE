@@ -41,7 +41,7 @@ const deleteConversationParamsSchema = z.object({
 });
 
 /**
- * GET /projects/conversations 프로젝트 대화 목록 조회 요청 (query)
+ * GET /projects/{projectId}/conversations 프로젝트 대화 목록 조회 요청 (path)
  */
 const getProjectConversationListParamsSchema = z.object({
   /** 대화 목록을 조회할 프로젝트 ID */
@@ -49,7 +49,7 @@ const getProjectConversationListParamsSchema = z.object({
 });
 
 /**
- * GET /projects/conversations 프로젝트 대화 목록 조회 응답
+ * GET /projects/{projectId}/conversations 프로젝트 대화 목록 조회 응답
  */
 const getProjectConversationListResSchema = z.array(conversationResponseSchema);
 
@@ -136,9 +136,9 @@ type GetConversationDetailParamsType = z.infer<typeof getConversationDetailParam
 type GetConversationDetailResType = z.infer<typeof getConversationDetailResSchema>;
 /** DELETE /conversations/{conversationId} 대화 삭제 요청 (path) */
 type DeleteConversationParamsType = z.infer<typeof deleteConversationParamsSchema>;
-/** GET /projects/conversations 프로젝트 대화 목록 조회 요청 (query) */
+/** GET /projects/{projectId}/conversations 프로젝트 대화 목록 조회 요청 (path) */
 type GetProjectConversationListParamsType = z.infer<typeof getProjectConversationListParamsSchema>;
-/** GET /projects/conversations 프로젝트 대화 목록 조회 응답 */
+/** GET /projects/{projectId}/conversations 프로젝트 대화 목록 조회 응답 */
 type GetProjectConversationListResType = z.infer<typeof getProjectConversationListResSchema>;
 /** POST /projects/{projectId}/conversations 프로젝트 대화 생성 요청 (path) */
 type PostProjectConversationCreateParamsType = z.infer<

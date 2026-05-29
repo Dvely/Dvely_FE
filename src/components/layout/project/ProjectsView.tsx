@@ -1,5 +1,6 @@
 import ProjectCard from './ProjectCard';
 import { useProjectListQuery } from '@/api/projects';
+import { formatProjectDisplayName } from '@/components/layout/project/agentChat.utils';
 import type { ProjectItem } from '@/mocks/projects/projectTypes';
 import type { DeployStatus } from '@/types/common.enum';
 
@@ -20,7 +21,7 @@ function toProjectCardItem(project: {
 
   return {
     id: String(project.projectId),
-    slug: project.name,
+    slug: formatProjectDisplayName(project.name, project.projectId),
     deployStatus: deployStatusMap[project.deployStatus],
     category: 'landing',
     subtitle: project.currentUrl ?? '배포되지 않음',
