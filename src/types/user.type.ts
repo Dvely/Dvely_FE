@@ -12,20 +12,6 @@ const userSchema = z.object({
   avatarUrl: z.string().nullable().prefault(''),
   /** GitHub App 설치 여부 */
   githubAppInstalled: z.boolean(),
-  /** GitHub App 토큰 연동 여부 */
-  githubAppTokenLinked: z.boolean(),
-  /** GitHub App 토큰 만료 여부 */
-  githubAppTokenExpired: z.boolean(),
-  /** GitHub App access token 만료 시각 */
-  githubAppAccessTokenExpiresAt: z
-    .union([z.boolean(), z.string(), z.null()])
-    .nullable()
-    .prefault(null),
-  /** GitHub App refresh token 만료 시각 */
-  githubAppRefreshTokenExpiresAt: z
-    .union([z.boolean(), z.string(), z.null()])
-    .nullable()
-    .prefault(null),
 });
 
 /**
