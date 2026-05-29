@@ -9,7 +9,8 @@ import {
   SendHorizontal,
   Share2,
 } from 'lucide-react';
-import type { GetProjectDetailResType } from '@/types/projects.type';
+import type { GetProjectDetailResType, GithubRepository } from '@/types/projects.type';
+import GithubRepositoryPicker from '@/components/layout/project/GithubRepositoryPicker';
 
 const suggestedPrompts = [
   { label: 'UI 수정 요청', prompt: '히어로 섹션 CTA를 더 눈에 띄게 수정해줘' },
@@ -23,6 +24,7 @@ type ProjectAgentPageProps = {
 
 function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [input, setInput] = useState('');
+  const [connectedRepo, setConnectedRepo] = useState<GithubRepository | null>(null);
 
   return (
     <div className="flex h-[calc(100vh)] min-h-0 w-full overflow-hidden bg-[#f4f5f7]">
@@ -98,7 +100,9 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               </button>
             </div>
             <div className="flex min-w-0 flex-1 items-center rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-1.5">
-              <span className="truncate text-[12px] text-[#64748b]">/</span>
+              <span className="truncate text-[12px] text-[#64748b]">
+                {connectedRepo ? `/${connectedRepo.fullName}` : '/'}
+              </span>
             </div>
             <span className="hidden shrink-0 rounded-full bg-[#ede9fe] px-2 py-0.5 text-[10px] font-semibold text-[#7c3aed] sm:inline">
               preview branch
@@ -106,6 +110,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            <GithubRepositoryPicker onSelect={(repository) => setConnectedRepo(repository)} />
             <button
               type="button"
               className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 text-[12px] font-semibold text-[#334155]"
