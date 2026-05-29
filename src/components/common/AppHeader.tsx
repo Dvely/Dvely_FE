@@ -1,9 +1,13 @@
 import { Bell } from 'lucide-react';
 import { useState } from 'react';
 import profile from '@/assets/icons/profile.svg';
+import { useUserInfoQuery } from '@/api/user';
 
 function AppHeader() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { data: userResponse } = useUserInfoQuery('app-header');
+  const avatarUrl = userResponse?.data?.avatarUrl?.trim();
+  const profileImageSrc = avatarUrl || profile;
 
   return (
     <>
@@ -27,12 +31,12 @@ function AppHeader() {
 
           <button
             type="button"
-            className="flex size-[30px] items-center justify-center rounded-[15px] cursor-pointer"
+            className="flex size-[30px] items-center justify-center rounded-[15px] cursor-pointer overflow-hidden"
             aria-label="프로필"
             aria-expanded={settingsOpen}
             onClick={() => setSettingsOpen(true)}
           >
-            <img src={profile} alt="" className="size-[30px]" />
+            <img src={profileImageSrc} alt="" className="size-[30px] rounded-[15px] object-cover" />
           </button>
         </div>
       </header>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import {
   ArrowRight,
@@ -72,21 +72,22 @@ function buildProjectCreatePayload(
 }
 
 function ProjectCreatePage() {
+  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [operationMode, setOperationMode] = useState<OperationMode>('agency');
+  const [projectName, setProjectName] = useState(
+    () =>
+      getHomeTemplateById(DEFAULT_TEMPLATE_ID)?.title ?? homeTemplates[0]?.title ?? '새 프로젝트',
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
   const search = useSearch({ from: '/_authenticated/project/new' });
   const navigate = useNavigate();
   const wixPreviewUrl = 'https://aih-b-image-service.cafe24.com/templates/professional/crimson/';
-
   const templateId = search.templateId ?? DEFAULT_TEMPLATE_ID;
   const startType = search.type;
   const template =
     getHomeTemplateById(templateId) ?? getHomeTemplateById(DEFAULT_TEMPLATE_ID) ?? homeTemplates[0];
-
-  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
-  const [operationMode, setOperationMode] = useState<OperationMode>('agency');
-  const [projectName, setProjectName] = useState(template?.title ?? '새 프로젝트');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
   const trimmedName = projectName.trim();
   const isNameValid = trimmedName.length >= 2;
   const nextLabel = operationMode === 'agency' ? '다음' : '다음: 프로젝트 만들기';
@@ -115,6 +116,10 @@ function ProjectCreatePage() {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    setProjectName(template?.title ?? '새 프로젝트');
+  }, [templateId, template?.title]);
 
   return (
     <div className="flex h-screen min-h-0 flex-col bg-[#f8fafc]">

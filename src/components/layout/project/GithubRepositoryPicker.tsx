@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Lock, LockOpen } from 'lucide-react';
 import githubIcon from '@/assets/icons/github.svg';
 import { mockGithubRepositories } from '@/mocks/github/githubRepositories';
@@ -11,7 +11,17 @@ type GithubRepositoryPickerProps = {
 function GithubRepositoryPicker({ onSelect }: GithubRepositoryPickerProps) {
   const [open, setOpen] = useState(false);
   const [selectedFullName, setSelectedFullName] = useState<string | null>(null);
+
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleSelect = useCallback(
+    (repository: GithubRepository) => {
+      setSelectedFullName(repository.fullName);
+      onSelect?.(repository);
+      setOpen(false);
+    },
+    [onSelect],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -34,12 +44,6 @@ function GithubRepositoryPicker({ onSelect }: GithubRepositoryPickerProps) {
     };
   }, [open]);
 
-  const handleSelect = (repository: GithubRepository) => {
-    setSelectedFullName(repository.fullName);
-    onSelect?.(repository);
-    setOpen(false);
-  };
-
   return (
     <div ref={containerRef} className="relative">
       <button
@@ -49,9 +53,7 @@ function GithubRepositoryPicker({ onSelect }: GithubRepositoryPickerProps) {
         aria-haspopup="listbox"
         title={selectedFullName ?? 'GitHub 저장소'}
         className={`flex size-8 items-center justify-center rounded-lg border bg-white transition ${
-          open
-            ? 'border-[#0f172a] ring-2 ring-[#0f172a]/10'
-            : 'border-[#e2e8f0] hover:bg-[#f8fafc]'
+          open ? 'border-[#0f172a] ring-2 ring-[#0f172a]/10' : 'border-[#e2e8f0] hover:bg-[#f8fafc]'
         }`}
       >
         <img src={githubIcon} alt="" className="size-4" aria-hidden />

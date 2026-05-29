@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 
@@ -6,36 +6,40 @@ const MAIN_SCROLL_ID = 'app-main-scroll';
 
 function HeaderContainer() {
   const [isVisible, setIsVisible] = useState(true);
+
   const lastScrollY = useRef(0);
+
+  const handleScroll = useCallback(() => {
+    const scrollElement = document.getElementById(MAIN_SCROLL_ID);
+    if (!scrollElement) return;
+
+    const currentScrollY = scrollElement.scrollTop;
+
+    if (currentScrollY <= 8) {
+      setIsVisible(true);
+      lastScrollY.current = currentScrollY;
+      return;
+    }
+
+    if (currentScrollY > lastScrollY.current) {
+      setIsVisible(false);
+    } else {
+      setIsVisible(true);
+    }
+
+    lastScrollY.current = currentScrollY;
+  }, []);
 
   useEffect(() => {
     const scrollElement = document.getElementById(MAIN_SCROLL_ID);
     if (!scrollElement) return;
-
-    const handleScroll = () => {
-      const currentScrollY = scrollElement.scrollTop;
-
-      if (currentScrollY <= 8) {
-        setIsVisible(true);
-        lastScrollY.current = currentScrollY;
-        return;
-      }
-
-      if (currentScrollY > lastScrollY.current) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
-      }
-
-      lastScrollY.current = currentScrollY;
-    };
 
     scrollElement.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       scrollElement.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [handleScroll]);
 
   return (
     <header

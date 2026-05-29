@@ -13,4 +13,8 @@ Use `.specify/templates/api-types.template.ts` as the structural reference.
 When implementing loading states in UI components, you **MUST** follow
 `.specify/standards/loading-ui.md`.
 In particular, all `isLoading` states must render skeleton UI instead of text-only placeholders.
+
+When writing or editing React components (`src/**/*.tsx`) and custom hooks
+(`src/hooks/*.ts`), you **MUST** follow `.specify/standards/component-code-order.md`.
+Declare hooks and locals in order: state → variables → functions → effects.
 <!-- SPECKIT END -->

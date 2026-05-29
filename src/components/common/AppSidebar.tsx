@@ -8,9 +8,10 @@ import {
   PanelRight,
   Settings,
 } from 'lucide-react';
-import { Link, useRouterState } from '@tanstack/react-router';
-import { useState } from 'react';
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
+import { useCallback, useState } from 'react';
 import type { AppShellPath } from '@/lib/appRoutes';
+import { logoutSession } from '@/lib/logout';
 
 const navItems: {
   to: AppShellPath;
@@ -27,7 +28,21 @@ const navItems: {
 
 export default function AppSidebar() {
   const [collapsed, setCollapsed] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  const handleLogout = useCallback(async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    try {
+      await logoutSession();
+    } finally {
+      void navigate({ to: '/', replace: true });
+    }
+  }, [isLoggingOut, navigate]);
 
   return (
     <aside
@@ -84,6 +99,22 @@ export default function AppSidebar() {
           );
         })}
       </nav>
+
+      <div className={`shrink-0 border-t border-[#0F172A]/8 py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
+        <button
+          type="button"
+          onClick={() => void handleLogout()}
+          disabled={isLoggingOut}
+          title={collapsed ? '로그아웃' : undefined}
+          className={`flex w-full items-center rounded-xl text-[13px] font-medium text-[#64748B] transition hover:bg-[#E4E4E4] hover:text-[#34322D] disabled:cursor-not-allowed disabled:opacity-50 ${
+            collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5 text-left'
+          }`}
+        >
+          <span className={collapsed ? 'text-center text-[11px] leading-tight' : undefined}>
+            {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+          </span>
+        </button>
+      </div>
     </aside>
   );
 }

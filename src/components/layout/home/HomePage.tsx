@@ -34,10 +34,13 @@ function HomePage() {
   const [activeCategory, setActiveCategory] = useState<TemplateCategory>('all');
   const [selectedId, setSelectedId] = useState('2');
 
-  const filteredCards = useMemo(() => {
-    if (activeCategory === 'all') return templateCards;
-    return templateCards.filter((card) => card.category === activeCategory);
-  }, [activeCategory]);
+  const filteredCards = useMemo(
+    () =>
+      activeCategory === 'all'
+        ? templateCards
+        : templateCards.filter((card) => card.category === activeCategory),
+    [activeCategory],
+  );
 
   return (
     <div className="min-h-full bg-white px-4 py-6 sm:px-6">

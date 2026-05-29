@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { completeGitHubCallback } from '@/api/auth';
-import type { GitHubCallbackResult } from '@/types/auth.type';
+import { fetchAndPersistUserInfo } from '@/api/user';
 import { finishGitHubLogin } from '@/lib/finishGitHubLogin';
+import { handleGitHubOAuthSuccess } from '@/lib/handleGitHubOAuthSuccess';
+import { persistAuthTokens } from '@/lib/persistAuthTokens';
 import {
   clearOAuthState,
   getOAuthState,
@@ -26,63 +28,55 @@ export const Route = createFileRoute('/auth/callback')({
   component: RouteComponent,
 });
 
-function persistAuthTokens(data?: GitHubCallbackResult) {
-  if (!data) return;
-
-  if (data.accessToken) {
-    localStorage.setItem('accessToken', data.accessToken);
-  }
-  if (data.refreshToken) {
-    localStorage.setItem('refreshToken', data.refreshToken);
-  }
-}
-
 function RouteComponent() {
-  const navigate = useNavigate();
-  const { code, state } = Route.useSearch();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function handleCallback() {
-      if (!code || !state) {
-        setErrorMessage('인증 정보(code/state)가 없습니다.');
-        return;
-      }
+  const navigate = useNavigate();
+  const { code, state } = Route.useSearch();
 
-      if (isOAuthCodeProcessed(code)) {
-        finishGitHubLogin();
-        return;
-      }
-
-      if (exchangingOAuthCode === code) {
-        return;
-      }
-
-      exchangingOAuthCode = code;
-
-      const savedState = getOAuthState();
-      if (savedState && savedState !== state) {
-        exchangingOAuthCode = null;
-        clearOAuthState();
-        setErrorMessage('로그인 요청이 유효하지 않습니다. 다시 시도해 주세요.');
-        return;
-      }
-
-      try {
-        const response = await completeGitHubCallback({ code, state });
-
-        persistAuthTokens(response.data);
-        markOAuthCodeProcessed(code);
-        clearOAuthState();
-        finishGitHubLogin();
-      } catch (error) {
-        exchangingOAuthCode = null;
-        setErrorMessage(error instanceof Error ? error.message : '로그인 처리에 실패했습니다.');
-      }
+  const handleCallback = useCallback(async () => {
+    if (!code || !state) {
+      setErrorMessage('인증 정보(code/state)가 없습니다.');
+      return;
     }
 
-    void handleCallback();
+    if (isOAuthCodeProcessed(code)) {
+      await handleGitHubOAuthSuccess();
+      finishGitHubLogin();
+      return;
+    }
+
+    if (exchangingOAuthCode === code) {
+      return;
+    }
+
+    exchangingOAuthCode = code;
+
+    const savedState = getOAuthState();
+    if (savedState && savedState !== state) {
+      exchangingOAuthCode = null;
+      clearOAuthState();
+      setErrorMessage('로그인 요청이 유효하지 않습니다. 다시 시도해 주세요.');
+      return;
+    }
+
+    try {
+      const response = await completeGitHubCallback({ code, state });
+
+      persistAuthTokens(response);
+      await fetchAndPersistUserInfo();
+      markOAuthCodeProcessed(code);
+      clearOAuthState();
+      finishGitHubLogin();
+    } catch (error) {
+      exchangingOAuthCode = null;
+      setErrorMessage(error instanceof Error ? error.message : '로그인 처리에 실패했습니다.');
+    }
   }, [code, state]);
+
+  useEffect(() => {
+    void handleCallback();
+  }, [handleCallback]);
 
   if (errorMessage) {
     return (

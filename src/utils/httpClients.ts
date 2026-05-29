@@ -4,6 +4,8 @@ import axios, {
   type AxiosInstance,
   type InternalAxiosRequestConfig,
 } from 'axios';
+import { dispatchAuthRedirectHome } from '@/constants/authEvents';
+import { clearAppLocalStorage } from '@/lib/clearAppStorage';
 
 type TokenPair = {
   value: string;
@@ -56,13 +58,13 @@ class Http {
   }
 
   private clearTokens() {
-    localStorage.clear();
+    clearAppLocalStorage();
   }
 
   private goLogin(reason: string) {
     console.log('[AUTH_FLOW] goLogin:', reason);
     this.clearTokens();
-    window.location.href = '/auth/login';
+    dispatchAuthRedirectHome();
   }
 
   // =========================
