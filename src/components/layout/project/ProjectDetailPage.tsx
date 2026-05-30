@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft, Play, Settings } from 'lucide-react';
 import { formatProjectDisplayName } from '@/components/layout/project/agentChat.utils';
+import ProjectSettingsDialog from '@/components/layout/project/ProjectSettingsDialog';
 import type {
   GetProjectActivityLogListResType,
   GetProjectCommitListResType,
@@ -40,6 +42,7 @@ function ProjectDetailPage({
   repositoryHealth,
   isRelatedLoading = false,
 }: ProjectDetailPageProps) {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const isPending = project.status === 'DRAFT';
   const latestCommit = commits[0] ?? overview?.latestCommit ?? null;
   const activityRows = activityLogs.slice(0, 5);
@@ -81,6 +84,7 @@ function ProjectDetailPage({
                 </Link>
                 <button
                   type="button"
+                  onClick={() => setIsSettingsOpen(true)}
                   className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#e2e8f0] bg-white px-4 text-[13px] font-semibold text-[#334155] transition hover:bg-[#f8fafc]"
                 >
                   <Settings className="size-4" />
@@ -216,6 +220,13 @@ function ProjectDetailPage({
           </div>
         </div>
       </div>
+
+      <ProjectSettingsDialog
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+        projectId={projectId}
+        projectName={project.name}
+      />
     </div>
   );
 }

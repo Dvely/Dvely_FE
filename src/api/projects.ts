@@ -1,5 +1,5 @@
 import Http from '@/utils/httpClients';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { errorResponse, succesResponse } from '@/utils/response';
 import {
   deleteProjectParamsSchema,
@@ -286,6 +286,18 @@ function useProjectDetailBundleQuery(queryKey: unknown, projectId: number) {
   });
 }
 
+/** 프로젝트 삭제 Mutation Hook */
+function useDeleteProjectMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteProject,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['project-list'] });
+    },
+  });
+}
+
 export {
   getGithubRepositoryList,
   getProjectList,
@@ -306,4 +318,5 @@ export {
   useProjectOverviewQuery,
   useProjectRepositoryHealthQuery,
   useProjectDetailBundleQuery,
+  useDeleteProjectMutation,
 };
