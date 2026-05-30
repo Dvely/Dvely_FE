@@ -1,6 +1,5 @@
 export const APP_SHELL_PATHS = [
   '/home',
-  '/tasks',
   '/project',
   '/templates',
   '/analytics',

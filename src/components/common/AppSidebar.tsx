@@ -2,7 +2,6 @@ import {
   BarChart2,
   FolderKanban,
   Home,
-  SquarePen,
   LayoutTemplate,
   PanelLeft,
   PanelRight,
@@ -18,10 +17,9 @@ import { logoutSession } from '@/lib/logout';
 const navItems: {
   to: AppShellPath;
   label: string;
-  icon: typeof SquarePen;
+  icon: typeof Home;
 }[] = [
   { to: '/home', label: '홈', icon: Home },
-  { to: '/tasks', label: '작업', icon: SquarePen },
   { to: '/project', label: '프로젝트', icon: FolderKanban },
   { to: '/templates', label: '템플릿', icon: LayoutTemplate },
   { to: '/analytics', label: '분석', icon: BarChart2 },

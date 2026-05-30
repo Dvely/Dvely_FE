@@ -69,8 +69,8 @@ const getProjectDetailResSchema = z.object({
 const deleteProjectParamsSchema = z.object({
   /** 삭제할 프로젝트 ID */
   projectId: z.number().int(),
-  /** 삭제 범위. 값이 없으면 PROJECT_ONLY */
-  deleteMode: projectDeleteModeSchema.nullable().prefault(null),
+  /** 삭제 범위. 생략 시 백엔드 기본값(PROJECT_ONLY) */
+  deleteMode: projectDeleteModeSchema.nullable().optional(),
 });
 
 /**
