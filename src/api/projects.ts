@@ -211,12 +211,17 @@ function useGithubRepositoryListQuery(queryKey: unknown) {
   });
 }
 
+type UseProjectListQueryOptions = {
+  enabled?: boolean;
+};
+
 /** 프로젝트 목록 조회 Query Hook */
-function useProjectListQuery(queryKey: unknown) {
+function useProjectListQuery(queryKey: unknown, options?: UseProjectListQueryOptions) {
   if (!queryKey) throw new Error('queryKey is required');
   return useQuery({
     queryKey: ['project-list', queryKey],
     queryFn: getProjectList,
+    enabled: options?.enabled ?? true,
     ...defaultQueryOptions,
   });
 }

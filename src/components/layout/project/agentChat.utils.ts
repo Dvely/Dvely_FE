@@ -1,5 +1,32 @@
 export const AGENT_CHAT_QUERY_KEY = 'project-agent';
 
+const PENDING_HOME_AGENT_PROMPT_KEY = 'dvely:pending-home-agent-prompt';
+
+export function setPendingHomeAgentPrompt(prompt: string) {
+  sessionStorage.setItem(PENDING_HOME_AGENT_PROMPT_KEY, prompt.trim());
+}
+
+export function consumePendingHomeAgentPrompt(): string | null {
+  const value = sessionStorage.getItem(PENDING_HOME_AGENT_PROMPT_KEY);
+  if (value) {
+    sessionStorage.removeItem(PENDING_HOME_AGENT_PROMPT_KEY);
+  }
+  return value;
+}
+
+const sentHomeAgentPrompts = new Set<string>();
+
+export function shouldSendHomeAgentPromptOnce(prompt: string): boolean {
+  const normalized = prompt.trim();
+  if (!normalized || sentHomeAgentPrompts.has(normalized)) return false;
+  sentHomeAgentPrompts.add(normalized);
+  return true;
+}
+
+export function clearHomeAgentPromptSendGuard(prompt: string) {
+  sentHomeAgentPrompts.delete(prompt.trim());
+}
+
 /** 대화·프로젝트 등 제목 필드가 없을 때 표시 */
 export function formatUntitledLabel(id: number): string {
   return `제목없음 · ${id}`;
