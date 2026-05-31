@@ -1,132 +1,27 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearch } from '@tanstack/react-router';
-import {
-  ArrowRight,
-  Check,
-  ExternalLink,
-  Monitor,
-  RefreshCw,
-  Smartphone,
-  ThumbsUp,
-} from 'lucide-react';
+import { useState } from 'react';
+import { Link, useSearch } from '@tanstack/react-router';
+import { ExternalLink, Monitor, RefreshCw, Smartphone } from 'lucide-react';
 import HomeStepProgress from '@/components/layout/home/HomeStepProgress';
 import {
   DEFAULT_TEMPLATE_ID,
   getHomeTemplateById,
   homeTemplates,
 } from '@/mocks/home/homeTemplates';
-import { postProjectCreate } from '@/api/projects';
-import type { ProjectStartType } from '@/lib/userProjects';
-
-export type OperationMode = 'agency' | 'direct';
-
-const operationOptions: {
-  id: OperationMode;
-  title: string;
-  description: string;
-  recommended?: boolean;
-  bullets: string[];
-  bulletTone: 'blue' | 'green';
-  featureBoxClass: string;
-  footerTags: string[];
-  priceLabel?: string;
-  priceValue?: string;
-}[] = [
-  {
-    id: 'agency',
-    title: '광고대행 서비스',
-    description: '광고는 Dvely 마케팅센터에서 운영해 드립니다',
-    recommended: true,
-    bullets: [
-      '업종별 맞춤 광고 전략 수립',
-      '네이버·카카오·메타·구글·틱톡 등 주요 매체 운영',
-      '성과 분석 리포트 제공',
-    ],
-    bulletTone: 'blue',
-    featureBoxClass: 'bg-[#eff6ff] border border-[#dbeafe]',
-    footerTags: ['대행 선택 시 솔루션 무료', 'Dvely 마케터 운영'],
-  },
-];
-
-function buildProjectCreatePayload(
-  name: string,
-  startType: ProjectStartType,
-  templateId: string,
-  operation: OperationMode,
-) {
-  if (startType === 'blank') {
-    return {
-      name,
-      startMode: 'blank' as const,
-      templateType: null,
-      draftMode: 'fast',
-    };
-  }
-
-  return {
-    name,
-    startMode: 'template' as const,
-    templateType: `${templateId}:${operation}`,
-    draftMode: 'fast',
-  };
-}
 
 function ProjectCreatePage() {
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
-  const [operationMode, setOperationMode] = useState<OperationMode>('agency');
-  const [projectName, setProjectName] = useState(
-    () =>
-      getHomeTemplateById(DEFAULT_TEMPLATE_ID)?.title ?? homeTemplates[0]?.title ?? '새 프로젝트',
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   const search = useSearch({ from: '/_authenticated/project/new' });
-  const navigate = useNavigate();
   const wixPreviewUrl = 'https://aih-b-image-service.cafe24.com/templates/professional/crimson/';
   const templateId = search.templateId ?? DEFAULT_TEMPLATE_ID;
-  const startType = search.type;
   const template =
     getHomeTemplateById(templateId) ?? getHomeTemplateById(DEFAULT_TEMPLATE_ID) ?? homeTemplates[0];
-  const trimmedName = projectName.trim();
-  const isNameValid = trimmedName.length >= 2;
-  const nextLabel = operationMode === 'agency' ? '다음' : '다음: 프로젝트 만들기';
-
-  const handleNext = async () => {
-    if (isSubmitting || !template || !isNameValid) return;
-
-    setErrorMessage('');
-    setIsSubmitting(true);
-
-    try {
-      const project = await postProjectCreate(
-        buildProjectCreatePayload(trimmedName, startType, template.id, operationMode),
-      );
-      const projectSlug = String(project.projectId);
-
-      if (startType === 'blank') {
-        navigate({ to: '/project/$slug/agent', params: { slug: projectSlug } });
-        return;
-      }
-
-      navigate({ to: '/project/$slug', params: { slug: projectSlug } });
-    } catch {
-      setErrorMessage('프로젝트 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  useEffect(() => {
-    setProjectName(template?.title ?? '새 프로젝트');
-  }, [templateId, template?.title]);
 
   return (
     <div className="flex h-screen min-h-0 flex-col bg-[#f8fafc]">
       <HomeStepProgress currentStep={2} />
 
       <div className="flex min-h-0 flex-1">
-        {/* 왼쪽: 템플릿 미리보기 */}
         <section className="flex min-h-0 w-full shrink-0 flex-col bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e2e8f0] px-4 py-3">
             <div className="flex flex-wrap items-center gap-2">

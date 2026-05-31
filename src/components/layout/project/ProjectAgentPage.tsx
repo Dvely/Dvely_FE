@@ -21,9 +21,15 @@ import {
   AGENT_CHAT_QUERY_KEY,
   consumePendingHomeAgentPrompt,
   formatProjectDisplayName,
+  readSessionMessages,
 } from '@/components/layout/project/agentChat.utils';
+import {
+  deriveAgentPreviewPhase,
+  deriveAgentPreviewUrl,
+} from '@/components/layout/project/agentPreview.utils';
 import AgentChatListPanel from '@/components/layout/project/AgentChatListPanel';
 import AgentConversationPanel from '@/components/layout/project/AgentConversationPanel';
+import AgentSitePreviewPanel from '@/components/layout/project/AgentSitePreviewPanel';
 import GithubRepositoryPicker from '@/components/layout/project/GithubRepositoryPicker';
 import ProjectCodeExplorerPanel from '@/components/layout/project/ProjectCodeExplorerPanel';
 import { cn } from '@/lib/utils';
@@ -44,6 +50,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
   const [connectedRepo, setConnectedRepo] = useState<GithubRepository | null>(null);
   const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
+  const [previewRevision, setPreviewRevision] = useState(0);
 
   const queryClient = useQueryClient();
 
@@ -57,6 +64,32 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
     [conversations],
   );
+
+  const previewPhase = useMemo(() => {
+    void previewRevision;
+
+    if (isNewConversation || activeConversationId === null) {
+      return deriveAgentPreviewPhase([]);
+    }
+
+    return deriveAgentPreviewPhase(readSessionMessages(activeConversationId));
+  }, [activeConversationId, isNewConversation, previewRevision]);
+
+  const previewUrl = useMemo(() => {
+    void previewRevision;
+
+    if (isNewConversation || activeConversationId === null) {
+      return deriveAgentPreviewUrl([]);
+    }
+
+    return deriveAgentPreviewUrl(readSessionMessages(activeConversationId));
+  }, [activeConversationId, isNewConversation, previewRevision]);
+
+  const handleConversationActivity = (conversationId: number) => {
+    if (conversationId === activeConversationId) {
+      setPreviewRevision((revision) => revision + 1);
+    }
+  };
 
   const invalidateConversationQueries = () => {
     void queryClient.invalidateQueries({
@@ -145,6 +178,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               setIsNewConversation(false);
               setActiveConversationId(conversationId);
               setSidebarTab('conversation');
+              setPreviewRevision((revision) => revision + 1);
               void queryClient.prefetchQuery({
                 queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, conversationId],
                 queryFn: () => getConversationMessageList(conversationId),
@@ -159,7 +193,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           />
         ) : (
           <AgentConversationPanel
-            key={isNewConversation ? 'new' : String(activeConversationId ?? 'empty')}
+            key={String(activeConversationId ?? 'new')}
             projectId={projectId}
             projectName={formatProjectDisplayName(project.name, project.projectId)}
             conversationId={activeConversationId}
@@ -168,7 +202,9 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             onConversationCreated={(conversationId) => {
               setActiveConversationId(conversationId);
               setIsNewConversation(false);
+              setPreviewRevision((revision) => revision + 1);
             }}
+            onConversationActivity={handleConversationActivity}
           />
         )}
       </section>
@@ -217,7 +253,11 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             </div>
             <div className="flex min-w-0 flex-1 items-center rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-1.5">
               <span className="truncate text-[12px] text-[#64748b]">
-                {connectedRepo ? `/${connectedRepo.fullName}` : '/'}
+                {connectedRepo
+                  ? `/${connectedRepo.fullName}`
+                  : previewPhase === 'ready'
+                    ? previewUrl
+                    : '/'}
               </span>
             </div>
             <span className="hidden shrink-0 rounded-full bg-[#ede9fe] px-2 py-0.5 text-[10px] font-semibold text-[#7c3aed] sm:inline">
@@ -260,18 +300,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
         {rightPanelView === 'code' ? (
           <ProjectCodeExplorerPanel />
         ) : (
-          <div className="flex flex-1 items-center justify-center bg-[#ececee] p-8">
-            <div className="max-w-md text-center">
-              <p className="text-[15px] font-semibold leading-relaxed text-[#334155]">
-                Devely가 사이트를 구축 중입니다.
-                <br />
-                잠시 기다려 주세요!
-              </p>
-              <p className="mt-2 text-[13px] leading-relaxed text-[#94a3b8]">
-                앱을 다운로드하면 준비가 완료될 때 알림을 받을 수 있어요.
-              </p>
-            </div>
-          </div>
+          <AgentSitePreviewPanel phase={previewPhase} previewUrl={previewUrl} />
         )}
       </section>
     </div>

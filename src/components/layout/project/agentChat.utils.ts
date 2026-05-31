@@ -1,4 +1,28 @@
+import type { ConversationMessage } from '@/types/chat.type';
+
 export const AGENT_CHAT_QUERY_KEY = 'project-agent';
+
+const sessionMessagesByConversation = new Map<number, ConversationMessage[]>();
+
+export function readSessionMessages(conversationId: number): ConversationMessage[] {
+  return sessionMessagesByConversation.get(conversationId) ?? [];
+}
+
+export function writeSessionMessages(conversationId: number, messages: ConversationMessage[]) {
+  sessionMessagesByConversation.set(conversationId, messages);
+}
+
+/** 새 대화 생성 전 임시 ID(0)에 쌓인 메시지를 실제 conversationId로 옮긴다. */
+export function migrateSessionMessages(fromConversationId: number, toConversationId: number) {
+  const messages = readSessionMessages(fromConversationId);
+  if (messages.length === 0) return;
+
+  writeSessionMessages(
+    toConversationId,
+    messages.map((message) => ({ ...message, conversationId: toConversationId })),
+  );
+  sessionMessagesByConversation.delete(fromConversationId);
+}
 
 const PENDING_HOME_AGENT_PROMPT_KEY = 'dvely:pending-home-agent-prompt';
 
