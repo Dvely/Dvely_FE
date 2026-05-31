@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Check, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import type { ProjectStartType } from '@/lib/userProjects';
 
 export type HomeTemplateCardData = {
@@ -16,7 +16,7 @@ type HomeTemplateCardProps = {
   onSelect: () => void;
 };
 
-function HomeTemplateCard({ card, selected, onSelect }: HomeTemplateCardProps) {
+function HomeTemplateCard({ card, onSelect }: HomeTemplateCardProps) {
   return (
     <article
       className="group text-left"
@@ -30,13 +30,7 @@ function HomeTemplateCard({ card, selected, onSelect }: HomeTemplateCardProps) {
       role="button"
       tabIndex={0}
     >
-      <div
-        className={`relative aspect-16/10 overflow-hidden rounded-2xl border bg-[#f1f5f9] transition duration-300 ${
-          selected
-            ? 'border-[#2ea7ff] ring-2 ring-[#2ea7ff] shadow-[0_10px_28px_rgba(29,155,240,0.2)]'
-            : 'border-[#e2e8f0] group-hover:border-[#cbd5e1] group-hover:shadow-[0_10px_24px_rgba(15,23,42,0.14)]'
-        }`}
-      >
+      <div className="relative aspect-16/10 overflow-hidden rounded-2xl border border-[#e2e8f0] bg-[#f1f5f9] transition duration-300 group-hover:border-[#7c3aed] group-hover:ring-2 group-hover:ring-[#7c3aed] group-hover:shadow-[0_10px_28px_rgba(124,58,237,0.2)]">
         <img
           src={card.image}
           alt={card.title}
@@ -44,28 +38,16 @@ function HomeTemplateCard({ card, selected, onSelect }: HomeTemplateCardProps) {
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/50 to-transparent" />
 
-        {selected ? (
-          <span className="absolute right-3 top-3 z-10 flex size-7 items-center justify-center rounded-full bg-[#2ea7ff] text-white">
-            <Check className="size-4" />
-          </span>
-        ) : null}
-
-        <div
-          className={`absolute inset-0 z-10 flex items-end justify-center gap-3 bg-black/45 px-4 pb-4 transition-opacity duration-200 ${
-            selected
-              ? 'pointer-events-auto opacity-100'
-              : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'
-          }`}
+        <Link
+          to="/project/new"
+          search={{ type: card.startType, templateId: card.id }}
+          onClick={(e) => e.stopPropagation()}
+          aria-label={`${card.title} 미리보기`}
+          className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center gap-2 bg-black/45 text-[15px] font-semibold text-white opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100 hover:bg-black/55"
         >
-          <Link
-            to="/project/new"
-            search={{ type: card.startType, templateId: card.id }}
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#1d9bf0] px-5 py-2.5 text-center text-[14px] font-semibold text-white shadow-sm transition hover:bg-[#1689d6]"
-          >
-            <Eye className="size-3.5" />이 템플릿으로 시작
-          </Link>
-        </div>
+          <Eye className="size-5" strokeWidth={2} />
+          미리보기
+        </Link>
       </div>
 
       <p className="mt-2 text-[22px] font-semibold tracking-tight text-[#0f172a]">{card.title}</p>

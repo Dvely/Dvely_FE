@@ -57,7 +57,7 @@ function FilterSelect({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 cursor-pointer appearance-none rounded-lg border border-[#e5e7eb] bg-white py-0 pl-3 pr-8 text-[13px] font-medium text-[#334155] outline-none transition hover:bg-[#f8fafc] focus-visible:border-[#93c5fd] focus-visible:ring-2 focus-visible:ring-[#3b82f6]/20"
+        className="h-9 cursor-pointer appearance-none rounded-lg border border-[#e5e7eb] bg-white py-0 pl-3 pr-8 text-[13px] font-medium text-[#334155] outline-none transition hover:bg-[#f8fafc] focus-visible:border-[#c4b5fd] focus-visible:ring-2 focus-visible:ring-[#7c3aed]/20"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
 import { X } from 'lucide-react';
 import { postProjectCreate } from '@/api/projects';
 import { Input } from '@/components/ui/input';
@@ -12,7 +11,6 @@ type ProjectCreateDialogProps = {
 
 function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogProps) {
   const titleFieldId = useId();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [name, setName] = useState('');
@@ -43,7 +41,6 @@ function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogProps) {
 
       await queryClient.invalidateQueries({ queryKey: ['project-list'] });
       onOpenChange(false);
-      void navigate({ to: '/home' });
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -152,7 +149,7 @@ function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogProps) {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="h-10 flex-1 rounded-lg bg-[#2563eb] text-sm font-semibold text-white hover:bg-[#1d4ed8] disabled:bg-[#e2e8f0] disabled:text-[#94a3b8]"
+              className="h-10 flex-1 rounded-lg bg-[#7c3aed] text-sm font-semibold text-white hover:bg-[#6d28d9] disabled:bg-[#e2e8f0] disabled:text-[#94a3b8]"
             >
               {isSubmitting ? '생성 중…' : '생성'}
             </button>

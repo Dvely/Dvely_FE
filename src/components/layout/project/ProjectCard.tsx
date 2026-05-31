@@ -1,5 +1,5 @@
-import { Link } from '@tanstack/react-router';
 import type { ProjectItem } from '@/mocks/projects/projectTypes';
+import ProjectNavLink from '@/components/layout/project/ProjectNavLink';
 import { CATEGORY_LABEL, DEPLOY_STATUS_LABEL } from '@/mocks/projects/projectTypes';
 
 const deployBadgeClass: Record<ProjectItem['deployStatus'], string> = {
@@ -85,9 +85,8 @@ type ProjectCardProps = {
 
 function ProjectCard({ project }: ProjectCardProps) {
   return (
-    <Link
-      to="/project/$slug"
-      params={{ slug: project.id }}
+    <ProjectNavLink
+      projectId={Number(project.id)}
       className="flex flex-col overflow-hidden rounded-lg border border-[#e5e7eb] bg-white transition hover:border-[#c4b5fd] hover:shadow-[0_8px_24px_rgba(99,102,241,0.1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
     >
       <div className="border-b border-[#f1f5f9] bg-gradient-to-b from-[#f8fafc] to-white px-3 pb-3 pt-3">
@@ -119,7 +118,7 @@ function ProjectCard({ project }: ProjectCardProps) {
       <footer className="border-t border-[#f1f5f9] px-6 py-4 text-right">
         <time className="text-[12px] text-[#94a3b8]">{project.updatedAt}</time>
       </footer>
-    </Link>
+    </ProjectNavLink>
   );
 }
 

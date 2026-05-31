@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useProjectListQuery } from '@/api/projects';
 import {
   formatProjectDisplayName,
+  markHomeChatProject,
   setPendingHomeAgentPrompt,
 } from '@/components/layout/project/agentChat.utils';
 import HomeProjectListPopover from '@/components/layout/home/HomeProjectListPopover';
@@ -47,9 +48,10 @@ function HomePromptHero() {
     }
 
     setSubmitError(null);
+    markHomeChatProject(targetProjectId);
     setPendingHomeAgentPrompt(trimmed);
     void navigate({
-      to: '/project/$slug/agent',
+      to: '/project/$slug',
       params: { slug: String(targetProjectId) },
     });
   };
@@ -57,7 +59,7 @@ function HomePromptHero() {
   const cloudButtonLabel =
     selectedProjectId != null && selectedProjectName
       ? formatProjectDisplayName(selectedProjectName, selectedProjectId)
-      : '클라우드 컴퓨터';
+      : '프로젝트 선택';
 
   return (
     <section className="relative z-10 flex flex-col items-center pt-10 pb-8">
@@ -121,11 +123,6 @@ function HomePromptHero() {
                   >
                     <Laptop className="size-3.5 shrink-0 text-[#64748b]" strokeWidth={1.75} />
                     <span className="truncate">{cloudButtonLabel}</span>
-                    {selectedProjectId == null ? (
-                      <span className="shrink-0 rounded bg-[#7c3aed] px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                        새로운
-                      </span>
-                    ) : null}
                   </button>
                 }
               />

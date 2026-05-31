@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -32,10 +32,13 @@ import AgentConversationPanel from '@/components/layout/project/AgentConversatio
 import AgentSitePreviewPanel from '@/components/layout/project/AgentSitePreviewPanel';
 import GithubRepositoryPicker from '@/components/layout/project/GithubRepositoryPicker';
 import ProjectCodeExplorerPanel from '@/components/layout/project/ProjectCodeExplorerPanel';
+import ProjectPipelinePanel from '@/components/layout/project/ProjectPipelinePanel';
+import { createIdlePipelineRun, runPipelineSequence } from '@/lib/projectPipelineRunner';
+import type { PipelineRun } from '@/mocks/project/pipeline';
 import { cn } from '@/lib/utils';
 
 type AgentSidebarTab = 'list' | 'conversation';
-type RightPanelView = 'preview' | 'code';
+type RightPanelView = 'preview' | 'code' | 'pipeline';
 
 type ProjectAgentPageProps = {
   projectId: number;
@@ -51,8 +54,33 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [connectedRepo, setConnectedRepo] = useState<GithubRepository | null>(null);
   const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
   const [previewRevision, setPreviewRevision] = useState(0);
+  const [pipelineRun, setPipelineRun] = useState<PipelineRun>(() => createIdlePipelineRun());
+  const pipelineAbortRef = useRef<AbortController | null>(null);
 
   const queryClient = useQueryClient();
+
+  const isPipelineRunning = pipelineRun.status === 'running';
+
+  const handleDeployPipelineStart = useCallback(async () => {
+    pipelineAbortRef.current?.abort();
+    const controller = new AbortController();
+    pipelineAbortRef.current = controller;
+    setRightPanelView('pipeline');
+
+    try {
+      await runPipelineSequence(setPipelineRun, { signal: controller.signal });
+    } finally {
+      if (pipelineAbortRef.current === controller) {
+        pipelineAbortRef.current = null;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      pipelineAbortRef.current?.abort();
+    };
+  }, []);
 
   const { data: conversations = [], isLoading: isConversationsLoading } =
     useProjectConversationListQuery(AGENT_CHAT_QUERY_KEY, projectId);
@@ -205,6 +233,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               setPreviewRevision((revision) => revision + 1);
             }}
             onConversationActivity={handleConversationActivity}
+            onDeployPipelineStart={handleDeployPipelineStart}
           />
         )}
       </section>
@@ -274,7 +303,16 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             </button>
             <button
               type="button"
-              className="inline-flex h-8 items-center rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white"
+              onClick={() =>
+                setRightPanelView((view) => (view === 'pipeline' ? 'preview' : 'pipeline'))
+              }
+              aria-pressed={rightPanelView === 'pipeline'}
+              className={cn(
+                'inline-flex h-8 items-center rounded-lg px-3 text-[12px] font-semibold transition',
+                rightPanelView === 'pipeline'
+                  ? 'bg-[#1e293b] text-white ring-2 ring-[#0f172a]/20 ring-offset-1'
+                  : 'bg-[#0f172a] text-white hover:bg-[#1e293b]',
+              )}
             >
               게시
             </button>
@@ -297,6 +335,8 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
 
         {rightPanelView === 'code' ? (
           <ProjectCodeExplorerPanel />
+        ) : rightPanelView === 'pipeline' ? (
+          <ProjectPipelinePanel run={pipelineRun} isRunning={isPipelineRunning} />
         ) : (
           <AgentSitePreviewPanel phase={previewPhase} previewUrl={previewUrl} />
         )}

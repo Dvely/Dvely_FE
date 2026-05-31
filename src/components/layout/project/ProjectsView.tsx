@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Link } from '@tanstack/react-router';
 import { ChevronDown, LayoutGrid, List, Plus } from 'lucide-react';
 import ProjectCard from './ProjectCard';
+import ProjectNavLink from '@/components/layout/project/ProjectNavLink';
 import ProjectCreateDialog from './ProjectCreateDialog';
 import { useProjectListQuery } from '@/api/projects';
 import { formatProjectDisplayName } from '@/components/layout/project/agentChat.utils';
@@ -68,7 +68,7 @@ function ToolbarSelect({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 cursor-pointer appearance-none rounded-lg border border-[#e5e7eb] bg-white py-0 pl-3 pr-8 text-[13px] font-medium text-[#334155] outline-none transition hover:bg-[#f8fafc] focus-visible:border-[#93c5fd] focus-visible:ring-2 focus-visible:ring-[#3b82f6]/20"
+        className="h-9 cursor-pointer appearance-none rounded-lg border border-[#e5e7eb] bg-white py-0 pl-3 pr-8 text-[13px] font-medium text-[#334155] outline-none transition hover:bg-[#f8fafc] focus-visible:border-[#c4b5fd] focus-visible:ring-2 focus-visible:ring-[#7c3aed]/20"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value} className="bg-white text-[#334155]">
@@ -86,9 +86,8 @@ function ToolbarSelect({
 
 function ProjectListRow({ project }: { project: ProjectItem }) {
   return (
-    <Link
-      to="/project/$slug"
-      params={{ slug: project.id }}
+    <ProjectNavLink
+      projectId={Number(project.id)}
       className="flex items-center gap-4 rounded-lg border border-[#e5e7eb] bg-white px-4 py-3 transition hover:border-[#c4b5fd] hover:shadow-[0_4px_16px_rgba(99,102,241,0.08)]"
     >
       <div className="min-w-0 flex-1">
@@ -99,7 +98,7 @@ function ProjectListRow({ project }: { project: ProjectItem }) {
         {DEPLOY_STATUS_LABEL[project.deployStatus]}
       </span>
       <time className="shrink-0 text-[12px] text-[#94a3b8]">{project.updatedAt}</time>
-    </Link>
+    </ProjectNavLink>
   );
 }
 
@@ -189,7 +188,7 @@ function ProjectsView() {
         <button
           type="button"
           onClick={() => setIsCreateDialogOpen(true)}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-[#2563eb] px-3.5 text-[13px] font-semibold text-white transition hover:bg-[#1d4ed8]"
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-[#7c3aed] px-3.5 text-[13px] font-semibold text-white transition hover:bg-[#6d28d9]"
         >
           <Plus className="size-4" strokeWidth={2} />
           프로젝트 생성
