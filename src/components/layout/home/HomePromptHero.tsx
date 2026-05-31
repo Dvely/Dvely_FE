@@ -1,0 +1,125 @@
+import { useState } from 'react';
+import { ArrowUp, Laptop, MessageSquare, Mic, Plus, SlidersHorizontal } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+
+const quickActions = [
+  { emoji: '💻', label: '슬라이드 제작' },
+  { emoji: '<>', label: '웹사이트 구축' },
+  { emoji: '🖥️', label: '데스크톱 앱 개발' },
+  { emoji: '🎨', label: '디자인' },
+  { label: '더보기' },
+] as const;
+
+function HomePromptHero() {
+  const navigate = useNavigate();
+  const [prompt, setPrompt] = useState('');
+
+  const handleSubmit = () => {
+    const trimmed = prompt.trim();
+    if (!trimmed) return;
+    void navigate({ to: '/project' });
+  };
+
+  return (
+    <section className="flex flex-col items-center pt-10 pb-8">
+      <h1 className="text-center text-[32px] font-semibold tracking-tight text-[#0f172a] sm:text-[36px]">
+        무엇을 도와드릴까요?
+      </h1>
+
+      <div className="mt-8 w-full max-w-[720px]">
+        <div className="overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
+          <textarea
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                handleSubmit();
+              }
+            }}
+            rows={3}
+            placeholder="작업을 할당하거나 무엇이든 질문하세요"
+            className="block w-full resize-none bg-transparent px-5 pt-5 pb-2 text-[15px] leading-relaxed text-[#0f172a] outline-none placeholder:text-[#94a3b8]"
+          />
+
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-4">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                className="flex size-8 items-center justify-center rounded-lg text-[#64748b] transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
+                aria-label="첨부"
+              >
+                <Plus className="size-[18px]" strokeWidth={1.75} />
+              </button>
+              <button
+                type="button"
+                className="flex size-8 items-center justify-center rounded-lg text-[#64748b] transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
+                aria-label="설정"
+              >
+                <SlidersHorizontal className="size-[18px]" strokeWidth={1.75} />
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e5e7eb] bg-[#f8fafc] px-2.5 text-[12px] font-medium text-[#334155] transition hover:bg-[#f1f5f9]"
+              >
+                <Laptop className="size-3.5 text-[#64748b]" strokeWidth={1.75} />
+                클라우드 컴퓨터
+                <span className="rounded bg-[#7c3aed] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                  새로운
+                </span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                className="flex size-8 items-center justify-center rounded-lg text-[#64748b] transition hover:bg-[#f1f5f9]"
+                aria-label="채팅"
+              >
+                <MessageSquare className="size-[18px]" strokeWidth={1.75} />
+              </button>
+              <button
+                type="button"
+                className="flex size-8 items-center justify-center rounded-lg text-[#64748b] transition hover:bg-[#f1f5f9]"
+                aria-label="음성 입력"
+              >
+                <Mic className="size-[18px]" strokeWidth={1.75} />
+              </button>
+              <button
+                type="button"
+                disabled={!prompt.trim()}
+                onClick={handleSubmit}
+                className="flex size-9 items-center justify-center rounded-full bg-[#0f172a] text-white transition hover:bg-[#1e293b] disabled:cursor-not-allowed disabled:bg-[#cbd5e1]"
+                aria-label="전송"
+              >
+                <ArrowUp className="size-[18px]" strokeWidth={2} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 flex max-w-[720px] flex-wrap justify-center gap-2">
+        {quickActions.map((action) => (
+          <button
+            key={action.label}
+            type="button"
+            onClick={() =>
+              setPrompt((prev) => (prev ? prev : `${action.label} 관련 작업을 도와주세요`))
+            }
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#e5e7eb] bg-white px-3.5 py-2 text-[13px] font-medium text-[#334155] shadow-sm transition hover:border-[#cbd5e1] hover:bg-[#f8fafc]"
+          >
+            {'emoji' in action && action.emoji ? (
+              <span className="text-[14px] leading-none" aria-hidden>
+                {action.emoji}
+              </span>
+            ) : null}
+            {action.label}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default HomePromptHero;
