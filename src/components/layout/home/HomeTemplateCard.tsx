@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ArrowRight, Check, Eye } from 'lucide-react';
+import { Check, Eye } from 'lucide-react';
 import type { ProjectStartType } from '@/lib/userProjects';
 
 export type HomeTemplateCardData = {
@@ -17,8 +17,6 @@ type HomeTemplateCardProps = {
 };
 
 function HomeTemplateCard({ card, selected, onSelect }: HomeTemplateCardProps) {
-  const isBestTemplate = card.id === '2';
-
   return (
     <article
       className="group text-left"
@@ -45,12 +43,6 @@ function HomeTemplateCard({ card, selected, onSelect }: HomeTemplateCardProps) {
           className="size-full object-cover object-top transition duration-500 group-hover:scale-[1.035]"
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/50 to-transparent" />
-
-        {isBestTemplate ? (
-          <span className="absolute left-3 top-3 z-10 rounded-full bg-[#0f172a]/80 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
-            BEST UI
-          </span>
-        ) : null}
 
         {selected ? (
           <span className="absolute right-3 top-3 z-10 flex size-7 items-center justify-center rounded-full bg-[#2ea7ff] text-white">

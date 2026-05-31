@@ -7,7 +7,11 @@ import {
   useConversationMessageListQuery,
 } from '@/api/chat';
 import type { ConversationMessage } from '@/types/chat.type';
-import { AGENT_CHAT_QUERY_KEY } from '@/components/layout/project/agentChat.utils';
+import {
+  AGENT_CHAT_QUERY_KEY,
+  clearHomeAgentPromptSendGuard,
+  shouldSendHomeAgentPromptOnce,
+} from '@/components/layout/project/agentChat.utils';
 
 const suggestedPrompts = [
   { label: 'UI 수정 요청', prompt: '히어로 섹션 CTA를 더 눈에 띄게 수정해줘' },
@@ -21,6 +25,7 @@ type AgentConversationPanelProps = {
   projectName: string;
   conversationId: number | null;
   isNewConversation: boolean;
+  initialPrompt?: string | null;
   onConversationCreated: (conversationId: number) => void;
 };
 
@@ -29,6 +34,7 @@ function AgentConversationPanel({
   projectName,
   conversationId,
   isNewConversation,
+  initialPrompt,
   onConversationCreated,
 }: AgentConversationPanelProps) {
   const [input, setInput] = useState('');
@@ -88,9 +94,16 @@ function AgentConversationPanel({
     }
   };
 
+  useEffect(() => {}, [conversationId, isNewConversation]);
+
   useEffect(() => {
-    setInput('');
-  }, [conversationId, isNewConversation]);
+    const content = initialPrompt?.trim();
+    if (!content || !shouldSendHomeAgentPromptOnce(content)) return;
+
+    sendMessageMutation.mutate(content, {
+      onError: () => clearHomeAgentPromptSendGuard(content),
+    });
+  }, [initialPrompt]);
 
   return (
     <>

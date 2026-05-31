@@ -18,6 +18,7 @@ import {
 import type { GetProjectDetailResType, GithubRepository } from '@/types/projects.type';
 import {
   AGENT_CHAT_QUERY_KEY,
+  consumePendingHomeAgentPrompt,
   formatProjectDisplayName,
 } from '@/components/layout/project/agentChat.utils';
 import AgentChatListPanel from '@/components/layout/project/AgentChatListPanel';
@@ -32,9 +33,10 @@ type ProjectAgentPageProps = {
 };
 
 function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
+  const [homePrompt] = useState(() => consumePendingHomeAgentPrompt());
   const [sidebarTab, setSidebarTab] = useState<AgentSidebarTab>('conversation');
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
-  const [isNewConversation, setIsNewConversation] = useState(false);
+  const [isNewConversation, setIsNewConversation] = useState(() => homePrompt !== null);
   const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
   const [connectedRepo, setConnectedRepo] = useState<GithubRepository | null>(null);
 
@@ -157,6 +159,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             projectName={formatProjectDisplayName(project.name, project.projectId)}
             conversationId={activeConversationId}
             isNewConversation={isNewConversation}
+            initialPrompt={isNewConversation ? homePrompt : null}
             onConversationCreated={(conversationId) => {
               setActiveConversationId(conversationId);
               setIsNewConversation(false);

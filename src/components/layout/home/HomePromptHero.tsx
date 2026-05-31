@@ -1,6 +1,13 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ArrowUp, Laptop, MessageSquare, Mic, Plus, SlidersHorizontal } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
+import { useProjectListQuery } from '@/api/projects';
+import {
+  formatProjectDisplayName,
+  setPendingHomeAgentPrompt,
+} from '@/components/layout/project/agentChat.utils';
+import HomeProjectListPopover from '@/components/layout/home/HomeProjectListPopover';
+import { cn } from '@/lib/utils';
 
 const quickActions = [
   { emoji: '💻', label: '슬라이드 제작' },
@@ -13,21 +20,53 @@ const quickActions = [
 function HomePromptHero() {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState('');
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [projectPickerOpen, setProjectPickerOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [selectedProjectName, setSelectedProjectName] = useState<string | null>(null);
+
+  const { data: projects = [], isLoading: isProjectsLoading } = useProjectListQuery('home-prompt');
+
+  const latestProjectId = useMemo(() => {
+    if (projects.length === 0) return null;
+    const sorted = [...projects].sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    );
+    return sorted[0].projectId;
+  }, [projects]);
+
+  const targetProjectId = selectedProjectId ?? latestProjectId;
 
   const handleSubmit = () => {
     const trimmed = prompt.trim();
-    if (!trimmed) return;
-    void navigate({ to: '/project' });
+    if (!trimmed || isProjectsLoading) return;
+
+    if (targetProjectId == null) {
+      setSubmitError('먼저 프로젝트를 생성해 주세요.');
+      return;
+    }
+
+    setSubmitError(null);
+    setPendingHomeAgentPrompt(trimmed);
+    void navigate({
+      to: '/project/$slug/agent',
+      params: { slug: String(targetProjectId) },
+    });
   };
 
+  const cloudButtonLabel =
+    selectedProjectId != null && selectedProjectName
+      ? formatProjectDisplayName(selectedProjectName, selectedProjectId)
+      : '클라우드 컴퓨터';
+
   return (
-    <section className="flex flex-col items-center pt-10 pb-8">
+    <section className="relative z-10 flex flex-col items-center pt-10 pb-8">
       <h1 className="text-center text-[32px] font-semibold tracking-tight text-[#0f172a] sm:text-[36px]">
         무엇을 도와드릴까요?
       </h1>
 
       <div className="mt-8 w-full max-w-[720px]">
-        <div className="overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
+        <div className="overflow-visible rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
           <textarea
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
@@ -58,16 +97,38 @@ function HomePromptHero() {
               >
                 <SlidersHorizontal className="size-[18px]" strokeWidth={1.75} />
               </button>
-              <button
-                type="button"
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e5e7eb] bg-[#f8fafc] px-2.5 text-[12px] font-medium text-[#334155] transition hover:bg-[#f1f5f9]"
-              >
-                <Laptop className="size-3.5 text-[#64748b]" strokeWidth={1.75} />
-                클라우드 컴퓨터
-                <span className="rounded bg-[#7c3aed] px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                  새로운
-                </span>
-              </button>
+              <HomeProjectListPopover
+                open={projectPickerOpen}
+                onOpenChange={setProjectPickerOpen}
+                selectedProjectId={selectedProjectId}
+                onSelect={(project) => {
+                  setSelectedProjectId(project.projectId);
+                  setSelectedProjectName(project.name);
+                }}
+                trigger={
+                  <button
+                    type="button"
+                    onClick={() => setProjectPickerOpen((prev) => !prev)}
+                    aria-expanded={projectPickerOpen}
+                    aria-haspopup="listbox"
+                    title={cloudButtonLabel}
+                    className={cn(
+                      'inline-flex h-8 max-w-[220px] items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition',
+                      projectPickerOpen
+                        ? 'border-[#0f172a] bg-white ring-2 ring-[#0f172a]/10 text-[#0f172a]'
+                        : 'border-[#e5e7eb] bg-[#f8fafc] text-[#334155] hover:bg-[#f1f5f9]',
+                    )}
+                  >
+                    <Laptop className="size-3.5 shrink-0 text-[#64748b]" strokeWidth={1.75} />
+                    <span className="truncate">{cloudButtonLabel}</span>
+                    {selectedProjectId == null ? (
+                      <span className="shrink-0 rounded bg-[#7c3aed] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                        새로운
+                      </span>
+                    ) : null}
+                  </button>
+                }
+              />
             </div>
 
             <div className="flex items-center gap-1">
@@ -98,6 +159,12 @@ function HomePromptHero() {
           </div>
         </div>
       </div>
+
+      {submitError ? (
+        <p className="mt-3 text-center text-[13px] text-red-600" role="alert">
+          {submitError}
+        </p>
+      ) : null}
 
       <div className="mt-5 flex max-w-[720px] flex-wrap justify-center gap-2">
         {quickActions.map((action) => (
