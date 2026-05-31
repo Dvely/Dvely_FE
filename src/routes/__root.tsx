@@ -10,7 +10,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const showAppChrome = pathname !== '/';
+  const showAppChrome = pathname !== '/' && !pathname.startsWith('/template');
 
   return (
     <>
