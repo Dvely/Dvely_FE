@@ -5,7 +5,12 @@ import ProjectNavLink from '@/components/layout/project/ProjectNavLink';
 import ProjectCreateDialog from './ProjectCreateDialog';
 import { useProjectListQuery } from '@/api/projects';
 import { formatProjectDisplayName } from '@/components/layout/project/agentChat.utils';
-import { DEPLOY_STATUS_LABEL } from '@/mocks/projects/projectTypes';
+import { hasProjectTemplate, templateTypeToPreviewVariant } from '@/lib/projectTemplate';
+import {
+  DEPLOY_STATUS_LABEL,
+  TEMPLATE_UNCONFIGURED_LABEL,
+  TEMPLATE_UNCONFIGURED_SUBTITLE,
+} from '@/mocks/projects/projectTypes';
 import type { ProjectItem } from '@/mocks/projects/projectTypes';
 import type { DeployStatus } from '@/types/common.enum';
 import { cn } from '@/lib/utils';
@@ -32,6 +37,8 @@ function toProjectCardItem(project: {
   deployStatus: DeployStatus;
   currentUrl: string | null;
   updatedAtRelativeText: string;
+  templateType: string | null;
+  startMode: string | null;
 }): ProjectItem {
   const deployStatusMap: Record<DeployStatus, ProjectItem['deployStatus']> = {
     DRAFT: 'pending',
@@ -41,14 +48,17 @@ function toProjectCardItem(project: {
     FAILED: 'pending',
   };
 
+  const hasTemplate = hasProjectTemplate(project);
+
   return {
     id: String(project.projectId),
     slug: formatProjectDisplayName(project.name, project.projectId),
     deployStatus: deployStatusMap[project.deployStatus],
     category: 'landing',
+    hasTemplate,
     subtitle: project.currentUrl ?? '배포되지 않음',
     updatedAt: project.updatedAtRelativeText,
-    preview: 'landing',
+    preview: hasTemplate ? templateTypeToPreviewVariant(project.templateType) : 'landing',
   };
 }
 
@@ -85,6 +95,8 @@ function ToolbarSelect({
 }
 
 function ProjectListRow({ project }: { project: ProjectItem }) {
+  const subtitle = project.hasTemplate ? project.subtitle : TEMPLATE_UNCONFIGURED_SUBTITLE;
+
   return (
     <ProjectNavLink
       projectId={Number(project.id)}
@@ -92,11 +104,16 @@ function ProjectListRow({ project }: { project: ProjectItem }) {
     >
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14px] font-semibold text-[#111827]">{project.slug}</p>
-        <p className="truncate text-[12px] text-[#94a3b8]">{project.subtitle}</p>
+        <p className="truncate text-[12px] text-[#94a3b8]">{subtitle}</p>
       </div>
       <span className="shrink-0 rounded bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#475569]">
         {DEPLOY_STATUS_LABEL[project.deployStatus]}
       </span>
+      {!project.hasTemplate ? (
+        <span className="shrink-0 rounded bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
+          {TEMPLATE_UNCONFIGURED_LABEL}
+        </span>
+      ) : null}
       <time className="shrink-0 text-[12px] text-[#94a3b8]">{project.updatedAt}</time>
     </ProjectNavLink>
   );

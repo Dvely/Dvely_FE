@@ -35,9 +35,9 @@ export const homeTemplates: HomeTemplateItem[] = [
   {
     id: '2',
     title: 'Crimson',
-    tags: ['#퍼포트폴리오', '#애니메이션'],
+    tags: ['#포트폴리오', '#애니메이션'],
     image: container1,
-    startType: resolveStartType(['#퍼포트폴리오', '#애니메이션']),
+    startType: resolveStartType(['#포트폴리오', '#애니메이션']),
     category: 'service',
   },
   {
