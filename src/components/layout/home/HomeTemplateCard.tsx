@@ -65,29 +65,13 @@ function HomeTemplateCard({ card, selected, onSelect }: HomeTemplateCardProps) {
               : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'
           }`}
         >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              window.open(
-                'https://aih-b-image-service.cafe24.com/templates/professional/crimson/',
-                '_blank',
-                'noopener,noreferrer',
-              );
-            }}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-white px-5 py-2.5 text-[14px] font-semibold text-[#0f172a] shadow-sm transition hover:bg-[#f8fafc]"
-          >
-            <Eye className="size-3.5" />
-            미리보기
-          </button>
           <Link
             to="/project/new"
             search={{ type: card.startType, templateId: card.id }}
             onClick={(e) => e.stopPropagation()}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#1d9bf0] px-5 py-2.5 text-center text-[14px] font-semibold text-white shadow-sm transition hover:bg-[#1689d6]"
           >
-            이 템플릿으로 시작
-            <ArrowRight className="size-3.5" />
+            <Eye className="size-3.5" />이 템플릿으로 시작
           </Link>
         </div>
       </div>

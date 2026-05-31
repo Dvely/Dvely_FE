@@ -127,7 +127,7 @@ function ProjectCreatePage() {
 
       <div className="flex min-h-0 flex-1">
         {/* 왼쪽: 템플릿 미리보기 */}
-        <section className="flex min-h-0 w-[1000px] shrink-0 flex-col bg-white shadow-sm">
+        <section className="flex min-h-0 w-full shrink-0 flex-col bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e2e8f0] px-4 py-3">
             <div className="flex flex-wrap items-center gap-2">
               <Link
@@ -190,112 +190,6 @@ function ProjectCreatePage() {
               />
             </div>
           </div>
-        </section>
-
-        {/* 오른쪽: 운영 방식 선택 */}
-        <section className="flex w-full flex-col overflow-y-auto px-6 py-6">
-          <h1 className="text-[22px] font-bold tracking-tight text-[#0f172a]">
-            프로젝트를 생성해주세요
-          </h1>
-          <p className="mt-1 text-[14px] text-[#64748b]">선택한 방식에 따라 다음 단계가 달라져요</p>
-
-          <div className="mt-5 rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-sm">
-            <label htmlFor="project-name" className="text-[14px] font-semibold text-[#334155]">
-              프로젝트 이름 <span className="text-[#ef4444]">*</span>
-            </label>
-            <input
-              id="project-name"
-              type="text"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              placeholder="예: 카페 랜딩, 디자이너 포트폴리오"
-              disabled={isSubmitting}
-              className="mt-2 w-full rounded-xl border border-[#dbe3ef] bg-[#fbfdff] px-4 py-3 text-[15px] text-[#0f172a] outline-none transition placeholder:text-[#94a3b8] focus:border-[#93c5fd] focus:ring-2 focus:ring-[#dbeafe] disabled:cursor-not-allowed disabled:opacity-60"
-            />
-            <p className="mt-2 text-[12px] text-[#94a3b8]">
-              {isNameValid ? (
-                <>
-                  선택 템플릿: <span className="font-medium text-[#64748b]">{template?.title}</span>
-                </>
-              ) : (
-                '프로젝트 이름은 2자 이상 입력해 주세요.'
-              )}
-            </p>
-          </div>
-
-          <div className="mt-5 space-y-3">
-            {operationOptions.map((option) => {
-              const checkColor = option.bulletTone === 'blue' ? 'text-[#2563eb]' : 'text-[#22c55e]';
-
-              return (
-                <div
-                  key={option.id}
-                  onClick={() => setOperationMode(option.id)}
-                  className="relative w-full rounded-2xl border-2 p-4 text-left transition border-[#2563eb] bg-white shadow-[0_4px_16px_rgba(37,99,235,0.1)]"
-                >
-                  {option.recommended ? (
-                    <span className="absolute -top-2.5 left-4 inline-flex items-center gap-1 rounded-md bg-[#2563eb] px-2 py-0.5 text-[11px] font-bold text-white">
-                      <ThumbsUp className="size-3" />
-                      추천
-                    </span>
-                  ) : null}
-
-                  <p className="pr-8 text-[16px] font-bold text-[#0f172a]">{option.title}</p>
-                  <p className="mt-1 text-[13px] text-[#64748b]">{option.description}</p>
-
-                  <div className={`mt-3 rounded-xl px-3 py-2.5 ${option.featureBoxClass}`}>
-                    <ul className="space-y-1.5">
-                      {option.bullets.map((bullet) => (
-                        <li
-                          key={bullet}
-                          className="flex items-start gap-2 text-[13px] text-[#334155]"
-                        >
-                          <Check
-                            className={`mt-0.5 size-3.5 shrink-0 ${checkColor}`}
-                            strokeWidth={2.5}
-                          />
-                          {bullet}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    {option.footerTags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-md bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {option.priceLabel && option.priceValue ? (
-                      <div className="ml-auto flex items-baseline gap-2 text-[12px]">
-                        <span className="text-[#94a3b8]">{option.priceLabel}</span>
-                        <span className="font-bold text-[#0f172a]">{option.priceValue}</span>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => void handleNext()}
-            disabled={isSubmitting || !isNameValid}
-            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#2563eb] px-6 py-2.5 text-[14px] font-semibold text-white shadow-sm transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSubmitting ? '처리 중...' : nextLabel}
-            <ArrowRight className="size-4" />
-          </button>
-
-          {errorMessage ? (
-            <p className="mt-4 rounded-xl border border-[#fecaca] bg-[#fff1f2] px-4 py-3 text-[13px] text-[#b91c1c]">
-              {errorMessage}
-            </p>
-          ) : null}
         </section>
       </div>
     </div>
