@@ -2,8 +2,6 @@ import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router'
 import AppRouterEffects from '@/components/auth/AppRouterEffects';
 import NotFoundPage from '@/components/layout/NotFoundPage';
 import AppSidebar from '@/components/common/AppSidebar';
-import HeaderContainer from '@/components/layout/header/HeaderContainer';
-import { isAuthLayoutPath } from '@/lib/appRoutes';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -12,7 +10,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const showAppChrome = !isAuthLayoutPath(pathname);
+  const showAppChrome = pathname !== '/';
 
   return (
     <>
@@ -26,7 +24,7 @@ function RootComponent() {
         <div className="flex h-screen w-full overflow-hidden bg-[#f8fafc] text-[#0f172a]">
           <AppSidebar />
           <main id="app-main-scroll" className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-            <HeaderContainer />
+            {/* <HeaderContainer /> */}
             <Outlet />
           </main>
         </div>

@@ -190,8 +190,8 @@ function ProjectSettingsDialog({
 
             {isDeleteConfirming ? (
               <p className="mt-4 rounded-lg bg-red-50 px-3 py-2.5 text-xs leading-relaxed text-red-700">
-                <strong className="font-semibold">{displayName}</strong> 프로젝트를 삭제할까요?
-                아래 버튼을 눌러 주세요.
+                <strong className="font-semibold">{displayName}</strong> 프로젝트를 삭제할까요? 아래
+                버튼을 눌러 주세요.
               </p>
             ) : null}
 
