@@ -15,15 +15,15 @@ type FilterOption = 'all' | ProjectItem['deployStatus'];
 type SortOption = 'lastModified' | 'name';
 
 const FILTER_OPTIONS: { value: FilterOption; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'deployed', label: 'Deployed' },
-  { value: 'deploying', label: 'Deploying' },
-  { value: 'pending', label: 'Pending' },
+  { value: 'all', label: '전체' },
+  { value: 'deployed', label: DEPLOY_STATUS_LABEL.deployed },
+  { value: 'deploying', label: DEPLOY_STATUS_LABEL.deploying },
+  { value: 'pending', label: DEPLOY_STATUS_LABEL.pending },
 ];
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'lastModified', label: 'Last modified' },
-  { value: 'name', label: 'Name' },
+  { value: 'lastModified', label: '최근 수정순' },
+  { value: 'name', label: '이름순' },
 ];
 
 function toProjectCardItem(project: {
