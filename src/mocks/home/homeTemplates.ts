@@ -16,7 +16,17 @@ export type HomeTemplateItem = {
   image: string;
   startType: ProjectStartType;
   category: HomeTemplateCategory;
+  previewUrl?: string;
 };
+
+const DEFAULT_LANDING_PREVIEW_URL =
+  'https://aih-b-image-service.cafe24.com/templates/professional/crimson/';
+
+export function resolveHomeTemplatePreviewUrl(template: HomeTemplateItem): string {
+  if (template.previewUrl) return template.previewUrl;
+  if (template.startType === 'portfolio') return '/template/portfolio';
+  return DEFAULT_LANDING_PREVIEW_URL;
+}
 
 function resolveStartType(tags: string[]): ProjectStartType {
   if (tags.some((tag) => tag.includes('포트폴리오'))) return 'portfolio';
@@ -26,24 +36,25 @@ function resolveStartType(tags: string[]): ProjectStartType {
 export const homeTemplates: HomeTemplateItem[] = [
   {
     id: '1',
-    title: '세움 세무법인',
-    tags: ['#회계', '#원페이지'],
+    title: '압구정 현대',
+    tags: ['#빌라', '#풀빌라'],
     image: container2,
     startType: 'landing',
     category: 'service',
+    previewUrl: 'https://apgujeong-h.co.kr/main/index',
   },
   {
     id: '2',
-    title: 'Crimson',
-    tags: ['#포트폴리오', '#애니메이션'],
+    title: '개발자 포트폴리오',
+    tags: ['#포트폴리오', '#개발자'],
     image: container1,
-    startType: resolveStartType(['#포트폴리오', '#애니메이션']),
+    startType: resolveStartType(['#포트폴리오', '#개발자']),
     category: 'service',
   },
   {
     id: '3',
-    title: 'Aqualine Villas',
-    tags: ['#빌라', '#풀빌라'],
+    title: 'Crimson',
+    tags: ['#랜딩페이지', '#애니메이션'],
     image: container3,
     startType: 'landing',
     category: 'academy',
@@ -79,14 +90,6 @@ export const homeTemplates: HomeTemplateItem[] = [
     image: container7,
     startType: 'landing',
     category: 'church',
-  },
-  {
-    id: '8',
-    title: '라운지스테이',
-    tags: ['#게스트하우스', '#숙박'],
-    image: container1,
-    startType: 'landing',
-    category: 'academy',
   },
 ];
 

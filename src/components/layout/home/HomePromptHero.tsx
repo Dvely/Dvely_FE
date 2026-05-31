@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowUp, Laptop, MessageSquare, Mic, Plus, SlidersHorizontal } from 'lucide-react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useProjectListQuery } from '@/api/projects';
 import {
   formatProjectDisplayName,
@@ -8,6 +8,15 @@ import {
   setPendingHomeAgentPrompt,
 } from '@/components/layout/project/agentChat.utils';
 import HomeProjectListPopover from '@/components/layout/home/HomeProjectListPopover';
+import HomePromptTemplateChip from '@/components/layout/home/HomePromptTemplateChip';
+import { getHomeTemplateById } from '@/mocks/home/homeTemplates';
+import {
+  clearHomePromptTemplate,
+  readHomePromptTemplate,
+  setHomePromptTemplate,
+  toHomePromptAttachedTemplate,
+  type HomePromptAttachedTemplate,
+} from '@/lib/homePromptTemplate';
 import { cn } from '@/lib/utils';
 
 const quickActions = [
@@ -20,13 +29,34 @@ const quickActions = [
 
 function HomePromptHero() {
   const navigate = useNavigate();
+  const { templateId: templateIdFromSearch } = useSearch({ from: '/_authenticated/home' });
+
   const [prompt, setPrompt] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [selectedProjectName, setSelectedProjectName] = useState<string | null>(null);
+  const [attachedTemplate, setAttachedTemplate] = useState<HomePromptAttachedTemplate | null>(() =>
+    readHomePromptTemplate(),
+  );
 
   const { data: projects = [], isLoading: isProjectsLoading } = useProjectListQuery('home-prompt');
+
+  useEffect(() => {
+    if (!templateIdFromSearch) return;
+
+    const template = getHomeTemplateById(templateIdFromSearch);
+    if (!template) return;
+
+    const attached = toHomePromptAttachedTemplate(template);
+    setHomePromptTemplate(attached);
+
+    void navigate({
+      to: '/home',
+      search: {},
+      replace: true,
+    });
+  }, [navigate, templateIdFromSearch]);
 
   const latestProjectId = useMemo(() => {
     if (projects.length === 0) return null;
@@ -38,6 +68,11 @@ function HomePromptHero() {
 
   const targetProjectId = selectedProjectId ?? latestProjectId;
 
+  const handleRemoveTemplate = () => {
+    setAttachedTemplate(null);
+    clearHomePromptTemplate();
+  };
+
   const handleSubmit = () => {
     const trimmed = prompt.trim();
     if (!trimmed || isProjectsLoading) return;
@@ -47,11 +82,15 @@ function HomePromptHero() {
       return;
     }
 
+    const message = attachedTemplate ? `[${attachedTemplate.title} 템플릿] ${trimmed}` : trimmed;
+
     setSubmitError(null);
     markHomeChatProject(targetProjectId);
-    setPendingHomeAgentPrompt(trimmed);
+    setPendingHomeAgentPrompt(message);
+    clearHomePromptTemplate();
+    setAttachedTemplate(null);
     void navigate({
-      to: '/project/$slug',
+      to: '/project/$slug/agent',
       params: { slug: String(targetProjectId) },
     });
   };
@@ -61,6 +100,10 @@ function HomePromptHero() {
       ? formatProjectDisplayName(selectedProjectName, selectedProjectId)
       : '프로젝트 선택';
 
+  const promptPlaceholder = attachedTemplate
+    ? '이 템플릿으로 만들 내용과 요구사항을 입력하세요'
+    : '작업을 할당하거나 무엇이든 질문하세요';
+
   return (
     <section className="relative z-10 flex flex-col items-center pt-10 pb-8">
       <h1 className="text-center text-[32px] font-semibold tracking-tight text-[#0f172a] sm:text-[36px]">
@@ -69,6 +112,12 @@ function HomePromptHero() {
 
       <div className="mt-8 w-full max-w-[720px]">
         <div className="overflow-visible rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
+          {attachedTemplate ? (
+            <div className="px-5 pt-5">
+              <HomePromptTemplateChip template={attachedTemplate} onRemove={handleRemoveTemplate} />
+            </div>
+          ) : null}
+
           <textarea
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
@@ -78,9 +127,12 @@ function HomePromptHero() {
                 handleSubmit();
               }
             }}
-            rows={3}
-            placeholder="작업을 할당하거나 무엇이든 질문하세요"
-            className="block w-full resize-none bg-transparent px-5 pt-5 pb-2 text-[15px] leading-relaxed text-[#0f172a] outline-none placeholder:text-[#94a3b8]"
+            rows={attachedTemplate ? 2 : 3}
+            placeholder={promptPlaceholder}
+            className={cn(
+              'block w-full resize-none bg-transparent px-5 pb-2 text-[15px] leading-relaxed text-[#0f172a] outline-none placeholder:text-[#94a3b8]',
+              attachedTemplate ? 'pt-4' : 'pt-5',
+            )}
           />
 
           <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-4">
