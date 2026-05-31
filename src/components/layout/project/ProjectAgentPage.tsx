@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ChevronLeft,
   ChevronRight,
+  Code,
   MessageSquare,
   Pencil,
   RefreshCw,
@@ -24,8 +25,11 @@ import {
 import AgentChatListPanel from '@/components/layout/project/AgentChatListPanel';
 import AgentConversationPanel from '@/components/layout/project/AgentConversationPanel';
 import GithubRepositoryPicker from '@/components/layout/project/GithubRepositoryPicker';
+import ProjectCodeExplorerPanel from '@/components/layout/project/ProjectCodeExplorerPanel';
+import { cn } from '@/lib/utils';
 
 type AgentSidebarTab = 'list' | 'conversation';
+type RightPanelView = 'preview' | 'code';
 
 type ProjectAgentPageProps = {
   projectId: number;
@@ -39,6 +43,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [isNewConversation, setIsNewConversation] = useState(() => homePrompt !== null);
   const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
   const [connectedRepo, setConnectedRepo] = useState<GithubRepository | null>(null);
+  const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
 
   const queryClient = useQueryClient();
 
@@ -186,8 +191,28 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               <button type="button" className="rounded p-1.5 text-[#94a3b8] hover:bg-white">
                 <ChevronRight className="size-3.5" />
               </button>
-              <button type="button" className="rounded p-1.5 text-[#94a3b8] hover:bg-white">
+              <button
+                type="button"
+                className="rounded p-1.5 text-[#94a3b8] hover:bg-white"
+                aria-label="새로고침"
+              >
                 <RotateCcw className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setRightPanelView((view) => (view === 'code' ? 'preview' : 'code'))
+                }
+                aria-label="코드 보기"
+                aria-pressed={rightPanelView === 'code'}
+                className={cn(
+                  'rounded p-1.5 transition',
+                  rightPanelView === 'code'
+                    ? 'bg-white text-[#0f172a] shadow-sm ring-1 ring-[#e2e8f0]'
+                    : 'text-[#94a3b8] hover:bg-white',
+                )}
+              >
+                <Code className="size-3.5" strokeWidth={1.75} />
               </button>
             </div>
             <div className="flex min-w-0 flex-1 items-center rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-1.5">
@@ -232,18 +257,22 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           </div>
         </header>
 
-        <div className="flex flex-1 items-center justify-center p-8">
-          <div className="max-w-md text-center">
-            <p className="mt-6 text-[15px] font-semibold leading-relaxed text-[#334155]">
-              Devely가 사이트를 구축 중입니다.
-              <br />
-              잠시 기다려 주세요!
-            </p>
-            <p className="mt-2 text-[13px] leading-relaxed text-[#94a3b8]">
-              앱을 다운로드하면 준비가 완료될 때 알림을 받을 수 있어요.
-            </p>
+        {rightPanelView === 'code' ? (
+          <ProjectCodeExplorerPanel />
+        ) : (
+          <div className="flex flex-1 items-center justify-center bg-[#ececee] p-8">
+            <div className="max-w-md text-center">
+              <p className="text-[15px] font-semibold leading-relaxed text-[#334155]">
+                Devely가 사이트를 구축 중입니다.
+                <br />
+                잠시 기다려 주세요!
+              </p>
+              <p className="mt-2 text-[13px] leading-relaxed text-[#94a3b8]">
+                앱을 다운로드하면 준비가 완료될 때 알림을 받을 수 있어요.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </section>
     </div>
   );

@@ -23,6 +23,7 @@ import { Route as AuthenticatedProjectIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedProjectNewRouteImport } from './routes/_authenticated/project.new'
 import { Route as AuthenticatedProjectSlugRouteImport } from './routes/_authenticated/project.$slug'
 import { Route as AuthenticatedProjectSlugIndexRouteImport } from './routes/_authenticated/project.$slug.index'
+import { Route as AuthenticatedProjectSlugCodeRouteImport } from './routes/_authenticated/project.$slug.code'
 import { Route as AuthenticatedProjectSlugAgentRouteImport } from './routes/_authenticated/project.$slug.agent'
 
 const CallbackRoute = CallbackRouteImport.update({
@@ -97,6 +98,12 @@ const AuthenticatedProjectSlugIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedProjectSlugRoute,
   } as any)
+const AuthenticatedProjectSlugCodeRoute =
+  AuthenticatedProjectSlugCodeRouteImport.update({
+    id: '/code',
+    path: '/code',
+    getParentRoute: () => AuthenticatedProjectSlugRoute,
+  } as any)
 const AuthenticatedProjectSlugAgentRoute =
   AuthenticatedProjectSlugAgentRouteImport.update({
     id: '/agent',
@@ -118,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/project/new': typeof AuthenticatedProjectNewRoute
   '/project/': typeof AuthenticatedProjectIndexRoute
   '/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute
+  '/project/$slug/code': typeof AuthenticatedProjectSlugCodeRoute
   '/project/$slug/': typeof AuthenticatedProjectSlugIndexRoute
 }
 export interface FileRoutesByTo {
@@ -132,6 +140,7 @@ export interface FileRoutesByTo {
   '/project/new': typeof AuthenticatedProjectNewRoute
   '/project': typeof AuthenticatedProjectIndexRoute
   '/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute
+  '/project/$slug/code': typeof AuthenticatedProjectSlugCodeRoute
   '/project/$slug': typeof AuthenticatedProjectSlugIndexRoute
 }
 export interface FileRoutesById {
@@ -150,6 +159,7 @@ export interface FileRoutesById {
   '/_authenticated/project/new': typeof AuthenticatedProjectNewRoute
   '/_authenticated/project/': typeof AuthenticatedProjectIndexRoute
   '/_authenticated/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute
+  '/_authenticated/project/$slug/code': typeof AuthenticatedProjectSlugCodeRoute
   '/_authenticated/project/$slug/': typeof AuthenticatedProjectSlugIndexRoute
 }
 export interface FileRouteTypes {
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/project/new'
     | '/project/'
     | '/project/$slug/agent'
+    | '/project/$slug/code'
     | '/project/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/project/new'
     | '/project'
     | '/project/$slug/agent'
+    | '/project/$slug/code'
     | '/project/$slug'
   id:
     | '__root__'
@@ -199,6 +211,7 @@ export interface FileRouteTypes {
     | '/_authenticated/project/new'
     | '/_authenticated/project/'
     | '/_authenticated/project/$slug/agent'
+    | '/_authenticated/project/$slug/code'
     | '/_authenticated/project/$slug/'
   fileRoutesById: FileRoutesById
 }
@@ -309,6 +322,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectSlugIndexRouteImport
       parentRoute: typeof AuthenticatedProjectSlugRoute
     }
+    '/_authenticated/project/$slug/code': {
+      id: '/_authenticated/project/$slug/code'
+      path: '/code'
+      fullPath: '/project/$slug/code'
+      preLoaderRoute: typeof AuthenticatedProjectSlugCodeRouteImport
+      parentRoute: typeof AuthenticatedProjectSlugRoute
+    }
     '/_authenticated/project/$slug/agent': {
       id: '/_authenticated/project/$slug/agent'
       path: '/agent'
@@ -321,12 +341,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedProjectSlugRouteChildren {
   AuthenticatedProjectSlugAgentRoute: typeof AuthenticatedProjectSlugAgentRoute
+  AuthenticatedProjectSlugCodeRoute: typeof AuthenticatedProjectSlugCodeRoute
   AuthenticatedProjectSlugIndexRoute: typeof AuthenticatedProjectSlugIndexRoute
 }
 
 const AuthenticatedProjectSlugRouteChildren: AuthenticatedProjectSlugRouteChildren =
   {
     AuthenticatedProjectSlugAgentRoute: AuthenticatedProjectSlugAgentRoute,
+    AuthenticatedProjectSlugCodeRoute: AuthenticatedProjectSlugCodeRoute,
     AuthenticatedProjectSlugIndexRoute: AuthenticatedProjectSlugIndexRoute,
   }
 
