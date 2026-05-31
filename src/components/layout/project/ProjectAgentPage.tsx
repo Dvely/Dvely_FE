@@ -236,9 +236,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  setRightPanelView((view) => (view === 'code' ? 'preview' : 'code'))
-                }
+                onClick={() => setRightPanelView((view) => (view === 'code' ? 'preview' : 'code'))}
                 aria-label="코드 보기"
                 aria-pressed={rightPanelView === 'code'}
                 className={cn(

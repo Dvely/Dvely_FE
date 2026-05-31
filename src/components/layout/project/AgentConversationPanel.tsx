@@ -245,9 +245,7 @@ function AgentConversationPanel({
               key={message.messageId}
               message={message}
               reviewStatus={
-                message.role === 'assistant'
-                  ? getMessageReviewStatus(message.messageId)
-                  : null
+                message.role === 'assistant' ? getMessageReviewStatus(message.messageId) : null
               }
               onReviewDecision={handleReviewDecision}
             />
@@ -361,7 +359,9 @@ function MessageBubble({ message, reviewStatus, onReviewDecision }: MessageBubbl
               : 'rounded-xl border border-[#e2e8f0] bg-white px-3.5 py-3 text-[#64748b]'
         }`}
       >
-        <p className="whitespace-pre-wrap">{linkifyMessageContent(message.content, linkClassName)}</p>
+        <p className="whitespace-pre-wrap">
+          {linkifyMessageContent(message.content, linkClassName)}
+        </p>
       </div>
 
       {isAssistant && reviewStatus === 'pending' ? (

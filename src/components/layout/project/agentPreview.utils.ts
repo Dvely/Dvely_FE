@@ -19,8 +19,7 @@ function hasPreviewReadyMessage(messages: ConversationMessage[]): boolean {
 export function deriveAgentPreviewUrl(messages: ConversationMessage[]): string {
   const hasBlogContext = messages.some(
     (message) =>
-      message.content.includes('my-blog') ||
-      message.content.includes('blog.dldnsgkr.dev'),
+      message.content.includes('my-blog') || message.content.includes('blog.dldnsgkr.dev'),
   );
 
   return hasBlogContext ? AGENT_BLOG_PREVIEW_URL : AGENT_PORTFOLIO_PREVIEW_URL;

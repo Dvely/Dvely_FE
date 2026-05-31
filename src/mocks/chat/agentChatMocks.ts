@@ -1,5 +1,8 @@
 import type { ConversationMessage } from '@/types/chat.type';
-import { readSessionMessages, writeSessionMessages } from '@/components/layout/project/agentChat.utils';
+import {
+  readSessionMessages,
+  writeSessionMessages,
+} from '@/components/layout/project/agentChat.utils';
 
 export type MessageReviewStatus = 'pending' | 'accepted' | 'rejected';
 
@@ -119,10 +122,7 @@ const messageTemplateIdByLocalId = new Map<number, number>();
 const portfolioScriptStartedConversationIds = new Set<number>();
 const repoEditScriptStartedConversationIds = new Set<number>();
 
-type MockAssistantReplyListener = (
-  conversationId: number,
-  messages: ConversationMessage[],
-) => void;
+type MockAssistantReplyListener = (conversationId: number, messages: ConversationMessage[]) => void;
 
 let mockAssistantReplyListener: MockAssistantReplyListener | null = null;
 
@@ -191,11 +191,7 @@ function clearPendingReplyTimer(conversationId: number) {
   }
 }
 
-function scheduleConversationUpdate(
-  conversationId: number,
-  deliver: () => void,
-  delayMs: number,
-) {
+function scheduleConversationUpdate(conversationId: number, deliver: () => void, delayMs: number) {
   clearPendingReplyTimer(conversationId);
 
   const timerId = window.setTimeout(() => {

@@ -103,7 +103,11 @@ export const codeFileContents: Record<string, CodeFileContent> = {
     path: 'sites/portfolio-2024/layout.tsx',
     diff: [
       { type: 'remove', content: 'export default function RootLayout({ children }) {' },
-      { type: 'add', content: 'export default function RootLayout({ children }: { children: React.ReactNode }) {' },
+      {
+        type: 'add',
+        content:
+          'export default function RootLayout({ children }: { children: React.ReactNode }) {',
+      },
     ],
   },
   'styles/globals.css': {

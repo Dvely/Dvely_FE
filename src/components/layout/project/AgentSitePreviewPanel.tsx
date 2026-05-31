@@ -17,8 +17,7 @@ function AgentSitePreviewPanel({ phase, previewUrl }: AgentSitePreviewPanelProps
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[12px] font-medium text-[#334155] transition hover:bg-[#f8fafc]"
           >
-            <ExternalLink className="size-3.5" />
-            새 탭에서 보기
+            <ExternalLink className="size-3.5" />새 탭에서 보기
           </a>
         </div>
         <iframe

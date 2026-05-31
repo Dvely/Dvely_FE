@@ -12,7 +12,9 @@ type SidebarTab = 'folder' | 'tag';
 
 function collectFolderIds(nodes: CodeExplorerFileNode[]): string[] {
   return nodes.flatMap((node) =>
-    node.type === 'folder' ? [node.id, ...(node.children ? collectFolderIds(node.children) : [])] : [],
+    node.type === 'folder'
+      ? [node.id, ...(node.children ? collectFolderIds(node.children) : [])]
+      : [],
   );
 }
 
@@ -55,7 +57,10 @@ function CodeFileTreeItem({
       >
         {isFolder ? (
           <ChevronDown
-            className={cn('size-3.5 shrink-0 text-[#94a3b8] transition', !isExpanded && '-rotate-90')}
+            className={cn(
+              'size-3.5 shrink-0 text-[#94a3b8] transition',
+              !isExpanded && '-rotate-90',
+            )}
             aria-hidden
           />
         ) : (
@@ -68,7 +73,9 @@ function CodeFileTreeItem({
         )}
         <span className="min-w-0 flex-1 truncate">{node.name}</span>
         {node.changeCount != null ? (
-          <span className="shrink-0 text-[12px] tabular-nums text-[#94a3b8]">{node.changeCount}</span>
+          <span className="shrink-0 text-[12px] tabular-nums text-[#94a3b8]">
+            {node.changeCount}
+          </span>
         ) : null}
       </button>
       {isFolder && isExpanded && node.children
