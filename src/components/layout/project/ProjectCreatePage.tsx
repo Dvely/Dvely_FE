@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useSearch } from '@tanstack/react-router';
 import { ExternalLink, Monitor, RefreshCw, Smartphone } from 'lucide-react';
-import HomeStepProgress from '@/components/layout/home/HomeStepProgress';
+
 import {
   DEFAULT_TEMPLATE_ID,
   getHomeTemplateById,
@@ -19,8 +19,6 @@ function ProjectCreatePage() {
 
   return (
     <div className="flex h-screen min-h-0 flex-col bg-[#f8fafc]">
-      <HomeStepProgress currentStep={2} />
-
       <div className="flex min-h-0 flex-1">
         <section className="flex min-h-0 w-full shrink-0 flex-col bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e2e8f0] px-4 py-3">

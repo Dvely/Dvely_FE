@@ -24,6 +24,9 @@ const MOCK_CODE_WRITING_DELAY_MS = 2500;
 const MOCK_SAVE_PROMPT_DELAY_MS = 400;
 const MOCK_DEPLOY_DELAY_MS = 1500;
 
+/** "약 2~3분" 배포 수락 단계 — 수락 시 파이프라인 실행 */
+export const DEPLOY_APPROVAL_TEMPLATE_IDS = new Set([1005, 2005]);
+
 /** 신규 포트폴리오 생성 대화 (conversation 예: 201) */
 const MOCK_PORTFOLIO_SCRIPT: MockScriptStep[] = [
   {
@@ -140,6 +143,13 @@ export function getMessageReviewStatus(messageId: number): MessageReviewStatus |
 
 export function setMessageReviewStatus(messageId: number, status: MessageReviewStatus) {
   messageReviewStatusById.set(messageId, status);
+}
+
+export function isDeployApprovalMessage(messageId: number): boolean {
+  const templateMessageId = messageTemplateIdByLocalId.get(messageId);
+  return (
+    templateMessageId !== undefined && DEPLOY_APPROVAL_TEMPLATE_IDS.has(templateMessageId)
+  );
 }
 
 export function hasPendingMessageReview(messages: ConversationMessage[]): boolean {
@@ -327,10 +337,13 @@ export function scheduleMockAssistantReply({
   notifyConversationUpdate(conversationId);
 }
 
-export function resolveMockScriptReview(
+export async function resolveMockScriptReview(
   conversationId: number,
   messageId: number,
   status: Exclude<MessageReviewStatus, 'pending'>,
+  options?: {
+    runDeployPipeline?: () => Promise<void>;
+  },
 ) {
   if (status === 'rejected') return;
 
@@ -340,15 +353,21 @@ export function resolveMockScriptReview(
   const followUpStep = MOCK_APPROVAL_FOLLOWUPS[templateMessageId];
   if (!followUpStep) return;
 
+  const isDeployApproval = DEPLOY_APPROVAL_TEMPLATE_IDS.has(templateMessageId);
   const isSaveApproval = templateMessageId === 1004 || templateMessageId === 2004;
   const delayMs = isSaveApproval ? MOCK_ASSISTANT_REPLY_DELAY_MS : MOCK_DEPLOY_DELAY_MS;
 
-  scheduleConversationUpdate(
-    conversationId,
-    () => {
-      appendScriptMessage(conversationId, followUpStep);
-    },
-    delayMs,
-  );
+  const deliverFollowUp = () => {
+    appendScriptMessage(conversationId, followUpStep);
+    notifyConversationUpdate(conversationId);
+  };
+
+  if (isDeployApproval && options?.runDeployPipeline) {
+    await options.runDeployPipeline();
+    scheduleConversationUpdate(conversationId, deliverFollowUp, 0);
+    return;
+  }
+
+  scheduleConversationUpdate(conversationId, deliverFollowUp, delayMs);
   notifyConversationUpdate(conversationId);
 }

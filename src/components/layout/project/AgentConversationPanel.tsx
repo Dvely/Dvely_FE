@@ -15,6 +15,7 @@ import {
   createLocalMessage,
   getMessageReviewStatus,
   hasPendingMessageReview,
+  isDeployApprovalMessage,
   isMockAssistantReplyPending,
   MOCK_NEW_PORTFOLIO_USER_PROMPT,
   MOCK_REPO_EDIT_USER_PROMPT,
@@ -44,6 +45,8 @@ type AgentConversationPanelProps = {
   initialPrompt?: string | null;
   onConversationCreated: (conversationId: number) => void;
   onConversationActivity?: (conversationId: number) => void;
+  /** 배포 제안(약 2~3분) 수락 시 파이프라인 실행 */
+  onDeployPipelineStart?: () => Promise<void>;
 };
 
 function AgentConversationPanel({
@@ -54,6 +57,7 @@ function AgentConversationPanel({
   initialPrompt,
   onConversationCreated,
   onConversationActivity,
+  onDeployPipelineStart,
 }: AgentConversationPanelProps) {
   const [input, setInput] = useState('');
   const [displayMessages, setDisplayMessages] = useState<ConversationMessage[]>([]);
@@ -156,18 +160,29 @@ function AgentConversationPanel({
     }
   };
 
-  const handleReviewDecision = (
+  const handleReviewDecision = async (
     messageId: number,
     status: Exclude<MessageReviewStatus, 'pending'>,
   ) => {
     setMessageReviewStatus(messageId, status);
+    setReviewRevision((revision) => revision + 1);
 
-    if (conversationId !== null && status === 'accepted') {
-      resolveMockScriptReview(conversationId, messageId, status);
-      setIsAssistantReplying(isMockAssistantReplyPending(conversationId));
+    if (conversationId === null || status !== 'accepted') return;
+
+    const shouldRunDeployPipeline =
+      isDeployApprovalMessage(messageId) && onDeployPipelineStart !== undefined;
+
+    if (shouldRunDeployPipeline) {
+      setIsAssistantReplying(true);
     }
 
-    setReviewRevision((revision) => revision + 1);
+    try {
+      await resolveMockScriptReview(conversationId, messageId, status, {
+        runDeployPipeline: shouldRunDeployPipeline ? onDeployPipelineStart : undefined,
+      });
+    } finally {
+      setIsAssistantReplying(isMockAssistantReplyPending(conversationId));
+    }
   };
 
   const syncConversationView = (targetConversationId: number | null) => {
@@ -294,7 +309,7 @@ function AgentConversationPanel({
             type="button"
             disabled={!input.trim() || isInputLocked}
             onClick={handleSend}
-            className="mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#2563eb] text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-40"
+            className="mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#7c3aed] text-white transition hover:bg-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="전송"
           >
             <SendHorizontal className="size-4" />
@@ -344,7 +359,7 @@ function MessageBubble({ message, reviewStatus, onReviewDecision }: MessageBubbl
   const isAssistant = message.role === 'assistant';
   const linkClassName = isUser
     ? 'underline underline-offset-2 hover:text-[#5b21b6]'
-    : 'text-[#2563eb] underline underline-offset-2 hover:text-[#1d4ed8]';
+    : 'text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]';
 
   return (
     <div className={isUser ? 'ml-6' : undefined}>

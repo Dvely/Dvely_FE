@@ -25,6 +25,38 @@ export function migrateSessionMessages(fromConversationId: number, toConversatio
 }
 
 const PENDING_HOME_AGENT_PROMPT_KEY = 'dvely:pending-home-agent-prompt';
+const HOME_CHAT_PROJECT_IDS_KEY = 'dvely:home-chat-project-ids';
+
+function readHomeChatProjectIds(): Set<number> {
+  try {
+    const raw = sessionStorage.getItem(HOME_CHAT_PROJECT_IDS_KEY);
+    if (!raw) return new Set();
+
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set();
+
+    return new Set(
+      parsed.filter((id): id is number => typeof id === 'number' && Number.isFinite(id)),
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+function writeHomeChatProjectIds(ids: Set<number>) {
+  sessionStorage.setItem(HOME_CHAT_PROJECT_IDS_KEY, JSON.stringify([...ids]));
+}
+
+/** 홈에서 프로젝트를 연결하고 채팅을 보낸 프로젝트 — 목록 클릭 시 상세로 이동 */
+export function markHomeChatProject(projectId: number) {
+  const ids = readHomeChatProjectIds();
+  ids.add(projectId);
+  writeHomeChatProjectIds(ids);
+}
+
+export function isHomeChatProject(projectId: number): boolean {
+  return readHomeChatProjectIds().has(projectId);
+}
 
 export function setPendingHomeAgentPrompt(prompt: string) {
   sessionStorage.setItem(PENDING_HOME_AGENT_PROMPT_KEY, prompt.trim());

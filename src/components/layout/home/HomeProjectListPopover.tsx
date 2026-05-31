@@ -165,7 +165,7 @@ function HomeProjectListPopover({
               <button
                 type="button"
                 onClick={() => void refetch()}
-                className="mt-2 block w-full py-2 text-center text-[12px] font-medium text-[#2563eb] hover:underline"
+                className="mt-2 block w-full py-2 text-center text-[12px] font-medium text-[#7c3aed] hover:underline"
               >
                 다시 불러오기
               </button>
