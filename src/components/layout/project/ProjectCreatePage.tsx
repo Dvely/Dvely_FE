@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useSearch } from '@tanstack/react-router';
-import { ExternalLink, Monitor, RefreshCw, Smartphone } from 'lucide-react';
+import { ChevronLeft, ExternalLink, Monitor, Smartphone } from 'lucide-react';
 
 import {
   DEFAULT_TEMPLATE_ID,
@@ -27,8 +27,8 @@ function ProjectCreatePage() {
                 to="/home"
                 className="inline-flex items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[13px] font-medium text-[#334155] transition hover:bg-[#f8fafc]"
               >
-                <RefreshCw className="size-3.5" />
-                템플릿 변경
+                <ChevronLeft className="size-3.5" strokeWidth={2} />
+                템플릿 뒤로가기
               </Link>
               <button
                 type="button"
