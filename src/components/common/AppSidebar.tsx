@@ -6,9 +6,10 @@ import {
   PanelLeft,
   PanelRight,
   Settings,
+  Trash2,
 } from 'lucide-react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 import type { AppShellPath } from '@/lib/appRoutes';
 import { logoutSession } from '@/lib/logout';
@@ -22,6 +23,7 @@ const navItems: {
   { to: '/project', label: '프로젝트', icon: FolderKanban },
   { to: '/templates', label: '템플릿', icon: LayoutTemplate },
   { to: '/analytics', label: '분석', icon: BarChart2 },
+  { to: '/trash', label: '휴지통', icon: Trash2 },
   { to: '/settings', label: '설정', icon: Settings },
 ];
 
@@ -98,17 +100,25 @@ export default function AppSidebar() {
           const active = pathname === to || pathname.startsWith(`${to}/`);
 
           return (
-            <Link
-              key={to}
-              to={to}
-              title={collapsed ? label : undefined}
-              className={`flex w-full items-center rounded-xl text-[13px] font-medium transition ${
-                collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5 text-left'
-              } ${active ? 'bg-[#E4E4E4] text-[#34322D]' : ' hover:bg-[#E4E4E4]'}`}
-            >
-              <Icon className="size-[18px] shrink-0 opacity-90" strokeWidth={active ? 2 : 1.75} />
-              {!collapsed ? <span>{label}</span> : <span className="sr-only">{label}</span>}
-            </Link>
+            <Fragment key={to}>
+              {to === '/trash' ? (
+                <div
+                  className="my-1 border-t border-[#0F172A]/8"
+                  role="separator"
+                  aria-hidden="true"
+                />
+              ) : null}
+              <Link
+                to={to}
+                title={collapsed ? label : undefined}
+                className={`flex w-full items-center rounded-xl text-[13px] font-medium transition ${
+                  collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5 text-left'
+                } ${active ? 'bg-[#E4E4E4] text-[#34322D]' : ' hover:bg-[#E4E4E4]'}`}
+              >
+                <Icon className="size-[18px] shrink-0 opacity-90" strokeWidth={active ? 2 : 1.75} />
+                {!collapsed ? <span>{label}</span> : <span className="sr-only">{label}</span>}
+              </Link>
+            </Fragment>
           );
         })}
       </nav>

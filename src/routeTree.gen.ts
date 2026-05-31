@@ -13,6 +13,7 @@ import { Route as CallbackRouteImport } from './routes/callback';
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated';
 import { Route as IndexRouteImport } from './routes/index';
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback';
+import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash';
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates';
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings';
 import { Route as AuthenticatedProjectRouteImport } from './routes/_authenticated/project';
@@ -42,6 +43,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
+} as any);
+const AuthenticatedTrashRoute = AuthenticatedTrashRouteImport.update({
+  id: '/trash',
+  path: '/trash',
+  getParentRoute: () => AuthenticatedRoute,
 } as any);
 const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
   id: '/templates',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/project': typeof AuthenticatedProjectRouteWithChildren;
   '/settings': typeof AuthenticatedSettingsRoute;
   '/templates': typeof AuthenticatedTemplatesRoute;
+  '/trash': typeof AuthenticatedTrashRoute;
   '/auth/callback': typeof AuthCallbackRoute;
   '/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren;
   '/project/new': typeof AuthenticatedProjectNewRoute;
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute;
   '/settings': typeof AuthenticatedSettingsRoute;
   '/templates': typeof AuthenticatedTemplatesRoute;
+  '/trash': typeof AuthenticatedTrashRoute;
   '/auth/callback': typeof AuthCallbackRoute;
   '/project/new': typeof AuthenticatedProjectNewRoute;
   '/project': typeof AuthenticatedProjectIndexRoute;
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/_authenticated/project': typeof AuthenticatedProjectRouteWithChildren;
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute;
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute;
+  '/_authenticated/trash': typeof AuthenticatedTrashRoute;
   '/auth/callback': typeof AuthCallbackRoute;
   '/_authenticated/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren;
   '/_authenticated/project/new': typeof AuthenticatedProjectNewRoute;
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/project'
     | '/settings'
     | '/templates'
+    | '/trash'
     | '/auth/callback'
     | '/project/$slug'
     | '/project/new'
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/settings'
     | '/templates'
+    | '/trash'
     | '/auth/callback'
     | '/project/new'
     | '/project'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/_authenticated/project'
     | '/_authenticated/settings'
     | '/_authenticated/templates'
+    | '/_authenticated/trash'
     | '/auth/callback'
     | '/_authenticated/project/$slug'
     | '/_authenticated/project/new'
@@ -222,6 +234,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/callback';
       preLoaderRoute: typeof AuthCallbackRouteImport;
       parentRoute: typeof rootRouteImport;
+    };
+    '/_authenticated/trash': {
+      id: '/_authenticated/trash';
+      path: '/trash';
+      fullPath: '/trash';
+      preLoaderRoute: typeof AuthenticatedTrashRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
     };
     '/_authenticated/templates': {
       id: '/_authenticated/templates';
@@ -332,6 +351,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProjectRoute: typeof AuthenticatedProjectRouteWithChildren;
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute;
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute;
+  AuthenticatedTrashRoute: typeof AuthenticatedTrashRoute;
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -340,6 +360,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProjectRoute: AuthenticatedProjectRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
+  AuthenticatedTrashRoute: AuthenticatedTrashRoute,
 };
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

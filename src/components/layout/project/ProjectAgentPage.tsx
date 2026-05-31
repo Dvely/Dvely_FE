@@ -9,14 +9,11 @@ import {
   RefreshCw,
   RotateCcw,
   Share2,
-  Trash2,
 } from 'lucide-react';
 import {
   deleteConversation,
   getConversationMessageList,
-  postTrashConversationRestore,
   useProjectConversationListQuery,
-  useTrashConversationListQuery,
 } from '@/api/chat';
 import type { GetProjectDetailResType, GithubRepository } from '@/types/projects.type';
 import {
@@ -25,10 +22,9 @@ import {
 } from '@/components/layout/project/agentChat.utils';
 import AgentChatListPanel from '@/components/layout/project/AgentChatListPanel';
 import AgentConversationPanel from '@/components/layout/project/AgentConversationPanel';
-import AgentTrashListPanel from '@/components/layout/project/AgentTrashListPanel';
 import GithubRepositoryPicker from '@/components/layout/project/GithubRepositoryPicker';
 
-type AgentSidebarTab = 'list' | 'conversation' | 'trash';
+type AgentSidebarTab = 'list' | 'conversation';
 
 type ProjectAgentPageProps = {
   projectId: number;
@@ -40,7 +36,6 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [isNewConversation, setIsNewConversation] = useState(false);
   const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
-  const [restoringConversationId, setRestoringConversationId] = useState<number | null>(null);
   const [connectedRepo, setConnectedRepo] = useState<GithubRepository | null>(null);
 
   const queryClient = useQueryClient();
@@ -48,27 +43,12 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const { data: conversations = [], isLoading: isConversationsLoading } =
     useProjectConversationListQuery(AGENT_CHAT_QUERY_KEY, projectId);
 
-  const { data: trashConversations = [], isLoading: isTrashLoading } =
-    useTrashConversationListQuery(AGENT_CHAT_QUERY_KEY, sidebarTab === 'trash');
-
   const activeConversations = useMemo(
     () =>
       [...conversations]
         .filter((conversation) => !conversation.deleted)
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
     [conversations],
-  );
-
-  const projectTrashConversations = useMemo(
-    () =>
-      [...trashConversations]
-        .filter((conversation) => conversation.projectId === projectId)
-        .sort(
-          (a, b) =>
-            new Date(b.deletedAt || b.updatedAt).getTime() -
-            new Date(a.deletedAt || a.updatedAt).getTime(),
-        ),
-    [trashConversations, projectId],
   );
 
   const invalidateConversationQueries = () => {
@@ -100,27 +80,9 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     },
   });
 
-  const restoreConversationMutation = useMutation({
-    mutationFn: postTrashConversationRestore,
-    onMutate: (conversationId) => {
-      setRestoringConversationId(conversationId);
-    },
-    onSuccess: () => {
-      invalidateConversationQueries();
-    },
-    onSettled: () => {
-      setRestoringConversationId(null);
-    },
-  });
-
   const handleDeleteChat = (conversationId: number) => {
     if (deletingConversationId !== null) return;
     deleteConversationMutation.mutate(conversationId);
-  };
-
-  const handleRestoreChat = (conversationId: number) => {
-    if (restoringConversationId !== null) return;
-    restoreConversationMutation.mutate(conversationId);
   };
 
   const tabButtonClass = (isActive: boolean) =>
@@ -164,16 +126,6 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           >
             대화
           </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={sidebarTab === 'trash'}
-            onClick={() => setSidebarTab('trash')}
-            className={tabButtonClass(sidebarTab === 'trash')}
-          >
-            <Trash2 className="size-3.5 shrink-0" />
-            휴지통
-          </button>
         </div>
 
         {sidebarTab === 'list' ? (
@@ -197,13 +149,6 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               setActiveConversationId(null);
               setSidebarTab('conversation');
             }}
-          />
-        ) : sidebarTab === 'trash' ? (
-          <AgentTrashListPanel
-            conversations={projectTrashConversations}
-            isLoading={isTrashLoading}
-            restoringConversationId={restoringConversationId}
-            onRestore={handleRestoreChat}
           />
         ) : (
           <AgentConversationPanel
