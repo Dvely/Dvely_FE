@@ -35,7 +35,12 @@ import ProjectCodeExplorerPanel from '@/components/layout/project/ProjectCodeExp
 import ProjectPipelinePanel from '@/components/layout/project/ProjectPipelinePanel';
 import { createIdlePipelineRun, runPipelineSequence } from '@/lib/projectPipelineRunner';
 import type { PipelineRun } from '@/mocks/project/pipeline';
+import { useHorizontalPanelResize } from '@/hooks/useHorizontalPanelResize';
 import { cn } from '@/lib/utils';
+
+const AGENT_CHAT_PANEL_MIN_WIDTH = 280;
+const AGENT_CHAT_PANEL_MAX_WIDTH = 640;
+const AGENT_CHAT_PANEL_DEFAULT_WIDTH = 380;
 
 type AgentSidebarTab = 'list' | 'conversation';
 type RightPanelView = 'preview' | 'code' | 'pipeline';
@@ -56,6 +61,13 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [previewRevision, setPreviewRevision] = useState(0);
   const [pipelineRun, setPipelineRun] = useState<PipelineRun>(() => createIdlePipelineRun());
   const pipelineAbortRef = useRef<AbortController | null>(null);
+
+  const { width: chatPanelWidth, handleResizeStart: handleChatPanelResizeStart } =
+    useHorizontalPanelResize({
+      defaultWidth: AGENT_CHAT_PANEL_DEFAULT_WIDTH,
+      minWidth: AGENT_CHAT_PANEL_MIN_WIDTH,
+      maxWidth: AGENT_CHAT_PANEL_MAX_WIDTH,
+    });
 
   const queryClient = useQueryClient();
 
@@ -162,7 +174,10 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
 
   return (
     <div className="flex h-[calc(100vh)] min-h-0 w-full overflow-hidden bg-[#f4f5f7]">
-      <section className="flex w-[min(420px,36vw)] shrink-0 flex-col border-r border-[#e2e8f0] bg-white">
+      <section
+        className="relative flex shrink-0 flex-col border-r border-[#e2e8f0] bg-white"
+        style={{ width: chatPanelWidth }}
+      >
         <header className="flex items-center justify-between border-b border-[#f1f5f9] px-4 py-3">
           <h1 className="text-[14px] font-bold text-[#0f172a]">SYS.AI Agent</h1>
           <button type="button" className="text-[12px] font-medium text-[#7c3aed] hover:underline">
@@ -236,6 +251,17 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             onDeployPipelineStart={handleDeployPipelineStart}
           />
         )}
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="채팅 패널 너비 조절"
+          onPointerDown={handleChatPanelResizeStart}
+          className={cn(
+            'absolute -right-1 top-0 z-20 h-full w-2 touch-none',
+            'cursor-col-resize bg-transparent',
+            'hover:bg-[#7c3aed]/15 active:bg-[#7c3aed]/25',
+          )}
+        />
       </section>
 
       <section className="flex min-w-0 flex-1 flex-col bg-[#ececee]">
