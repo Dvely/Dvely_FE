@@ -2,6 +2,7 @@ import type { ConversationMessage } from '@/types/chat.type';
 
 export type AgentPreviewPhase = 'empty' | 'building' | 'ready';
 
+export const AGENT_TODO_PREVIEW_URL = 'https://dldnsgkr.github.io/my-todo-app/';
 export const AGENT_PORTFOLIO_PREVIEW_URL = 'https://dldnsgkr.github.io/portfolio/';
 export const AGENT_PORTFOLIO_FIX_PREVIEW_URL = 'https://dldnsgkr.github.io/portfolio_fix';
 
@@ -19,12 +20,39 @@ function hasPreviewReadyMessage(messages: ConversationMessage[]): boolean {
   );
 }
 
-export function deriveAgentPreviewUrl(messages: ConversationMessage[]): string {
-  const hasPortfolioFixDeploy = messages.some((message) =>
-    message.content.includes('portfolio_fix'),
+function isTodoAppConversation(messages: ConversationMessage[]): boolean {
+  return messages.some(
+    (message) =>
+      (message.role === 'user' && /투두/.test(message.content)) ||
+      (message.role === 'assistant' && message.content.includes('투두 앱 생성을 완료')) ||
+      message.content.includes('my-todo-app'),
   );
+}
 
-  return hasPortfolioFixDeploy ? AGENT_PORTFOLIO_FIX_PREVIEW_URL : AGENT_PORTFOLIO_PREVIEW_URL;
+function isPortfolioEditConversation(messages: ConversationMessage[]): boolean {
+  return messages.some(
+    (message) =>
+      (message.role === 'user' &&
+        /포트폴리오/i.test(message.content) &&
+        /(감사|섹션)/.test(message.content)) ||
+      (message.role === 'assistant' && message.content.includes('감사 섹션 추가를 완료')),
+  );
+}
+
+export function deriveAgentPreviewUrl(messages: ConversationMessage[]): string {
+  if (messages.some((message) => message.content.includes('portfolio_fix'))) {
+    return AGENT_PORTFOLIO_FIX_PREVIEW_URL;
+  }
+
+  if (isPortfolioEditConversation(messages)) {
+    return AGENT_PORTFOLIO_PREVIEW_URL;
+  }
+
+  if (isTodoAppConversation(messages)) {
+    return AGENT_TODO_PREVIEW_URL;
+  }
+
+  return AGENT_TODO_PREVIEW_URL;
 }
 
 /** 코드·수정 완료 안내 메시지가 오면 배포 URL 프리뷰를 표시한다. */
