@@ -7,10 +7,10 @@ import {
 export type MessageReviewStatus = 'pending' | 'accepted' | 'rejected';
 
 export const MOCK_NEW_PORTFOLIO_USER_PROMPT =
-  'React로 포트폴리오 랜딩 페이지 만들어줘. 내 이름은 이운학(Jace)이고 3년차 프론트엔드 개발자야.\n\n페이지 구성은 헤더 네비게이션, 히어로, 자기소개(About), 경력 타임라인(History), 기술 스택, 프로젝트 갤러리, 연락처 푸터로 해줘.\n\n기술 스택은 메인(React, Next.js, TypeScript, Tailwind CSS, Zustand, Zod, React Hook Form)이랑 경험(Vue, Spring Boot, AWS, Figma 등) 두 카테고리로 나눠서 보여줘.\n\n프로젝트는 실무(HeartField, Hectofinancial, etevers, SRT)랑 토이(UPDEV, Eclectic Explorations)로 구분해줘.\n\n연락처는 이메일 dldnsgkr3326@gmail.com이랑 GitHub github.com/dldnsgkr 넣어줘.\n\n다 만들면 GitHub Pages로 배포해줘. 그리고 portfolio.qeploy.com 도메인도 연결해줘.';
+  'React + Vite로 투두 앱 만들어줘. 할 일 추가, 삭제, 완료 체크 기능 포함해줘.';
 
 export const MOCK_REPO_EDIT_USER_PROMPT =
-  '내 이름이랑 소개글 수정하고 배포해줘. blog.dldnsgkr.dev 도메인도 연결해줘.';
+  '포트폴리오 맨 하단에 감사하다는 의미를 담은 섹션 추가해줘.';
 
 type MockScriptStep = {
   templateMessageId: number;
@@ -24,94 +24,158 @@ const MOCK_CODE_WRITING_DELAY_MS = 2500;
 const MOCK_SAVE_PROMPT_DELAY_MS = 400;
 const MOCK_DEPLOY_DELAY_MS = 1500;
 
-/** "약 2~3분" 배포 수락 단계 — 수락 시 파이프라인 실행 */
-export const DEPLOY_APPROVAL_TEMPLATE_IDS = new Set([1005, 2005]);
+/** GitHub Pages 배포 수락 단계 — 수락 시 파이프라인 실행 */
+export const DEPLOY_APPROVAL_TEMPLATE_IDS = new Set([10043, 20043]);
 
-/** 신규 포트폴리오 생성 대화 (conversation 예: 201) */
-const MOCK_PORTFOLIO_SCRIPT: MockScriptStep[] = [
-  {
-    templateMessageId: 1002,
-    content:
-      '이운학(Jace)님의 포트폴리오 랜딩 페이지를 만들어드릴게요.\n\n진행 순서\n1. 코드 작성 — 헤더, 히어로, About, History, 기술 스택, 프로젝트 갤러리, 푸터 제작\n2. GitHub Pages 배포 — 누구나 접속할 수 있는 주소 생성\n3. 도메인 연결 — portfolio.qeploy.com 주소로 접속 설정\n\n코드 작성을 시작합니다!',
-    tokenCount: 312,
-    requiresApproval: false,
-  },
-  {
-    templateMessageId: 1004,
-    content:
-      '코드 작성이 완료됐어요!\n\n작성된 화면 구성\n- 헤더 — 네비게이션\n- 히어로 — 이름·직업·소개\n- About · History(경력 타임라인)\n- 기술 스택 — 메인 / 경험 카테고리\n- 프로젝트 갤러리 — 실무 / 토이\n- 푸터 — 이메일 · GitHub\n\n이 코드를 GitHub에 저장할게요. 저장해두면 나중에 언제든 불러오거나 수정할 수 있고, 다음 배포 단계도 진행할 수 있어요.\n\n저장을 진행할까요?',
-    tokenCount: 468,
-    requiresApproval: true,
-  },
-];
+const PROJECT_NAME_PROMPT_TEMPLATE_ID = 1001;
+const CODE_COMPLETE_COMMIT_TEMPLATE_ID = 1002;
 
-/** 기존 레포 수정 대화 (conversation 예: 202) */
+const MOCK_PROJECT_NAME_PROMPT_STEP: MockScriptStep = {
+  templateMessageId: PROJECT_NAME_PROMPT_TEMPLATE_ID,
+  content:
+    '프로젝트 이름을 무엇으로 할까요? 입력하신 이름은 추후 저장소에 저장할 때 그대로 사용됩니다.',
+  tokenCount: 42,
+  requiresApproval: false,
+};
+
+const MOCK_CODE_COMPLETE_COMMIT_STEP: MockScriptStep = {
+  templateMessageId: CODE_COMPLETE_COMMIT_TEMPLATE_ID,
+  content:
+    'React + Vite 투두 앱 생성을 완료했습니다!\n\n**구현된 기능**\n- 할 일 추가 (Enter 키 지원)\n- 완료 체크 / 해제\n- 항목 삭제\n- 전체 / 활성 / 완료 필터\n\n프리뷰를 확인해보세요! 변경된 코드를 커밋할까요?',
+  tokenCount: 842,
+  requiresApproval: true,
+};
+
+const REPO_EDIT_ANALYZING_TEMPLATE_ID = 2002;
+const REPO_EDIT_ANALYZE_COMPLETE_TEMPLATE_ID = 2003;
+const REPO_EDIT_COMPLETE_COMMIT_TEMPLATE_ID = 2004;
+const REPO_EDIT_GITHUB_PAGES_DEPLOY_TEMPLATE_ID = 20043;
+const REPO_EDIT_DEPLOY_START_TEMPLATE_ID = 20044;
+const REPO_EDIT_DEPLOY_COMPLETE_TEMPLATE_ID = 20045;
+
+const MOCK_REPO_EDIT_DEPLOY_URL = 'https://dldnsgkr.github.io/portfolio_fix';
+
+/** 기존 레포 수정 대화 (conversation 예: 2) */
 const MOCK_REPO_EDIT_SCRIPT: MockScriptStep[] = [
   {
-    templateMessageId: 2002,
-    content:
-      '이름·소개글을 수정하고 배포 후 blog.dldnsgkr.dev 주소를 연결해드릴게요.\n\n진행 순서\n1. 코드 수정 — 이름·소개글 등 내용 업데이트\n2. 인터넷에 올리기 — 누구나 접속할 수 있는 주소 생성\n3. 도메인 연결 — blog.dldnsgkr.dev 주소로 바로 접속할 수 있도록 설정\n\n시작합니다!',
-    tokenCount: 298,
+    templateMessageId: REPO_EDIT_ANALYZING_TEMPLATE_ID,
+    content: '코드를 분석하고 있습니다. 잠시만 기다려 주세요...',
+    tokenCount: 28,
     requiresApproval: false,
   },
   {
-    templateMessageId: 2003,
-    content:
-      '프로젝트를 불러오고 내용을 수정했어요!\n\n수정된 내용\n- 이름·소개글 업데이트 (src/config/site.js)\n- 소개 페이지 내용 수정 (src/pages/About.jsx)\n\n배포를 위해 추가된 파일\n- 자동 배포 설정 (.github/workflows/deploy.yml)\n- 도메인 연결 파일 (CNAME)',
-    tokenCount: 256,
+    templateMessageId: REPO_EDIT_ANALYZE_COMPLETE_TEMPLATE_ID,
+    content: '분석을 완료했습니다. 감사 섹션 추가를 시작합니다...',
+    tokenCount: 32,
     requiresApproval: false,
   },
   {
-    templateMessageId: 2004,
-    content: '이 변경 내용을 GitHub에 저장할게요.\n\n저장을 진행할까요?',
-    tokenCount: 98,
+    templateMessageId: REPO_EDIT_COMPLETE_COMMIT_TEMPLATE_ID,
+    content:
+      '감사 섹션 추가를 완료했습니다!\n\n방문해주신 분들에 대한 감사 메시지를 포트폴리오 맨 아래에 자연스럽게 담았습니다. 프리뷰에서 확인해보세요! 변경된 코드를 커밋할까요?',
+    tokenCount: 521,
     requiresApproval: true,
   },
 ];
 
+const MOCK_REPO_EDIT_GITHUB_PAGES_DEPLOY_PROMPT_STEP: MockScriptStep = {
+  templateMessageId: REPO_EDIT_GITHUB_PAGES_DEPLOY_TEMPLATE_ID,
+  content: '커밋이 완료됐습니다!\n\nGitHub Pages에 배포할까요?',
+  tokenCount: 38,
+  requiresApproval: true,
+};
+
+const MOCK_REPO_EDIT_DEPLOY_START_STEP: MockScriptStep = {
+  templateMessageId: REPO_EDIT_DEPLOY_START_TEMPLATE_ID,
+  content: '변경 사항을 GitHub Pages에 배포하고 있습니다. 잠시만 기다려 주세요...',
+  tokenCount: 42,
+  requiresApproval: false,
+};
+
+const MOCK_REPO_EDIT_DEPLOY_COMPLETE_STEP: MockScriptStep = {
+  templateMessageId: REPO_EDIT_DEPLOY_COMPLETE_TEMPLATE_ID,
+  content: `배포를 완료했습니다!\n\n**배포 정보**\n- 배포 URL: ${MOCK_REPO_EDIT_DEPLOY_URL}\n- 상태: 성공\n\n감사 섹션이 반영된 포트폴리오를 확인해보세요!`,
+  tokenCount: 387,
+  requiresApproval: false,
+};
+
+const REPO_CREATED_ACK_TEMPLATE_ID = 10041;
+const REPO_COMMIT_COMPLETE_TEMPLATE_ID = 10042;
+const COMMIT_IN_PROGRESS_TEMPLATE_ID = 10049;
+
+const MOCK_REPO_COMMIT_COMPLETE_STEP: MockScriptStep = {
+  templateMessageId: REPO_COMMIT_COMPLETE_TEMPLATE_ID,
+  content: '레포지토리 생성이 완료됐습니다. 코드를 커밋할게요.',
+  tokenCount: 32,
+  requiresApproval: false,
+};
+
+const MOCK_COMMIT_IN_PROGRESS_STEP: MockScriptStep = {
+  templateMessageId: COMMIT_IN_PROGRESS_TEMPLATE_ID,
+  content: '커밋하고 있습니다...',
+  tokenCount: 14,
+  requiresApproval: false,
+};
+
+const GITHUB_PAGES_DEPLOY_TEMPLATE_ID = 10043;
+
+const MOCK_GITHUB_PAGES_DEPLOY_PROMPT_STEP: MockScriptStep = {
+  templateMessageId: GITHUB_PAGES_DEPLOY_TEMPLATE_ID,
+  content: '커밋이 완료됐습니다!\n\nGitHub Pages에 배포할까요?',
+  tokenCount: 38,
+  requiresApproval: true,
+};
+
+const MOCK_GITHUB_PAGES_DEPLOY_START_STEP: MockScriptStep = {
+  templateMessageId: 10044,
+  content: 'GitHub Pages 배포를 시작합니다. 잠시만 기다려 주세요...',
+  tokenCount: 38,
+  requiresApproval: false,
+};
+
+const DEPLOY_COMPLETE_TEMPLATE_ID = 10045;
+const DOMAIN_METHOD_PROMPT_TEMPLATE_ID = 10046;
+const DOMAIN_CONNECT_START_TEMPLATE_ID = 10047;
+const DOMAIN_CONNECT_COMPLETE_TEMPLATE_ID = 10048;
+
+const MOCK_DOMAIN_CONNECT_DELAY_MS = 3000;
+
+const conversationRepoNames = new Map<number, string>();
+
+function buildDeployCompleteStep(repoName: string): MockScriptStep {
+  return {
+    templateMessageId: DEPLOY_COMPLETE_TEMPLATE_ID,
+    content:
+      `GitHub Pages 배포를 완료했습니다!\n\n**배포 정보**\n- 배포 URL: https://dldnsgkr.github.io/${repoName}\n- 상태: 성공\n\n배포가 반영되기까지 수 분이 소요될 수 있습니다. 이후 위 URL로 접속하시면 투두 앱을 확인하실 수 있습니다.\n\n도메인 연결도 진행할까요?`,
+    tokenCount: 614,
+    requiresApproval: true,
+  };
+}
+
+const MOCK_DOMAIN_METHOD_PROMPT_STEP: MockScriptStep = {
+  templateMessageId: DOMAIN_METHOD_PROMPT_TEMPLATE_ID,
+  content:
+    '도메인 연결 방식을 선택해 주세요.\n\n#0 managed_subdomain — Dvely에서 제공하는 서브도메인을 사용합니다. (예: todo.dvely.app)\n#1 purchasable_domain — 새 도메인을 구매해 연결합니다. (예: todo.com)\n#2 custom_domain — 이미 보유한 도메인을 직접 연결합니다. (예: todo.qeploy.com)',
+  tokenCount: 112,
+  requiresApproval: false,
+};
+
+function resolveDomainFromChoice(choice: string, repoName: string): string {
+  const normalized = choice.trim().toLowerCase();
+
+  if (normalized === '0' || normalized.includes('managed')) {
+    return `${repoName}.dvely.app`;
+  }
+
+  if (normalized === '1' || normalized.includes('purchase')) {
+    return 'todo.com';
+  }
+
+  return 'todo.qeploy.com';
+}
+
 const MOCK_APPROVAL_FOLLOWUPS: Record<number, MockScriptStep> = {
-  1004: {
-    templateMessageId: 1005,
-    content:
-      '이제 인터넷에 사이트를 올릴게요. 완료되면 아래 주소로 누구나 접속할 수 있어요.\n\nhttps://dldnsgkr.github.io/portfolio/\n\n약 2~3분 정도 걸려요. 지금 바로 올릴까요?',
-    tokenCount: 198,
-    requiresApproval: true,
-  },
-  1005: {
-    templateMessageId: 1006,
-    content:
-      '사이트가 올라갔어요!\n\nhttps://dldnsgkr.github.io/portfolio/\n\n이제 portfolio.qeploy.com 주소로도 바로 접속할 수 있도록 연결할게요. 연결이 완료되면 portfolio.qeploy.com 으로 접속할 수 있어요. 주소가 완전히 적용되기까지 최대 48시간 정도 걸릴 수 있어요.\n\n도메인 연결을 시작할까요?',
-    tokenCount: 286,
-    requiresApproval: true,
-  },
-  1006: {
-    templateMessageId: 1007,
-    content:
-      '모든 작업이 완료됐어요!\n\n사이트 주소:  portfolio.qeploy.com/\n**커스텀 주소:** portfolio.qeploy.com\n\nportfolio.qeploy.com 주소는 인터넷 전체에 전파되기까지 최대 48시간이 걸릴 수 있어요. 전파 완료 후에는 해당 주소로 바로 접속할 수 있어요.',
-    tokenCount: 367,
-    requiresApproval: false,
-  },
-  2004: {
-    templateMessageId: 2005,
-    content:
-      '이제 인터넷에 사이트를 올릴게요. 완료되면 아래 주소로 누구나 접속할 수 있어요.\n\nhttps://dldnsgkr.github.io/my-blog/\n\n약 2~3분 정도 걸려요. 지금 바로 올릴까요?',
-    tokenCount: 198,
-    requiresApproval: true,
-  },
-  2005: {
-    templateMessageId: 2006,
-    content:
-      '사이트가 올라갔어요!\n\nhttps://dldnsgkr.github.io/my-blog/\n\n이제 blog.dldnsgkr.dev 주소로도 바로 접속할 수 있도록 연결할게요. 연결이 완료되면 blog.dldnsgkr.dev 로 접속할 수 있어요. 주소가 완전히 적용되기까지 최대 48시간 정도 걸릴 수 있어요.\n\n도메인 연결을 시작할까요?',
-    tokenCount: 286,
-    requiresApproval: true,
-  },
-  2006: {
-    templateMessageId: 2007,
-    content:
-      '모든 작업이 완료됐어요!\n\n사이트 주소:  portfolio.qeploy.com/\n**커스텀 주소:** blog.dldnsgkr.dev\n\nblog.dldnsgkr.dev 주소는 인터넷 전체에 전파되기까지 최대 48시간이 걸릴 수 있어요. 전파 완료 후에는 해당 주소로 바로 접속할 수 있어요.',
-    tokenCount: 367,
-    requiresApproval: false,
-  },
+  [DEPLOY_COMPLETE_TEMPLATE_ID]: MOCK_DOMAIN_METHOD_PROMPT_STEP,
 };
 
 const FALLBACK_ASSISTANT_REPLY =
@@ -147,9 +211,7 @@ export function setMessageReviewStatus(messageId: number, status: MessageReviewS
 
 export function isDeployApprovalMessage(messageId: number): boolean {
   const templateMessageId = messageTemplateIdByLocalId.get(messageId);
-  return (
-    templateMessageId !== undefined && DEPLOY_APPROVAL_TEMPLATE_IDS.has(templateMessageId)
-  );
+  return templateMessageId !== undefined && DEPLOY_APPROVAL_TEMPLATE_IDS.has(templateMessageId);
 }
 
 export function hasPendingMessageReview(messages: ConversationMessage[]): boolean {
@@ -182,10 +244,123 @@ function isRepoEditRequest(content: string): boolean {
   const normalized = content.trim();
   if (normalized === MOCK_REPO_EDIT_USER_PROMPT) return true;
 
-  return (
-    /blog\.dldnsgkr\.dev/i.test(normalized) &&
-    /(수정|소개글|이름)/.test(normalized) &&
-    /(배포|연결)/.test(normalized)
+  return /포트폴리오/i.test(normalized) && /(감사|섹션)/.test(normalized);
+}
+
+function getLastAssistantTemplateId(conversationId: number): number | undefined {
+  const messages = readSessionMessages(conversationId);
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index].role === 'assistant') {
+      return messageTemplateIdByLocalId.get(messages[index].messageId);
+    }
+  }
+  return undefined;
+}
+
+function isAwaitingProjectNameInput(conversationId: number): boolean {
+  return getLastAssistantTemplateId(conversationId) === PROJECT_NAME_PROMPT_TEMPLATE_ID;
+}
+
+function isAwaitingDomainMethodSelection(conversationId: number): boolean {
+  return getLastAssistantTemplateId(conversationId) === DOMAIN_METHOD_PROMPT_TEMPLATE_ID;
+}
+
+function normalizeRepoNameInput(content: string): string {
+  const trimmed = content.trim();
+  if (!trimmed) return 'my-todo-app';
+
+  const match = trimmed.match(/[a-zA-Z0-9][a-zA-Z0-9_-]*/);
+  return match?.[0] ?? 'my-todo-app';
+}
+
+function handleProjectNameSubmit(conversationId: number, content: string) {
+  const repoName = normalizeRepoNameInput(content);
+  conversationRepoNames.set(conversationId, repoName);
+
+  scheduleConversationUpdate(
+    conversationId,
+    () => {
+      appendScriptMessage(conversationId, MOCK_CODE_COMPLETE_COMMIT_STEP);
+    },
+    MOCK_CODE_WRITING_DELAY_MS,
+  );
+}
+
+function handleRepoEditCommitApprovalAccepted(conversationId: number) {
+  appendScriptMessage(conversationId, MOCK_COMMIT_IN_PROGRESS_STEP);
+
+  scheduleConversationUpdate(
+    conversationId,
+    () => {
+      appendScriptMessage(conversationId, MOCK_REPO_EDIT_GITHUB_PAGES_DEPLOY_PROMPT_STEP);
+    },
+    MOCK_ASSISTANT_REPLY_DELAY_MS,
+  );
+}
+
+function handleCommitApprovalAccepted(conversationId: number) {
+  const repoName = conversationRepoNames.get(conversationId) ?? 'my-todo-app';
+
+  appendScriptMessage(conversationId, {
+    templateMessageId: REPO_CREATED_ACK_TEMPLATE_ID,
+    content: `${repoName} 레포지토리를 생성합니다...`,
+    tokenCount: 24,
+    requiresApproval: false,
+  });
+
+  scheduleConversationUpdate(
+    conversationId,
+    () => {
+      appendScriptMessage(conversationId, MOCK_REPO_COMMIT_COMPLETE_STEP);
+
+      scheduleConversationUpdate(
+        conversationId,
+        () => {
+          appendScriptMessage(conversationId, MOCK_COMMIT_IN_PROGRESS_STEP);
+
+          scheduleConversationUpdate(
+            conversationId,
+            () => {
+              appendScriptMessage(conversationId, MOCK_GITHUB_PAGES_DEPLOY_PROMPT_STEP);
+            },
+            MOCK_ASSISTANT_REPLY_DELAY_MS,
+          );
+        },
+        MOCK_ASSISTANT_REPLY_DELAY_MS,
+      );
+    },
+    MOCK_ASSISTANT_REPLY_DELAY_MS,
+  );
+}
+
+function handleDomainMethodSubmit(conversationId: number, content: string) {
+  const repoName = conversationRepoNames.get(conversationId) ?? 'my-todo-app';
+  const domain = resolveDomainFromChoice(content, repoName);
+
+  scheduleConversationUpdate(
+    conversationId,
+    () => {
+      appendScriptMessage(conversationId, {
+        templateMessageId: DOMAIN_CONNECT_START_TEMPLATE_ID,
+        content: `${domain} 도메인 연결을 시작합니다...`,
+        tokenCount: 28,
+        requiresApproval: false,
+      });
+
+      scheduleConversationUpdate(
+        conversationId,
+        () => {
+          appendScriptMessage(conversationId, {
+            templateMessageId: DOMAIN_CONNECT_COMPLETE_TEMPLATE_ID,
+            content: `도메인 연결을 완료했습니다!\n\n**연결 정보**\n- 도메인: ${domain}\n- 연결된 저장소: ${repoName}\n\nDNS 전파는 최대 24시간 소요될 수 있습니다. 이후 ${domain} 으로 접속하시면 투두 앱을 확인하실 수 있습니다.`,
+            tokenCount: 398,
+            requiresApproval: false,
+          });
+        },
+        MOCK_DOMAIN_CONNECT_DELAY_MS,
+      );
+    },
+    MOCK_ASSISTANT_REPLY_DELAY_MS,
   );
 }
 
@@ -269,7 +444,13 @@ function runScriptSteps(
 
 function startPortfolioScript(conversationId: number) {
   portfolioScriptStartedConversationIds.add(conversationId);
-  runScriptSteps(conversationId, MOCK_PORTFOLIO_SCRIPT, [MOCK_CODE_WRITING_DELAY_MS]);
+  scheduleConversationUpdate(
+    conversationId,
+    () => {
+      appendScriptMessage(conversationId, MOCK_PROJECT_NAME_PROMPT_STEP);
+    },
+    MOCK_ASSISTANT_REPLY_DELAY_MS,
+  );
 }
 
 function startRepoEditScript(conversationId: number) {
@@ -327,6 +508,18 @@ export function scheduleMockAssistantReply({
     return;
   }
 
+  if (isAwaitingProjectNameInput(conversationId)) {
+    handleProjectNameSubmit(conversationId, content);
+    notifyConversationUpdate(conversationId);
+    return;
+  }
+
+  if (isAwaitingDomainMethodSelection(conversationId)) {
+    handleDomainMethodSubmit(conversationId, content);
+    notifyConversationUpdate(conversationId);
+    return;
+  }
+
   scheduleConversationUpdate(
     conversationId,
     () => {
@@ -350,23 +543,86 @@ export async function resolveMockScriptReview(
   const templateMessageId = messageTemplateIdByLocalId.get(messageId);
   if (templateMessageId === undefined) return;
 
-  const followUpStep = MOCK_APPROVAL_FOLLOWUPS[templateMessageId];
-  if (!followUpStep) return;
-
   const isDeployApproval = DEPLOY_APPROVAL_TEMPLATE_IDS.has(templateMessageId);
-  const isSaveApproval = templateMessageId === 1004 || templateMessageId === 2004;
-  const delayMs = isSaveApproval ? MOCK_ASSISTANT_REPLY_DELAY_MS : MOCK_DEPLOY_DELAY_MS;
+  const isRepoEditCommitApproval =
+    templateMessageId === REPO_EDIT_COMPLETE_COMMIT_TEMPLATE_ID;
+  const isCommitPreviewApproval = templateMessageId === CODE_COMPLETE_COMMIT_TEMPLATE_ID;
+  const delayMs =
+    isRepoEditCommitApproval || isCommitPreviewApproval
+      ? MOCK_ASSISTANT_REPLY_DELAY_MS
+      : MOCK_DEPLOY_DELAY_MS;
+
+  if (isCommitPreviewApproval) {
+    scheduleConversationUpdate(
+      conversationId,
+      () => {
+        handleCommitApprovalAccepted(conversationId);
+      },
+      delayMs,
+    );
+    notifyConversationUpdate(conversationId);
+    return;
+  }
+
+  if (isRepoEditCommitApproval) {
+    scheduleConversationUpdate(
+      conversationId,
+      () => {
+        handleRepoEditCommitApprovalAccepted(conversationId);
+      },
+      delayMs,
+    );
+    notifyConversationUpdate(conversationId);
+    return;
+  }
 
   const deliverFollowUp = () => {
+    const followUpStep = MOCK_APPROVAL_FOLLOWUPS[templateMessageId];
+    if (!followUpStep) return;
+
     appendScriptMessage(conversationId, followUpStep);
     notifyConversationUpdate(conversationId);
   };
 
+  const deliverGithubPagesDeployComplete = () => {
+    const repoName = conversationRepoNames.get(conversationId) ?? 'my-todo-app';
+    appendScriptMessage(conversationId, buildDeployCompleteStep(repoName));
+    notifyConversationUpdate(conversationId);
+  };
+
   if (isDeployApproval && options?.runDeployPipeline) {
+    if (templateMessageId === GITHUB_PAGES_DEPLOY_TEMPLATE_ID) {
+      appendScriptMessage(conversationId, MOCK_GITHUB_PAGES_DEPLOY_START_STEP);
+      notifyConversationUpdate(conversationId);
+    } else if (templateMessageId === REPO_EDIT_GITHUB_PAGES_DEPLOY_TEMPLATE_ID) {
+      appendScriptMessage(conversationId, MOCK_REPO_EDIT_DEPLOY_START_STEP);
+      notifyConversationUpdate(conversationId);
+    }
+
     await options.runDeployPipeline();
+
+    if (templateMessageId === GITHUB_PAGES_DEPLOY_TEMPLATE_ID) {
+      scheduleConversationUpdate(conversationId, deliverGithubPagesDeployComplete, 0);
+      return;
+    }
+
+    if (templateMessageId === REPO_EDIT_GITHUB_PAGES_DEPLOY_TEMPLATE_ID) {
+      scheduleConversationUpdate(
+        conversationId,
+        () => {
+          appendScriptMessage(conversationId, MOCK_REPO_EDIT_DEPLOY_COMPLETE_STEP);
+          notifyConversationUpdate(conversationId);
+        },
+        0,
+      );
+      return;
+    }
+
     scheduleConversationUpdate(conversationId, deliverFollowUp, 0);
     return;
   }
+
+  if (!MOCK_APPROVAL_FOLLOWUPS[templateMessageId]) return;
 
   scheduleConversationUpdate(conversationId, deliverFollowUp, delayMs);
   notifyConversationUpdate(conversationId);
