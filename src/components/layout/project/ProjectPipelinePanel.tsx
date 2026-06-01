@@ -75,6 +75,7 @@ type ProjectPipelinePanelProps = {
 function ProjectPipelinePanel({ className, run: controlledRun, isRunning: controlledIsRunning }: ProjectPipelinePanelProps) {
   const run = controlledRun ?? mockPipelineRun;
   const isRunning = controlledIsRunning ?? run.status === 'running';
+  const runNumber = run.id.replace('run-', '');
 
   return (
     <div className={cn('flex min-h-0 flex-1 flex-col bg-white', className)}>
@@ -83,7 +84,7 @@ function ProjectPipelinePanel({ className, run: controlledRun, isRunning: contro
           <div>
             <h2 className="text-[15px] font-semibold text-[#0f172a]">배포 파이프라인</h2>
             <p className="mt-1 text-[12px] text-[#64748b]">
-              Run #{run.id.replace('run-', '')} · {run.branch} branch · {run.triggeredAt}
+              Run #{runNumber} · {run.branch} branch · {run.triggeredAt}
             </p>
           </div>
           {isRunning ? (

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronDown, File, Folder, Tag } from 'lucide-react';
 import CodeDiffSideBySideView from '@/components/layout/project/CodeDiffSideBySideView';
 import { codeExplorerTree, DEFAULT_CODE_FILE_PATH } from '@/mocks/project/codeExplorer';
-import { getDiffFileByPath } from '@/mocks/project/portfolioCodeDiff';
+import { getDiffFileByPath } from '@/mocks/project/todoCodeDiff';
 import type { CodeExplorerFileNode } from '@/mocks/project/codeExplorer';
 import { cn } from '@/lib/utils';
 
