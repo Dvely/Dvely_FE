@@ -26,7 +26,7 @@ export type DiffFile = {
 export type CodeDiffPayload = {
   meta: {
     generatedAt: string;
-    baseSha: string;
+    baseSha: string | null;
     headSha: string | null;
   };
   summary: {
