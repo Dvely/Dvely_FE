@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { ChevronDown, File, Folder, Tag } from 'lucide-react';
-import {
-  codeExplorerTree,
-  codeFileContents,
-  DEFAULT_CODE_FILE_PATH,
-  type CodeExplorerFileNode,
-} from '@/mocks/project/codeExplorer';
+import CodeDiffSideBySideView from '@/components/layout/project/CodeDiffSideBySideView';
+import { codeExplorerTree, DEFAULT_CODE_FILE_PATH } from '@/mocks/project/codeExplorer';
+import { getDiffFileByPath } from '@/mocks/project/portfolioCodeDiff';
+import type { CodeExplorerFileNode } from '@/mocks/project/codeExplorer';
 import { cn } from '@/lib/utils';
 
 type SidebarTab = 'folder' | 'tag';
@@ -106,7 +104,7 @@ function ProjectCodeExplorerPanel({ className }: ProjectCodeExplorerPanelProps) 
   );
   const [selectedPath, setSelectedPath] = useState(DEFAULT_CODE_FILE_PATH);
 
-  const fileContent = codeFileContents[selectedPath];
+  const diffFile = getDiffFileByPath(selectedPath);
 
   const handleToggleFolder = (id: string) => {
     setExpandedIds((prev) => {
@@ -182,32 +180,24 @@ function ProjectCodeExplorerPanel({ className }: ProjectCodeExplorerPanelProps) 
         </div>
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col bg-white">
-        <div className="shrink-0 border-b border-[#e2e8f0] bg-[#f8fafc] px-4 py-2.5">
-          <p className="truncate font-mono text-[13px] text-[#334155]">
-            {fileContent?.path ?? selectedPath}
-          </p>
+      <main className="flex min-w-0 flex-1 flex-col bg-[#f6f8fa]">
+        <div className="shrink-0 border-b border-[#d0d7de] bg-white px-4 py-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="min-w-0 flex-1 truncate font-mono text-[13px] font-semibold text-[#1f2328]">
+              {selectedPath}
+            </p>
+            {diffFile ? (
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-[12px] font-medium text-[#1a7f37]">+{diffFile.additions}</span>
+                <span className="text-[12px] font-medium text-[#cf222e]">−{diffFile.deletions}</span>
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto bg-white p-4">
-          {fileContent ? (
-            <pre className="overflow-hidden rounded-lg border border-[#e2e8f0] font-mono text-[13px] leading-relaxed">
-              {fileContent.diff.map((line, index) => (
-                <div
-                  key={`${line.type}-${index}`}
-                  className={cn(
-                    'px-3 py-0.5',
-                    line.type === 'remove' && 'bg-[#fef2f2] text-[#b91c1c]',
-                    line.type === 'add' && 'bg-[#f0fdf4] text-[#15803d]',
-                  )}
-                >
-                  <span className="select-none pr-2 opacity-70">
-                    {line.type === 'remove' ? '-' : '+'}
-                  </span>
-                  {line.content}
-                </div>
-              ))}
-            </pre>
+        <div className="min-h-0 flex-1 overflow-auto p-4">
+          {diffFile ? (
+            <CodeDiffSideBySideView file={diffFile} />
           ) : (
             <p className="text-[13px] text-[#94a3b8]">선택한 파일의 변경 내용이 없습니다.</p>
           )}
