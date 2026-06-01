@@ -22,7 +22,7 @@ function ProjectNavLink({ projectId, className, children }: ProjectNavLinkProps)
   }
 
   return (
-    <Link to="/" className={className}>
+    <Link to="/home" className={className}>
       {children}
     </Link>
   );
