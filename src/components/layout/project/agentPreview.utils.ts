@@ -3,10 +3,13 @@ import type { ConversationMessage } from '@/types/chat.type';
 export type AgentPreviewPhase = 'empty' | 'building' | 'ready';
 
 export const AGENT_PORTFOLIO_PREVIEW_URL = 'https://dldnsgkr.github.io/portfolio/';
-export const AGENT_BLOG_PREVIEW_URL = 'https://dldnsgkr.github.io/my-blog/';
+export const AGENT_PORTFOLIO_FIX_PREVIEW_URL = 'https://dldnsgkr.github.io/portfolio_fix';
 
-/** 신규 생성: 코드 작성 완료 / 기존 레포 수정: 프로젝트 수정 완료 */
-export const AGENT_PREVIEW_READY_MARKERS = ['코드 작성이 완료', '프로젝트를 불러오고'] as const;
+/** 신규 생성: 앱 생성 완료 / 기존 레포 수정: 감사 섹션 추가 완료 */
+export const AGENT_PREVIEW_READY_MARKERS = [
+  '투두 앱 생성을 완료',
+  '감사 섹션 추가를 완료',
+] as const;
 
 function hasPreviewReadyMessage(messages: ConversationMessage[]): boolean {
   return messages.some(
@@ -17,12 +20,11 @@ function hasPreviewReadyMessage(messages: ConversationMessage[]): boolean {
 }
 
 export function deriveAgentPreviewUrl(messages: ConversationMessage[]): string {
-  const hasBlogContext = messages.some(
-    (message) =>
-      message.content.includes('my-blog') || message.content.includes('blog.dldnsgkr.dev'),
+  const hasPortfolioFixDeploy = messages.some((message) =>
+    message.content.includes('portfolio_fix'),
   );
 
-  return hasBlogContext ? AGENT_BLOG_PREVIEW_URL : AGENT_PORTFOLIO_PREVIEW_URL;
+  return hasPortfolioFixDeploy ? AGENT_PORTFOLIO_FIX_PREVIEW_URL : AGENT_PORTFOLIO_PREVIEW_URL;
 }
 
 /** 코드·수정 완료 안내 메시지가 오면 배포 URL 프리뷰를 표시한다. */
