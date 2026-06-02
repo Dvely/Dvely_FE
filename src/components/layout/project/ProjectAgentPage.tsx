@@ -24,8 +24,11 @@ import {
   readSessionMessages,
 } from '@/components/layout/project/agentChat.utils';
 import {
+  AGENT_PORTFOLIO_LIVE_PREVIEW_URL,
   deriveAgentPreviewPhase,
   deriveAgentPreviewUrl,
+  hasPortfolioThanksRequest,
+  isPortfolioProjectName,
 } from '@/components/layout/project/agentPreview.utils';
 import AgentChatListPanel from '@/components/layout/project/AgentChatListPanel';
 import AgentConversationPanel from '@/components/layout/project/AgentConversationPanel';
@@ -105,25 +108,30 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     [conversations],
   );
 
-  const previewPhase = useMemo(() => {
+  const previewMessages = useMemo(() => {
     void previewRevision;
 
     if (isNewConversation || activeConversationId === null) {
-      return deriveAgentPreviewPhase([]);
+      return [];
     }
 
-    return deriveAgentPreviewPhase(readSessionMessages(activeConversationId));
+    return readSessionMessages(activeConversationId);
   }, [activeConversationId, isNewConversation, previewRevision]);
+
+  const shouldForcePortfolioPreview =
+    isPortfolioProjectName(project.name) && !hasPortfolioThanksRequest(previewMessages);
+
+  const previewPhase = useMemo(() => {
+    if (shouldForcePortfolioPreview) return 'ready';
+
+    return deriveAgentPreviewPhase(previewMessages);
+  }, [previewMessages, shouldForcePortfolioPreview]);
 
   const previewUrl = useMemo(() => {
-    void previewRevision;
+    if (shouldForcePortfolioPreview) return AGENT_PORTFOLIO_LIVE_PREVIEW_URL;
 
-    if (isNewConversation || activeConversationId === null) {
-      return deriveAgentPreviewUrl([]);
-    }
-
-    return deriveAgentPreviewUrl(readSessionMessages(activeConversationId));
-  }, [activeConversationId, isNewConversation, previewRevision]);
+    return deriveAgentPreviewUrl(previewMessages);
+  }, [previewMessages, shouldForcePortfolioPreview]);
 
   const handleConversationActivity = (conversationId: number) => {
     if (conversationId === activeConversationId) {

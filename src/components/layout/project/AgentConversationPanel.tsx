@@ -17,25 +17,12 @@ import {
   hasPendingMessageReview,
   isDeployApprovalMessage,
   isMockAssistantReplyPending,
-  MOCK_NEW_PORTFOLIO_USER_PROMPT,
-  MOCK_REPO_EDIT_USER_PROMPT,
   resolveMockScriptReview,
   scheduleMockAssistantReply,
   setMessageReviewStatus,
   setMockAssistantReplyListener,
   type MessageReviewStatus,
 } from '@/mocks/chat/agentChatMocks';
-
-const suggestedPrompts = [
-  {
-    label: '포트폴리오 만들기',
-    prompt: MOCK_NEW_PORTFOLIO_USER_PROMPT,
-  },
-  {
-    label: '기존 레포 수정',
-    prompt: MOCK_REPO_EDIT_USER_PROMPT,
-  },
-] as const;
 
 type AgentConversationPanelProps = {
   projectId: number;
@@ -280,19 +267,6 @@ function AgentConversationPanel({
             에이전트 제안을 수락하거나 거절한 뒤 다음 메시지를 보낼 수 있습니다.
           </p>
         ) : null}
-        <div className="mb-2 flex flex-wrap gap-2">
-          {suggestedPrompts.map(({ label, prompt }) => (
-            <button
-              key={label}
-              type="button"
-              disabled={isInputLocked}
-              onClick={() => setInput(prompt)}
-              className="rounded-full border border-[#e2e8f0] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#475569] transition hover:border-[#c4b5fd] hover:text-[#7c3aed] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
         <div className="flex items-end gap-2 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 focus-within:border-[#a5b4fc] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#6366f1]/15">
           <textarea
             rows={2}

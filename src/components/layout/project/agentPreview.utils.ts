@@ -5,12 +5,26 @@ export type AgentPreviewPhase = 'empty' | 'building' | 'ready';
 export const AGENT_TODO_PREVIEW_URL = 'https://dldnsgkr.github.io/my-todo-app/';
 export const AGENT_PORTFOLIO_PREVIEW_URL = 'https://dldnsgkr.github.io/portfolio_fix';
 export const AGENT_PORTFOLIO_FIX_PREVIEW_URL = 'https://dldnsgkr.github.io/portfolio_fix';
+export const AGENT_PORTFOLIO_LIVE_PREVIEW_URL = 'http://portfolio.qeploy.com/';
 
 /** 신규 생성: 앱 생성 완료 / 기존 레포 수정: 감사 섹션 추가 완료 */
 export const AGENT_PREVIEW_READY_MARKERS = [
   '투두 앱 생성을 완료',
   '감사 섹션 추가를 완료',
 ] as const;
+
+export function isPortfolioProjectName(name: string): boolean {
+  return name.trim().toLowerCase() === 'portfolio';
+}
+
+export function hasPortfolioThanksRequest(messages: ConversationMessage[]): boolean {
+  return messages.some(
+    (message) =>
+      message.role === 'user' &&
+      /포트폴리오/i.test(message.content) &&
+      /(감사|섹션)/.test(message.content),
+  );
+}
 
 function hasPreviewReadyMessage(messages: ConversationMessage[]): boolean {
   return messages.some(
@@ -30,12 +44,10 @@ function isTodoAppConversation(messages: ConversationMessage[]): boolean {
 }
 
 function isPortfolioEditConversation(messages: ConversationMessage[]): boolean {
+  if (hasPortfolioThanksRequest(messages)) return true;
+
   return messages.some(
-    (message) =>
-      (message.role === 'user' &&
-        /포트폴리오/i.test(message.content) &&
-        /(감사|섹션)/.test(message.content)) ||
-      (message.role === 'assistant' && message.content.includes('감사 섹션 추가를 완료')),
+    (message) => message.role === 'assistant' && message.content.includes('감사 섹션 추가를 완료'),
   );
 }
 
