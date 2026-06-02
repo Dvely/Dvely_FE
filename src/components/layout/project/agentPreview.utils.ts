@@ -3,7 +3,7 @@ import type { ConversationMessage } from '@/types/chat.type';
 export type AgentPreviewPhase = 'empty' | 'building' | 'ready';
 
 export const AGENT_TODO_PREVIEW_URL = 'https://dldnsgkr.github.io/my-todo-app/';
-export const AGENT_PORTFOLIO_PREVIEW_URL = 'https://dldnsgkr.github.io/portfolio/';
+export const AGENT_PORTFOLIO_PREVIEW_URL = 'https://dldnsgkr.github.io/portfolio_fix';
 export const AGENT_PORTFOLIO_FIX_PREVIEW_URL = 'https://dldnsgkr.github.io/portfolio_fix';
 
 /** 신규 생성: 앱 생성 완료 / 기존 레포 수정: 감사 섹션 추가 완료 */
