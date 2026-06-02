@@ -1,34 +1,49 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ChevronLeft,
   ChevronRight,
+  Code,
   MessageSquare,
   Pencil,
   RefreshCw,
   RotateCcw,
   Share2,
-  Trash2,
 } from 'lucide-react';
 import {
   deleteConversation,
   getConversationMessageList,
-  postTrashConversationRestore,
   useProjectConversationListQuery,
-  useTrashConversationListQuery,
 } from '@/api/chat';
 import type { GetProjectDetailResType, GithubRepository } from '@/types/projects.type';
 import {
   AGENT_CHAT_QUERY_KEY,
+  consumePendingHomeAgentPrompt,
   formatProjectDisplayName,
+  readSessionMessages,
 } from '@/components/layout/project/agentChat.utils';
+import {
+  deriveAgentPreviewPhase,
+  deriveAgentPreviewUrl,
+} from '@/components/layout/project/agentPreview.utils';
 import AgentChatListPanel from '@/components/layout/project/AgentChatListPanel';
 import AgentConversationPanel from '@/components/layout/project/AgentConversationPanel';
-import AgentTrashListPanel from '@/components/layout/project/AgentTrashListPanel';
+import AgentSitePreviewPanel from '@/components/layout/project/AgentSitePreviewPanel';
 import GithubRepositoryPicker from '@/components/layout/project/GithubRepositoryPicker';
+import ProjectCodeExplorerPanel from '@/components/layout/project/ProjectCodeExplorerPanel';
+import ProjectPipelinePanel from '@/components/layout/project/ProjectPipelinePanel';
+import { createIdlePipelineRun, runPipelineSequence } from '@/lib/projectPipelineRunner';
+import type { PipelineRun } from '@/mocks/project/pipeline';
+import { useHorizontalPanelResize } from '@/hooks/useHorizontalPanelResize';
+import { cn } from '@/lib/utils';
 
-type AgentSidebarTab = 'list' | 'conversation' | 'trash';
+const AGENT_CHAT_PANEL_MIN_WIDTH = 280;
+const AGENT_CHAT_PANEL_MAX_WIDTH = 640;
+const AGENT_CHAT_PANEL_DEFAULT_WIDTH = 380;
+
+type AgentSidebarTab = 'list' | 'conversation';
+type RightPanelView = 'preview' | 'code' | 'pipeline';
 
 type ProjectAgentPageProps = {
   projectId: number;
@@ -36,20 +51,51 @@ type ProjectAgentPageProps = {
 };
 
 function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
+  const [homePrompt] = useState(() => consumePendingHomeAgentPrompt());
   const [sidebarTab, setSidebarTab] = useState<AgentSidebarTab>('conversation');
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
-  const [isNewConversation, setIsNewConversation] = useState(false);
+  const [isNewConversation, setIsNewConversation] = useState(() => homePrompt !== null);
   const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
-  const [restoringConversationId, setRestoringConversationId] = useState<number | null>(null);
   const [connectedRepo, setConnectedRepo] = useState<GithubRepository | null>(null);
+  const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
+  const [previewRevision, setPreviewRevision] = useState(0);
+  const [pipelineRun, setPipelineRun] = useState<PipelineRun>(() => createIdlePipelineRun());
+  const pipelineAbortRef = useRef<AbortController | null>(null);
+
+  const { width: chatPanelWidth, handleResizeStart: handleChatPanelResizeStart } =
+    useHorizontalPanelResize({
+      defaultWidth: AGENT_CHAT_PANEL_DEFAULT_WIDTH,
+      minWidth: AGENT_CHAT_PANEL_MIN_WIDTH,
+      maxWidth: AGENT_CHAT_PANEL_MAX_WIDTH,
+    });
 
   const queryClient = useQueryClient();
 
+  const isPipelineRunning = pipelineRun.status === 'running';
+
+  const handleDeployPipelineStart = useCallback(async () => {
+    pipelineAbortRef.current?.abort();
+    const controller = new AbortController();
+    pipelineAbortRef.current = controller;
+    setRightPanelView('pipeline');
+
+    try {
+      await runPipelineSequence(setPipelineRun, { signal: controller.signal });
+    } finally {
+      if (pipelineAbortRef.current === controller) {
+        pipelineAbortRef.current = null;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      pipelineAbortRef.current?.abort();
+    };
+  }, []);
+
   const { data: conversations = [], isLoading: isConversationsLoading } =
     useProjectConversationListQuery(AGENT_CHAT_QUERY_KEY, projectId);
-
-  const { data: trashConversations = [], isLoading: isTrashLoading } =
-    useTrashConversationListQuery(AGENT_CHAT_QUERY_KEY, sidebarTab === 'trash');
 
   const activeConversations = useMemo(
     () =>
@@ -59,17 +105,31 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     [conversations],
   );
 
-  const projectTrashConversations = useMemo(
-    () =>
-      [...trashConversations]
-        .filter((conversation) => conversation.projectId === projectId)
-        .sort(
-          (a, b) =>
-            new Date(b.deletedAt || b.updatedAt).getTime() -
-            new Date(a.deletedAt || a.updatedAt).getTime(),
-        ),
-    [trashConversations, projectId],
-  );
+  const previewPhase = useMemo(() => {
+    void previewRevision;
+
+    if (isNewConversation || activeConversationId === null) {
+      return deriveAgentPreviewPhase([]);
+    }
+
+    return deriveAgentPreviewPhase(readSessionMessages(activeConversationId));
+  }, [activeConversationId, isNewConversation, previewRevision]);
+
+  const previewUrl = useMemo(() => {
+    void previewRevision;
+
+    if (isNewConversation || activeConversationId === null) {
+      return deriveAgentPreviewUrl([]);
+    }
+
+    return deriveAgentPreviewUrl(readSessionMessages(activeConversationId));
+  }, [activeConversationId, isNewConversation, previewRevision]);
+
+  const handleConversationActivity = (conversationId: number) => {
+    if (conversationId === activeConversationId) {
+      setPreviewRevision((revision) => revision + 1);
+    }
+  };
 
   const invalidateConversationQueries = () => {
     void queryClient.invalidateQueries({
@@ -100,27 +160,9 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     },
   });
 
-  const restoreConversationMutation = useMutation({
-    mutationFn: postTrashConversationRestore,
-    onMutate: (conversationId) => {
-      setRestoringConversationId(conversationId);
-    },
-    onSuccess: () => {
-      invalidateConversationQueries();
-    },
-    onSettled: () => {
-      setRestoringConversationId(null);
-    },
-  });
-
   const handleDeleteChat = (conversationId: number) => {
     if (deletingConversationId !== null) return;
     deleteConversationMutation.mutate(conversationId);
-  };
-
-  const handleRestoreChat = (conversationId: number) => {
-    if (restoringConversationId !== null) return;
-    restoreConversationMutation.mutate(conversationId);
   };
 
   const tabButtonClass = (isActive: boolean) =>
@@ -132,7 +174,10 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
 
   return (
     <div className="flex h-[calc(100vh)] min-h-0 w-full overflow-hidden bg-[#f4f5f7]">
-      <section className="flex w-[min(420px,36vw)] shrink-0 flex-col border-r border-[#e2e8f0] bg-white">
+      <section
+        className="relative flex shrink-0 flex-col border-r border-[#e2e8f0] bg-white"
+        style={{ width: chatPanelWidth }}
+      >
         <header className="flex items-center justify-between border-b border-[#f1f5f9] px-4 py-3">
           <h1 className="text-[14px] font-bold text-[#0f172a]">SYS.AI Agent</h1>
           <button type="button" className="text-[12px] font-medium text-[#7c3aed] hover:underline">
@@ -164,16 +209,6 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           >
             대화
           </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={sidebarTab === 'trash'}
-            onClick={() => setSidebarTab('trash')}
-            className={tabButtonClass(sidebarTab === 'trash')}
-          >
-            <Trash2 className="size-3.5 shrink-0" />
-            휴지통
-          </button>
         </div>
 
         {sidebarTab === 'list' ? (
@@ -186,6 +221,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               setIsNewConversation(false);
               setActiveConversationId(conversationId);
               setSidebarTab('conversation');
+              setPreviewRevision((revision) => revision + 1);
               void queryClient.prefetchQuery({
                 queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, conversationId],
                 queryFn: () => getConversationMessageList(conversationId),
@@ -198,26 +234,34 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               setSidebarTab('conversation');
             }}
           />
-        ) : sidebarTab === 'trash' ? (
-          <AgentTrashListPanel
-            conversations={projectTrashConversations}
-            isLoading={isTrashLoading}
-            restoringConversationId={restoringConversationId}
-            onRestore={handleRestoreChat}
-          />
         ) : (
           <AgentConversationPanel
-            key={isNewConversation ? 'new' : String(activeConversationId ?? 'empty')}
+            key={String(activeConversationId ?? 'new')}
             projectId={projectId}
             projectName={formatProjectDisplayName(project.name, project.projectId)}
             conversationId={activeConversationId}
             isNewConversation={isNewConversation}
+            initialPrompt={isNewConversation ? homePrompt : null}
             onConversationCreated={(conversationId) => {
               setActiveConversationId(conversationId);
               setIsNewConversation(false);
+              setPreviewRevision((revision) => revision + 1);
             }}
+            onConversationActivity={handleConversationActivity}
+            onDeployPipelineStart={handleDeployPipelineStart}
           />
         )}
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="채팅 패널 너비 조절"
+          onPointerDown={handleChatPanelResizeStart}
+          className={cn(
+            'absolute -right-1 top-0 z-20 h-full w-2 touch-none',
+            'cursor-col-resize bg-transparent',
+            'hover:bg-[#7c3aed]/15 active:bg-[#7c3aed]/25',
+          )}
+        />
       </section>
 
       <section className="flex min-w-0 flex-1 flex-col bg-[#ececee]">
@@ -238,13 +282,35 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               <button type="button" className="rounded p-1.5 text-[#94a3b8] hover:bg-white">
                 <ChevronRight className="size-3.5" />
               </button>
-              <button type="button" className="rounded p-1.5 text-[#94a3b8] hover:bg-white">
+              <button
+                type="button"
+                className="rounded p-1.5 text-[#94a3b8] hover:bg-white"
+                aria-label="새로고침"
+              >
                 <RotateCcw className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setRightPanelView((view) => (view === 'code' ? 'preview' : 'code'))}
+                aria-label="코드 보기"
+                aria-pressed={rightPanelView === 'code'}
+                className={cn(
+                  'rounded p-1.5 transition',
+                  rightPanelView === 'code'
+                    ? 'bg-white text-[#0f172a] shadow-sm ring-1 ring-[#e2e8f0]'
+                    : 'text-[#94a3b8] hover:bg-white',
+                )}
+              >
+                <Code className="size-3.5" strokeWidth={1.75} />
               </button>
             </div>
             <div className="flex min-w-0 flex-1 items-center rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-1.5">
               <span className="truncate text-[12px] text-[#64748b]">
-                {connectedRepo ? `/${connectedRepo.fullName}` : '/'}
+                {connectedRepo
+                  ? `/${connectedRepo.fullName}`
+                  : previewPhase === 'ready'
+                    ? previewUrl
+                    : '/'}
               </span>
             </div>
             <span className="hidden shrink-0 rounded-full bg-[#ede9fe] px-2 py-0.5 text-[10px] font-semibold text-[#7c3aed] sm:inline">
@@ -263,7 +329,16 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             </button>
             <button
               type="button"
-              className="inline-flex h-8 items-center rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white"
+              onClick={() =>
+                setRightPanelView((view) => (view === 'pipeline' ? 'preview' : 'pipeline'))
+              }
+              aria-pressed={rightPanelView === 'pipeline'}
+              className={cn(
+                'inline-flex h-8 items-center rounded-lg px-3 text-[12px] font-semibold transition',
+                rightPanelView === 'pipeline'
+                  ? 'bg-[#1e293b] text-white ring-2 ring-[#0f172a]/20 ring-offset-1'
+                  : 'bg-[#0f172a] text-white hover:bg-[#1e293b]',
+              )}
             >
               게시
             </button>
@@ -284,18 +359,13 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           </div>
         </header>
 
-        <div className="flex flex-1 items-center justify-center p-8">
-          <div className="max-w-md text-center">
-            <p className="mt-6 text-[15px] font-semibold leading-relaxed text-[#334155]">
-              Devely가 사이트를 구축 중입니다.
-              <br />
-              잠시 기다려 주세요!
-            </p>
-            <p className="mt-2 text-[13px] leading-relaxed text-[#94a3b8]">
-              앱을 다운로드하면 준비가 완료될 때 알림을 받을 수 있어요.
-            </p>
-          </div>
-        </div>
+        {rightPanelView === 'code' ? (
+          <ProjectCodeExplorerPanel />
+        ) : rightPanelView === 'pipeline' ? (
+          <ProjectPipelinePanel run={pipelineRun} isRunning={isPipelineRunning} />
+        ) : (
+          <AgentSitePreviewPanel phase={previewPhase} previewUrl={previewUrl} />
+        )}
       </section>
     </div>
   );

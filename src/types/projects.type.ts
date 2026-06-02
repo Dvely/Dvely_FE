@@ -26,6 +26,10 @@ const projectListItemSchema = z.object({
   updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
   /** 마지막 수정 시각의 상대 표현 (예: "2시간 전") */
   updatedAtRelativeText: z.string().min(1, '상대 시각 표현이 없습니다.').prefault(''),
+  /** 템플릿 유형. 미설정 시 null */
+  templateType: z.string().nullable().prefault(null),
+  /** 프로젝트 시작 방식. 미설정 시 null */
+  startMode: startModeSchema.nullable().prefault(null),
 });
 
 /**

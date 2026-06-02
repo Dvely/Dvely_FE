@@ -3,6 +3,7 @@ export const APP_SHELL_PATHS = [
   '/project',
   '/templates',
   '/analytics',
+  '/trash',
   '/settings',
 ] as const;
 

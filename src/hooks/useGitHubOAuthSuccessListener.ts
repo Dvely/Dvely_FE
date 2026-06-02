@@ -16,7 +16,7 @@ export function useGitHubOAuthSuccessListener() {
         try {
           await handleGitHubOAuthSuccess();
         } finally {
-          void navigate({ to: '/', replace: true });
+          void navigate({ to: '/home', replace: true });
         }
       })();
     },

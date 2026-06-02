@@ -83,6 +83,7 @@ export function createUserProject(input: {
     slug,
     deployStatus: 'pending',
     category,
+    hasTemplate: input.startType !== 'blank',
     subtitle,
     updatedAt: formatUpdatedAt(new Date()),
     preview,

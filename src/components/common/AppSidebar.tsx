@@ -6,10 +6,10 @@ import {
   PanelLeft,
   PanelRight,
   Settings,
+  Trash2,
 } from 'lucide-react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
-import { useCallback, useEffect, useState } from 'react';
-import { useGitHubLogin } from '@/hooks/useGitHubLogin';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 import type { AppShellPath } from '@/lib/appRoutes';
 import { logoutSession } from '@/lib/logout';
@@ -23,6 +23,7 @@ const navItems: {
   { to: '/project', label: '프로젝트', icon: FolderKanban },
   { to: '/templates', label: '템플릿', icon: LayoutTemplate },
   { to: '/analytics', label: '분석', icon: BarChart2 },
+  { to: '/trash', label: '휴지통', icon: Trash2 },
   { to: '/settings', label: '설정', icon: Settings },
 ];
 
@@ -33,11 +34,6 @@ export default function AppSidebar() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [isLoggedIn, syncAuthState] = useIsLoggedIn();
-  const {
-    startGitHubLogin,
-    isLoading: isLoggingIn,
-    errorMessage: loginErrorMessage,
-  } = useGitHubLogin();
 
   const handleLogout = useCallback(async () => {
     if (isLoggingOut) return;
@@ -52,18 +48,7 @@ export default function AppSidebar() {
     }
   }, [isLoggingOut, navigate, syncAuthState]);
 
-  const handleLogin = useCallback(() => {
-    if (isLoggingIn) return;
-    void startGitHubLogin();
-  }, [isLoggingIn, startGitHubLogin]);
-
-  const authButtonLabel = isLoggedIn
-    ? isLoggingOut
-      ? '로그아웃 중...'
-      : '로그아웃'
-    : isLoggingIn
-      ? '로그인 중...'
-      : '로그인';
+  const logoutButtonLabel = isLoggingOut ? '로그아웃 중...' : '로그아웃';
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -83,7 +68,10 @@ export default function AppSidebar() {
         <div className={`flex items-center ${collapsed ? 'flex-col gap-1' : 'gap-3'}`}>
           {!collapsed ? (
             <div className="flex min-w-0 flex-col">
-              <span className="truncate text-[15px] font-semibold tracking-tight text-[#0B0C12]">
+              <span
+                className="truncate text-[15px] font-semibold tracking-tight text-[#0B0C12] cursor-pointer"
+                onClick={() => navigate({ to: '/', replace: true })}
+              >
                 Devely
               </span>
               <span className="truncate text-[12px] text-[#64748B]">AI 웹 자동 생성</span>
@@ -112,39 +100,46 @@ export default function AppSidebar() {
           const active = pathname === to || pathname.startsWith(`${to}/`);
 
           return (
-            <Link
-              key={to}
-              to={to}
-              title={collapsed ? label : undefined}
-              className={`flex w-full items-center rounded-xl text-[13px] font-medium transition ${
-                collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5 text-left'
-              } ${active ? 'bg-[#E4E4E4] text-[#34322D]' : ' hover:bg-[#E4E4E4]'}`}
-            >
-              <Icon className="size-[18px] shrink-0 opacity-90" strokeWidth={active ? 2 : 1.75} />
-              {!collapsed ? <span>{label}</span> : <span className="sr-only">{label}</span>}
-            </Link>
+            <Fragment key={to}>
+              {to === '/trash' ? (
+                <div
+                  className="my-1 border-t border-[#0F172A]/8"
+                  role="separator"
+                  aria-hidden="true"
+                />
+              ) : null}
+              <Link
+                to={to}
+                title={collapsed ? label : undefined}
+                className={`flex w-full items-center rounded-xl text-[13px] font-medium transition ${
+                  collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5 text-left'
+                } ${active ? 'bg-[#E4E4E4] text-[#34322D]' : ' hover:bg-[#E4E4E4]'}`}
+              >
+                <Icon className="size-[18px] shrink-0 opacity-90" strokeWidth={active ? 2 : 1.75} />
+                {!collapsed ? <span>{label}</span> : <span className="sr-only">{label}</span>}
+              </Link>
+            </Fragment>
           );
         })}
       </nav>
 
-      <div className={`shrink-0 border-t border-[#0F172A]/8 py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
-        <button
-          type="button"
-          onClick={() => (isLoggedIn ? void handleLogout() : handleLogin())}
-          disabled={isLoggingOut || isLoggingIn}
-          title={collapsed ? authButtonLabel : undefined}
-          className={`flex w-full items-center rounded-xl text-[13px] font-medium text-[#64748B] transition hover:bg-[#E4E4E4] hover:text-[#34322D] disabled:cursor-not-allowed disabled:opacity-50 ${
-            collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5 text-left'
-          }`}
-        >
-          <span className={collapsed ? 'text-center text-[11px] leading-tight' : undefined}>
-            {authButtonLabel}
-          </span>
-        </button>
-        {!collapsed && !isLoggedIn && loginErrorMessage ? (
-          <p className="mt-2 px-1 text-[11px] leading-snug text-red-600">{loginErrorMessage}</p>
-        ) : null}
-      </div>
+      {isLoggedIn ? (
+        <div className={`shrink-0 border-t border-[#0F172A]/8 py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
+          <button
+            type="button"
+            onClick={() => void handleLogout()}
+            disabled={isLoggingOut}
+            title={collapsed ? logoutButtonLabel : undefined}
+            className={`flex w-full items-center rounded-xl text-[13px] font-medium text-[#64748B] transition hover:bg-[#E4E4E4] hover:text-[#34322D] disabled:cursor-not-allowed disabled:opacity-50 ${
+              collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5 text-left'
+            }`}
+          >
+            <span className={collapsed ? 'text-center text-[11px] leading-tight' : undefined}>
+              {logoutButtonLabel}
+            </span>
+          </button>
+        </div>
+      ) : null}
     </aside>
   );
 }

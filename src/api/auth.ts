@@ -28,7 +28,7 @@ export async function completeGitHubCallback(params: { code: string; state: stri
 /** POST /auth/logout — 로그아웃 */
 export async function logout() {
   return Http.instance
-    .post<ApiResponse<void>>('/auth/logout')
+    .delete<ApiResponse<void>>('/auth/logout')
     .then((response) => {
       return succesResponse<ApiResponse<void>>(response);
     })

@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as CallbackRouteImport } from './routes/callback'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TemplatePortfolioRouteImport } from './routes/template.portfolio'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProjectRouteImport } from './routes/_authenticated/project'
@@ -22,6 +24,8 @@ import { Route as AuthenticatedProjectIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedProjectNewRouteImport } from './routes/_authenticated/project.new'
 import { Route as AuthenticatedProjectSlugRouteImport } from './routes/_authenticated/project.$slug'
 import { Route as AuthenticatedProjectSlugIndexRouteImport } from './routes/_authenticated/project.$slug.index'
+import { Route as AuthenticatedProjectSlugPipelineRouteImport } from './routes/_authenticated/project.$slug.pipeline'
+import { Route as AuthenticatedProjectSlugCodeRouteImport } from './routes/_authenticated/project.$slug.code'
 import { Route as AuthenticatedProjectSlugAgentRouteImport } from './routes/_authenticated/project.$slug.agent'
 
 const CallbackRoute = CallbackRouteImport.update({
@@ -38,10 +42,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TemplatePortfolioRoute = TemplatePortfolioRouteImport.update({
+  id: '/template/portfolio',
+  path: '/template/portfolio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTrashRoute = AuthenticatedTrashRouteImport.update({
+  id: '/trash',
+  path: '/trash',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
   id: '/templates',
@@ -91,6 +105,18 @@ const AuthenticatedProjectSlugIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedProjectSlugRoute,
   } as any)
+const AuthenticatedProjectSlugPipelineRoute =
+  AuthenticatedProjectSlugPipelineRouteImport.update({
+    id: '/pipeline',
+    path: '/pipeline',
+    getParentRoute: () => AuthenticatedProjectSlugRoute,
+  } as any)
+const AuthenticatedProjectSlugCodeRoute =
+  AuthenticatedProjectSlugCodeRouteImport.update({
+    id: '/code',
+    path: '/code',
+    getParentRoute: () => AuthenticatedProjectSlugRoute,
+  } as any)
 const AuthenticatedProjectSlugAgentRoute =
   AuthenticatedProjectSlugAgentRouteImport.update({
     id: '/agent',
@@ -106,11 +132,15 @@ export interface FileRoutesByFullPath {
   '/project': typeof AuthenticatedProjectRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/trash': typeof AuthenticatedTrashRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/template/portfolio': typeof TemplatePortfolioRoute
   '/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
   '/project/new': typeof AuthenticatedProjectNewRoute
   '/project/': typeof AuthenticatedProjectIndexRoute
   '/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute
+  '/project/$slug/code': typeof AuthenticatedProjectSlugCodeRoute
+  '/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute
   '/project/$slug/': typeof AuthenticatedProjectSlugIndexRoute
 }
 export interface FileRoutesByTo {
@@ -120,10 +150,14 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/trash': typeof AuthenticatedTrashRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/template/portfolio': typeof TemplatePortfolioRoute
   '/project/new': typeof AuthenticatedProjectNewRoute
   '/project': typeof AuthenticatedProjectIndexRoute
   '/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute
+  '/project/$slug/code': typeof AuthenticatedProjectSlugCodeRoute
+  '/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute
   '/project/$slug': typeof AuthenticatedProjectSlugIndexRoute
 }
 export interface FileRoutesById {
@@ -136,11 +170,15 @@ export interface FileRoutesById {
   '/_authenticated/project': typeof AuthenticatedProjectRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
+  '/_authenticated/trash': typeof AuthenticatedTrashRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/template/portfolio': typeof TemplatePortfolioRoute
   '/_authenticated/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
   '/_authenticated/project/new': typeof AuthenticatedProjectNewRoute
   '/_authenticated/project/': typeof AuthenticatedProjectIndexRoute
   '/_authenticated/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute
+  '/_authenticated/project/$slug/code': typeof AuthenticatedProjectSlugCodeRoute
+  '/_authenticated/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute
   '/_authenticated/project/$slug/': typeof AuthenticatedProjectSlugIndexRoute
 }
 export interface FileRouteTypes {
@@ -153,11 +191,15 @@ export interface FileRouteTypes {
     | '/project'
     | '/settings'
     | '/templates'
+    | '/trash'
     | '/auth/callback'
+    | '/template/portfolio'
     | '/project/$slug'
     | '/project/new'
     | '/project/'
     | '/project/$slug/agent'
+    | '/project/$slug/code'
+    | '/project/$slug/pipeline'
     | '/project/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -167,10 +209,14 @@ export interface FileRouteTypes {
     | '/home'
     | '/settings'
     | '/templates'
+    | '/trash'
     | '/auth/callback'
+    | '/template/portfolio'
     | '/project/new'
     | '/project'
     | '/project/$slug/agent'
+    | '/project/$slug/code'
+    | '/project/$slug/pipeline'
     | '/project/$slug'
   id:
     | '__root__'
@@ -182,11 +228,15 @@ export interface FileRouteTypes {
     | '/_authenticated/project'
     | '/_authenticated/settings'
     | '/_authenticated/templates'
+    | '/_authenticated/trash'
     | '/auth/callback'
+    | '/template/portfolio'
     | '/_authenticated/project/$slug'
     | '/_authenticated/project/new'
     | '/_authenticated/project/'
     | '/_authenticated/project/$slug/agent'
+    | '/_authenticated/project/$slug/code'
+    | '/_authenticated/project/$slug/pipeline'
     | '/_authenticated/project/$slug/'
   fileRoutesById: FileRoutesById
 }
@@ -195,6 +245,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   CallbackRoute: typeof CallbackRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  TemplatePortfolioRoute: typeof TemplatePortfolioRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -220,12 +271,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/template/portfolio': {
+      id: '/template/portfolio'
+      path: '/template/portfolio'
+      fullPath: '/template/portfolio'
+      preLoaderRoute: typeof TemplatePortfolioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/trash': {
+      id: '/_authenticated/trash'
+      path: '/trash'
+      fullPath: '/trash'
+      preLoaderRoute: typeof AuthenticatedTrashRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/templates': {
       id: '/_authenticated/templates'
@@ -290,6 +355,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectSlugIndexRouteImport
       parentRoute: typeof AuthenticatedProjectSlugRoute
     }
+    '/_authenticated/project/$slug/pipeline': {
+      id: '/_authenticated/project/$slug/pipeline'
+      path: '/pipeline'
+      fullPath: '/project/$slug/pipeline'
+      preLoaderRoute: typeof AuthenticatedProjectSlugPipelineRouteImport
+      parentRoute: typeof AuthenticatedProjectSlugRoute
+    }
+    '/_authenticated/project/$slug/code': {
+      id: '/_authenticated/project/$slug/code'
+      path: '/code'
+      fullPath: '/project/$slug/code'
+      preLoaderRoute: typeof AuthenticatedProjectSlugCodeRouteImport
+      parentRoute: typeof AuthenticatedProjectSlugRoute
+    }
     '/_authenticated/project/$slug/agent': {
       id: '/_authenticated/project/$slug/agent'
       path: '/agent'
@@ -302,12 +381,17 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedProjectSlugRouteChildren {
   AuthenticatedProjectSlugAgentRoute: typeof AuthenticatedProjectSlugAgentRoute
+  AuthenticatedProjectSlugCodeRoute: typeof AuthenticatedProjectSlugCodeRoute
+  AuthenticatedProjectSlugPipelineRoute: typeof AuthenticatedProjectSlugPipelineRoute
   AuthenticatedProjectSlugIndexRoute: typeof AuthenticatedProjectSlugIndexRoute
 }
 
 const AuthenticatedProjectSlugRouteChildren: AuthenticatedProjectSlugRouteChildren =
   {
     AuthenticatedProjectSlugAgentRoute: AuthenticatedProjectSlugAgentRoute,
+    AuthenticatedProjectSlugCodeRoute: AuthenticatedProjectSlugCodeRoute,
+    AuthenticatedProjectSlugPipelineRoute:
+      AuthenticatedProjectSlugPipelineRoute,
     AuthenticatedProjectSlugIndexRoute: AuthenticatedProjectSlugIndexRoute,
   }
 
@@ -337,6 +421,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProjectRoute: typeof AuthenticatedProjectRouteWithChildren
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
+  AuthenticatedTrashRoute: typeof AuthenticatedTrashRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -345,6 +430,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProjectRoute: AuthenticatedProjectRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
+  AuthenticatedTrashRoute: AuthenticatedTrashRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -356,6 +442,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   CallbackRoute: CallbackRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  TemplatePortfolioRoute: TemplatePortfolioRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
