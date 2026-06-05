@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TemplatePortfolioRouteImport } from './routes/template.portfolio'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as AuthAppCallbackRouteImport } from './routes/auth/app-callback'
 import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -50,6 +51,11 @@ const TemplatePortfolioRoute = TemplatePortfolioRouteImport.update({
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthAppCallbackRoute = AuthAppCallbackRouteImport.update({
+  id: '/auth/app-callback',
+  path: '/auth/app-callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTrashRoute = AuthenticatedTrashRouteImport.update({
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/trash': typeof AuthenticatedTrashRoute
+  '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/template/portfolio': typeof TemplatePortfolioRoute
   '/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/trash': typeof AuthenticatedTrashRoute
+  '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/template/portfolio': typeof TemplatePortfolioRoute
   '/project/new': typeof AuthenticatedProjectNewRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/_authenticated/trash': typeof AuthenticatedTrashRoute
+  '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/template/portfolio': typeof TemplatePortfolioRoute
   '/_authenticated/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
@@ -192,6 +201,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/templates'
     | '/trash'
+    | '/auth/app-callback'
     | '/auth/callback'
     | '/template/portfolio'
     | '/project/$slug'
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/templates'
     | '/trash'
+    | '/auth/app-callback'
     | '/auth/callback'
     | '/template/portfolio'
     | '/project/new'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/templates'
     | '/_authenticated/trash'
+    | '/auth/app-callback'
     | '/auth/callback'
     | '/template/portfolio'
     | '/_authenticated/project/$slug'
@@ -244,6 +256,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   CallbackRoute: typeof CallbackRoute
+  AuthAppCallbackRoute: typeof AuthAppCallbackRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   TemplatePortfolioRoute: typeof TemplatePortfolioRoute
 }
@@ -283,6 +296,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/app-callback': {
+      id: '/auth/app-callback'
+      path: '/auth/app-callback'
+      fullPath: '/auth/app-callback'
+      preLoaderRoute: typeof AuthAppCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/trash': {
@@ -441,6 +461,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   CallbackRoute: CallbackRoute,
+  AuthAppCallbackRoute: AuthAppCallbackRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   TemplatePortfolioRoute: TemplatePortfolioRoute,
 }

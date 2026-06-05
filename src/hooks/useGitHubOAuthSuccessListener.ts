@@ -1,7 +1,9 @@
 import { useCallback, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { dispatchGitHubAppInstallRequired } from '@/constants/authEvents';
 import { GITHUB_OAUTH_SUCCESS_MESSAGE } from '@/constants/githubOAuth';
 import { handleGitHubOAuthSuccess } from '@/lib/handleGitHubOAuthSuccess';
+import { readStoredUser } from '@/api/user';
 
 /** GitHub OAuth 팝업 완료 시 부모 창에서 user/me 조회 후 홈으로 이동 */
 export function useGitHubOAuthSuccessListener() {
@@ -17,6 +19,11 @@ export function useGitHubOAuthSuccessListener() {
           await handleGitHubOAuthSuccess();
         } finally {
           void navigate({ to: '/home', replace: true });
+
+          const user = readStoredUser();
+          if (user && !user.githubAppInstalled) {
+            dispatchGitHubAppInstallRequired();
+          }
         }
       })();
     },

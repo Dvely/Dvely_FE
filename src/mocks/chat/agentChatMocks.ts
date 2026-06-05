@@ -27,16 +27,7 @@ const MOCK_DEPLOY_DELAY_MS = 1500;
 /** GitHub Pages 배포 수락 단계 — 수락 시 파이프라인 실행 */
 export const DEPLOY_APPROVAL_TEMPLATE_IDS = new Set([10043, 20043]);
 
-const PROJECT_NAME_PROMPT_TEMPLATE_ID = 1001;
 const CODE_COMPLETE_COMMIT_TEMPLATE_ID = 1002;
-
-const MOCK_PROJECT_NAME_PROMPT_STEP: MockScriptStep = {
-  templateMessageId: PROJECT_NAME_PROMPT_TEMPLATE_ID,
-  content:
-    '프로젝트 이름을 무엇으로 할까요? 입력하신 이름은 추후 저장소에 저장할 때 그대로 사용됩니다.',
-  tokenCount: 42,
-  requiresApproval: false,
-};
 
 const MOCK_CODE_COMPLETE_COMMIT_STEP: MockScriptStep = {
   templateMessageId: CODE_COMPLETE_COMMIT_TEMPLATE_ID,
@@ -145,8 +136,7 @@ const conversationRepoNames = new Map<number, string>();
 function buildDeployCompleteStep(repoName: string): MockScriptStep {
   return {
     templateMessageId: DEPLOY_COMPLETE_TEMPLATE_ID,
-    content:
-      `GitHub Pages 배포를 완료했습니다!\n\n**배포 정보**\n- 배포 URL: https://dldnsgkr.github.io/${repoName}\n- 상태: 성공\n\n배포가 반영되기까지 수 분이 소요될 수 있습니다. 이후 위 URL로 접속하시면 투두 앱을 확인하실 수 있습니다.\n\n도메인 연결도 진행할까요?`,
+    content: `GitHub Pages 배포를 완료했습니다!\n\n**배포 정보**\n- 배포 URL: https://dldnsgkr.github.io/${repoName}\n- 상태: 성공\n\n배포가 반영되기까지 수 분이 소요될 수 있습니다. 이후 위 URL로 접속하시면 투두 앱을 확인하실 수 있습니다.\n\n도메인 연결도 진행할까요?`,
     tokenCount: 614,
     requiresApproval: true,
   };
@@ -257,33 +247,8 @@ function getLastAssistantTemplateId(conversationId: number): number | undefined 
   return undefined;
 }
 
-function isAwaitingProjectNameInput(conversationId: number): boolean {
-  return getLastAssistantTemplateId(conversationId) === PROJECT_NAME_PROMPT_TEMPLATE_ID;
-}
-
 function isAwaitingDomainMethodSelection(conversationId: number): boolean {
   return getLastAssistantTemplateId(conversationId) === DOMAIN_METHOD_PROMPT_TEMPLATE_ID;
-}
-
-function normalizeRepoNameInput(content: string): string {
-  const trimmed = content.trim();
-  if (!trimmed) return 'my-todo-app';
-
-  const match = trimmed.match(/[a-zA-Z0-9][a-zA-Z0-9_-]*/);
-  return match?.[0] ?? 'my-todo-app';
-}
-
-function handleProjectNameSubmit(conversationId: number, content: string) {
-  const repoName = normalizeRepoNameInput(content);
-  conversationRepoNames.set(conversationId, repoName);
-
-  scheduleConversationUpdate(
-    conversationId,
-    () => {
-      appendScriptMessage(conversationId, MOCK_CODE_COMPLETE_COMMIT_STEP);
-    },
-    MOCK_CODE_WRITING_DELAY_MS,
-  );
 }
 
 function handleRepoEditCommitApprovalAccepted(conversationId: number) {
@@ -444,12 +409,13 @@ function runScriptSteps(
 
 function startPortfolioScript(conversationId: number) {
   portfolioScriptStartedConversationIds.add(conversationId);
+  conversationRepoNames.set(conversationId, 'my-todo-app');
   scheduleConversationUpdate(
     conversationId,
     () => {
-      appendScriptMessage(conversationId, MOCK_PROJECT_NAME_PROMPT_STEP);
+      appendScriptMessage(conversationId, MOCK_CODE_COMPLETE_COMMIT_STEP);
     },
-    MOCK_ASSISTANT_REPLY_DELAY_MS,
+    MOCK_CODE_WRITING_DELAY_MS,
   );
 }
 
@@ -508,12 +474,6 @@ export function scheduleMockAssistantReply({
     return;
   }
 
-  if (isAwaitingProjectNameInput(conversationId)) {
-    handleProjectNameSubmit(conversationId, content);
-    notifyConversationUpdate(conversationId);
-    return;
-  }
-
   if (isAwaitingDomainMethodSelection(conversationId)) {
     handleDomainMethodSubmit(conversationId, content);
     notifyConversationUpdate(conversationId);
@@ -544,8 +504,7 @@ export async function resolveMockScriptReview(
   if (templateMessageId === undefined) return;
 
   const isDeployApproval = DEPLOY_APPROVAL_TEMPLATE_IDS.has(templateMessageId);
-  const isRepoEditCommitApproval =
-    templateMessageId === REPO_EDIT_COMPLETE_COMMIT_TEMPLATE_ID;
+  const isRepoEditCommitApproval = templateMessageId === REPO_EDIT_COMPLETE_COMMIT_TEMPLATE_ID;
   const isCommitPreviewApproval = templateMessageId === CODE_COMPLETE_COMMIT_TEMPLATE_ID;
   const delayMs =
     isRepoEditCommitApproval || isCommitPreviewApproval
