@@ -30,7 +30,7 @@ function HomeTemplateCard({ card, onSelect }: HomeTemplateCardProps) {
       role="button"
       tabIndex={0}
     >
-      <div className="relative aspect-16/10 overflow-hidden rounded-2xl border border-[#e2e8f0] bg-[#f1f5f9] transition duration-300 group-hover:border-[#7c3aed] group-hover:ring-2 group-hover:ring-[#7c3aed] group-hover:shadow-[0_10px_28px_rgba(124,58,237,0.2)]">
+      <div className="relative aspect-16/10 overflow-hidden rounded-2xl border border-[#e2e8f0] bg-[#f1f5f9] transition duration-300  group-hover:shadow-[0_10px_28px_rgba(124,58,237,0.2)]">
         <img
           src={card.image}
           alt={card.title}
