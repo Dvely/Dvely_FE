@@ -23,7 +23,6 @@ function MeAccountSettingsPanel() {
   const [fullName, setFullName] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
-  const [isDeleteConfirming, setIsDeleteConfirming] = useState(false);
 
   const fullNameFieldId = useId();
   const { t } = useTranslation();
@@ -61,15 +60,6 @@ function MeAccountSettingsPanel() {
       void navigate({ to: '/', replace: true });
     }
   }, [isLoggingOut, navigate, syncAuthState]);
-
-  const handleDeleteAccount = () => {
-    if (!isDeleteConfirming) {
-      setIsDeleteConfirming(true);
-      return;
-    }
-
-    setIsDeleteConfirming(false);
-  };
 
   useEffect(() => {
     setFullName(displayName);
@@ -173,31 +163,6 @@ function MeAccountSettingsPanel() {
                 className="inline-flex h-8 items-center rounded-lg border border-[#e2e8f0] bg-white px-3 text-[12px] font-semibold text-[#334155] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isLoggingOut ? t('me.account.logout.pending') : t('me.account.logout.action')}
-              </button>
-            }
-          />
-          <MeAccountActionRow
-            title={t('me.account.delete.title')}
-            description={
-              isDeleteConfirming
-                ? t('me.account.delete.confirmDescription')
-                : t('me.account.delete.description')
-            }
-            danger
-            action={
-              <button
-                type="button"
-                onClick={handleDeleteAccount}
-                className={cn(
-                  'inline-flex h-8 items-center rounded-lg px-3 text-[12px] font-semibold transition',
-                  isDeleteConfirming
-                    ? 'bg-[#ef4444] text-white hover:bg-[#dc2626]'
-                    : 'border border-[#fecaca] bg-white text-[#ef4444] hover:bg-[#fef2f2]',
-                )}
-              >
-                {isDeleteConfirming
-                  ? t('me.account.delete.confirmAction')
-                  : t('me.account.delete.action')}
               </button>
             }
           />
