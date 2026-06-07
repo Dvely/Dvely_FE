@@ -21,9 +21,9 @@ type SortOption = 'lastModified' | 'name';
 
 const FILTER_OPTIONS: { value: FilterOption; label: string }[] = [
   { value: 'all', label: '전체' },
-  { value: 'deployed', label: DEPLOY_STATUS_LABEL.deployed },
-  { value: 'deploying', label: DEPLOY_STATUS_LABEL.deploying },
-  { value: 'pending', label: DEPLOY_STATUS_LABEL.pending },
+  { value: 'pending', label: '배포 전' },
+  { value: 'deploying', label: '배포 중' },
+  { value: 'deployed', label: '배포 완료' },
 ];
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [

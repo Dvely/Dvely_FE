@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as CallbackRouteImport } from './routes/callback'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TemplatePortfolioRouteImport } from './routes/template.portfolio'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthAppCallbackRouteImport } from './routes/auth/app-callback'
 import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash'
@@ -41,11 +40,6 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TemplatePortfolioRoute = TemplatePortfolioRouteImport.update({
-  id: '/template/portfolio',
-  path: '/template/portfolio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -141,7 +135,6 @@ export interface FileRoutesByFullPath {
   '/trash': typeof AuthenticatedTrashRoute
   '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/template/portfolio': typeof TemplatePortfolioRoute
   '/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
   '/project/new': typeof AuthenticatedProjectNewRoute
   '/project/': typeof AuthenticatedProjectIndexRoute
@@ -160,7 +153,6 @@ export interface FileRoutesByTo {
   '/trash': typeof AuthenticatedTrashRoute
   '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/template/portfolio': typeof TemplatePortfolioRoute
   '/project/new': typeof AuthenticatedProjectNewRoute
   '/project': typeof AuthenticatedProjectIndexRoute
   '/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute
@@ -181,7 +173,6 @@ export interface FileRoutesById {
   '/_authenticated/trash': typeof AuthenticatedTrashRoute
   '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/template/portfolio': typeof TemplatePortfolioRoute
   '/_authenticated/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
   '/_authenticated/project/new': typeof AuthenticatedProjectNewRoute
   '/_authenticated/project/': typeof AuthenticatedProjectIndexRoute
@@ -203,7 +194,6 @@ export interface FileRouteTypes {
     | '/trash'
     | '/auth/app-callback'
     | '/auth/callback'
-    | '/template/portfolio'
     | '/project/$slug'
     | '/project/new'
     | '/project/'
@@ -222,7 +212,6 @@ export interface FileRouteTypes {
     | '/trash'
     | '/auth/app-callback'
     | '/auth/callback'
-    | '/template/portfolio'
     | '/project/new'
     | '/project'
     | '/project/$slug/agent'
@@ -242,7 +231,6 @@ export interface FileRouteTypes {
     | '/_authenticated/trash'
     | '/auth/app-callback'
     | '/auth/callback'
-    | '/template/portfolio'
     | '/_authenticated/project/$slug'
     | '/_authenticated/project/new'
     | '/_authenticated/project/'
@@ -258,7 +246,6 @@ export interface RootRouteChildren {
   CallbackRoute: typeof CallbackRoute
   AuthAppCallbackRoute: typeof AuthAppCallbackRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
-  TemplatePortfolioRoute: typeof TemplatePortfolioRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -282,13 +269,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/template/portfolio': {
-      id: '/template/portfolio'
-      path: '/template/portfolio'
-      fullPath: '/template/portfolio'
-      preLoaderRoute: typeof TemplatePortfolioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
@@ -463,7 +443,6 @@ const rootRouteChildren: RootRouteChildren = {
   CallbackRoute: CallbackRoute,
   AuthAppCallbackRoute: AuthAppCallbackRoute,
   AuthCallbackRoute: AuthCallbackRoute,
-  TemplatePortfolioRoute: TemplatePortfolioRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
