@@ -21,8 +21,6 @@ function MeGeneralSettingsPanel() {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-5">
-        <h3 className="text-[15px] font-semibold text-[#0f172a]">외관</h3>
-
         <div className="flex flex-col gap-2">
           <label htmlFor="me-settings-language" className="text-[13px] font-medium text-[#334155]">
             언어
