@@ -29,6 +29,41 @@
     "placeholder": {
       "description": "この設定画面は準備中です。まもなくさらに多くのオプションを提供します。"
     },
+    "account": {
+      "fullName": "氏名",
+      "plan": {
+        "free": "無料",
+        "upgrade": "アップグレード"
+      },
+      "credits": {
+        "title": "クレジット",
+        "value": "{{used}} / {{total}}",
+        "help": "クレジットについて"
+      },
+      "dailyRefresh": {
+        "title": "毎日リフレッシュクレジット",
+        "description": "毎日00:00に300に更新",
+        "help": "毎日リフレッシュクレジットについて"
+      },
+      "personalInfo": "個人情報",
+      "email": "メール",
+      "userId": "ユーザーID",
+      "copy": "コピー",
+      "copied": "コピーしました",
+      "management": "アカウント管理",
+      "logout": {
+        "title": "このデバイスからログアウト",
+        "action": "ログアウト",
+        "pending": "ログアウト中..."
+      },
+      "delete": {
+        "title": "アカウント削除",
+        "description": "この操作によりアカウントとすべてのデータが削除されます。",
+        "confirmDescription": "アカウント削除APIは準備中です。もう一度押すとキャンセルされます。",
+        "action": "アカウント削除",
+        "confirmAction": "確認"
+      }
+    },
     "general": {
       "appearance": "外観",
       "language": "言語",

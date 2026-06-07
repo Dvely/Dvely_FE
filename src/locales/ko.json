@@ -29,6 +29,41 @@
     "placeholder": {
       "description": "이 설정 화면은 준비 중입니다. 곧 더 많은 옵션을 제공할 예정이에요."
     },
+    "account": {
+      "fullName": "전체 이름",
+      "plan": {
+        "free": "무료",
+        "upgrade": "업그레이드"
+      },
+      "credits": {
+        "title": "크레딧",
+        "value": "{{used}} / {{total}}",
+        "help": "크레딧 안내"
+      },
+      "dailyRefresh": {
+        "title": "매일 리프레시 크레딧",
+        "description": "매일 00:00에 300으로 새로고침",
+        "help": "매일 리프레시 크레딧 안내"
+      },
+      "personalInfo": "개인 정보",
+      "email": "이메일",
+      "userId": "사용자 ID",
+      "copy": "복사",
+      "copied": "복사됨",
+      "management": "계정 관리",
+      "logout": {
+        "title": "이 장치에서 로그아웃",
+        "action": "로그아웃",
+        "pending": "로그아웃 중..."
+      },
+      "delete": {
+        "title": "계정 삭제",
+        "description": "이 작업은 계정 및 모든 데이터를 삭제합니다.",
+        "confirmDescription": "계정 삭제 API는 준비 중입니다. 다시 누르면 취소됩니다.",
+        "action": "계정 삭제",
+        "confirmAction": "확인"
+      }
+    },
     "general": {
       "appearance": "외관",
       "language": "언어",
