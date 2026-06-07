@@ -55,13 +55,6 @@
         "title": "이 장치에서 로그아웃",
         "action": "로그아웃",
         "pending": "로그아웃 중..."
-      },
-      "delete": {
-        "title": "계정 삭제",
-        "description": "이 작업은 계정 및 모든 데이터를 삭제합니다.",
-        "confirmDescription": "계정 삭제 API는 준비 중입니다. 다시 누르면 취소됩니다.",
-        "action": "계정 삭제",
-        "confirmAction": "확인"
       }
     },
     "general": {

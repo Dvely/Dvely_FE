@@ -55,13 +55,6 @@
         "title": "このデバイスからログアウト",
         "action": "ログアウト",
         "pending": "ログアウト中..."
-      },
-      "delete": {
-        "title": "アカウント削除",
-        "description": "この操作によりアカウントとすべてのデータが削除されます。",
-        "confirmDescription": "アカウント削除APIは準備中です。もう一度押すとキャンセルされます。",
-        "action": "アカウント削除",
-        "confirmAction": "確認"
       }
     },
     "general": {

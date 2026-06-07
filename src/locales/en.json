@@ -55,13 +55,6 @@
         "title": "Log out from this device",
         "action": "Log out",
         "pending": "Logging out..."
-      },
-      "delete": {
-        "title": "Delete account",
-        "description": "This action deletes your account and all data.",
-        "confirmDescription": "Account deletion API is coming soon. Press again to cancel.",
-        "action": "Delete account",
-        "confirmAction": "Confirm"
       }
     },
     "general": {
