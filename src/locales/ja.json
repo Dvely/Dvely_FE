@@ -1,0 +1,64 @@
+{
+  "common": {
+    "close": "閉じる",
+    "settings": "設定"
+  },
+  "me": {
+    "profileType": "個人",
+    "help": "ヘルプ",
+    "closeSettings": "設定を閉じる",
+    "nav": {
+      "groups": {
+        "account": "アカウント",
+        "features": "機能"
+      },
+      "items": {
+        "account": "アカウント",
+        "general": "一般",
+        "billing": "使用量と請求",
+        "personalization": "パーソナライズ",
+        "mail": "Mail",
+        "data-control": "データ管理",
+        "my-computer": "My Computer",
+        "cloud-browser": "クラウドブラウザ",
+        "skills": "スキル",
+        "connectors": "コネクター",
+        "integrations": "連携"
+      }
+    },
+    "placeholder": {
+      "description": "この設定画面は準備中です。まもなくさらに多くのオプションを提供します。"
+    },
+    "general": {
+      "appearance": "外観",
+      "language": "言語",
+      "languages": {
+        "ko": "한국어",
+        "en": "English",
+        "ja": "日本語"
+      },
+      "theme": "テーマ",
+      "themes": {
+        "light": "ライト",
+        "dark": "ダーク",
+        "auto": "自動"
+      },
+      "communications": "通信設定",
+      "productUpdates": {
+        "title": "製品アップデートを受け取る",
+        "description": "新機能と改善をいち早く確認できます。",
+        "toggleLabel": "製品アップデートを受け取る"
+      },
+      "pendingTaskEmail": {
+        "title": "保留中のタスクが開始されたらメールを送る",
+        "description": "タスクが開始されたときにメールでお知らせします。",
+        "toggleLabel": "保留タスク開始メール通知"
+      },
+      "marketingAds": {
+        "title": "Develyに関する広告",
+        "description": "マーケティング目的でのデータ収集・共有に同意します。",
+        "toggleLabel": "Devely広告を受け取る"
+      }
+    }
+  }
+}

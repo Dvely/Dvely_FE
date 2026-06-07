@@ -1,13 +1,15 @@
+import { useTranslation } from 'react-i18next';
 import MeGeneralSettingsPanel from '@/components/layout/me/MeGeneralSettingsPanel';
 import MeSettingsPlaceholderPanel from '@/components/layout/me/MeSettingsPlaceholderPanel';
-import { meSettingsSectionLabels, type MeSettingsSectionId } from '@/components/layout/me/meSettingsNav';
+import type { MeSettingsSectionId } from '@/components/layout/me/meSettingsNav';
 
 type MeSettingsContentPanelProps = {
   activeSection: MeSettingsSectionId;
 };
 
 function MeSettingsContentPanel({ activeSection }: MeSettingsContentPanelProps) {
-  const title = meSettingsSectionLabels[activeSection];
+  const { t } = useTranslation();
+  const title = t(`me.nav.items.${activeSection}`);
 
   if (activeSection === 'general') {
     return (

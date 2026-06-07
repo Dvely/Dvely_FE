@@ -1,0 +1,64 @@
+{
+  "common": {
+    "close": "Close",
+    "settings": "Settings"
+  },
+  "me": {
+    "profileType": "Personal",
+    "help": "Get help",
+    "closeSettings": "Close settings",
+    "nav": {
+      "groups": {
+        "account": "Account",
+        "features": "Features"
+      },
+      "items": {
+        "account": "Account",
+        "general": "General",
+        "billing": "Usage & billing",
+        "personalization": "Personalization",
+        "mail": "Mail",
+        "data-control": "Data control",
+        "my-computer": "My Computer",
+        "cloud-browser": "Cloud browser",
+        "skills": "Skills",
+        "connectors": "Connectors",
+        "integrations": "Integrations"
+      }
+    },
+    "placeholder": {
+      "description": "This settings screen is coming soon. More options will be available shortly."
+    },
+    "general": {
+      "appearance": "Appearance",
+      "language": "Language",
+      "languages": {
+        "ko": "한국어",
+        "en": "English",
+        "ja": "日本語"
+      },
+      "theme": "Theme",
+      "themes": {
+        "light": "Light",
+        "dark": "Dark",
+        "auto": "Auto"
+      },
+      "communications": "Communication settings",
+      "productUpdates": {
+        "title": "Receive product updates",
+        "description": "Be the first to know about new features and improvements.",
+        "toggleLabel": "Receive product updates"
+      },
+      "pendingTaskEmail": {
+        "title": "Email me when my pending tasks start",
+        "description": "We'll notify you by email when a task begins.",
+        "toggleLabel": "Pending task start email notification"
+      },
+      "marketingAds": {
+        "title": "Ads about Devely",
+        "description": "I agree to the collection and sharing of data for marketing purposes.",
+        "toggleLabel": "Receive Devely marketing ads"
+      }
+    }
+  }
+}

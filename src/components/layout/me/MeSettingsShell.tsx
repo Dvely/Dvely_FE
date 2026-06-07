@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useUserInfoQuery } from '@/api/user';
 import MeSettingsContentPanel from '@/components/layout/me/MeSettingsContentPanel';
 import MeSettingsSidebar, { formatDisplayName } from '@/components/layout/me/MeSettingsSidebar';
@@ -19,6 +20,7 @@ function MeSettingsShell({
   className,
   variant = 'page',
 }: MeSettingsShellProps) {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState<MeSettingsSectionId>(initialSection);
 
   const { data: userResponse } = useUserInfoQuery('me-settings');
@@ -48,7 +50,7 @@ function MeSettingsShell({
             <button
               type="button"
               onClick={onClose}
-              aria-label="설정 닫기"
+              aria-label={t('me.closeSettings')}
               className="rounded-lg p-1.5 text-[#94a3b8] transition hover:bg-[#f1f5f9] hover:text-[#475569]"
             >
               <X className="size-5" aria-hidden />
