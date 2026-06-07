@@ -1,5 +1,4 @@
 import type { ProjectCategory, ProjectItem, PreviewVariant } from '@/mocks/projects/projectTypes';
-import { DEMO_PROJECTS } from '@/mocks/projects/projectTypes';
 
 export type ProjectStartType = 'landing' | 'portfolio' | 'blank';
 
@@ -59,7 +58,7 @@ function startTypeToPreview(type: ProjectStartType): PreviewVariant {
 }
 
 export function getAllProjects(): ProjectItem[] {
-  return [...readUserProjects(), ...DEMO_PROJECTS];
+  return [...readUserProjects()];
 }
 
 export function getProjectBySlug(slug: string): ProjectItem | undefined {
