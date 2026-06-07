@@ -5,7 +5,6 @@ import {
   LayoutTemplate,
   PanelLeft,
   PanelRight,
-  Settings,
   Trash2,
 } from 'lucide-react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
@@ -23,7 +22,6 @@ const navItems: {
   { to: '/templates', label: '템플릿', icon: LayoutTemplate },
   { to: '/analytics', label: '분석', icon: BarChart2 },
   { to: '/trash', label: '휴지통', icon: Trash2 },
-  { to: '/settings', label: '설정', icon: Settings },
 ];
 
 export default function AppSidebar() {
