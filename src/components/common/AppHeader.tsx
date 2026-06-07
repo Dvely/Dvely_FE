@@ -2,6 +2,7 @@ import { Bell } from 'lucide-react';
 import { useState } from 'react';
 import profile from '@/assets/icons/profile.svg';
 import { useUserInfoQuery } from '@/api/user';
+import MeSettingsDialog from '@/components/layout/me/MeSettingsDialog';
 
 function AppHeader() {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -40,6 +41,8 @@ function AppHeader() {
           </button>
         </div>
       </header>
+
+      <MeSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </>
   );
 }
