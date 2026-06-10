@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { ChevronDown, LayoutGrid, List, Plus } from 'lucide-react';
+import { LayoutGrid, List, Plus } from 'lucide-react';
 import ProjectCard from './ProjectCard';
 import ProjectNavLink from '@/components/layout/project/ProjectNavLink';
 import ProjectCreateDialog from './ProjectCreateDialog';
+import { FilterSelect } from '@/components/ui/Filter';
 import { useProjectListQuery } from '@/api/projects';
 import { formatProjectDisplayName } from '@/components/layout/project/agentChat.utils';
 import { hasProjectTemplate, templateTypeToPreviewVariant } from '@/lib/projectTemplate';
@@ -60,38 +61,6 @@ function toProjectCardItem(project: {
     updatedAt: project.updatedAtRelativeText,
     preview: hasTemplate ? templateTypeToPreviewVariant(project.templateType) : 'landing',
   };
-}
-
-function ToolbarSelect({
-  value,
-  onChange,
-  options,
-  className,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-  className?: string;
-}) {
-  return (
-    <div className={cn('relative', className)}>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-9 cursor-pointer appearance-none rounded-lg border border-[#e5e7eb] bg-white py-0 pl-3 pr-8 text-[13px] font-medium text-[#334155] outline-none transition hover:bg-[#f8fafc] focus-visible:border-[#c4b5fd] focus-visible:ring-2 focus-visible:ring-[#7c3aed]/20"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value} className="bg-white text-[#334155]">
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown
-        className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#94a3b8]"
-        aria-hidden
-      />
-    </div>
-  );
 }
 
 function ProjectListRow({ project }: { project: ProjectItem }) {
@@ -190,16 +159,18 @@ function ProjectsView() {
           </button>
         </div>
 
-        <ToolbarSelect
+        <FilterSelect
           value={filter}
           onChange={(value) => setFilter(value as FilterOption)}
           options={FILTER_OPTIONS}
+          aria-label="배포 상태 필터"
         />
 
-        <ToolbarSelect
+        <FilterSelect
           value={sort}
           onChange={(value) => setSort(value as SortOption)}
           options={SORT_OPTIONS}
+          aria-label="정렬 기준"
         />
 
         <button

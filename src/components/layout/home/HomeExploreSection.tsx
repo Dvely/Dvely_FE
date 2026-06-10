@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
 import HomeTemplateCard, {
   type HomeTemplateCardData,
 } from '@/components/layout/home/HomeTemplateCard';
 import HomeAddTemplateCard from '@/components/layout/home/HomeAddTemplateCard';
+import Filter, { FilterSelect } from '@/components/ui/Filter';
 import { homeTemplates } from '@/mocks/home/homeTemplates';
 import { cn } from '@/lib/utils';
 
@@ -42,36 +42,6 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: 'popular', label: '정렬 기준: 인기순' },
   { value: 'newest', label: '정렬 기준: 최신순' },
 ];
-
-function FilterSelect({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-9 cursor-pointer appearance-none rounded-lg border border-[#e5e7eb] bg-white py-0 pl-3 pr-8 text-[13px] font-medium text-[#334155] outline-none transition hover:bg-[#f8fafc] focus-visible:border-[#c4b5fd] focus-visible:ring-2 focus-visible:ring-[#7c3aed]/20"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown
-        className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#94a3b8]"
-        aria-hidden
-      />
-    </div>
-  );
-}
 
 function HomeExploreSection() {
   const [activeTab, setActiveTab] = useState<HomeTab>('explore');
@@ -127,23 +97,26 @@ function HomeExploreSection() {
 
       {activeTab === 'explore' ? (
         <>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <Filter className="mt-4">
             <FilterSelect
               value={styleFilter}
               onChange={(value) => setStyleFilter(value as StyleFilter)}
               options={styleOptions}
+              aria-label="스타일 필터"
             />
             <FilterSelect
               value={themeFilter}
               onChange={(value) => setThemeFilter(value as ThemeFilter)}
               options={themeOptions}
+              aria-label="테마 필터"
             />
             <FilterSelect
               value={sort}
               onChange={(value) => setSort(value as SortOption)}
               options={sortOptions}
+              aria-label="정렬 기준"
             />
-          </div>
+          </Filter>
 
           <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <HomeAddTemplateCard />
