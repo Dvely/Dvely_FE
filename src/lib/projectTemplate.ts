@@ -1,4 +1,4 @@
-import type { PreviewVariant } from '@/mocks/projects/projectTypes';
+import type { PreviewVariant } from '@/types/project-card.type';
 
 type ProjectTemplateFields = {
   templateType: string | null;

@@ -1,4 +1,9 @@
-import type { ProjectCategory, ProjectItem, PreviewVariant } from '@/mocks/projects/projectTypes';
+import {
+  projectItemListSchema,
+  type ProjectCategory,
+  type ProjectItem,
+  type PreviewVariant,
+} from '@/types/project-card.type';
 
 export type ProjectStartType = 'landing' | 'portfolio' | 'blank';
 
@@ -9,8 +14,9 @@ function readUserProjects(): ProjectItem[] {
   if (!raw) return [];
 
   try {
-    const parsed = JSON.parse(raw) as ProjectItem[];
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed = JSON.parse(raw) as unknown;
+    const result = projectItemListSchema.safeParse(parsed);
+    return result.success ? result.data : [];
   } catch {
     localStorage.removeItem(STORAGE_KEY);
     return [];

@@ -10,8 +10,8 @@ import {
   DEPLOY_STATUS_LABEL,
   TEMPLATE_UNCONFIGURED_LABEL,
   TEMPLATE_UNCONFIGURED_SUBTITLE,
-} from '@/mocks/projects/projectTypes';
-import type { ProjectItem } from '@/mocks/projects/projectTypes';
+  type ProjectItem,
+} from '@/types/project-card.type';
 import type { DeployStatus } from '@/types/common.enum';
 import { cn } from '@/lib/utils';
 

@@ -13,7 +13,6 @@ import { formatDisplayName } from '@/components/layout/me/MeSettingsSidebar';
 import { Input } from '@/components/ui/input';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 import { logoutSession } from '@/lib/logout';
-import { cn } from '@/lib/utils';
 
 const DEMO_CREDIT_TOTAL = 1000;
 const DEMO_CREDIT_USED = 1000;
