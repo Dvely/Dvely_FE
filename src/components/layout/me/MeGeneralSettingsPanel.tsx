@@ -39,7 +39,7 @@ function MeGeneralSettingsPanel() {
               id="me-settings-language"
               value={currentLanguage}
               onChange={handleLanguageChange}
-              className="h-11 w-full appearance-none rounded-xl border border-[#e2e8f0] bg-white px-3.5 text-[14px] text-[#0f172a] outline-none transition focus-visible:border-[#c4b5fd] focus-visible:ring-2 focus-visible:ring-[#7c3aed]/20"
+              className="h-11 w-full appearance-none rounded-xl border border-[#e2e8f0] bg-white px-3.5 text-[14px] text-[#0f172a] outline-none transition focus:border-[#e2e8f0] focus:ring-0"
             >
               {APP_LOCALES.map((locale) => (
                 <option key={locale} value={locale}>
