@@ -30,8 +30,6 @@ function MeGeneralSettingsPanel() {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-5">
-        <h3 className="text-[15px] font-semibold text-[#0f172a]">{t('me.general.appearance')}</h3>
-
         <div className="flex flex-col gap-2">
           <label htmlFor="me-settings-language" className="text-[13px] font-medium text-[#334155]">
             {t('me.general.language')}
@@ -87,7 +85,9 @@ function MeGeneralSettingsPanel() {
       <div className="h-px bg-[#e2e8f0]" role="separator" />
 
       <section className="flex flex-col gap-4">
-        <h3 className="text-[15px] font-semibold text-[#0f172a]">{t('me.general.communications')}</h3>
+        <h3 className="text-[15px] font-semibold text-[#0f172a]">
+          {t('me.general.communications')}
+        </h3>
 
         <div className="flex flex-col divide-y divide-[#f1f5f9]">
           <div className="flex items-start justify-between gap-4 py-4 first:pt-0">
