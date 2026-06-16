@@ -87,7 +87,7 @@ function MeAccountSettingsPanel() {
             id={fullNameFieldId}
             value={fullName}
             onChange={(event) => setFullName(event.target.value)}
-            className="h-11 rounded-xl border-[#e2e8f0] bg-white text-[14px] text-[#0f172a]"
+            className="h-11 rounded-xl border-[#e2e8f0] bg-white text-[14px] text-[#0f172a] shadow-none focus:border-[#e2e8f0] focus:ring-0 focus-visible:border-[#e2e8f0] focus-visible:ring-0"
           />
         </div>
       </section>
