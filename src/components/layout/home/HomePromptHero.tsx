@@ -24,7 +24,6 @@ const quickActions = [
   { emoji: '<>', label: '웹사이트 구축' },
   { emoji: '🖥️', label: '데스크톱 앱 개발' },
   { emoji: '🎨', label: '디자인' },
-  { label: '더보기' },
 ] as const;
 
 function HomePromptHero() {
