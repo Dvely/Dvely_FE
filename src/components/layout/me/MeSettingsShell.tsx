@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useUserInfoQuery } from '@/api/user';
 import MeSettingsContentPanel from '@/components/layout/me/MeSettingsContentPanel';
@@ -21,12 +22,18 @@ function MeSettingsShell({
   variant = 'page',
 }: MeSettingsShellProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<MeSettingsSectionId>(initialSection);
 
   const { data: userResponse } = useUserInfoQuery('me-settings');
   const username = userResponse?.data?.username?.trim() || 'user';
   const displayName = formatDisplayName(username);
   const avatarUrl = userResponse?.data?.avatarUrl ?? null;
+
+  const handleHelpClick = () => {
+    void navigate({ to: '/help' });
+    onClose?.();
+  };
 
   return (
     <div
@@ -42,6 +49,7 @@ function MeSettingsShell({
         onSectionChange={setActiveSection}
         displayName={displayName}
         avatarUrl={avatarUrl}
+        onHelpClick={handleHelpClick}
       />
 
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">

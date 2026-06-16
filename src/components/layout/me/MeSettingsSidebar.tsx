@@ -1,4 +1,5 @@
-import { ChevronsUpDown, ExternalLink } from 'lucide-react';
+import { ChevronRight, ChevronsUpDown } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import profileFallback from '@/assets/icons/profile.svg';
 import {
@@ -13,6 +14,7 @@ type MeSettingsSidebarProps = {
   onSectionChange: (section: MeSettingsSectionId) => void;
   displayName: string;
   avatarUrl: string | null;
+  onHelpClick?: () => void;
 };
 
 function formatDisplayName(username: string) {
@@ -28,10 +30,21 @@ function MeSettingsSidebar({
   onSectionChange,
   displayName,
   avatarUrl,
+  onHelpClick,
 }: MeSettingsSidebarProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const profileImageSrc = avatarUrl?.trim() || profileFallback;
   const HelpIcon = meSettingsHelpItem.icon;
+
+  const handleHelpClick = () => {
+    if (onHelpClick) {
+      onHelpClick();
+      return;
+    }
+
+    void navigate({ to: '/help' });
+  };
 
   return (
     <aside className="flex h-full w-full shrink-0 flex-col border-r border-[#e2e8f0] bg-[#fafafa] lg:w-[248px]">
@@ -89,11 +102,12 @@ function MeSettingsSidebar({
       <div className="border-t border-[#e2e8f0] px-2 py-3">
         <button
           type="button"
+          onClick={handleHelpClick}
           className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-[#475569] transition hover:bg-[#f1f5f9]"
         >
           <HelpIcon className="size-4 shrink-0" strokeWidth={1.75} />
           <span className="flex-1">{t('me.help')}</span>
-          <ExternalLink className="size-3.5 shrink-0 text-[#94a3b8]" aria-hidden />
+          <ChevronRight className="size-3.5 shrink-0 text-[#94a3b8]" aria-hidden />
         </button>
       </div>
     </aside>

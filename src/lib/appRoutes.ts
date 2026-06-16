@@ -5,6 +5,7 @@ export const APP_SHELL_PATHS = [
   '/analytics',
   '/trash',
   '/settings',
+  '/help',
 ] as const;
 
 export type AppShellPath = (typeof APP_SHELL_PATHS)[number];
