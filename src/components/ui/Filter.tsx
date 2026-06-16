@@ -35,7 +35,7 @@ function FilterSelect({
         value={value}
         aria-label={ariaLabel ?? options.find((option) => option.value === value)?.label}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 cursor-pointer appearance-none rounded-lg border border-[#e5e7eb] bg-white py-0 pl-3 pr-8 text-[13px] font-medium text-[#334155] outline-none transition hover:bg-[#f8fafc] focus-visible:border-[#c4b5fd] focus-visible:ring-2 focus-visible:ring-[#7c3aed]/20"
+        className="h-9 cursor-pointer appearance-none rounded-lg border border-[#e5e7eb] bg-white py-0 pl-3 pr-8 text-[13px] font-medium text-[#334155] outline-none transition hover:bg-[#f8fafc] focus:border-[#e5e7eb] focus:ring-0"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value} className="bg-white text-[#334155]">
