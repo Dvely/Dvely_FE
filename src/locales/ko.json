@@ -3,6 +3,15 @@
     "close": "닫기",
     "settings": "설정"
   },
+  "notifications": {
+    "title": "알림",
+    "tabs": {
+      "all": "모두",
+      "updates": "업데이트",
+      "messages": "메시지"
+    },
+    "empty": "새 알림이 없습니다."
+  },
   "me": {
     "profileType": "개인",
     "help": "도움 받기",

@@ -3,6 +3,15 @@
     "close": "閉じる",
     "settings": "設定"
   },
+  "notifications": {
+    "title": "お知らせ",
+    "tabs": {
+      "all": "すべて",
+      "updates": "更新",
+      "messages": "メッセージ"
+    },
+    "empty": "新しいお知らせはありません。"
+  },
   "me": {
     "profileType": "個人",
     "help": "ヘルプ",

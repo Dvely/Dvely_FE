@@ -40,7 +40,8 @@ function MeSettingsShell({
       className={cn(
         'flex min-h-0 w-full flex-col overflow-hidden bg-white lg:flex-row',
         variant === 'dialog' && 'h-full max-h-[min(720px,calc(100vh-2rem))] rounded-2xl shadow-xl',
-        variant === 'page' && 'min-h-[calc(100vh-56px)] rounded-2xl border border-[#e2e8f0] shadow-sm',
+        variant === 'page' &&
+          'min-h-[calc(100vh-56px)] rounded-2xl border border-[#e2e8f0] shadow-sm',
         className,
       )}
     >

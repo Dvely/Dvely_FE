@@ -3,6 +3,15 @@
     "close": "Close",
     "settings": "Settings"
   },
+  "notifications": {
+    "title": "Notifications",
+    "tabs": {
+      "all": "All",
+      "updates": "Updates",
+      "messages": "Messages"
+    },
+    "empty": "No new notifications."
+  },
   "me": {
     "profileType": "Personal",
     "help": "Get help",
