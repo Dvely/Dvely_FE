@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Calendar, Sparkles } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,6 @@ import {
   MeAccountSettingsSkeleton,
 } from '@/components/layout/me/MeAccountSettings.shared';
 import { formatDisplayName } from '@/components/layout/me/MeSettingsSidebar';
-import { Input } from '@/components/ui/input';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 import { logoutSession } from '@/lib/logout';
 
@@ -19,11 +18,8 @@ const DEMO_CREDIT_USED = 1000;
 const DEMO_DAILY_REFRESH = 300;
 
 function MeAccountSettingsPanel() {
-  const [fullName, setFullName] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
-
-  const fullNameFieldId = useId();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [, syncAuthState] = useIsLoggedIn();
@@ -61,10 +57,6 @@ function MeAccountSettingsPanel() {
   }, [isLoggingOut, navigate, syncAuthState]);
 
   useEffect(() => {
-    setFullName(displayName);
-  }, [displayName]);
-
-  useEffect(() => {
     if (copyState !== 'copied') return;
 
     const timer = window.setTimeout(() => setCopyState('idle'), 2000);
@@ -78,17 +70,12 @@ function MeAccountSettingsPanel() {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-2">
-        <label htmlFor={fullNameFieldId} className="text-[13px] font-medium text-[#334155]">
-          {t('me.account.fullName')}
-        </label>
+        <p className="text-[13px] font-medium text-[#334155]">{t('me.account.fullName')}</p>
         <div className="flex items-center gap-3">
           <img src={avatarUrl} alt="" className="size-9 shrink-0 rounded-full object-cover" />
-          <Input
-            id={fullNameFieldId}
-            value={fullName}
-            onChange={(event) => setFullName(event.target.value)}
-            className="h-11 rounded-xl border-[#e2e8f0] bg-white text-[14px] text-[#0f172a] shadow-none focus:border-[#e2e8f0] focus:ring-0 focus-visible:border-[#e2e8f0] focus-visible:ring-0"
-          />
+          <div className="flex h-11 min-w-0 flex-1 items-center rounded-xl border border-[#e2e8f0] bg-white px-3.5 text-[14px] text-[#0f172a]">
+            {displayName}
+          </div>
         </div>
       </section>
 
