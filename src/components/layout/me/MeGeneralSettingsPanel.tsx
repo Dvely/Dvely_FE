@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent } from 'react';
-import { Moon, Sun, SunMoon } from 'lucide-react';
+import { ChevronDown, Moon, Sun, SunMoon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import MeSettingsToggle from '@/components/layout/me/MeSettingsToggle';
 import { changeAppLanguage, getCurrentAppLanguage } from '@/lib/i18n/changeAppLanguage';
@@ -39,7 +39,7 @@ function MeGeneralSettingsPanel() {
               id="me-settings-language"
               value={currentLanguage}
               onChange={handleLanguageChange}
-              className="h-11 w-full appearance-none rounded-xl border border-[#e2e8f0] bg-white px-3.5 text-[14px] text-[#0f172a] outline-none transition focus:border-[#e2e8f0] focus:ring-0"
+              className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-[#e2e8f0] bg-white py-0 pl-3.5 pr-10 text-[14px] text-[#0f172a] outline-none transition focus:border-[#e2e8f0] focus:ring-0"
             >
               {APP_LOCALES.map((locale) => (
                 <option key={locale} value={locale}>
@@ -47,9 +47,10 @@ function MeGeneralSettingsPanel() {
                 </option>
               ))}
             </select>
-            <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8]">
-              ▾
-            </span>
+            <ChevronDown
+              className="pointer-events-none absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-[#94a3b8]"
+              aria-hidden
+            />
           </div>
         </div>
 
