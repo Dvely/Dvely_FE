@@ -17,9 +17,7 @@ type FilterSelectProps = {
 };
 
 function Filter({ className, ...props }: FilterProps) {
-  return (
-    <div className={cn('flex flex-wrap items-center gap-2', className)} {...props} />
-  );
+  return <div className={cn('flex flex-wrap items-center gap-2', className)} {...props} />;
 }
 
 function FilterSelect({
