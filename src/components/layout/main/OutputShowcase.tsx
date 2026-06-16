@@ -1,125 +1,141 @@
-import type { ReactNode } from 'react';
-
-import { Button } from '@/components/ui/button';
+import { useMemo, useState } from 'react';
+import { Link } from '@tanstack/react-router';
+import { ChevronRight } from 'lucide-react';
+import {
+  homeTemplates,
+  type HomeTemplateCategory,
+  type HomeTemplateItem,
+} from '@/mocks/home/homeTemplates';
 import { cn } from '@/lib/utils';
-import InfoCard from '@/components/common/InfoCard';
 
-const showcaseCardClassName = 'rounded-3xl w-full h-[147px] p-3.5';
+type CategoryFilter = 'all' | HomeTemplateCategory | 'leisure';
 
-type ShowcaseCardProps = {
-  cardBackgroundClassName: string;
-  badgeBackgroundClassName: string;
-  badgeTextClassName: string;
-  badgeLabel: ReactNode;
+const categoryLabels: Record<HomeTemplateCategory, string> = {
+  service: '서비스업',
+  academy: '교육/학원',
+  company: '기업',
+  church: '종교/단체',
+  politics: '정치',
 };
 
-const showcaseItems: ShowcaseCardProps[] = [
-  {
-    cardBackgroundClassName: 'bg-[linear-gradient(135deg,#1E293B_0%,#312E81_100%)]',
-    badgeBackgroundClassName: 'bg-black',
-    badgeTextClassName: 'text-white',
-    badgeLabel: 'SaaS 랜딩',
-  },
-  {
-    cardBackgroundClassName: 'bg-red-500',
-    badgeBackgroundClassName: 'bg-white',
-    badgeTextClassName: 'text-[#111827]',
-    badgeLabel: '포트폴리오',
-  },
-  {
-    cardBackgroundClassName: 'bg-orange-500',
-    badgeBackgroundClassName: 'bg-white',
-    badgeTextClassName: 'text-[#111827]',
-    badgeLabel: '로컬 비즈니스',
-  },
-  {
-    cardBackgroundClassName: 'bg-yellow-400',
-    badgeBackgroundClassName: 'bg-white',
-    badgeTextClassName: 'text-[#111827]',
-    badgeLabel: '블로그 · 문서',
-  },
-  {
-    cardBackgroundClassName: 'bg-green-500',
-    badgeBackgroundClassName: 'bg-white',
-    badgeTextClassName: 'text-[#111827]',
-    badgeLabel: '대시보드형',
-  },
-  {
-    cardBackgroundClassName: 'bg-blue-500',
-    badgeBackgroundClassName: 'bg-white',
-    badgeTextClassName: 'text-[#111827]',
-    badgeLabel: '이벤트 페이지',
-  },
+const filterOptions: { value: CategoryFilter; label: string }[] = [
+  { value: 'all', label: '전체' },
+  { value: 'service', label: '서비스업' },
+  { value: 'academy', label: '교육/학원' },
+  { value: 'leisure', label: '숙박/레저' },
+  { value: 'company', label: '기업' },
+  { value: 'church', label: '종교/단체' },
+  { value: 'politics', label: '정치' },
 ];
 
-function ShowcaseCard({
-  cardBackgroundClassName,
-  badgeBackgroundClassName,
-  badgeTextClassName,
-  badgeLabel,
-}: ShowcaseCardProps) {
+const LANDING_TEMPLATE_LIMIT = 3;
+
+function filterTemplates(templates: HomeTemplateItem[], filter: CategoryFilter) {
+  if (filter === 'all') return templates;
+
+  if (filter === 'leisure') {
+    return templates.filter(
+      (template) =>
+        template.category === 'service' &&
+        template.tags.some((tag) => tag.includes('빌라') || tag.includes('풀빌라')),
+    );
+  }
+
+  return templates.filter((template) => template.category === filter);
+}
+
+type LandingTemplateCardProps = {
+  template: HomeTemplateItem;
+};
+
+function LandingTemplateCard({ template }: LandingTemplateCardProps) {
   return (
-    <div
-      className={cn(
-        showcaseCardClassName,
-        'flex flex-col justify-end items-start',
-        cardBackgroundClassName,
-      )}
-    >
-      <div
-        className={cn(
-          'rounded-full typo-b5-sb py-2 px-3 w-fit',
-          badgeBackgroundClassName,
-          badgeTextClassName,
-        )}
+    <article className="group text-left">
+      <Link
+        to="/project/new"
+        search={{ type: template.startType, templateId: template.id }}
+        className="block"
       >
-        {badgeLabel}
+        <div className="relative aspect-10/16 overflow-hidden rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] transition duration-300 group-hover:border-[#cbd5e1]">
+          <img
+            src={template.image}
+            alt={template.title}
+            className="size-full object-cover object-top transition duration-500 group-hover:scale-[1.02]"
+          />
+        </div>
+      </Link>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="rounded-md bg-[#dbeafe] px-2 py-0.5 text-[12px] font-semibold text-[#2563eb]">
+          무료
+        </span>
+        <span className="text-[15px] font-semibold text-[#0f172a]">{template.title}</span>
+        <span className="text-[14px] text-[#64748b]">{categoryLabels[template.category]}</span>
       </div>
-    </div>
+    </article>
   );
 }
 
 function OutputShowcase() {
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+
+  const visibleTemplates = useMemo(() => {
+    return filterTemplates(homeTemplates, categoryFilter).slice(0, LANDING_TEMPLATE_LIMIT);
+  }, [categoryFilter]);
+
   return (
     <section className="w-full bg-white">
-      <div className="flex flex-col gap-2 items-start justify-center py-16 px-52">
-        <p className="text-[#7C3AED] text-lg font-extrabold">만들 수 있는 결과물</p>
-        <p className="text-[#111827] typo-h2-bd">다양한 웹 서비스 유형</p>
-        <div className="flex justify-between w-full">
-          <p className="text-[#64748B] text-lg font-medium">
-            아래는 스타일 레퍼런스용 목업입니다. 실제 생성물은 프롬프트
-            <br />와 템플리셍 따라 달라집니다.
+      <div className="mx-auto flex max-w-[1080px] flex-col items-center px-6 py-20">
+        <header className="flex flex-col items-center gap-3 text-center">
+          <h2 className="text-[32px] font-bold tracking-tight text-[#0f172a] sm:text-[36px]">
+            무료로 바로 시작해보세요
+          </h2>
+          <p className="max-w-[560px] text-[15px] leading-relaxed text-[#64748b] sm:text-[16px]">
+            업종별 전문 템플릿. 선택하는 순간 나만의 홈페이지가 완성됩니다
           </p>
-          <Button variant="link" className="text-[#7C3AED] text-md font-medium">
-            템플릿 보러가기 {'->'}
-          </Button>
+        </header>
+
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+          {filterOptions.map((option) => {
+            const isActive = categoryFilter === option.value;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setCategoryFilter(option.value)}
+                className={cn(
+                  'rounded-full px-4 py-2 text-[14px] font-medium transition',
+                  isActive
+                    ? 'bg-[#0f172a] text-white'
+                    : 'border border-[#e2e8f0] bg-white text-[#0f172a] hover:border-[#cbd5e1]',
+                )}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
-        <div className="grid grid-cols-3 gap-4 pt-5 w-full">
-          {showcaseItems.map((item, i) => (
-            <ShowcaseCard key={i} {...item} />
-          ))}
-          <InfoCard
-            title="템플릿으로 시작하면"
-            description={
-              <p className="text-[#64748B] font-medium">
-                카페·스튜디오·SaaS 등
-                <span className="text-[#111827] font-semibold">업종별 뼈대</span>가 잡혀 있어 첫
-                프롬프트 부담이 줄어듭니다. 이후에는 섹션 추가·카피 교체만 반복하면 됩니다.
-              </p>
-            }
-            className="bg-transparent border-none"
-          />
-          <InfoCard
-            title="브랜드 톤 맞추기"
-            description='다크/라이트, 미니멀/감성 등 키워드를 프롬프트에 섞으면 라이아웃 밀도와 여백 감각이 달라집니다. 에이전트에 "톤만 살짝 더 딱딱하게"처럼 요청해 미세 조정할 수 있습니다.'
-            className="bg-transparent border-none"
-          />
-          <InfoCard
-            title="배포 후에도"
-            description="같은 프로젝트에서 버전·파이프라인 상태를 보고, 다음 스프린트에 맞춰 페이지를 덧붙이는 흐름을 가정했습니다."
-            className="bg-transparent border-none"
-          />
+
+        <div className="mt-10 grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {visibleTemplates.length > 0 ? (
+            visibleTemplates.map((template) => (
+              <LandingTemplateCard key={template.id} template={template} />
+            ))
+          ) : (
+            <p className="col-span-full py-16 text-center text-[14px] text-[#94a3b8]">
+              해당 업종의 템플릿을 준비 중입니다.
+            </p>
+          )}
         </div>
+
+        <Link
+          to="/home"
+          className="mt-10 inline-flex h-12 items-center gap-2 rounded-full bg-[#0f172a] px-6 text-[14px] font-semibold text-white transition hover:bg-[#1e293b]"
+        >
+          템플릿 더보기
+          <ChevronRight className="size-4" strokeWidth={2} aria-hidden />
+        </Link>
       </div>
     </section>
   );
