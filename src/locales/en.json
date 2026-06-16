@@ -88,5 +88,66 @@
         "toggleLabel": "Receive Devely marketing ads"
       }
     }
+  },
+  "help": {
+    "title": "Help center",
+    "description": "Learn how to use Devely and find answers to common questions.",
+    "searchPlaceholder": "Search for help",
+    "quickLinks": {
+      "title": "Quick links",
+      "items": {
+        "gettingStarted": {
+          "title": "Getting started",
+          "description": "Enter a prompt on the home page to create your first project."
+        },
+        "projects": {
+          "title": "Project management",
+          "description": "View, edit, and track deployment status from the projects page."
+        },
+        "github": {
+          "title": "GitHub integration",
+          "description": "Grant GitHub App permissions to connect repositories and sync code."
+        },
+        "account": {
+          "title": "Account & settings",
+          "description": "Update your profile, language, theme, and other account preferences."
+        }
+      }
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "empty": "No results found. Try a different keyword.",
+      "items": {
+        "createProject": {
+          "question": "How do I create a project?",
+          "answer": "Describe the website you want on the home page, or start from a template to create a new project."
+        },
+        "githubPermission": {
+          "question": "Why can't I see my GitHub repositories?",
+          "answer": "You need to install the GitHub App and grant repository access. Follow the prompts, then refresh the list."
+        },
+        "agentChat": {
+          "question": "What happens when I chat with the agent?",
+          "answer": "The agent can update code, layout, and content automatically. Review changes in the project code tab."
+        },
+        "credits": {
+          "question": "How are credits used?",
+          "answer": "Credits are consumed by agent tasks and generation requests. Check usage in Settings > Account. A daily amount refreshes each day."
+        },
+        "restoreTrash": {
+          "question": "Can I restore deleted conversations?",
+          "answer": "Yes. Open Trash to review deleted agent conversations and restore them."
+        },
+        "changeLanguage": {
+          "question": "Where can I change the language?",
+          "answer": "Go to Settings > General > Language and choose Korean, English, or Japanese."
+        }
+      }
+    },
+    "contact": {
+      "title": "Still need help?",
+      "description": "Send us a message and our team will get back to you.",
+      "action": "Email support"
+    }
   }
 }
