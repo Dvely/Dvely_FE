@@ -29,24 +29,22 @@
 | 파일 | 언제 | 하는 일 |
 | --- | --- | --- |
 | `.github/workflows/ci.yml` | `main` 대상 PR, `main` push | `bun install --frozen-lockfile` → typecheck → lint → build |
-| `.github/workflows/deploy-ec2.yml` | 수동(`workflow_dispatch`) | 러너에서 빌드 → tar 업로드 → 릴리스 교체 → 검증 |
+| `.github/workflows/deploy-ec2.yml` | `main` push(= PR 병합), 수동 | 러너에서 빌드 → tar 업로드 → 릴리스 교체 → 검증 |
 
 빌드는 러너에서 한다. 서버는 메모리 3.8GB에 MySQL·백엔드·Docker가 이미 올라가 있어
 `bun install && bun run build`를 돌리기에 여유가 없다. 서버로는 `dist` 산출물만 보낸다.
 
-### 자동 배포 켜기
+**`main` 병합이 곧 배포다.** 2026-08-01 첫 수동 배포로 78커밋 밀려 있던 프로덕션을
+갱신하고 로그인까지 확인한 뒤 `push` 트리거를 열었다.
 
-`deploy-ec2.yml`은 지금 **수동 트리거만** 열려 있다. 서비스 중인 빌드와 `main` 사이에
-78커밋 차이가 있어(백엔드 API가 V12→V30으로 변경) 한 번은 사람이 보고 올리기 위해서다.
+되돌리려면 `deploy-ec2.yml` 상단의 `push` 블록을 주석 처리하면 된다.
+그러면 `workflow_dispatch`(수동)만 남는다.
 
-수동 배포로 정상 동작을 확인한 뒤 `deploy-ec2.yml` 상단의 `push` 블록 주석을 풀면
-`main` 병합이 곧 배포가 된다. 그때는 반드시 아래 브랜치 보호도 같이 걸어야 한다.
-
-### 브랜치 보호 (아직 안 돼 있음)
+### 브랜치 보호
 
 `main` 보호 규칙에 CI의 **`Typecheck and build`** 를 required status check로 등록해야
 실제로 병합이 막힌다. 워크플로 파일만으로는 강제되지 않는다.
-자동 배포를 켠 뒤 이게 없으면 검증을 건너뛴 직접 푸시가 그대로 프로덕션에 나간다.
+자동 배포가 켜져 있으므로, 이게 없으면 검증을 건너뛴 직접 푸시가 그대로 프로덕션에 나간다.
 
 ## 필요한 설정값
 
