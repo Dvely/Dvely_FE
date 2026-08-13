@@ -43,10 +43,10 @@ const defaultQueryOptions = {
 /** GitHub 저장소 목록 조회 API GET */
 async function getGithubRepositoryList() {
   return Http.instance
-    .get<GetGithubRepositoryListResType>(`${endpoint}/github/repositories`)
+    .get<ApiResponse<GetGithubRepositoryListResType>>(`${endpoint}/github/repositories`)
     .then((response) => {
-      const data = succesResponse<GetGithubRepositoryListResType>(response);
-      return getGithubRepositoryListResSchema.parse(data);
+      const body = succesResponse<ApiResponse<GetGithubRepositoryListResType>>(response);
+      return getGithubRepositoryListResSchema.parse(body.data);
     })
     .catch(errorResponse());
 }
@@ -203,11 +203,12 @@ async function deleteProject(params: DeleteProjectParamsType) {
 }
 
 /** GitHub 저장소 목록 조회 Query Hook */
-function useGithubRepositoryListQuery(queryKey: unknown) {
+function useGithubRepositoryListQuery(queryKey: unknown, options?: { enabled?: boolean }) {
   if (!queryKey) throw new Error('queryKey is required');
   return useQuery({
     queryKey: ['github-repository-list', queryKey],
     queryFn: getGithubRepositoryList,
+    enabled: options?.enabled ?? true,
     ...defaultQueryOptions,
   });
 }

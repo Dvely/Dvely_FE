@@ -103,10 +103,12 @@ async function postProjectConversationCreate(projectId: number) {
   });
 
   return Http.instance
-    .post<PostProjectConversationCreateResType>(`${projectsEndpoint}/${id}/conversations`)
+    .post<ApiResponse<PostProjectConversationCreateResType>>(
+      `${projectsEndpoint}/${id}/conversations`,
+    )
     .then((response) => {
-      const data = succesResponse<PostProjectConversationCreateResType>(response);
-      return postProjectConversationCreateResSchema.parse(data);
+      const body = succesResponse<ApiResponse<PostProjectConversationCreateResType>>(response);
+      return postProjectConversationCreateResSchema.parse(body.data);
     })
     .catch(errorResponse());
 }

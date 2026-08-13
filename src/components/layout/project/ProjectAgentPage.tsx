@@ -34,7 +34,7 @@ import GithubRepositoryPicker from '@/components/layout/project/GithubRepository
 import ProjectCodeExplorerPanel from '@/components/layout/project/ProjectCodeExplorerPanel';
 import ProjectPipelinePanel from '@/components/layout/project/ProjectPipelinePanel';
 import { createIdlePipelineRun, runPipelineSequence } from '@/lib/projectPipelineRunner';
-import type { PipelineRun } from '@/mocks/project/pipeline';
+import type { PipelineRun } from '@/types/pipeline.type';
 import { useHorizontalPanelResize } from '@/hooks/useHorizontalPanelResize';
 import { cn } from '@/lib/utils';
 

@@ -1,5 +1,26 @@
 import type { ConversationMessage } from '@/types/chat.type';
 
+let localMessageId = -1;
+
+export function createLocalMessage(
+  conversationId: number,
+  role: 'user' | 'assistant',
+  content: string,
+  tokenCount = role === 'assistant' ? 96 : 0,
+): ConversationMessage {
+  const messageId = localMessageId;
+  localMessageId -= 1;
+
+  return {
+    messageId,
+    conversationId,
+    role,
+    content,
+    tokenCount,
+    createdAt: new Date().toISOString(),
+  };
+}
+
 export const AGENT_CHAT_QUERY_KEY = 'project-agent';
 
 const sessionMessagesByConversation = new Map<number, ConversationMessage[]>();
