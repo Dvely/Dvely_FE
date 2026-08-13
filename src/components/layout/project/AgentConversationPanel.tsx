@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SendHorizontal } from 'lucide-react';
 import { postConversationMessageCreate, postProjectConversationCreate } from '@/api/chat';
+import { pollAgentTask } from '@/api/agent';
+import type { GetAgentTaskResType } from '@/types/agent.type';
 import type { ConversationMessage } from '@/types/chat.type';
 import {
   AGENT_CHAT_QUERY_KEY,
@@ -36,6 +38,29 @@ type AgentConversationPanelProps = {
   onDeployPipelineStart?: () => Promise<void>;
 };
 
+function formatAgentTaskReply(task: GetAgentTaskResType) {
+  switch (task.status) {
+    case 'DONE':
+      return task.summary?.trim() || '작업을 완료했습니다.';
+    case 'FAILED':
+      return (
+        task.error?.trim() ||
+        task.suggestedFix?.trim() ||
+        '작업에 실패했습니다. 잠시 후 다시 시도해주세요.'
+      );
+    case 'CANCELLED':
+      return '작업이 취소되었습니다.';
+    case 'WAITING_INPUT':
+      return task.question?.trim() || '추가 입력이 필요합니다.';
+    case 'WAITING_APPROVAL':
+      return '작업 실행 전 승인이 필요합니다.';
+    case 'WAITING_RESULT_APPROVAL':
+      return task.summary?.trim() || '결과 승인이 필요합니다. 미리보기를 확인한 뒤 승인해 주세요.';
+    default:
+      return task.summary?.trim() || '작업 상태를 확인했습니다.';
+  }
+}
+
 function AgentConversationPanel({
   projectId,
   projectName,
@@ -53,23 +78,49 @@ function AgentConversationPanel({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousConversationIdRef = useRef(conversationId);
   const onConversationActivityRef = useRef(onConversationActivity);
+  const pollAbortRef = useRef<AbortController | null>(null);
 
   onConversationActivityRef.current = onConversationActivity;
 
-  const notifyConversationActivity = (targetConversationId: number) => {
-    onConversationActivityRef.current?.(targetConversationId);
-  };
-
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
-      if (isNewConversation || conversationId === null) {
+      let targetConversationId = conversationId;
+
+      if (isNewConversation || targetConversationId === null) {
         const created = await postProjectConversationCreate(projectId);
-        await postConversationMessageCreate(created.conversationId, { content });
-        return created.conversationId;
+        targetConversationId = created.conversationId;
       }
 
-      await postConversationMessageCreate(conversationId, { content });
-      return conversationId;
+      const createdMessage = await postConversationMessageCreate(targetConversationId, { content });
+
+      // 로컬 유저 메시지에 서버 taskId를 붙여 프리뷰/폴링 상태를 맞춘다.
+      const sessionMessages = readSessionMessages(targetConversationId);
+      const lastUserIndex = [...sessionMessages]
+        .map((message, index) => ({ message, index }))
+        .reverse()
+        .find(({ message }) => message.role === 'user' && message.content === content)?.index;
+      if (lastUserIndex != null) {
+        const nextMessages = sessionMessages.map((message, index) =>
+          index === lastUserIndex ? { ...message, taskId: createdMessage.taskId } : message,
+        );
+        writeSessionMessages(targetConversationId, nextMessages);
+      }
+
+      let task: GetAgentTaskResType | null = null;
+
+      if (createdMessage.taskId) {
+        setIsAssistantReplying(true);
+        pollAbortRef.current?.abort();
+        const controller = new AbortController();
+        pollAbortRef.current = controller;
+        task = await pollAgentTask(createdMessage.taskId, { signal: controller.signal });
+      }
+
+      return {
+        conversationId: targetConversationId,
+        task,
+        taskId: createdMessage.taskId,
+      };
     },
     onMutate: (content) => {
       const draftConversationId = conversationId ?? 0;
@@ -82,7 +133,9 @@ function AgentConversationPanel({
       setInput('');
       return { content, userMessage, draftConversationId };
     },
-    onSuccess: (targetConversationId, _content, context) => {
+    onSuccess: (result, _content, context) => {
+      const targetConversationId = result.conversationId;
+
       if (context?.userMessage && context.draftConversationId !== targetConversationId) {
         migrateSessionMessages(context.draftConversationId, targetConversationId);
       }
@@ -98,17 +151,66 @@ function AgentConversationPanel({
         queryKey: ['project-conversation-list', AGENT_CHAT_QUERY_KEY, projectId],
       });
 
-      if (!context?.userMessage) return;
+      if (result.task) {
+        const assistantMessage = createLocalMessage(
+          targetConversationId,
+          'assistant',
+          formatAgentTaskReply(result.task),
+        );
+        setDisplayMessages((prev) => {
+          const next = [...prev, assistantMessage];
+          writeSessionMessages(targetConversationId, next);
+          return next;
+        });
+      } else if (context?.userMessage) {
+        console.warn('[agent] message created without taskId', {
+          conversationId: targetConversationId,
+          taskId: result.taskId,
+        });
+        const assistantMessage = createLocalMessage(
+          targetConversationId,
+          'assistant',
+          '메시지는 저장됐지만 AI 작업이 생성되지 않았습니다. 백엔드 Decision Agent(AI 키/설정)를 확인해주세요.',
+        );
+        setDisplayMessages((prev) => {
+          const next = [...prev, assistantMessage];
+          writeSessionMessages(targetConversationId, next);
+          return next;
+        });
+      }
 
       setIsAssistantReplying(false);
-      notifyConversationActivity(targetConversationId);
+      onConversationActivityRef.current?.(targetConversationId);
     },
-    onError: (_error, content, context) => {
-      setInput(content);
-      if (context?.userMessage) {
-        setDisplayMessages((prev) =>
-          prev.filter((message) => message.messageId !== context.userMessage.messageId),
+    onError: (error, content, context) => {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setIsAssistantReplying(false);
+        return;
+      }
+
+      console.error('[agent] send/poll failed', error);
+
+      const targetConversationId = conversationId ?? context?.draftConversationId ?? null;
+      if (targetConversationId != null && context?.userMessage) {
+        const assistantMessage = createLocalMessage(
+          targetConversationId,
+          'assistant',
+          error instanceof Error
+            ? `작업 확인 중 오류가 발생했습니다: ${error.message}`
+            : '작업 확인 중 오류가 발생했습니다.',
         );
+        setDisplayMessages((prev) => {
+          const next = [...prev, assistantMessage];
+          writeSessionMessages(targetConversationId, next);
+          return next;
+        });
+      } else {
+        setInput(content);
+        if (context?.userMessage) {
+          setDisplayMessages((prev) =>
+            prev.filter((message) => message.messageId !== context.userMessage.messageId),
+          );
+        }
       }
       setIsAssistantReplying(false);
     },
@@ -134,6 +236,9 @@ function AgentConversationPanel({
   };
 
   const syncConversationView = (targetConversationId: number | null) => {
+    pollAbortRef.current?.abort();
+    pollAbortRef.current = null;
+
     if (targetConversationId !== null) {
       setDisplayMessages(readSessionMessages(targetConversationId));
     } else {
@@ -172,6 +277,12 @@ function AgentConversationPanel({
       window.cancelAnimationFrame(frameId);
     };
   }, [conversationId, displayMessages, isAssistantReplying]);
+
+  useEffect(() => {
+    return () => {
+      pollAbortRef.current?.abort();
+    };
+  }, []);
 
   return (
     <>

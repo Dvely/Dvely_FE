@@ -18,6 +18,7 @@ export function createLocalMessage(
     content,
     tokenCount,
     createdAt: new Date().toISOString(),
+    taskId: null,
   };
 }
 
