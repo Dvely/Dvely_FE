@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Lock, LockOpen } from 'lucide-react';
 import githubIcon from '@/assets/icons/github.svg';
-import { mockGithubRepositories } from '@/mocks/github/githubRepositories';
+import { useGithubRepositoryListQuery } from '@/api/projects';
 import type { GithubRepository } from '@/types/projects.type';
 
 type GithubRepositoryPickerProps = {
@@ -13,6 +13,10 @@ function GithubRepositoryPicker({ onSelect }: GithubRepositoryPickerProps) {
   const [selectedFullName, setSelectedFullName] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const { data: repositories = [], isLoading } = useGithubRepositoryListQuery('github-picker', {
+    enabled: open,
+  });
+  const skeletonItems = Array.from({ length: 4 }, (_, index) => `repo-skeleton-${index}`);
 
   const handleSelect = useCallback(
     (repository: GithubRepository) => {
@@ -70,48 +74,60 @@ function GithubRepositoryPicker({ onSelect }: GithubRepositoryPickerProps) {
           </div>
 
           <div className="max-h-[320px] overflow-y-auto p-1.5">
-            <ul>
-              {mockGithubRepositories.map((repo) => {
-                const isSelected = selectedFullName === repo.fullName;
-                const isPrivate = repo.visibility === 'PRIVATE';
+            {isLoading ? (
+              <ul>
+                {skeletonItems.map((key) => (
+                  <li key={key} className="h-[72px] animate-pulse rounded-lg bg-[#f8fafc]" />
+                ))}
+              </ul>
+            ) : repositories.length === 0 ? (
+              <p className="px-3 py-8 text-center text-[12px] text-[#94a3b8]">
+                연결할 수 있는 저장소가 없습니다.
+              </p>
+            ) : (
+              <ul>
+                {repositories.map((repo) => {
+                  const isSelected = selectedFullName === repo.fullName;
+                  const isPrivate = repo.visibility === 'PRIVATE';
 
-                return (
-                  <li key={repo.fullName}>
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={isSelected}
-                      onClick={() => handleSelect(repo)}
-                      className={`w-full rounded-lg px-3 py-2.5 text-left transition ${
-                        isSelected ? 'bg-[#eff6ff]' : 'hover:bg-[#f8fafc]'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="truncate text-[13px] font-semibold text-[#0f172a]">
-                          {repo.fullName}
+                  return (
+                    <li key={repo.fullName}>
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        onClick={() => handleSelect(repo)}
+                        className={`w-full rounded-lg px-3 py-2.5 text-left transition ${
+                          isSelected ? 'bg-[#eff6ff]' : 'hover:bg-[#f8fafc]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="truncate text-[13px] font-semibold text-[#0f172a]">
+                            {repo.fullName}
+                          </p>
+                          <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] font-medium text-[#64748b]">
+                            {isPrivate ? (
+                              <Lock className="size-3" aria-hidden />
+                            ) : (
+                              <LockOpen className="size-3" aria-hidden />
+                            )}
+                            {isPrivate ? 'Private' : 'Public'}
+                          </span>
+                        </div>
+                        {repo.description ? (
+                          <p className="mt-1 line-clamp-2 text-[11px] text-[#64748b]">
+                            {repo.description}
+                          </p>
+                        ) : null}
+                        <p className="mt-1 text-[10px] text-[#94a3b8]">
+                          기본 브랜치 · {repo.defaultBranch}
                         </p>
-                        <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] font-medium text-[#64748b]">
-                          {isPrivate ? (
-                            <Lock className="size-3" aria-hidden />
-                          ) : (
-                            <LockOpen className="size-3" aria-hidden />
-                          )}
-                          {isPrivate ? 'Private' : 'Public'}
-                        </span>
-                      </div>
-                      {repo.description ? (
-                        <p className="mt-1 line-clamp-2 text-[11px] text-[#64748b]">
-                          {repo.description}
-                        </p>
-                      ) : null}
-                      <p className="mt-1 text-[10px] text-[#94a3b8]">
-                        기본 브랜치 · {repo.defaultBranch}
-                      </p>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         </div>
       ) : null}

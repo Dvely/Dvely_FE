@@ -1,5 +1,6 @@
 import { Check, Circle, Loader2, X } from 'lucide-react';
-import { mockPipelineRun, type PipelineRun, type PipelineStep, type PipelineStepStatus } from '@/mocks/project/pipeline';
+import { createIdlePipelineRun } from '@/lib/projectPipelineRunner';
+import type { PipelineRun, PipelineStep, PipelineStepStatus } from '@/types/pipeline.type';
 import { cn } from '@/lib/utils';
 
 function StepStatusIcon({ status }: { status: PipelineStepStatus }) {
@@ -73,7 +74,7 @@ type ProjectPipelinePanelProps = {
 };
 
 function ProjectPipelinePanel({ className, run: controlledRun, isRunning: controlledIsRunning }: ProjectPipelinePanelProps) {
-  const run = controlledRun ?? mockPipelineRun;
+  const run = controlledRun ?? createIdlePipelineRun();
   const isRunning = controlledIsRunning ?? run.status === 'running';
   const runNumber = run.id.replace('run-', '');
 

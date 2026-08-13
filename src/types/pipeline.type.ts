@@ -19,8 +19,3 @@ export type PipelineRun = {
   steps: PipelineStep[];
   logs: string[];
 };
-
-import { createIdlePipelineRun } from '@/lib/projectPipelineRunner';
-
-/** 초기 화면: 배포 실행 전 대기 상태 */
-export const mockPipelineRun: PipelineRun = createIdlePipelineRun();

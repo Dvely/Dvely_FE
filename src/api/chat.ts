@@ -1,6 +1,7 @@
 import Http from '@/utils/httpClients';
 import { useQuery } from '@tanstack/react-query';
 import { errorResponse, succesResponse } from '@/utils/response';
+import type { ApiResponse } from '@/types/response.type';
 import {
   deleteConversationParamsSchema,
   getConversationDetailParamsSchema,
@@ -71,10 +72,13 @@ async function postConversationMessageCreate(
   const payload = postConversationMessageCreateReqSchema.parse(params);
 
   return Http.instance
-    .post<PostConversationMessageCreateResType>(`${conversationsEndpoint}/${id}/messages`, payload)
+    .post<ApiResponse<PostConversationMessageCreateResType>>(
+      `${conversationsEndpoint}/${id}/messages`,
+      payload,
+    )
     .then((response) => {
-      const data = succesResponse<PostConversationMessageCreateResType>(response);
-      return postConversationMessageCreateResSchema.parse(data);
+      const body = succesResponse<ApiResponse<PostConversationMessageCreateResType>>(response);
+      return postConversationMessageCreateResSchema.parse(body.data);
     })
     .catch(errorResponse());
 }
@@ -84,10 +88,10 @@ async function getProjectConversationList(projectId: number) {
   const { projectId: id } = getProjectConversationListParamsSchema.parse({ projectId });
 
   return Http.instance
-    .get<GetProjectConversationListResType>(`${projectsEndpoint}/${id}/conversations`)
+    .get<ApiResponse<GetProjectConversationListResType>>(`${projectsEndpoint}/${id}/conversations`)
     .then((response) => {
-      const data = succesResponse<GetProjectConversationListResType>(response);
-      return getProjectConversationListResSchema.parse(data);
+      const body = succesResponse<ApiResponse<GetProjectConversationListResType>>(response);
+      return getProjectConversationListResSchema.parse(body.data);
     })
     .catch(errorResponse());
 }
@@ -99,10 +103,12 @@ async function postProjectConversationCreate(projectId: number) {
   });
 
   return Http.instance
-    .post<PostProjectConversationCreateResType>(`${projectsEndpoint}/${id}/conversations`)
+    .post<ApiResponse<PostProjectConversationCreateResType>>(
+      `${projectsEndpoint}/${id}/conversations`,
+    )
     .then((response) => {
-      const data = succesResponse<PostProjectConversationCreateResType>(response);
-      return postProjectConversationCreateResSchema.parse(data);
+      const body = succesResponse<ApiResponse<PostProjectConversationCreateResType>>(response);
+      return postProjectConversationCreateResSchema.parse(body.data);
     })
     .catch(errorResponse());
 }
@@ -122,10 +128,10 @@ async function deleteConversation(conversationId: number) {
 /** 휴지통 대화 목록 조회 API GET */
 async function getTrashConversationList() {
   return Http.instance
-    .get<GetTrashConversationListResType>(`${trashEndpoint}/conversations`)
+    .get<ApiResponse<GetTrashConversationListResType>>(`${trashEndpoint}/conversations`)
     .then((response) => {
-      const data = succesResponse<GetTrashConversationListResType>(response);
-      return getTrashConversationListResSchema.parse(data);
+      const body = succesResponse<ApiResponse<GetTrashConversationListResType>>(response);
+      return getTrashConversationListResSchema.parse(body.data);
     })
     .catch(errorResponse());
 }
@@ -137,10 +143,12 @@ async function postTrashConversationRestore(conversationId: number) {
   });
 
   return Http.instance
-    .post<PostTrashConversationRestoreResType>(`${trashEndpoint}/conversations/${id}/restore`)
+    .post<ApiResponse<PostTrashConversationRestoreResType>>(
+      `${trashEndpoint}/conversations/${id}/restore`,
+    )
     .then((response) => {
-      const data = succesResponse<PostTrashConversationRestoreResType>(response);
-      return postTrashConversationRestoreResSchema.parse(data);
+      const body = succesResponse<ApiResponse<PostTrashConversationRestoreResType>>(response);
+      return postTrashConversationRestoreResSchema.parse(body.data);
     })
     .catch(errorResponse());
 }

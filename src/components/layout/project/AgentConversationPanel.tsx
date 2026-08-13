@@ -1,39 +1,26 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Check, SendHorizontal, X } from 'lucide-react';
+import { SendHorizontal } from 'lucide-react';
 import { postConversationMessageCreate, postProjectConversationCreate } from '@/api/chat';
 import type { ConversationMessage } from '@/types/chat.type';
 import {
   AGENT_CHAT_QUERY_KEY,
   clearHomeAgentPromptSendGuard,
+  createLocalMessage,
   migrateSessionMessages,
   readSessionMessages,
   shouldSendHomeAgentPromptOnce,
   writeSessionMessages,
 } from '@/components/layout/project/agentChat.utils';
-import {
-  createLocalMessage,
-  getMessageReviewStatus,
-  hasPendingMessageReview,
-  isDeployApprovalMessage,
-  isMockAssistantReplyPending,
-  MOCK_NEW_PORTFOLIO_USER_PROMPT,
-  MOCK_REPO_EDIT_USER_PROMPT,
-  resolveMockScriptReview,
-  scheduleMockAssistantReply,
-  setMessageReviewStatus,
-  setMockAssistantReplyListener,
-  type MessageReviewStatus,
-} from '@/mocks/chat/agentChatMocks';
 
 const suggestedPrompts = [
   {
     label: '포트폴리오 만들기',
-    prompt: MOCK_NEW_PORTFOLIO_USER_PROMPT,
+    prompt: 'React + Vite로 포트폴리오 사이트를 만들어줘.',
   },
   {
     label: '기존 레포 수정',
-    prompt: MOCK_REPO_EDIT_USER_PROMPT,
+    prompt: '현재 프로젝트에서 수정하고 싶은 부분을 알려줄게.',
   },
 ] as const;
 
@@ -57,21 +44,16 @@ function AgentConversationPanel({
   initialPrompt,
   onConversationCreated,
   onConversationActivity,
-  onDeployPipelineStart,
 }: AgentConversationPanelProps) {
   const [input, setInput] = useState('');
   const [displayMessages, setDisplayMessages] = useState<ConversationMessage[]>([]);
   const [isAssistantReplying, setIsAssistantReplying] = useState(false);
-  const [reviewRevision, setReviewRevision] = useState(0);
 
   const queryClient = useQueryClient();
-  const activeConversationIdRef = useRef(conversationId);
-  const isMountedRef = useRef(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousConversationIdRef = useRef(conversationId);
   const onConversationActivityRef = useRef(onConversationActivity);
 
-  activeConversationIdRef.current = conversationId;
   onConversationActivityRef.current = onConversationActivity;
 
   const notifyConversationActivity = (targetConversationId: number) => {
@@ -100,7 +82,7 @@ function AgentConversationPanel({
       setInput('');
       return { content, userMessage, draftConversationId };
     },
-    onSuccess: (targetConversationId, content, context) => {
+    onSuccess: (targetConversationId, _content, context) => {
       if (context?.userMessage && context.draftConversationId !== targetConversationId) {
         migrateSessionMessages(context.draftConversationId, targetConversationId);
       }
@@ -118,12 +100,7 @@ function AgentConversationPanel({
 
       if (!context?.userMessage) return;
 
-      setIsAssistantReplying(true);
-      scheduleMockAssistantReply({
-        conversationId: targetConversationId,
-        userMessageId: context.userMessage.messageId,
-        content,
-      });
+      setIsAssistantReplying(false);
       notifyConversationActivity(targetConversationId);
     },
     onError: (_error, content, context) => {
@@ -138,11 +115,7 @@ function AgentConversationPanel({
   });
 
   const isSending = sendMessageMutation.isPending;
-  const hasPendingReview = useMemo(
-    () => hasPendingMessageReview(displayMessages),
-    [displayMessages, reviewRevision],
-  );
-  const isInputLocked = isSending || isAssistantReplying || hasPendingReview;
+  const isInputLocked = isSending || isAssistantReplying;
   const showWelcome =
     isNewConversation && !isSending && !isAssistantReplying && displayMessages.length === 0;
 
@@ -160,64 +133,19 @@ function AgentConversationPanel({
     }
   };
 
-  const handleReviewDecision = async (
-    messageId: number,
-    status: Exclude<MessageReviewStatus, 'pending'>,
-  ) => {
-    setMessageReviewStatus(messageId, status);
-    setReviewRevision((revision) => revision + 1);
-
-    if (conversationId === null || status !== 'accepted') return;
-
-    const shouldRunDeployPipeline =
-      isDeployApprovalMessage(messageId) && onDeployPipelineStart !== undefined;
-
-    if (shouldRunDeployPipeline) {
-      setIsAssistantReplying(true);
-    }
-
-    try {
-      await resolveMockScriptReview(conversationId, messageId, status, {
-        runDeployPipeline: shouldRunDeployPipeline ? onDeployPipelineStart : undefined,
-      });
-    } finally {
-      setIsAssistantReplying(isMockAssistantReplyPending(conversationId));
-    }
-  };
-
   const syncConversationView = (targetConversationId: number | null) => {
     if (targetConversationId !== null) {
       setDisplayMessages(readSessionMessages(targetConversationId));
-      setIsAssistantReplying(isMockAssistantReplyPending(targetConversationId));
     } else {
       setDisplayMessages([]);
-      setIsAssistantReplying(false);
     }
+    setIsAssistantReplying(false);
     setInput('');
   };
 
   const scrollToLatestMessage = (behavior: ScrollBehavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
   };
-
-  useEffect(() => {
-    isMountedRef.current = true;
-
-    setMockAssistantReplyListener((targetConversationId, messages) => {
-      if (!isMountedRef.current) return;
-      if (activeConversationIdRef.current !== targetConversationId) return;
-
-      setDisplayMessages(messages);
-      setIsAssistantReplying(isMockAssistantReplyPending(targetConversationId));
-      setReviewRevision((revision) => revision + 1);
-      notifyConversationActivity(targetConversationId);
-    });
-
-    return () => {
-      isMountedRef.current = false;
-      setMockAssistantReplyListener(null);
-    };
-  }, []);
 
   useEffect(() => {
     syncConversationView(conversationId);
@@ -243,7 +171,7 @@ function AgentConversationPanel({
     return () => {
       window.cancelAnimationFrame(frameId);
     };
-  }, [conversationId, displayMessages, isAssistantReplying, reviewRevision]);
+  }, [conversationId, displayMessages, isAssistantReplying]);
 
   return (
     <>
@@ -256,14 +184,7 @@ function AgentConversationPanel({
             </div>
           ) : null}
           {displayMessages.map((message) => (
-            <MessageBubble
-              key={message.messageId}
-              message={message}
-              reviewStatus={
-                message.role === 'assistant' ? getMessageReviewStatus(message.messageId) : null
-              }
-              onReviewDecision={handleReviewDecision}
-            />
+            <MessageBubble key={message.messageId} message={message} />
           ))}
           {isAssistantReplying ? (
             <div className="px-3.5 py-3 text-[13px] text-[#94a3b8]">
@@ -275,11 +196,6 @@ function AgentConversationPanel({
       </div>
 
       <footer className="border-t border-[#f1f5f9] p-3">
-        {hasPendingReview ? (
-          <p className="mb-2 px-1 text-[11px] text-[#94a3b8]">
-            에이전트 제안을 수락하거나 거절한 뒤 다음 메시지를 보낼 수 있습니다.
-          </p>
-        ) : null}
         <div className="mb-2 flex flex-wrap gap-2">
           {suggestedPrompts.map(({ label, prompt }) => (
             <button
@@ -300,9 +216,7 @@ function AgentConversationPanel({
             disabled={isInputLocked}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={
-              hasPendingReview ? '제안 검토 후 메시지를 보낼 수 있습니다' : '메시지를 입력하세요'
-            }
+            placeholder="메시지를 입력하세요"
             className="min-h-[40px] flex-1 resize-none bg-transparent text-[13px] text-[#0f172a] outline-none placeholder:text-[#94a3b8] disabled:opacity-60"
           />
           <button
@@ -322,8 +236,6 @@ function AgentConversationPanel({
 
 type MessageBubbleProps = {
   message: ConversationMessage;
-  reviewStatus: MessageReviewStatus | null;
-  onReviewDecision: (messageId: number, status: Exclude<MessageReviewStatus, 'pending'>) => void;
 };
 
 const MESSAGE_URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -354,7 +266,7 @@ function linkifyMessageContent(content: string, linkClassName: string) {
   });
 }
 
-function MessageBubble({ message, reviewStatus, onReviewDecision }: MessageBubbleProps) {
+function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
   const linkClassName = isUser
@@ -368,9 +280,7 @@ function MessageBubble({ message, reviewStatus, onReviewDecision }: MessageBubbl
           isUser
             ? 'rounded-xl border border-[#c4b5fd] bg-[#ede9fe] px-3.5 py-3 text-[#4c1d95]'
             : isAssistant
-              ? `px-3.5 py-3 text-[#475569] ${
-                  reviewStatus === 'rejected' ? 'opacity-60 line-through' : ''
-                }`
+              ? 'px-3.5 py-3 text-[#475569]'
               : 'rounded-xl border border-[#e2e8f0] bg-white px-3.5 py-3 text-[#64748b]'
         }`}
       >
@@ -378,41 +288,6 @@ function MessageBubble({ message, reviewStatus, onReviewDecision }: MessageBubbl
           {linkifyMessageContent(message.content, linkClassName)}
         </p>
       </div>
-
-      {isAssistant && reviewStatus === 'pending' ? (
-        <div className="mt-2 flex items-center gap-2 px-3.5">
-          <button
-            type="button"
-            onClick={() => onReviewDecision(message.messageId, 'rejected')}
-            className="inline-flex h-7 items-center gap-1 rounded-md border border-[#e2e8f0] bg-white px-2.5 text-[11px] font-semibold text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#334155]"
-          >
-            <X className="size-3" />
-            거절
-          </button>
-          <button
-            type="button"
-            onClick={() => onReviewDecision(message.messageId, 'accepted')}
-            className="inline-flex h-7 items-center gap-1 rounded-md bg-[#0f172a] px-2.5 text-[11px] font-semibold text-white transition hover:bg-[#1e293b]"
-          >
-            <Check className="size-3" />
-            수락
-          </button>
-        </div>
-      ) : null}
-
-      {isAssistant && reviewStatus === 'accepted' ? (
-        <div className="mt-1.5 flex items-center gap-1 px-3.5 text-[11px] font-medium text-[#16a34a]">
-          <Check className="size-3" />
-          수락됨
-        </div>
-      ) : null}
-
-      {isAssistant && reviewStatus === 'rejected' ? (
-        <div className="mt-1.5 flex items-center gap-1 px-3.5 text-[11px] font-medium text-[#94a3b8]">
-          <X className="size-3" />
-          거절됨
-        </div>
-      ) : null}
     </div>
   );
 }
