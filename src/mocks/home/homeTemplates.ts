@@ -28,11 +28,6 @@ export function resolveHomeTemplatePreviewUrl(template: HomeTemplateItem): strin
   return DEFAULT_LANDING_PREVIEW_URL;
 }
 
-function resolveStartType(tags: string[]): ProjectStartType {
-  if (tags.some((tag) => tag.includes('포트폴리오'))) return 'portfolio';
-  return 'landing';
-}
-
 export const homeTemplates: HomeTemplateItem[] = [
   {
     id: '1',
@@ -48,7 +43,7 @@ export const homeTemplates: HomeTemplateItem[] = [
     title: '개발자 포트폴리오',
     tags: ['#포트폴리오', '#개발자'],
     image: container1,
-    startType: resolveStartType(['#포트폴리오', '#개발자']),
+    startType: 'landing',
     category: 'service',
   },
   {

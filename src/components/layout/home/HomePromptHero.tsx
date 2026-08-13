@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowUp, Laptop, MessageSquare, Mic, Plus, SlidersHorizontal } from 'lucide-react';
+import { ArrowUp, Laptop, Mic, Plus, SlidersHorizontal } from 'lucide-react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useProjectListQuery } from '@/api/projects';
 import {
@@ -24,7 +24,6 @@ const quickActions = [
   { emoji: '<>', label: '웹사이트 구축' },
   { emoji: '🖥️', label: '데스크톱 앱 개발' },
   { emoji: '🎨', label: '디자인' },
-  { label: '더보기' },
 ] as const;
 
 function HomePromptHero() {
@@ -181,13 +180,6 @@ function HomePromptHero() {
             </div>
 
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                className="flex size-8 items-center justify-center rounded-lg text-[#64748b] transition hover:bg-[#f1f5f9]"
-                aria-label="채팅"
-              >
-                <MessageSquare className="size-[18px]" strokeWidth={1.75} />
-              </button>
               <button
                 type="button"
                 className="flex size-8 items-center justify-center rounded-lg text-[#64748b] transition hover:bg-[#f1f5f9]"

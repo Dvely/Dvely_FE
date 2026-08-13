@@ -189,7 +189,7 @@ function ProjectDetailPage({
                   </>
                 ) : latestCommit ? (
                   <>
-                    <p className="mt-3 font-mono text-[13px] font-semibold text-[#7c3aed]">
+                    <p className="mt-3 truncate font-mono text-[13px] font-semibold text-[#7c3aed]">
                       {latestCommit.sha}
                     </p>
                     <p className="mt-1 text-[12px] text-[#64748b]">{latestCommit.message}</p>

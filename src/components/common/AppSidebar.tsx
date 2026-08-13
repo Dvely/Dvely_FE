@@ -5,14 +5,12 @@ import {
   LayoutTemplate,
   PanelLeft,
   PanelRight,
-  Settings,
   Trash2,
 } from 'lucide-react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
-import { Fragment, useCallback, useEffect, useState } from 'react';
-import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
+import { Fragment, useState } from 'react';
+
 import type { AppShellPath } from '@/lib/appRoutes';
-import { logoutSession } from '@/lib/logout';
 
 const navItems: {
   to: AppShellPath;
@@ -24,37 +22,13 @@ const navItems: {
   { to: '/templates', label: '템플릿', icon: LayoutTemplate },
   { to: '/analytics', label: '분석', icon: BarChart2 },
   { to: '/trash', label: '휴지통', icon: Trash2 },
-  { to: '/settings', label: '설정', icon: Settings },
 ];
 
 export default function AppSidebar() {
   const [collapsed, setCollapsed] = useState(true);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const [isLoggedIn, syncAuthState] = useIsLoggedIn();
-
-  const handleLogout = useCallback(async () => {
-    if (isLoggingOut) return;
-
-    setIsLoggingOut(true);
-    try {
-      await logoutSession();
-    } finally {
-      setIsLoggingOut(false);
-      syncAuthState();
-      void navigate({ to: '/', replace: true });
-    }
-  }, [isLoggingOut, navigate, syncAuthState]);
-
-  const logoutButtonLabel = isLoggingOut ? '로그아웃 중...' : '로그아웃';
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      setIsLoggingOut(false);
-    }
-  }, [isLoggedIn]);
 
   return (
     <aside
@@ -122,24 +96,6 @@ export default function AppSidebar() {
           );
         })}
       </nav>
-
-      {isLoggedIn ? (
-        <div className={`shrink-0 border-t border-[#0F172A]/8 py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
-          <button
-            type="button"
-            onClick={() => void handleLogout()}
-            disabled={isLoggingOut}
-            title={collapsed ? logoutButtonLabel : undefined}
-            className={`flex w-full items-center rounded-xl text-[13px] font-medium text-[#64748B] transition hover:bg-[#E4E4E4] hover:text-[#34322D] disabled:cursor-not-allowed disabled:opacity-50 ${
-              collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5 text-left'
-            }`}
-          >
-            <span className={collapsed ? 'text-center text-[11px] leading-tight' : undefined}>
-              {logoutButtonLabel}
-            </span>
-          </button>
-        </div>
-      ) : null}
     </aside>
   );
 }

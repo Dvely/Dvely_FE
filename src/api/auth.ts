@@ -25,6 +25,16 @@ export async function completeGitHubCallback(params: { code: string; state: stri
     .catch(errorResponse());
 }
 
+/** GET /auth/github/app/install-url — GitHub App 설치 URL 발급 */
+export async function fetchGitHubAppInstallUrl() {
+  return Http.instance
+    .get<ApiResponse<GitHubAuthUrlResult>>(`${endpoint}/app/install-url`)
+    .then((response) => {
+      return succesResponse<ApiResponse<GitHubAuthUrlResult>>(response);
+    })
+    .catch(errorResponse());
+}
+
 /** POST /auth/logout — 로그아웃 */
 export async function logout() {
   return Http.instance

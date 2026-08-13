@@ -1,3 +1,4 @@
+import HeaderContainer from '@/components/layout/header/HeaderContainer';
 import HeroSection from './HeroSection';
 import HighlightSection from './HighlightSection';
 import PainPointsSection from './PainPointsSection';
@@ -14,6 +15,7 @@ import Footer from '../footer/Footer';
 function MainContainer() {
   return (
     <main className="w-[1440px] mx-auto flex flex-col">
+      <HeaderContainer />
       <HeroSection />
       <HighlightSection />
       <PainPointsSection />

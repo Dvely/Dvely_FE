@@ -12,7 +12,6 @@ function HomePromptTemplateChip({ template, onRemove }: HomePromptTemplateChipPr
       <div className="flex min-w-0 items-stretch overflow-hidden rounded-xl border border-[#e2e8f0] bg-[#f8fafc] shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
         <img
           src={template.image}
-          alt=""
           className="h-[58px] w-[76px] shrink-0 border-r border-[#e2e8f0] object-cover object-top"
         />
         <div className="flex min-w-0 flex-col justify-center py-2 pl-3 pr-4">

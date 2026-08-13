@@ -1,5 +1,4 @@
 import { LayoutTemplate } from 'lucide-react';
-import type { ProjectItem } from '@/types/project-card.type';
 import ProjectNavLink from '@/components/layout/project/ProjectNavLink';
 import {
   CATEGORY_LABEL,
@@ -7,6 +6,7 @@ import {
   TEMPLATE_UNCONFIGURED_HINT,
   TEMPLATE_UNCONFIGURED_LABEL,
   TEMPLATE_UNCONFIGURED_SUBTITLE,
+  type ProjectItem,
 } from '@/types/project-card.type';
 import { cn } from '@/lib/utils';
 
