@@ -169,10 +169,10 @@ async function postProjectRepository(projectId: number, params: PostProjectRepos
   const payload = postProjectRepositoryReqSchema.parse(params);
 
   return Http.instance
-    .post<PostProjectRepositoryResType>(`${endpoint}/${projectId}/repository`, payload)
+    .post<ApiResponse<PostProjectRepositoryResType>>(`${endpoint}/${projectId}/repository`, payload)
     .then((response) => {
-      const data = succesResponse<PostProjectRepositoryResType>(response);
-      return postProjectRepositoryResSchema.parse(data);
+      const body = succesResponse<ApiResponse<PostProjectRepositoryResType>>(response);
+      return postProjectRepositoryResSchema.parse(body.data);
     })
     .catch(errorResponse());
 }

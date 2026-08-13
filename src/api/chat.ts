@@ -38,10 +38,10 @@ async function getConversationDetail(conversationId: number) {
   });
 
   return Http.instance
-    .get<GetConversationDetailResType>(`${conversationsEndpoint}/${id}`)
+    .get<ApiResponse<GetConversationDetailResType>>(`${conversationsEndpoint}/${id}`)
     .then((response) => {
-      const data = succesResponse<GetConversationDetailResType>(response);
-      return getConversationDetailResSchema.parse(data);
+      const body = succesResponse<ApiResponse<GetConversationDetailResType>>(response);
+      return getConversationDetailResSchema.parse(body.data);
     })
     .catch(errorResponse());
 }
@@ -53,10 +53,10 @@ async function getConversationMessageList(conversationId: number) {
   });
 
   return Http.instance
-    .get<GetConversationMessageListResType>(`${conversationsEndpoint}/${id}/messages`)
+    .get<ApiResponse<GetConversationMessageListResType>>(`${conversationsEndpoint}/${id}/messages`)
     .then((response) => {
-      const data = succesResponse<GetConversationMessageListResType>(response);
-      return getConversationMessageListResSchema.parse(data);
+      const body = succesResponse<ApiResponse<GetConversationMessageListResType>>(response);
+      return getConversationMessageListResSchema.parse(body.data);
     })
     .catch(errorResponse());
 }
