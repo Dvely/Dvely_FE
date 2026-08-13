@@ -100,6 +100,8 @@ const conversationMessageSchema = z.object({
   tokenCount: z.number().int(),
   /** 메시지 생성 시각 (ISO 8601 date-time) */
   createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  /** 큐잉된 Agent 작업 ID. 없거나 과거 메시지 조회 시 null */
+  taskId: z.string().nullable().prefault(''),
 });
 
 /**
