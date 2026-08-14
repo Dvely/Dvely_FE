@@ -21,6 +21,7 @@ type ProjectListItem = {
 
 const DEPLOY_STATUS_LABEL: Record<DeployStatus, string> = {
   DRAFT: 'Draft',
+  PENDING: '대기',
   IN_PROGRESS: '배포 중',
   PREVIEW_READY: '미리보기',
   LIVE: 'Live',
@@ -96,7 +97,11 @@ function HomeProjectListPopover({
       const result = await fetchGitHubAppInstallUrl();
       if (!result?.data?.url) return;
 
-      const popup = window.open(result.data.url, GITHUB_APP_INSTALL_POPUP_NAME, GITHUB_OAUTH_POPUP_FEATURES);
+      const popup = window.open(
+        result.data.url,
+        GITHUB_APP_INSTALL_POPUP_NAME,
+        GITHUB_OAUTH_POPUP_FEATURES,
+      );
       if (!popup) throw new Error('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해 주세요.');
     } finally {
       setIsInstallLoading(false);

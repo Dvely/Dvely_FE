@@ -2,14 +2,22 @@ import type { ConversationMessage } from '@/types/chat.type';
 
 let localMessageId = -1;
 
+type CreateLocalMessageOptions = {
+  tokenCount?: number;
+  taskId?: string | null;
+  pendingApprovalId?: number | null;
+  needsApproval?: boolean | null;
+};
+
 export function createLocalMessage(
   conversationId: number,
   role: 'user' | 'assistant',
   content: string,
-  tokenCount = role === 'assistant' ? 96 : 0,
+  options: CreateLocalMessageOptions = {},
 ): ConversationMessage {
   const messageId = localMessageId;
   localMessageId -= 1;
+  const tokenCount = options.tokenCount ?? (role === 'assistant' ? 96 : 0);
 
   return {
     messageId,
@@ -18,7 +26,9 @@ export function createLocalMessage(
     content,
     tokenCount,
     createdAt: new Date().toISOString(),
-    taskId: null,
+    taskId: options.taskId ?? null,
+    pendingApprovalId: options.pendingApprovalId ?? null,
+    needsApproval: options.needsApproval ?? null,
   };
 }
 
@@ -32,6 +42,101 @@ export function readSessionMessages(conversationId: number): ConversationMessage
 
 export function writeSessionMessages(conversationId: number, messages: ConversationMessage[]) {
   sessionMessagesByConversation.set(conversationId, messages);
+}
+
+/** 서버 메시지에 세션의 승인 버튼 상태·아직 저장 안 된 로컬 메시지를 합친다. */
+export function mergeConversationMessages(
+  serverMessages: ConversationMessage[],
+  sessionMessages: ConversationMessage[],
+): ConversationMessage[] {
+  const usedSessionIds = new Set<number>();
+
+  const takeSessionMatch = (message: ConversationMessage) => {
+    const byId = sessionMessages.find(
+      (sessionMessage) => sessionMessage.messageId === message.messageId,
+    );
+    if (byId) {
+      usedSessionIds.add(byId.messageId);
+      return byId;
+    }
+
+    const byContent = sessionMessages.find(
+      (sessionMessage) =>
+        !usedSessionIds.has(sessionMessage.messageId) &&
+        sessionMessage.role === message.role &&
+        sessionMessage.content === message.content,
+    );
+    if (byContent) {
+      usedSessionIds.add(byContent.messageId);
+      return byContent;
+    }
+
+    return null;
+  };
+
+  const mergedServer = serverMessages.map((message) => {
+    const sessionMessage = takeSessionMatch(message);
+    if (!sessionMessage) return message;
+
+    return {
+      ...message,
+      taskId: sessionMessage.taskId || message.taskId,
+      pendingApprovalId: sessionMessage.pendingApprovalId ?? message.pendingApprovalId,
+      needsApproval: sessionMessage.needsApproval ?? message.needsApproval,
+    };
+  });
+
+  const localOnly = sessionMessages.filter((message) => !usedSessionIds.has(message.messageId));
+
+  return applyApprovalActionState([...mergedServer, ...localOnly]);
+}
+
+function parseApprovalIdFromPlan(content: string) {
+  const match = content.match(/\[(\d+)\]/);
+  if (!match) return null;
+
+  const approvalId = Number(match[1]);
+  return Number.isInteger(approvalId) ? approvalId : null;
+}
+
+function isApprovalPlanContent(content: string) {
+  return content.includes('승인 후 실행');
+}
+
+function isApprovalResolvedContent(content: string) {
+  return (
+    content.includes('모든 승인이 완료') ||
+    content.includes('작업을 시작') ||
+    content.includes('작업 중 오류') ||
+    content.includes('작업이 취소')
+  );
+}
+
+/** 아직 처리되지 않은 승인 계획 메시지에만 승인/거절 버튼을 붙인다. */
+export function applyApprovalActionState(messages: ConversationMessage[]): ConversationMessage[] {
+  return messages.map((message, index) => {
+    if (message.needsApproval === false) {
+      return { ...message, needsApproval: false, pendingApprovalId: null };
+    }
+
+    if (message.role !== 'assistant' || !isApprovalPlanContent(message.content)) {
+      return message;
+    }
+
+    const alreadyResolved = messages
+      .slice(index + 1)
+      .some((later) => later.role === 'assistant' && isApprovalResolvedContent(later.content));
+
+    if (alreadyResolved) {
+      return { ...message, needsApproval: false, pendingApprovalId: null };
+    }
+
+    return {
+      ...message,
+      needsApproval: true,
+      pendingApprovalId: message.pendingApprovalId ?? parseApprovalIdFromPlan(message.content),
+    };
+  });
 }
 
 /** 새 대화 생성 전 임시 ID(0)에 쌓인 메시지를 실제 conversationId로 옮긴다. */

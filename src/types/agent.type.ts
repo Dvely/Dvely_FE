@@ -1,21 +1,44 @@
 import { z } from 'zod';
+import { agentTaskStatusSchema, agentTypeSchema, aiProviderSchema } from '@/types/common.enum';
+
+const agentStepSchema = z.object({
+  /** 에이전트 작업 유형 */
+  agentType: agentTypeSchema,
+  /** 단계 파라미터 */
+  parameters: z.record(z.string(), z.unknown()),
+});
 
 /**
- * 에이전트 태스크 상태
- * @example "DONE"
+ * POST /agent/decision 에이전트 요청 제출 요청
  */
-const agentTaskStatusSchema = z.enum([
-  'PENDING',
-  'WAITING_APPROVAL',
-  'QUEUED',
-  'RETRY_WAIT',
-  'RUNNING',
-  'WAITING_INPUT',
-  'WAITING_RESULT_APPROVAL',
-  'DONE',
-  'FAILED',
-  'CANCELLED',
-]);
+const postAgentDecisionReqSchema = z.object({
+  /** 사용자 요청 본문 */
+  content: z.string().min(1, '요청 본문을 입력해주세요.').prefault(''),
+  /** AI 제공자 */
+  aiProvider: aiProviderSchema,
+  /** 대상 프로젝트 ID. 없으면 null */
+  projectId: z.number().int().nullable().prefault(null),
+  /** 대상 대화 ID. 없으면 null */
+  conversationId: z.number().int().nullable().prefault(null),
+});
+
+/**
+ * POST /agent/decision 에이전트 요청 제출 응답
+ */
+const postAgentDecisionResSchema = z.object({
+  /** 실행 단계 */
+  steps: z.array(agentStepSchema),
+  /** 판단 근거 */
+  reasoning: z.string().nullable().prefault(''),
+  /** AI 제공자 */
+  aiProvider: aiProviderSchema,
+  /** 태스크 ID */
+  taskId: z.string().min(1, '태스크 ID가 없습니다.').prefault(''),
+  /** 태스크 상태 */
+  status: z.string().min(1, '태스크 상태가 없습니다.').prefault(''),
+  /** 생성된 승인 ID 목록 */
+  approvalIds: z.array(z.number().int()),
+});
 
 /**
  * GET /agent/tasks/{taskId} 태스크 상태 조회 요청 (path)
@@ -54,6 +77,8 @@ const getAgentTaskResSchema = z.object({
   /** PENDING 승인 ID. 없으면 null */
   pendingApprovalId: z.number().int().nullable().prefault(null),
 });
+
+const getAgentTaskStatusResSchema = getAgentTaskResSchema;
 
 /**
  * GET /agent/tasks/{taskId}/events 태스크 이벤트 조회 요청 (path + query)
@@ -115,6 +140,8 @@ type AgentTaskStatus = z.infer<typeof agentTaskStatusSchema>;
 type GetAgentTaskParamsType = z.infer<typeof getAgentTaskParamsSchema>;
 /** GET /agent/tasks/{taskId} 태스크 상태 조회 응답 */
 type GetAgentTaskResType = z.infer<typeof getAgentTaskResSchema>;
+/** GET /agent/tasks/{taskId} 태스크 상태 조회 응답 */
+type GetAgentTaskStatusResType = GetAgentTaskResType;
 /** GET /agent/tasks/{taskId}/events 태스크 이벤트 조회 요청 (path + query) */
 type GetAgentTaskEventListParamsType = z.infer<typeof getAgentTaskEventListParamsSchema>;
 /** GET /agent/tasks/{taskId}/events 태스크 이벤트 항목 */
@@ -127,20 +154,30 @@ type GetAgentTaskEventStreamParamsType = z.infer<typeof getAgentTaskEventStreamP
 type PostAgentTaskInputParamsType = z.infer<typeof postAgentTaskInputParamsSchema>;
 /** POST /agent/tasks/{taskId}/input 사용자 입력 제출 요청 body */
 type PostAgentTaskInputReqType = z.infer<typeof postAgentTaskInputReqSchema>;
+type AgentStep = z.infer<typeof agentStepSchema>;
+type PostAgentDecisionReqType = z.infer<typeof postAgentDecisionReqSchema>;
+type PostAgentDecisionResType = z.infer<typeof postAgentDecisionResSchema>;
 
 export {
-  agentTaskStatusSchema,
+  agentStepSchema,
+  postAgentDecisionReqSchema,
+  postAgentDecisionResSchema,
   getAgentTaskParamsSchema,
   getAgentTaskResSchema,
+  getAgentTaskStatusResSchema,
   getAgentTaskEventListParamsSchema,
   agentTaskEventSchema,
   getAgentTaskEventListResSchema,
   getAgentTaskEventStreamParamsSchema,
   postAgentTaskInputParamsSchema,
   postAgentTaskInputReqSchema,
+  type AgentStep,
+  type PostAgentDecisionReqType,
+  type PostAgentDecisionResType,
   type AgentTaskStatus,
   type GetAgentTaskParamsType,
   type GetAgentTaskResType,
+  type GetAgentTaskStatusResType,
   type GetAgentTaskEventListParamsType,
   type AgentTaskEvent,
   type GetAgentTaskEventListResType,

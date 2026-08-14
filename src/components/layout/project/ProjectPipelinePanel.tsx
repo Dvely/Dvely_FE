@@ -73,7 +73,11 @@ type ProjectPipelinePanelProps = {
   isRunning?: boolean;
 };
 
-function ProjectPipelinePanel({ className, run: controlledRun, isRunning: controlledIsRunning }: ProjectPipelinePanelProps) {
+function ProjectPipelinePanel({
+  className,
+  run: controlledRun,
+  isRunning: controlledIsRunning,
+}: ProjectPipelinePanelProps) {
   const run = controlledRun ?? createIdlePipelineRun();
   const isRunning = controlledIsRunning ?? run.status === 'running';
   const runNumber = run.id.replace('run-', '');

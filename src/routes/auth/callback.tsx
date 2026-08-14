@@ -75,6 +75,8 @@ function RouteComponent() {
   }, [code, state]);
 
   useEffect(() => {
+    // OAuth callback은 마운트 시 한 번 처리한다.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void handleCallback();
   }, [handleCallback]);
 

@@ -1,0 +1,319 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Qeploy API",
+    "description": "Qeploy backend API — natural-language driven web app generation, GitHub Pages/BYOC deployment, domain binding, and cloud infrastructure operation.\n\n### Common response envelope\nEvery response (except SSE, redirects, GitHub webhook callback, and the preview proxy) is wrapped as:\n```json\n{ \"status\": 200, \"code\": \"SUCCESS\", \"message\": \"...\", \"data\": { } }\n```\n`data` is omitted (not `null`) on responses with no body (e.g. 204). Frontend clients should unwrap `data` after checking `response.ok`; see `docs/FRONTEND_API_GUIDE.md` for the reference `http.ts` implementation.\n\n### Error codes\nErrors use the same envelope with `data` omitted. `code` is one of: `BAD_REQUEST`(400) · `UNAUTHORIZED`(401) · `INVALID_TOKEN`(401) · `EXPIRED_REFRESH_TOKEN`(401) · `REVOKED_REFRESH_TOKEN`(401) · `FORBIDDEN`(403) · `GITHUB_APP_NOT_INSTALLED`(403) · `NOT_FOUND`(404) · `METHOD_NOT_ALLOWED`(405) · `CONFLICT`(409) · `INTERNAL_SERVER_ERROR`(500). `message` carries the specific, human-readable detail — treat `code` as the stable machine-readable discriminator.\n\n### Authentication\nBearer JWT (see the **JWT TOKEN** security scheme below). Obtain a token via the GitHub OAuth flow (`Auth` group), then send `Authorization: Bearer {accessToken}` on every authenticated request. Access tokens expire in 1 hour; use `POST /api/v1/auth/refresh` (rotation — both tokens are replaced) before that. A small set of endpoints are unauthenticated by design: GitHub OAuth/App URL and callback endpoints, `POST /api/v1/auth/refresh`, and `POST /api/v1/webhook/github` (GitHub-signed, not JWT).\n",
+    "version": "0.0.1"
+  },
+  "servers": [{ "url": "/" }],
+  "security": [{ "JWT TOKEN": [] }],
+  "tags": [
+    {
+      "name": "Environment",
+      "description": "프로젝트별 환경변수/Secrets 관리 API. secret 값은 어떤 응답에도 포함되지 않습니다."
+    }
+  ],
+  "paths": {
+    "/api/v1/projects/{projectId}/environment-variables": {
+      "get": {
+        "tags": ["Environment"],
+        "summary": "환경변수 목록 조회",
+        "description": "scope 쿼리 파라미터로 필터링(생략 시 전체, scope asc → key asc 정렬). secret 값은 응답에 포함되지 않습니다(value=null).",
+        "operationId": "getVariables",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "description": "필터링할 스코프. 생략 시 전체 조회",
+            "required": false,
+            "schema": { "type": "string", "enum": ["PREVIEW", "PRODUCTION"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/EnvironmentVariableResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Environment"],
+        "summary": "환경변수 생성",
+        "description": "동일 (프로젝트, scope, key) 조합이 이미 있으면 409를 반환합니다. secret=true로 생성해도 이 응답의 value는 null입니다.",
+        "operationId": "create",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateEnvironmentVariableRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/EnvironmentVariableResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/environment-variables/{variableId}": {
+      "delete": {
+        "tags": ["Environment"],
+        "summary": "환경변수 삭제",
+        "description": "존재하지 않는 변수를 삭제하려 하면 404를 반환합니다(멱등 아님).",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          },
+          {
+            "name": "variableId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      },
+      "patch": {
+        "tags": ["Environment"],
+        "summary": "환경변수 수정",
+        "description": "value/secret만 수정할 수 있습니다(key·scope는 불변, 이름 변경은 삭제 후 재생성). secret은 true→false로 되돌릴 수 없습니다(400).",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          },
+          {
+            "name": "variableId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateEnvironmentVariableRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/EnvironmentVariableResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/environment-variables/history": {
+      "get": {
+        "tags": ["Environment"],
+        "summary": "환경변수 변경 이력 조회",
+        "description": "limit 기본 50, 최대 200(초과 시 200으로 보정). 최신순(생성시각 desc). 값 자체는 기록하지 않으므로 응답에도 포함되지 않습니다.",
+        "operationId": "getHistory",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "조회 개수. 기본 50, 최대 200(초과 시 200으로 보정)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/EnvironmentVariableHistoryResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateEnvironmentVariableRequest": {
+        "type": "object",
+        "description": "환경변수 생성 요청. 동일 (프로젝트, scope, key) 조합이 이미 있으면 409를 반환합니다.",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "환경변수 키 (대소문자 구분, 최대 128자)",
+            "example": "STRIPE_SECRET_KEY",
+            "maxLength": 128,
+            "minLength": 0
+          },
+          "value": {
+            "type": "string",
+            "description": "환경변수 값 (최대 4096자). 빈 문자열도 유효한 값",
+            "example": "sk_live_...",
+            "maxLength": 4096,
+            "minLength": 0
+          },
+          "scope": {
+            "type": "string",
+            "description": "적용 스코프. COMMON 없음 — 두 환경 모두 적용하려면 각각 생성해야 함",
+            "enum": ["PREVIEW", "PRODUCTION"],
+            "example": "PRODUCTION",
+            "minLength": 1
+          },
+          "secret": {
+            "type": "boolean",
+            "description": "민감 정보 여부. true로 설정한 뒤에는 false로 되돌릴 수 없음"
+          }
+        },
+        "required": ["key", "scope", "value"]
+      },
+      "EnvironmentVariableResponse": {
+        "type": "object",
+        "description": "환경변수 정보. secret=true이면 value는 항상 null입니다(어떤 응답에서도 평문/부분 노출 없음).",
+        "properties": {
+          "environmentVariableId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "환경변수 ID",
+            "example": 1
+          },
+          "scope": { "type": "string", "description": "적용 스코프", "example": "PREVIEW" },
+          "key": {
+            "type": "string",
+            "description": "환경변수 키 (대소문자 구분)",
+            "example": "API_BASE_URL"
+          },
+          "value": {
+            "type": "string",
+            "description": "환경변수 값. secret=true이면 항상 null",
+            "example": "https://api.example.com"
+          },
+          "secret": {
+            "type": "boolean",
+            "description": "민감 정보 여부. true로 설정한 뒤에는 false로 되돌릴 수 없습니다.",
+            "example": false
+          },
+          "createdAt": { "type": "string", "format": "date-time", "description": "생성 시각" },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "마지막 수정 시각"
+          }
+        }
+      },
+      "UpdateEnvironmentVariableRequest": {
+        "type": "object",
+        "description": "환경변수 수정 요청 (PATCH 시맨틱). key/scope는 필드 자체가 없음 — 이름을 바꾸려면 삭제 후 재생성.",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "새 값. 생략(null)하면 기존 값 유지, 빈 값으로 설정하려면 \"\"를 명시적으로 전달",
+            "maxLength": 4096,
+            "minLength": 0
+          },
+          "secret": {
+            "type": "boolean",
+            "description": "새 secret 여부. 생략(null)하면 기존 값 유지. true→false 전환은 400"
+          }
+        }
+      },
+      "EnvironmentVariableHistoryResponse": {
+        "type": "object",
+        "description": "환경변수 변경 이력. 값 자체는 기록/노출되지 않습니다(무엇이/언제/누가 바뀌었는지만 제공).",
+        "properties": {
+          "historyId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "이력 ID",
+            "example": 10
+          },
+          "environmentVariableId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "대상 환경변수 ID. 변수가 삭제된 뒤에는 null일 수 있습니다.",
+            "example": 2
+          },
+          "scope": {
+            "type": "string",
+            "description": "이력 시점의 스코프",
+            "example": "PRODUCTION"
+          },
+          "key": {
+            "type": "string",
+            "description": "이력 시점의 키",
+            "example": "STRIPE_SECRET_KEY"
+          },
+          "action": { "type": "string", "description": "변경 종류", "example": "UPDATED" },
+          "secret": {
+            "type": "boolean",
+            "description": "이력 시점의 secret 여부",
+            "example": true
+          },
+          "valueChanged": {
+            "type": "boolean",
+            "description": "이 변경으로 값이 실제로 바뀌었는지 여부(값 자체는 기록하지 않음)",
+            "example": true
+          },
+          "actorUserId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "변경을 수행한 유저 ID",
+            "example": 7
+          },
+          "createdAt": { "type": "string", "format": "date-time", "description": "변경 시각" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "JWT TOKEN": {
+        "type": "http",
+        "name": "JWT TOKEN",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

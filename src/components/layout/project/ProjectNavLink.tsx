@@ -11,11 +11,7 @@ type ProjectNavLinkProps = {
 function ProjectNavLink({ projectId, className, children }: ProjectNavLinkProps) {
   if (isHomeChatProject(projectId)) {
     return (
-      <Link
-        to="/project/$slug"
-        params={{ slug: String(projectId) }}
-        className={className}
-      >
+      <Link to="/project/$slug" params={{ slug: String(projectId) }} className={className}>
         {children}
       </Link>
     );

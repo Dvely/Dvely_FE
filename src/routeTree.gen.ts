@@ -8,190 +8,231 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as CallbackRouteImport } from './routes/callback'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
-import { Route as AuthAppCallbackRouteImport } from './routes/auth/app-callback'
-import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash'
-import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedProjectRouteImport } from './routes/_authenticated/project'
-import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
-import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
-import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedProjectIndexRouteImport } from './routes/_authenticated/project.index'
-import { Route as AuthenticatedProjectNewRouteImport } from './routes/_authenticated/project.new'
-import { Route as AuthenticatedProjectSlugRouteImport } from './routes/_authenticated/project.$slug'
-import { Route as AuthenticatedProjectSlugIndexRouteImport } from './routes/_authenticated/project.$slug.index'
-import { Route as AuthenticatedProjectSlugPipelineRouteImport } from './routes/_authenticated/project.$slug.pipeline'
-import { Route as AuthenticatedProjectSlugCodeRouteImport } from './routes/_authenticated/project.$slug.code'
-import { Route as AuthenticatedProjectSlugAgentRouteImport } from './routes/_authenticated/project.$slug.agent'
+import { Route as rootRouteImport } from './routes/__root';
+import { Route as CallbackRouteImport } from './routes/callback';
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated';
+import { Route as IndexRouteImport } from './routes/index';
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback';
+import { Route as AuthAppCallbackRouteImport } from './routes/auth/app-callback';
+import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash';
+import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates';
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings';
+import { Route as AuthenticatedProjectRouteImport } from './routes/_authenticated/project';
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home';
+import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help';
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics';
+import { Route as AuthenticatedProjectIndexRouteImport } from './routes/_authenticated/project.index';
+import { Route as AuthenticatedProjectNewRouteImport } from './routes/_authenticated/project.new';
+import { Route as AuthenticatedProjectSlugRouteImport } from './routes/_authenticated/project.$slug';
+import { Route as AuthenticatedProjectSlugIndexRouteImport } from './routes/_authenticated/project.$slug.index';
+import { Route as AuthenticatedProjectSlugPipelineRouteImport } from './routes/_authenticated/project.$slug.pipeline';
+import { Route as AuthenticatedProjectSlugInfraRouteImport } from './routes/_authenticated/project.$slug.infra';
+import { Route as AuthenticatedProjectSlugEnvironmentRouteImport } from './routes/_authenticated/project.$slug.environment';
+import { Route as AuthenticatedProjectSlugDomainsRouteImport } from './routes/_authenticated/project.$slug.domains';
+import { Route as AuthenticatedProjectSlugDeploymentsRouteImport } from './routes/_authenticated/project.$slug.deployments';
+import { Route as AuthenticatedProjectSlugCodeRouteImport } from './routes/_authenticated/project.$slug.code';
+import { Route as AuthenticatedProjectSlugApprovalsRouteImport } from './routes/_authenticated/project.$slug.approvals';
+import { Route as AuthenticatedProjectSlugAgentRouteImport } from './routes/_authenticated/project.$slug.agent';
 
 const CallbackRoute = CallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AuthAppCallbackRoute = AuthAppCallbackRouteImport.update({
   id: '/auth/app-callback',
   path: '/auth/app-callback',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AuthenticatedTrashRoute = AuthenticatedTrashRouteImport.update({
   id: '/trash',
   path: '/trash',
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
   id: '/templates',
   path: '/templates',
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedProjectRoute = AuthenticatedProjectRouteImport.update({
   id: '/project',
   path: '/project',
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   id: '/home',
   path: '/home',
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
   id: '/help',
   path: '/help',
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedProjectIndexRoute =
-  AuthenticatedProjectIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedProjectRoute,
-  } as any)
+} as any);
+const AuthenticatedProjectIndexRoute = AuthenticatedProjectIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedProjectRoute,
+} as any);
 const AuthenticatedProjectNewRoute = AuthenticatedProjectNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => AuthenticatedProjectRoute,
-} as any)
-const AuthenticatedProjectSlugRoute =
-  AuthenticatedProjectSlugRouteImport.update({
-    id: '/$slug',
-    path: '/$slug',
-    getParentRoute: () => AuthenticatedProjectRoute,
-  } as any)
-const AuthenticatedProjectSlugIndexRoute =
-  AuthenticatedProjectSlugIndexRouteImport.update({
-    id: '/',
-    path: '/',
+} as any);
+const AuthenticatedProjectSlugRoute = AuthenticatedProjectSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AuthenticatedProjectRoute,
+} as any);
+const AuthenticatedProjectSlugIndexRoute = AuthenticatedProjectSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedProjectSlugRoute,
+} as any);
+const AuthenticatedProjectSlugPipelineRoute = AuthenticatedProjectSlugPipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
+  getParentRoute: () => AuthenticatedProjectSlugRoute,
+} as any);
+const AuthenticatedProjectSlugInfraRoute = AuthenticatedProjectSlugInfraRouteImport.update({
+  id: '/infra',
+  path: '/infra',
+  getParentRoute: () => AuthenticatedProjectSlugRoute,
+} as any);
+const AuthenticatedProjectSlugEnvironmentRoute =
+  AuthenticatedProjectSlugEnvironmentRouteImport.update({
+    id: '/environment',
+    path: '/environment',
     getParentRoute: () => AuthenticatedProjectSlugRoute,
-  } as any)
-const AuthenticatedProjectSlugPipelineRoute =
-  AuthenticatedProjectSlugPipelineRouteImport.update({
-    id: '/pipeline',
-    path: '/pipeline',
+  } as any);
+const AuthenticatedProjectSlugDomainsRoute = AuthenticatedProjectSlugDomainsRouteImport.update({
+  id: '/domains',
+  path: '/domains',
+  getParentRoute: () => AuthenticatedProjectSlugRoute,
+} as any);
+const AuthenticatedProjectSlugDeploymentsRoute =
+  AuthenticatedProjectSlugDeploymentsRouteImport.update({
+    id: '/deployments',
+    path: '/deployments',
     getParentRoute: () => AuthenticatedProjectSlugRoute,
-  } as any)
-const AuthenticatedProjectSlugCodeRoute =
-  AuthenticatedProjectSlugCodeRouteImport.update({
-    id: '/code',
-    path: '/code',
-    getParentRoute: () => AuthenticatedProjectSlugRoute,
-  } as any)
-const AuthenticatedProjectSlugAgentRoute =
-  AuthenticatedProjectSlugAgentRouteImport.update({
-    id: '/agent',
-    path: '/agent',
-    getParentRoute: () => AuthenticatedProjectSlugRoute,
-  } as any)
+  } as any);
+const AuthenticatedProjectSlugCodeRoute = AuthenticatedProjectSlugCodeRouteImport.update({
+  id: '/code',
+  path: '/code',
+  getParentRoute: () => AuthenticatedProjectSlugRoute,
+} as any);
+const AuthenticatedProjectSlugApprovalsRoute = AuthenticatedProjectSlugApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
+  getParentRoute: () => AuthenticatedProjectSlugRoute,
+} as any);
+const AuthenticatedProjectSlugAgentRoute = AuthenticatedProjectSlugAgentRouteImport.update({
+  id: '/agent',
+  path: '/agent',
+  getParentRoute: () => AuthenticatedProjectSlugRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/callback': typeof CallbackRoute
-  '/analytics': typeof AuthenticatedAnalyticsRoute
-  '/help': typeof AuthenticatedHelpRoute
-  '/home': typeof AuthenticatedHomeRoute
-  '/project': typeof AuthenticatedProjectRouteWithChildren
-  '/settings': typeof AuthenticatedSettingsRoute
-  '/templates': typeof AuthenticatedTemplatesRoute
-  '/trash': typeof AuthenticatedTrashRoute
-  '/auth/app-callback': typeof AuthAppCallbackRoute
-  '/auth/callback': typeof AuthCallbackRoute
-  '/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
-  '/project/new': typeof AuthenticatedProjectNewRoute
-  '/project/': typeof AuthenticatedProjectIndexRoute
-  '/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute
-  '/project/$slug/code': typeof AuthenticatedProjectSlugCodeRoute
-  '/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute
-  '/project/$slug/': typeof AuthenticatedProjectSlugIndexRoute
+  '/': typeof IndexRoute;
+  '/callback': typeof CallbackRoute;
+  '/analytics': typeof AuthenticatedAnalyticsRoute;
+  '/help': typeof AuthenticatedHelpRoute;
+  '/home': typeof AuthenticatedHomeRoute;
+  '/project': typeof AuthenticatedProjectRouteWithChildren;
+  '/settings': typeof AuthenticatedSettingsRoute;
+  '/templates': typeof AuthenticatedTemplatesRoute;
+  '/trash': typeof AuthenticatedTrashRoute;
+  '/auth/app-callback': typeof AuthAppCallbackRoute;
+  '/auth/callback': typeof AuthCallbackRoute;
+  '/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren;
+  '/project/new': typeof AuthenticatedProjectNewRoute;
+  '/project/': typeof AuthenticatedProjectIndexRoute;
+  '/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute;
+  '/project/$slug/approvals': typeof AuthenticatedProjectSlugApprovalsRoute;
+  '/project/$slug/code': typeof AuthenticatedProjectSlugCodeRoute;
+  '/project/$slug/deployments': typeof AuthenticatedProjectSlugDeploymentsRoute;
+  '/project/$slug/domains': typeof AuthenticatedProjectSlugDomainsRoute;
+  '/project/$slug/environment': typeof AuthenticatedProjectSlugEnvironmentRoute;
+  '/project/$slug/infra': typeof AuthenticatedProjectSlugInfraRoute;
+  '/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute;
+  '/project/$slug/': typeof AuthenticatedProjectSlugIndexRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/callback': typeof CallbackRoute
-  '/analytics': typeof AuthenticatedAnalyticsRoute
-  '/help': typeof AuthenticatedHelpRoute
-  '/home': typeof AuthenticatedHomeRoute
-  '/settings': typeof AuthenticatedSettingsRoute
-  '/templates': typeof AuthenticatedTemplatesRoute
-  '/trash': typeof AuthenticatedTrashRoute
-  '/auth/app-callback': typeof AuthAppCallbackRoute
-  '/auth/callback': typeof AuthCallbackRoute
-  '/project/new': typeof AuthenticatedProjectNewRoute
-  '/project': typeof AuthenticatedProjectIndexRoute
-  '/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute
-  '/project/$slug/code': typeof AuthenticatedProjectSlugCodeRoute
-  '/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute
-  '/project/$slug': typeof AuthenticatedProjectSlugIndexRoute
+  '/': typeof IndexRoute;
+  '/callback': typeof CallbackRoute;
+  '/analytics': typeof AuthenticatedAnalyticsRoute;
+  '/help': typeof AuthenticatedHelpRoute;
+  '/home': typeof AuthenticatedHomeRoute;
+  '/settings': typeof AuthenticatedSettingsRoute;
+  '/templates': typeof AuthenticatedTemplatesRoute;
+  '/trash': typeof AuthenticatedTrashRoute;
+  '/auth/app-callback': typeof AuthAppCallbackRoute;
+  '/auth/callback': typeof AuthCallbackRoute;
+  '/project/new': typeof AuthenticatedProjectNewRoute;
+  '/project': typeof AuthenticatedProjectIndexRoute;
+  '/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute;
+  '/project/$slug/approvals': typeof AuthenticatedProjectSlugApprovalsRoute;
+  '/project/$slug/code': typeof AuthenticatedProjectSlugCodeRoute;
+  '/project/$slug/deployments': typeof AuthenticatedProjectSlugDeploymentsRoute;
+  '/project/$slug/domains': typeof AuthenticatedProjectSlugDomainsRoute;
+  '/project/$slug/environment': typeof AuthenticatedProjectSlugEnvironmentRoute;
+  '/project/$slug/infra': typeof AuthenticatedProjectSlugInfraRoute;
+  '/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute;
+  '/project/$slug': typeof AuthenticatedProjectSlugIndexRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/callback': typeof CallbackRoute
-  '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
-  '/_authenticated/help': typeof AuthenticatedHelpRoute
-  '/_authenticated/home': typeof AuthenticatedHomeRoute
-  '/_authenticated/project': typeof AuthenticatedProjectRouteWithChildren
-  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
-  '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
-  '/_authenticated/trash': typeof AuthenticatedTrashRoute
-  '/auth/app-callback': typeof AuthAppCallbackRoute
-  '/auth/callback': typeof AuthCallbackRoute
-  '/_authenticated/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
-  '/_authenticated/project/new': typeof AuthenticatedProjectNewRoute
-  '/_authenticated/project/': typeof AuthenticatedProjectIndexRoute
-  '/_authenticated/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute
-  '/_authenticated/project/$slug/code': typeof AuthenticatedProjectSlugCodeRoute
-  '/_authenticated/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute
-  '/_authenticated/project/$slug/': typeof AuthenticatedProjectSlugIndexRoute
+  __root__: typeof rootRouteImport;
+  '/': typeof IndexRoute;
+  '/_authenticated': typeof AuthenticatedRouteWithChildren;
+  '/callback': typeof CallbackRoute;
+  '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute;
+  '/_authenticated/help': typeof AuthenticatedHelpRoute;
+  '/_authenticated/home': typeof AuthenticatedHomeRoute;
+  '/_authenticated/project': typeof AuthenticatedProjectRouteWithChildren;
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute;
+  '/_authenticated/templates': typeof AuthenticatedTemplatesRoute;
+  '/_authenticated/trash': typeof AuthenticatedTrashRoute;
+  '/auth/app-callback': typeof AuthAppCallbackRoute;
+  '/auth/callback': typeof AuthCallbackRoute;
+  '/_authenticated/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren;
+  '/_authenticated/project/new': typeof AuthenticatedProjectNewRoute;
+  '/_authenticated/project/': typeof AuthenticatedProjectIndexRoute;
+  '/_authenticated/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute;
+  '/_authenticated/project/$slug/approvals': typeof AuthenticatedProjectSlugApprovalsRoute;
+  '/_authenticated/project/$slug/code': typeof AuthenticatedProjectSlugCodeRoute;
+  '/_authenticated/project/$slug/deployments': typeof AuthenticatedProjectSlugDeploymentsRoute;
+  '/_authenticated/project/$slug/domains': typeof AuthenticatedProjectSlugDomainsRoute;
+  '/_authenticated/project/$slug/environment': typeof AuthenticatedProjectSlugEnvironmentRoute;
+  '/_authenticated/project/$slug/infra': typeof AuthenticatedProjectSlugInfraRoute;
+  '/_authenticated/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute;
+  '/_authenticated/project/$slug/': typeof AuthenticatedProjectSlugIndexRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | '/'
     | '/callback'
@@ -208,10 +249,15 @@ export interface FileRouteTypes {
     | '/project/new'
     | '/project/'
     | '/project/$slug/agent'
+    | '/project/$slug/approvals'
     | '/project/$slug/code'
+    | '/project/$slug/deployments'
+    | '/project/$slug/domains'
+    | '/project/$slug/environment'
+    | '/project/$slug/infra'
     | '/project/$slug/pipeline'
-    | '/project/$slug/'
-  fileRoutesByTo: FileRoutesByTo
+    | '/project/$slug/';
+  fileRoutesByTo: FileRoutesByTo;
   to:
     | '/'
     | '/callback'
@@ -226,9 +272,14 @@ export interface FileRouteTypes {
     | '/project/new'
     | '/project'
     | '/project/$slug/agent'
+    | '/project/$slug/approvals'
     | '/project/$slug/code'
+    | '/project/$slug/deployments'
+    | '/project/$slug/domains'
+    | '/project/$slug/environment'
+    | '/project/$slug/infra'
     | '/project/$slug/pipeline'
-    | '/project/$slug'
+    | '/project/$slug';
   id:
     | '__root__'
     | '/'
@@ -247,201 +298,249 @@ export interface FileRouteTypes {
     | '/_authenticated/project/new'
     | '/_authenticated/project/'
     | '/_authenticated/project/$slug/agent'
+    | '/_authenticated/project/$slug/approvals'
     | '/_authenticated/project/$slug/code'
+    | '/_authenticated/project/$slug/deployments'
+    | '/_authenticated/project/$slug/domains'
+    | '/_authenticated/project/$slug/environment'
+    | '/_authenticated/project/$slug/infra'
     | '/_authenticated/project/$slug/pipeline'
-    | '/_authenticated/project/$slug/'
-  fileRoutesById: FileRoutesById
+    | '/_authenticated/project/$slug/';
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  CallbackRoute: typeof CallbackRoute
-  AuthAppCallbackRoute: typeof AuthAppCallbackRoute
-  AuthCallbackRoute: typeof AuthCallbackRoute
+  IndexRoute: typeof IndexRoute;
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren;
+  CallbackRoute: typeof CallbackRoute;
+  AuthAppCallbackRoute: typeof AuthAppCallbackRoute;
+  AuthCallbackRoute: typeof AuthCallbackRoute;
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/callback': {
-      id: '/callback'
-      path: '/callback'
-      fullPath: '/callback'
-      preLoaderRoute: typeof CallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/callback';
+      path: '/callback';
+      fullPath: '/callback';
+      preLoaderRoute: typeof CallbackRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/_authenticated';
+      path: '';
+      fullPath: '/';
+      preLoaderRoute: typeof AuthenticatedRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/';
+      path: '/';
+      fullPath: '/';
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/auth/callback': {
-      id: '/auth/callback'
-      path: '/auth/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/auth/callback';
+      path: '/auth/callback';
+      fullPath: '/auth/callback';
+      preLoaderRoute: typeof AuthCallbackRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/auth/app-callback': {
-      id: '/auth/app-callback'
-      path: '/auth/app-callback'
-      fullPath: '/auth/app-callback'
-      preLoaderRoute: typeof AuthAppCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/auth/app-callback';
+      path: '/auth/app-callback';
+      fullPath: '/auth/app-callback';
+      preLoaderRoute: typeof AuthAppCallbackRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/_authenticated/trash': {
-      id: '/_authenticated/trash'
-      path: '/trash'
-      fullPath: '/trash'
-      preLoaderRoute: typeof AuthenticatedTrashRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
+      id: '/_authenticated/trash';
+      path: '/trash';
+      fullPath: '/trash';
+      preLoaderRoute: typeof AuthenticatedTrashRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
     '/_authenticated/templates': {
-      id: '/_authenticated/templates'
-      path: '/templates'
-      fullPath: '/templates'
-      preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
+      id: '/_authenticated/templates';
+      path: '/templates';
+      fullPath: '/templates';
+      preLoaderRoute: typeof AuthenticatedTemplatesRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
     '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
+      id: '/_authenticated/settings';
+      path: '/settings';
+      fullPath: '/settings';
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
     '/_authenticated/project': {
-      id: '/_authenticated/project'
-      path: '/project'
-      fullPath: '/project'
-      preLoaderRoute: typeof AuthenticatedProjectRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
+      id: '/_authenticated/project';
+      path: '/project';
+      fullPath: '/project';
+      preLoaderRoute: typeof AuthenticatedProjectRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
     '/_authenticated/home': {
-      id: '/_authenticated/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof AuthenticatedHomeRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
+      id: '/_authenticated/home';
+      path: '/home';
+      fullPath: '/home';
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
     '/_authenticated/help': {
-      id: '/_authenticated/help'
-      path: '/help'
-      fullPath: '/help'
-      preLoaderRoute: typeof AuthenticatedHelpRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
+      id: '/_authenticated/help';
+      path: '/help';
+      fullPath: '/help';
+      preLoaderRoute: typeof AuthenticatedHelpRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
     '/_authenticated/analytics': {
-      id: '/_authenticated/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
+      id: '/_authenticated/analytics';
+      path: '/analytics';
+      fullPath: '/analytics';
+      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
     '/_authenticated/project/': {
-      id: '/_authenticated/project/'
-      path: '/'
-      fullPath: '/project/'
-      preLoaderRoute: typeof AuthenticatedProjectIndexRouteImport
-      parentRoute: typeof AuthenticatedProjectRoute
-    }
+      id: '/_authenticated/project/';
+      path: '/';
+      fullPath: '/project/';
+      preLoaderRoute: typeof AuthenticatedProjectIndexRouteImport;
+      parentRoute: typeof AuthenticatedProjectRoute;
+    };
     '/_authenticated/project/new': {
-      id: '/_authenticated/project/new'
-      path: '/new'
-      fullPath: '/project/new'
-      preLoaderRoute: typeof AuthenticatedProjectNewRouteImport
-      parentRoute: typeof AuthenticatedProjectRoute
-    }
+      id: '/_authenticated/project/new';
+      path: '/new';
+      fullPath: '/project/new';
+      preLoaderRoute: typeof AuthenticatedProjectNewRouteImport;
+      parentRoute: typeof AuthenticatedProjectRoute;
+    };
     '/_authenticated/project/$slug': {
-      id: '/_authenticated/project/$slug'
-      path: '/$slug'
-      fullPath: '/project/$slug'
-      preLoaderRoute: typeof AuthenticatedProjectSlugRouteImport
-      parentRoute: typeof AuthenticatedProjectRoute
-    }
+      id: '/_authenticated/project/$slug';
+      path: '/$slug';
+      fullPath: '/project/$slug';
+      preLoaderRoute: typeof AuthenticatedProjectSlugRouteImport;
+      parentRoute: typeof AuthenticatedProjectRoute;
+    };
     '/_authenticated/project/$slug/': {
-      id: '/_authenticated/project/$slug/'
-      path: '/'
-      fullPath: '/project/$slug/'
-      preLoaderRoute: typeof AuthenticatedProjectSlugIndexRouteImport
-      parentRoute: typeof AuthenticatedProjectSlugRoute
-    }
+      id: '/_authenticated/project/$slug/';
+      path: '/';
+      fullPath: '/project/$slug/';
+      preLoaderRoute: typeof AuthenticatedProjectSlugIndexRouteImport;
+      parentRoute: typeof AuthenticatedProjectSlugRoute;
+    };
     '/_authenticated/project/$slug/pipeline': {
-      id: '/_authenticated/project/$slug/pipeline'
-      path: '/pipeline'
-      fullPath: '/project/$slug/pipeline'
-      preLoaderRoute: typeof AuthenticatedProjectSlugPipelineRouteImport
-      parentRoute: typeof AuthenticatedProjectSlugRoute
-    }
+      id: '/_authenticated/project/$slug/pipeline';
+      path: '/pipeline';
+      fullPath: '/project/$slug/pipeline';
+      preLoaderRoute: typeof AuthenticatedProjectSlugPipelineRouteImport;
+      parentRoute: typeof AuthenticatedProjectSlugRoute;
+    };
+    '/_authenticated/project/$slug/infra': {
+      id: '/_authenticated/project/$slug/infra';
+      path: '/infra';
+      fullPath: '/project/$slug/infra';
+      preLoaderRoute: typeof AuthenticatedProjectSlugInfraRouteImport;
+      parentRoute: typeof AuthenticatedProjectSlugRoute;
+    };
+    '/_authenticated/project/$slug/environment': {
+      id: '/_authenticated/project/$slug/environment';
+      path: '/environment';
+      fullPath: '/project/$slug/environment';
+      preLoaderRoute: typeof AuthenticatedProjectSlugEnvironmentRouteImport;
+      parentRoute: typeof AuthenticatedProjectSlugRoute;
+    };
+    '/_authenticated/project/$slug/domains': {
+      id: '/_authenticated/project/$slug/domains';
+      path: '/domains';
+      fullPath: '/project/$slug/domains';
+      preLoaderRoute: typeof AuthenticatedProjectSlugDomainsRouteImport;
+      parentRoute: typeof AuthenticatedProjectSlugRoute;
+    };
+    '/_authenticated/project/$slug/deployments': {
+      id: '/_authenticated/project/$slug/deployments';
+      path: '/deployments';
+      fullPath: '/project/$slug/deployments';
+      preLoaderRoute: typeof AuthenticatedProjectSlugDeploymentsRouteImport;
+      parentRoute: typeof AuthenticatedProjectSlugRoute;
+    };
     '/_authenticated/project/$slug/code': {
-      id: '/_authenticated/project/$slug/code'
-      path: '/code'
-      fullPath: '/project/$slug/code'
-      preLoaderRoute: typeof AuthenticatedProjectSlugCodeRouteImport
-      parentRoute: typeof AuthenticatedProjectSlugRoute
-    }
+      id: '/_authenticated/project/$slug/code';
+      path: '/code';
+      fullPath: '/project/$slug/code';
+      preLoaderRoute: typeof AuthenticatedProjectSlugCodeRouteImport;
+      parentRoute: typeof AuthenticatedProjectSlugRoute;
+    };
+    '/_authenticated/project/$slug/approvals': {
+      id: '/_authenticated/project/$slug/approvals';
+      path: '/approvals';
+      fullPath: '/project/$slug/approvals';
+      preLoaderRoute: typeof AuthenticatedProjectSlugApprovalsRouteImport;
+      parentRoute: typeof AuthenticatedProjectSlugRoute;
+    };
     '/_authenticated/project/$slug/agent': {
-      id: '/_authenticated/project/$slug/agent'
-      path: '/agent'
-      fullPath: '/project/$slug/agent'
-      preLoaderRoute: typeof AuthenticatedProjectSlugAgentRouteImport
-      parentRoute: typeof AuthenticatedProjectSlugRoute
-    }
+      id: '/_authenticated/project/$slug/agent';
+      path: '/agent';
+      fullPath: '/project/$slug/agent';
+      preLoaderRoute: typeof AuthenticatedProjectSlugAgentRouteImport;
+      parentRoute: typeof AuthenticatedProjectSlugRoute;
+    };
   }
 }
 
 interface AuthenticatedProjectSlugRouteChildren {
-  AuthenticatedProjectSlugAgentRoute: typeof AuthenticatedProjectSlugAgentRoute
-  AuthenticatedProjectSlugCodeRoute: typeof AuthenticatedProjectSlugCodeRoute
-  AuthenticatedProjectSlugPipelineRoute: typeof AuthenticatedProjectSlugPipelineRoute
-  AuthenticatedProjectSlugIndexRoute: typeof AuthenticatedProjectSlugIndexRoute
+  AuthenticatedProjectSlugAgentRoute: typeof AuthenticatedProjectSlugAgentRoute;
+  AuthenticatedProjectSlugApprovalsRoute: typeof AuthenticatedProjectSlugApprovalsRoute;
+  AuthenticatedProjectSlugCodeRoute: typeof AuthenticatedProjectSlugCodeRoute;
+  AuthenticatedProjectSlugDeploymentsRoute: typeof AuthenticatedProjectSlugDeploymentsRoute;
+  AuthenticatedProjectSlugDomainsRoute: typeof AuthenticatedProjectSlugDomainsRoute;
+  AuthenticatedProjectSlugEnvironmentRoute: typeof AuthenticatedProjectSlugEnvironmentRoute;
+  AuthenticatedProjectSlugInfraRoute: typeof AuthenticatedProjectSlugInfraRoute;
+  AuthenticatedProjectSlugPipelineRoute: typeof AuthenticatedProjectSlugPipelineRoute;
+  AuthenticatedProjectSlugIndexRoute: typeof AuthenticatedProjectSlugIndexRoute;
 }
 
-const AuthenticatedProjectSlugRouteChildren: AuthenticatedProjectSlugRouteChildren =
-  {
-    AuthenticatedProjectSlugAgentRoute: AuthenticatedProjectSlugAgentRoute,
-    AuthenticatedProjectSlugCodeRoute: AuthenticatedProjectSlugCodeRoute,
-    AuthenticatedProjectSlugPipelineRoute:
-      AuthenticatedProjectSlugPipelineRoute,
-    AuthenticatedProjectSlugIndexRoute: AuthenticatedProjectSlugIndexRoute,
-  }
+const AuthenticatedProjectSlugRouteChildren: AuthenticatedProjectSlugRouteChildren = {
+  AuthenticatedProjectSlugAgentRoute: AuthenticatedProjectSlugAgentRoute,
+  AuthenticatedProjectSlugApprovalsRoute: AuthenticatedProjectSlugApprovalsRoute,
+  AuthenticatedProjectSlugCodeRoute: AuthenticatedProjectSlugCodeRoute,
+  AuthenticatedProjectSlugDeploymentsRoute: AuthenticatedProjectSlugDeploymentsRoute,
+  AuthenticatedProjectSlugDomainsRoute: AuthenticatedProjectSlugDomainsRoute,
+  AuthenticatedProjectSlugEnvironmentRoute: AuthenticatedProjectSlugEnvironmentRoute,
+  AuthenticatedProjectSlugInfraRoute: AuthenticatedProjectSlugInfraRoute,
+  AuthenticatedProjectSlugPipelineRoute: AuthenticatedProjectSlugPipelineRoute,
+  AuthenticatedProjectSlugIndexRoute: AuthenticatedProjectSlugIndexRoute,
+};
 
-const AuthenticatedProjectSlugRouteWithChildren =
-  AuthenticatedProjectSlugRoute._addFileChildren(
-    AuthenticatedProjectSlugRouteChildren,
-  )
+const AuthenticatedProjectSlugRouteWithChildren = AuthenticatedProjectSlugRoute._addFileChildren(
+  AuthenticatedProjectSlugRouteChildren,
+);
 
 interface AuthenticatedProjectRouteChildren {
-  AuthenticatedProjectSlugRoute: typeof AuthenticatedProjectSlugRouteWithChildren
-  AuthenticatedProjectNewRoute: typeof AuthenticatedProjectNewRoute
-  AuthenticatedProjectIndexRoute: typeof AuthenticatedProjectIndexRoute
+  AuthenticatedProjectSlugRoute: typeof AuthenticatedProjectSlugRouteWithChildren;
+  AuthenticatedProjectNewRoute: typeof AuthenticatedProjectNewRoute;
+  AuthenticatedProjectIndexRoute: typeof AuthenticatedProjectIndexRoute;
 }
 
 const AuthenticatedProjectRouteChildren: AuthenticatedProjectRouteChildren = {
   AuthenticatedProjectSlugRoute: AuthenticatedProjectSlugRouteWithChildren,
   AuthenticatedProjectNewRoute: AuthenticatedProjectNewRoute,
   AuthenticatedProjectIndexRoute: AuthenticatedProjectIndexRoute,
-}
+};
 
-const AuthenticatedProjectRouteWithChildren =
-  AuthenticatedProjectRoute._addFileChildren(AuthenticatedProjectRouteChildren)
+const AuthenticatedProjectRouteWithChildren = AuthenticatedProjectRoute._addFileChildren(
+  AuthenticatedProjectRouteChildren,
+);
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
-  AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
-  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
-  AuthenticatedProjectRoute: typeof AuthenticatedProjectRouteWithChildren
-  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
-  AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
-  AuthenticatedTrashRoute: typeof AuthenticatedTrashRoute
+  AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute;
+  AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute;
+  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute;
+  AuthenticatedProjectRoute: typeof AuthenticatedProjectRouteWithChildren;
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute;
+  AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute;
+  AuthenticatedTrashRoute: typeof AuthenticatedTrashRoute;
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -452,11 +551,11 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
   AuthenticatedTrashRoute: AuthenticatedTrashRoute,
-}
+};
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
-)
+);
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -464,7 +563,7 @@ const rootRouteChildren: RootRouteChildren = {
   CallbackRoute: CallbackRoute,
   AuthAppCallbackRoute: AuthAppCallbackRoute,
   AuthCallbackRoute: AuthCallbackRoute,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();

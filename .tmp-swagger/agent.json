@@ -1,0 +1,416 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Qeploy API",
+    "description": "Qeploy backend API — natural-language driven web app generation, GitHub Pages/BYOC deployment, domain binding, and cloud infrastructure operation.\n\n### Common response envelope\nEvery response (except SSE, redirects, GitHub webhook callback, and the preview proxy) is wrapped as:\n```json\n{ \"status\": 200, \"code\": \"SUCCESS\", \"message\": \"...\", \"data\": { } }\n```\n`data` is omitted (not `null`) on responses with no body (e.g. 204). Frontend clients should unwrap `data` after checking `response.ok`; see `docs/FRONTEND_API_GUIDE.md` for the reference `http.ts` implementation.\n\n### Error codes\nErrors use the same envelope with `data` omitted. `code` is one of: `BAD_REQUEST`(400) · `UNAUTHORIZED`(401) · `INVALID_TOKEN`(401) · `EXPIRED_REFRESH_TOKEN`(401) · `REVOKED_REFRESH_TOKEN`(401) · `FORBIDDEN`(403) · `GITHUB_APP_NOT_INSTALLED`(403) · `NOT_FOUND`(404) · `METHOD_NOT_ALLOWED`(405) · `CONFLICT`(409) · `INTERNAL_SERVER_ERROR`(500). `message` carries the specific, human-readable detail — treat `code` as the stable machine-readable discriminator.\n\n### Authentication\nBearer JWT (see the **JWT TOKEN** security scheme below). Obtain a token via the GitHub OAuth flow (`Auth` group), then send `Authorization: Bearer {accessToken}` on every authenticated request. Access tokens expire in 1 hour; use `POST /api/v1/auth/refresh` (rotation — both tokens are replaced) before that. A small set of endpoints are unauthenticated by design: GitHub OAuth/App URL and callback endpoints, `POST /api/v1/auth/refresh`, and `POST /api/v1/webhook/github` (GitHub-signed, not JWT).\n",
+    "version": "0.0.1"
+  },
+  "servers": [{ "url": "/" }],
+  "security": [{ "JWT TOKEN": [] }],
+  "tags": [
+    {
+      "name": "Agent",
+      "description": "AI 에이전트 요청 처리 API. 자연어 요청을 분석하여 코드 생성·수정, GitHub Pages 배포, 도메인 연결을 비동기로 실행합니다."
+    }
+  ],
+  "paths": {
+    "/api/v1/agent/tasks/{taskId}/retry": {
+      "post": {
+        "tags": ["Agent"],
+        "summary": "실패한 태스크 재시도",
+        "description": "저장된 plan과 현재 step부터 task를 다시 queue에 넣습니다. GET /tasks/{taskId} 응답의 pendingApprovalId가 non-null이면(#57) 이 호출은 항상 409로 거부되니, 먼저 POST /approvals/{pendingApprovalId}/approve로 그 승인을 처리하세요(승인 자체가 재실행을 트리거함). retryable:true일 때만 호출하세요.",
+        "operationId": "retryTask",
+        "parameters": [
+          { "name": "taskId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "202": { "description": "재시도 큐에 등록 완료" },
+          "409": {
+            "description": "재시도 불가 — PENDING 승인이 남아있거나 attempt가 maxAttempts에 도달함"
+          }
+        }
+      }
+    },
+    "/api/v1/agent/tasks/{taskId}/input": {
+      "post": {
+        "tags": ["Agent"],
+        "summary": "사용자 입력 제출",
+        "description": "태스크가 WAITING_INPUT 상태일 때 에이전트가 요구하는 값을 제출합니다. 예: 새 프로젝트의 GitHub 저장소 이름, 연결할 도메인 주소 등.",
+        "operationId": "submitInput",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "description": "에이전트 태스크 ID",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/TaskInputRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": { "description": "입력 수신 완료, 에이전트 재개" },
+          "400": { "description": "태스크가 WAITING_INPUT 상태가 아님" },
+          "404": { "description": "존재하지 않는 taskId 또는 입력 대기 만료" }
+        }
+      }
+    },
+    "/api/v1/agent/decision": {
+      "post": {
+        "tags": ["Agent"],
+        "summary": "에이전트 요청 제출",
+        "description": "자연어 요청을 분석해 실행 계획(steps)을 수립하고 비동기로 실행합니다. 응답의 taskId로 진행 상태를 폴링하세요. 기존 프로젝트 수정 시 projectId를 함께 전달하면 해당 저장소를 클론하여 작업합니다.",
+        "operationId": "decide",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/DecisionRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 접수 완료. taskId 반환",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/DecisionResponse" } } }
+          },
+          "400": {
+            "description": "요청 본문 유효성 오류",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/DecisionResponse" } } }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/DecisionResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/agent/tasks/{taskId}": {
+      "get": {
+        "tags": ["Agent"],
+        "summary": "태스크 상태 조회",
+        "description": "비동기 에이전트 작업의 현재 상태를 반환합니다. status가 WAITING_INPUT이면 question 필드를 읽고 /input 엔드포인트로 응답을 보내야 합니다. status가 DONE이면 previewUrl(Docker 프리뷰) 또는 summary(배포/도메인 결과)를 확인하세요.",
+        "operationId": "getTaskStatus",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "description": "에이전트 태스크 ID",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "태스크 상태 반환",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/TaskStatusResponse" } }
+            }
+          },
+          "404": {
+            "description": "존재하지 않는 taskId",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/TaskStatusResponse" } }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Agent"],
+        "summary": "에이전트 태스크 취소",
+        "description": "현재 사용자가 소유한 대기 또는 실행 중 태스크를 취소합니다.",
+        "operationId": "cancelTask",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "description": "에이전트 태스크 ID",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "태스크 취소 완료" },
+          "404": { "description": "존재하지 않거나 소유하지 않은 taskId" }
+        }
+      }
+    },
+    "/api/v1/agent/tasks/{taskId}/events": {
+      "get": {
+        "tags": ["Agent"],
+        "summary": "태스크 이벤트 조회",
+        "description": "afterEventId 이후의 영속 Agent 이벤트를 시간순으로 반환합니다.",
+        "operationId": "getTaskEvents",
+        "parameters": [
+          { "name": "taskId", "in": "path", "required": true, "schema": { "type": "string" } },
+          {
+            "name": "afterEventId",
+            "in": "query",
+            "description": "마지막으로 받은 event ID",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/AgentTaskEventResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agent/tasks/{taskId}/events/stream": {
+      "get": {
+        "tags": ["Agent"],
+        "summary": "태스크 이벤트 스트림",
+        "description": "DB에 저장된 Agent 이벤트를 SSE로 전달합니다.",
+        "operationId": "streamTaskEvents",
+        "parameters": [
+          { "name": "taskId", "in": "path", "required": true, "schema": { "type": "string" } },
+          {
+            "name": "afterEventId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/event-stream": { "schema": { "$ref": "#/components/schemas/SseEmitter" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agent/session": {
+      "delete": {
+        "tags": ["Agent"],
+        "summary": "에이전트 세션 종료",
+        "description": "현재 사용자의 PreviewSession을 만료시키고 연결된 Docker 컨테이너를 종료합니다. 작업이 끝난 후 리소스를 반환할 때 호출하세요.",
+        "operationId": "closeSession",
+        "responses": {
+          "204": { "description": "컨테이너 삭제 완료" },
+          "404": { "description": "실행 중인 컨테이너 없음" },
+          "401": { "description": "인증 필요" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TaskInputRequest": {
+        "type": "object",
+        "description": "에이전트 입력 대기 응답 본문",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "에이전트 질문에 대한 사용자 응답값. 예: GitHub 저장소 이름, 도메인 주소 등",
+            "example": "my-react-app",
+            "minLength": 1
+          }
+        },
+        "required": ["value"]
+      },
+      "DecisionRequest": {
+        "type": "object",
+        "description": "에이전트 요청 본문",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "자연어 요청 내용",
+            "example": "React로 투두 앱을 만들고 GitHub Pages에 배포해줘",
+            "minLength": 1
+          },
+          "aiProvider": {
+            "type": "string",
+            "description": "사용할 AI 제공자",
+            "enum": ["ANTHROPIC", "OPENAI"],
+            "example": "ANTHROPIC"
+          },
+          "projectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "수정할 기존 프로젝트 ID. null이면 신규 프로젝트로 처리",
+            "example": 42
+          },
+          "conversationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "요청이 시작된 대화 ID",
+            "example": 7
+          }
+        },
+        "required": ["aiProvider", "content"]
+      },
+      "AgentStep": {
+        "type": "object",
+        "description": "에이전트 실행 단계 하나",
+        "properties": {
+          "agentType": {
+            "type": "string",
+            "description": "실행할 에이전트 유형",
+            "enum": ["CHAT", "CODE", "DEPLOY", "DOMAIN_BIND", "INFRA_OPERATE"],
+            "example": "CODE"
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": { "type": "string" },
+            "description": "에이전트 유형별 파라미터.\n- CODE: instruction(코딩 지시), targetFile(대상 파일)\n- DEPLOY: instruction(배포 지시), repoName(저장소명), version(버전)\n- DOMAIN_BIND: instruction(도메인 설정 지시), domain(도메인값)\n- CHAT: instruction(질문/요청 내용)\n- INFRA_OPERATE: operation(STATUS_CHECK|LOG_VIEW|FAILURE_ANALYSIS|RESTART|\n  RESOURCE_SCALING|AUTOSCALING_CHANGE|RESOURCE_CLEANUP), instruction(운영 요청 내용)\n",
+            "example": { "instruction": "Create a React todo app", "targetFile": "" }
+          }
+        }
+      },
+      "DecisionResponse": {
+        "type": "object",
+        "description": "에이전트 요청 접수 응답. taskId로 진행 상태를 폴링하세요.",
+        "properties": {
+          "steps": {
+            "type": "array",
+            "description": "AI가 분석한 실행 단계 목록 (CODE → DEPLOY 순 등)",
+            "items": { "$ref": "#/components/schemas/AgentStep" }
+          },
+          "reasoning": {
+            "type": "string",
+            "description": "AI의 단계 분류 근거 설명",
+            "example": "코드 생성 후 GitHub Pages 배포 요청으로 판단"
+          },
+          "aiProvider": {
+            "type": "string",
+            "description": "사용된 AI 제공자",
+            "enum": ["ANTHROPIC", "OPENAI"],
+            "example": "ANTHROPIC"
+          },
+          "taskId": {
+            "type": "string",
+            "description": "비동기 태스크 ID. 상태 조회 및 입력 제출에 사용",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          "status": {
+            "type": "string",
+            "description": "현재 task 상태",
+            "example": "WAITING_APPROVAL"
+          },
+          "approvalIds": {
+            "type": "array",
+            "description": "승인이 필요한 경우 생성된 approval ID 목록",
+            "items": { "type": "integer", "format": "int64" }
+          }
+        }
+      },
+      "TaskStatusResponse": {
+        "type": "object",
+        "description": "에이전트 태스크 상태 응답",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "태스크 ID",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          "status": {
+            "type": "string",
+            "description": "태스크 상태.\n- PENDING: 대기 중\n- WAITING_APPROVAL: 사용자 승인 대기\n- QUEUED: 실행 queue 대기\n- RETRY_WAIT: lease 만료 또는 재시도 대기\n- RUNNING: 실행 중\n- WAITING_INPUT: 사용자 입력 필요 (question 필드 확인 후 /input 호출)\n- WAITING_RESULT_APPROVAL: 마지막 CODE step 완료, 결과(preview+diff) 승인 대기 중 — RESULT 승인\n  approve 시 main 반영 후 재개, reject 시 CANCELLED\n- DONE: 완료\n- FAILED: 실패 (error 필드 참조)\n- CANCELLED: 취소\n",
+            "enum": [
+              "PENDING",
+              "WAITING_APPROVAL",
+              "QUEUED",
+              "RETRY_WAIT",
+              "RUNNING",
+              "WAITING_INPUT",
+              "WAITING_RESULT_APPROVAL",
+              "DONE",
+              "FAILED",
+              "CANCELLED"
+            ],
+            "example": "DONE"
+          },
+          "previewUrl": {
+            "type": "string",
+            "description": "토큰 기반 프리뷰 gateway URL. CODE 스텝 완료 시에만 설정됨",
+            "example": "https://qeploy.com/api/v1/previews/101/token/"
+          },
+          "summary": {
+            "type": "string",
+            "description": "작업 완료 요약. 배포 URL, 도메인 연결 결과 등 포함"
+          },
+          "error": {
+            "type": "string",
+            "description": "실패 원인 메시지. status가 FAILED일 때 설정됨"
+          },
+          "question": {
+            "type": "string",
+            "description": "에이전트가 사용자에게 묻는 질문. status가 WAITING_INPUT일 때 설정됨. 응답은 /tasks/{taskId}/input으로 제출"
+          },
+          "failureLog": { "type": "string", "description": "실패 로그의 마지막 일부" },
+          "suggestedFix": { "type": "string", "description": "사용자에게 제안하는 최선의 수정안" },
+          "attempt": { "type": "integer", "format": "int32", "description": "현재 재시도 횟수" },
+          "maxAttempts": {
+            "type": "integer",
+            "format": "int32",
+            "description": "최대 재시도 횟수"
+          },
+          "retryable": {
+            "type": "boolean",
+            "description": "POST /tasks/{taskId}/retry 호출이 실제로 성공할지 여부(#57).\ntrue가 되려면 pendingApprovalId가 null(승인 대기 중인 건이 없음)이면서\nattempt < maxAttempts여야 한다. pendingApprovalId가 채워져 있으면 이 값은 항상\nfalse이며, /retry를 호출해도 409로 거부된다 — 먼저 POST /approvals/{id}/approve로\n그 승인을 처리해야 하고(승인 자체가 재실행을 트리거함), 승인 대기가 없고\nattempt<maxAttempts일 때만 /retry를 호출한다.\n",
+            "example": true
+          },
+          "pendingApprovalId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "이 태스크에 걸린 PENDING 승인의 ID(예: BuildFailureRecoveryService가 만드는\n\"자동 수정 및 재build\" 승인). null이면 승인 대기 없음. 값이 있으면 먼저\nPOST /approvals/{pendingApprovalId}/approve로 처리해야 하며(승인 처리 자체가\n재실행을 트리거한다), 그 전까지 retryable은 false로 고정된다.\n",
+            "example": 42
+          }
+        }
+      },
+      "AgentTaskEventResponse": {
+        "type": "object",
+        "properties": {
+          "eventId": { "type": "integer", "format": "int64" },
+          "taskId": { "type": "string" },
+          "type": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "WAITING_APPROVAL",
+              "QUEUED",
+              "RETRY_WAIT",
+              "RUNNING",
+              "WAITING_INPUT",
+              "WAITING_RESULT_APPROVAL",
+              "DONE",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "message": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SseEmitter": {
+        "type": "object",
+        "properties": { "timeout": { "type": "integer", "format": "int64" } }
+      }
+    },
+    "securitySchemes": {
+      "JWT TOKEN": {
+        "type": "http",
+        "name": "JWT TOKEN",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

@@ -80,6 +80,14 @@ const postTrashConversationRestoreParamsSchema = z.object({
 const postTrashConversationRestoreResSchema = conversationResponseSchema;
 
 /**
+ * DELETE /trash/conversations/{conversationId} 휴지통 대화 영구 삭제 요청 (path)
+ */
+const deleteTrashConversationParamsSchema = z.object({
+  /** 영구 삭제할 대화 ID */
+  conversationId: z.number().int(),
+});
+
+/**
  * GET /trash/conversations 휴지통 대화 목록 조회 응답
  */
 const getTrashConversationListResSchema = z.array(conversationResponseSchema);
@@ -102,6 +110,10 @@ const conversationMessageSchema = z.object({
   createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
   /** 큐잉된 Agent 작업 ID. 없거나 과거 메시지 조회 시 null */
   taskId: z.string().nullable().prefault(''),
+  /** PENDING 승인 ID. 채팅 승인 버튼용. API에 없으면 null */
+  pendingApprovalId: z.number().int().nullable().prefault(null),
+  /** 채팅에서 승인/거절 버튼을 보여줄지 여부. API에 없으면 null */
+  needsApproval: z.boolean().nullable().prefault(null),
 });
 
 /**
@@ -154,6 +166,8 @@ type PostTrashConversationRestoreParamsType = z.infer<
 >;
 /** POST /trash/conversations/{conversationId}/restore 휴지통 대화 복구 응답 */
 type PostTrashConversationRestoreResType = z.infer<typeof postTrashConversationRestoreResSchema>;
+/** DELETE /trash/conversations/{conversationId} 휴지통 대화 영구 삭제 요청 (path) */
+type DeleteTrashConversationParamsType = z.infer<typeof deleteTrashConversationParamsSchema>;
 /** GET /trash/conversations 휴지통 대화 목록 조회 응답 */
 type GetTrashConversationListResType = z.infer<typeof getTrashConversationListResSchema>;
 /** 대화 메시지 정보 */
@@ -178,6 +192,7 @@ export {
   postProjectConversationCreateResSchema,
   postTrashConversationRestoreParamsSchema,
   postTrashConversationRestoreResSchema,
+  deleteTrashConversationParamsSchema,
   getTrashConversationListResSchema,
   conversationMessageSchema,
   getConversationMessageListParamsSchema,
@@ -194,6 +209,7 @@ export {
   type PostProjectConversationCreateResType,
   type PostTrashConversationRestoreParamsType,
   type PostTrashConversationRestoreResType,
+  type DeleteTrashConversationParamsType,
   type GetTrashConversationListResType,
   type ConversationMessage,
   type GetConversationMessageListParamsType,

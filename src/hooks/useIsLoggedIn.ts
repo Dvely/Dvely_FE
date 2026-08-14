@@ -8,17 +8,12 @@ function readIsLoggedIn(): boolean {
 
 /** accessToken 존재 여부로 로그인 상태를 동기화 */
 export function useIsLoggedIn(): [boolean, () => void] {
-  const [isLoggedIn, setIsLoggedIn] = useState(readIsLoggedIn);
-
+  const [tokenVersion, setTokenVersion] = useState(0);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   const sync = useCallback(() => {
-    setIsLoggedIn(readIsLoggedIn());
+    setTokenVersion((version) => version + 1);
   }, []);
-
-  useEffect(() => {
-    sync();
-  }, [pathname, sync]);
 
   useEffect(() => {
     const onStorage = () => sync();
@@ -38,5 +33,8 @@ export function useIsLoggedIn(): [boolean, () => void] {
     };
   }, [sync]);
 
-  return [isLoggedIn, sync];
+  void pathname;
+  void tokenVersion;
+
+  return [readIsLoggedIn(), sync];
 }

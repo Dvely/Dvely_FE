@@ -1,14 +1,31 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SendHorizontal } from 'lucide-react';
-import { postConversationMessageCreate, postProjectConversationCreate } from '@/api/chat';
-import { pollAgentTask } from '@/api/agent';
+import {
+  postConversationMessageCreate,
+  postProjectConversationCreate,
+  useConversationMessageListQuery,
+} from '@/api/chat';
+import {
+  getAgentTask,
+  pollAgentTask,
+  postAgentDecision,
+  SETTLED_AGENT_TASK_STATUSES,
+} from '@/api/agent';
+import {
+  getProjectApprovalList,
+  getApprovalDetail,
+  postApprovalApprove,
+  postApprovalReject,
+} from '@/api/approvals';
+import AppAlertDialog from '@/components/common/AppAlertDialog';
 import type { GetAgentTaskResType } from '@/types/agent.type';
 import type { ConversationMessage } from '@/types/chat.type';
 import {
   AGENT_CHAT_QUERY_KEY,
   clearHomeAgentPromptSendGuard,
   createLocalMessage,
+  mergeConversationMessages,
   migrateSessionMessages,
   readSessionMessages,
   shouldSendHomeAgentPromptOnce,
@@ -53,12 +70,60 @@ function formatAgentTaskReply(task: GetAgentTaskResType) {
     case 'WAITING_INPUT':
       return task.question?.trim() || '추가 입력이 필요합니다.';
     case 'WAITING_APPROVAL':
-      return '작업 실행 전 승인이 필요합니다.';
+      return (
+        task.summary?.trim() ||
+        '작업 실행 전 승인이 필요합니다. 아래 버튼으로 승인하거나 거절해 주세요.'
+      );
     case 'WAITING_RESULT_APPROVAL':
       return task.summary?.trim() || '결과 승인이 필요합니다. 미리보기를 확인한 뒤 승인해 주세요.';
     default:
       return task.summary?.trim() || '작업 상태를 확인했습니다.';
   }
+}
+
+const APPROVAL_WAIT_STATUSES = new Set(['WAITING_APPROVAL', 'WAITING_RESULT_APPROVAL']);
+
+async function resolvePendingApprovalId(
+  task: GetAgentTaskResType,
+  projectId: number,
+  conversationId: number | null,
+) {
+  if (task.pendingApprovalId != null) return task.pendingApprovalId;
+  if (!APPROVAL_WAIT_STATUSES.has(task.status)) return null;
+
+  const approvals = await getProjectApprovalList(projectId);
+  const pending = approvals.find((approval) => {
+    if (approval.status !== 'PENDING') return false;
+    if (approval.taskId && approval.taskId === task.taskId) return true;
+    if (conversationId != null && approval.conversationId === conversationId) return true;
+    return false;
+  });
+
+  return (
+    pending?.approvalId ??
+    approvals.find((approval) => approval.status === 'PENDING')?.approvalId ??
+    null
+  );
+}
+
+function formatApiErrorMessage(error: unknown) {
+  if (!(error instanceof Error) || !error.message) {
+    return '요청 처리 중 오류가 발생했습니다.';
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(error.message);
+    if (parsed && typeof parsed === 'object' && 'message' in parsed) {
+      const message = (parsed as { message?: unknown }).message;
+      if (typeof message === 'string' && message.trim()) {
+        return message.trim();
+      }
+    }
+  } catch {
+    // 일반 문자열 오류 메시지는 그대로 사용한다.
+  }
+
+  return error.message;
 }
 
 function AgentConversationPanel({
@@ -71,16 +136,20 @@ function AgentConversationPanel({
   onConversationActivity,
 }: AgentConversationPanelProps) {
   const [input, setInput] = useState('');
-  const [displayMessages, setDisplayMessages] = useState<ConversationMessage[]>([]);
+  const [overlayMessages, setOverlayMessages] = useState<ConversationMessage[]>([]);
   const [isAssistantReplying, setIsAssistantReplying] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const previousConversationIdRef = useRef(conversationId);
-  const onConversationActivityRef = useRef(onConversationActivity);
+  const { data: serverMessages, isLoading: isMessagesLoading } = useConversationMessageListQuery(
+    AGENT_CHAT_QUERY_KEY,
+    conversationId ?? 0,
+  );
+  const displayMessages = useMemo(
+    () => mergeConversationMessages(serverMessages ?? [], overlayMessages),
+    [serverMessages, overlayMessages],
+  );
   const pollAbortRef = useRef<AbortController | null>(null);
-
-  onConversationActivityRef.current = onConversationActivity;
 
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -93,7 +162,19 @@ function AgentConversationPanel({
 
       const createdMessage = await postConversationMessageCreate(targetConversationId, { content });
 
-      // 로컬 유저 메시지에 서버 taskId를 붙여 프리뷰/폴링 상태를 맞춘다.
+      let taskId = createdMessage.taskId?.trim() || '';
+      let decisionApprovalIds: number[] = [];
+      if (!taskId) {
+        const decision = await postAgentDecision({
+          content,
+          aiProvider: 'OPENAI',
+          projectId,
+          conversationId: targetConversationId,
+        });
+        taskId = decision.taskId;
+        decisionApprovalIds = decision.approvalIds;
+      }
+
       const sessionMessages = readSessionMessages(targetConversationId);
       const lastUserIndex = [...sessionMessages]
         .map((message, index) => ({ message, index }))
@@ -101,36 +182,43 @@ function AgentConversationPanel({
         .find(({ message }) => message.role === 'user' && message.content === content)?.index;
       if (lastUserIndex != null) {
         const nextMessages = sessionMessages.map((message, index) =>
-          index === lastUserIndex ? { ...message, taskId: createdMessage.taskId } : message,
+          index === lastUserIndex ? { ...message, taskId } : message,
         );
         writeSessionMessages(targetConversationId, nextMessages);
       }
 
       let task: GetAgentTaskResType | null = null;
 
-      if (createdMessage.taskId) {
-        setIsAssistantReplying(true);
+      if (taskId) {
         pollAbortRef.current?.abort();
         const controller = new AbortController();
         pollAbortRef.current = controller;
-        task = await pollAgentTask(createdMessage.taskId, { signal: controller.signal });
+        task = await pollAgentTask(taskId, { signal: controller.signal });
       }
+
+      const pendingApprovalId = task
+        ? ((await resolvePendingApprovalId(task, projectId, targetConversationId)) ??
+          decisionApprovalIds[0] ??
+          null)
+        : null;
 
       return {
         conversationId: targetConversationId,
         task,
-        taskId: createdMessage.taskId,
+        taskId,
+        pendingApprovalId,
       };
     },
     onMutate: (content) => {
       const draftConversationId = conversationId ?? 0;
       const userMessage = createLocalMessage(draftConversationId, 'user', content);
-      setDisplayMessages((prev) => {
-        const next = [...prev, userMessage];
+      setOverlayMessages((prev) => {
+        const next = [...mergeConversationMessages(serverMessages ?? [], prev), userMessage];
         writeSessionMessages(draftConversationId, next);
         return next;
       });
       setInput('');
+      setIsAssistantReplying(true);
       return { content, userMessage, draftConversationId };
     },
     onSuccess: (result, _content, context) => {
@@ -141,7 +229,25 @@ function AgentConversationPanel({
       }
 
       const sessionMessages = readSessionMessages(targetConversationId);
-      setDisplayMessages(sessionMessages);
+      const pendingApprovalId = result.task?.pendingApprovalId ?? result.pendingApprovalId ?? null;
+      const nextMessages = result.task
+        ? [
+            ...sessionMessages,
+            createLocalMessage(
+              targetConversationId,
+              'assistant',
+              formatAgentTaskReply(result.task),
+              {
+                taskId: result.task.taskId,
+                pendingApprovalId,
+                needsApproval: APPROVAL_WAIT_STATUSES.has(result.task.status),
+              },
+            ),
+          ]
+        : sessionMessages;
+
+      writeSessionMessages(targetConversationId, nextMessages);
+      setOverlayMessages(nextMessages);
 
       if (isNewConversation || conversationId === null) {
         onConversationCreated(targetConversationId);
@@ -150,37 +256,22 @@ function AgentConversationPanel({
       void queryClient.invalidateQueries({
         queryKey: ['project-conversation-list', AGENT_CHAT_QUERY_KEY, projectId],
       });
+      void queryClient.invalidateQueries({
+        queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, targetConversationId],
+      });
 
-      if (result.task) {
-        const assistantMessage = createLocalMessage(
-          targetConversationId,
-          'assistant',
-          formatAgentTaskReply(result.task),
-        );
-        setDisplayMessages((prev) => {
-          const next = [...prev, assistantMessage];
-          writeSessionMessages(targetConversationId, next);
-          return next;
-        });
-      } else if (context?.userMessage) {
+      if (!result.task && context?.userMessage) {
         console.warn('[agent] message created without taskId', {
           conversationId: targetConversationId,
           taskId: result.taskId,
         });
-        const assistantMessage = createLocalMessage(
-          targetConversationId,
-          'assistant',
+        setAlertMessage(
           '메시지는 저장됐지만 AI 작업이 생성되지 않았습니다. 백엔드 Decision Agent(AI 키/설정)를 확인해주세요.',
         );
-        setDisplayMessages((prev) => {
-          const next = [...prev, assistantMessage];
-          writeSessionMessages(targetConversationId, next);
-          return next;
-        });
       }
 
       setIsAssistantReplying(false);
-      onConversationActivityRef.current?.(targetConversationId);
+      onConversationActivity?.(targetConversationId);
     },
     onError: (error, content, context) => {
       if (error instanceof DOMException && error.name === 'AbortError') {
@@ -190,24 +281,12 @@ function AgentConversationPanel({
 
       console.error('[agent] send/poll failed', error);
 
-      const targetConversationId = conversationId ?? context?.draftConversationId ?? null;
-      if (targetConversationId != null && context?.userMessage) {
-        const assistantMessage = createLocalMessage(
-          targetConversationId,
-          'assistant',
-          error instanceof Error
-            ? `작업 확인 중 오류가 발생했습니다: ${error.message}`
-            : '작업 확인 중 오류가 발생했습니다.',
-        );
-        setDisplayMessages((prev) => {
-          const next = [...prev, assistantMessage];
-          writeSessionMessages(targetConversationId, next);
-          return next;
-        });
-      } else {
+      setAlertMessage(formatApiErrorMessage(error));
+
+      if (!(conversationId != null && context?.userMessage)) {
         setInput(content);
         if (context?.userMessage) {
-          setDisplayMessages((prev) =>
+          setOverlayMessages((prev) =>
             prev.filter((message) => message.messageId !== context.userMessage.messageId),
           );
         }
@@ -216,10 +295,108 @@ function AgentConversationPanel({
     },
   });
 
+  const decideApprovalMutation = useMutation({
+    mutationFn: async ({
+      approvalId,
+      action,
+      taskId,
+      messageId,
+    }: {
+      approvalId: number;
+      action: 'approve' | 'reject';
+      taskId: string;
+      messageId: number;
+    }) => {
+      if (action === 'approve') {
+        await postApprovalApprove(approvalId);
+      } else {
+        await postApprovalReject(approvalId);
+      }
+
+      pollAbortRef.current?.abort();
+      const controller = new AbortController();
+      pollAbortRef.current = controller;
+      const task = await pollAgentTask(taskId, {
+        signal: controller.signal,
+        until: (nextTask) => {
+          const stillSameApproval =
+            nextTask.pendingApprovalId === approvalId &&
+            APPROVAL_WAIT_STATUSES.has(nextTask.status);
+          if (stillSameApproval) return false;
+          return SETTLED_AGENT_TASK_STATUSES.has(nextTask.status);
+        },
+      });
+      const nextPendingApprovalId = await resolvePendingApprovalId(task, projectId, conversationId);
+      const pendingApprovalId = nextPendingApprovalId === approvalId ? null : nextPendingApprovalId;
+
+      return { task, messageId, pendingApprovalId, decidedApprovalId: approvalId };
+    },
+    onMutate: ({ messageId }) => {
+      setIsAssistantReplying(true);
+      setOverlayMessages((prev) => {
+        const next = mergeConversationMessages(serverMessages ?? [], prev).map((message) =>
+          message.messageId === messageId
+            ? { ...message, pendingApprovalId: null, needsApproval: false }
+            : message,
+        );
+        if (conversationId != null) writeSessionMessages(conversationId, next);
+        return next;
+      });
+    },
+    onSuccess: ({ task, messageId, pendingApprovalId }) => {
+      const targetConversationId = conversationId;
+      if (targetConversationId == null) return;
+
+      const needsApproval = APPROVAL_WAIT_STATUSES.has(task.status) && pendingApprovalId != null;
+
+      const assistantMessage = createLocalMessage(
+        targetConversationId,
+        'assistant',
+        formatAgentTaskReply(task),
+        {
+          taskId: task.taskId,
+          pendingApprovalId: needsApproval ? pendingApprovalId : null,
+          needsApproval,
+        },
+      );
+
+      setOverlayMessages((prev) => {
+        const next = [
+          ...mergeConversationMessages(serverMessages ?? [], prev).map((message) =>
+            message.messageId === messageId
+              ? { ...message, pendingApprovalId: null, needsApproval: false }
+              : message,
+          ),
+          assistantMessage,
+        ];
+        writeSessionMessages(targetConversationId, next);
+        return next;
+      });
+
+      void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
+      setIsAssistantReplying(false);
+      onConversationActivity?.(targetConversationId);
+    },
+    onError: (error) => {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setIsAssistantReplying(false);
+        return;
+      }
+
+      setAlertMessage(formatApiErrorMessage(error));
+      setIsAssistantReplying(false);
+    },
+  });
+
   const isSending = sendMessageMutation.isPending;
   const isInputLocked = isSending || isAssistantReplying;
+  const showMessageSkeletons = isMessagesLoading && displayMessages.length === 0;
   const showWelcome =
-    isNewConversation && !isSending && !isAssistantReplying && displayMessages.length === 0;
+    !showMessageSkeletons &&
+    isNewConversation &&
+    !isSending &&
+    !isAssistantReplying &&
+    displayMessages.length === 0;
 
   const handleSend = () => {
     const content = input.trim();
@@ -235,26 +412,61 @@ function AgentConversationPanel({
     }
   };
 
-  const syncConversationView = (targetConversationId: number | null) => {
-    pollAbortRef.current?.abort();
-    pollAbortRef.current = null;
+  const handleAlertOpenChange = (open: boolean) => {
+    if (!open) setAlertMessage(null);
+  };
 
-    if (targetConversationId !== null) {
-      setDisplayMessages(readSessionMessages(targetConversationId));
-    } else {
-      setDisplayMessages([]);
+  const handleDecideApproval = (message: ConversationMessage, action: 'approve' | 'reject') => {
+    if (decideApprovalMutation.isPending || isAssistantReplying) {
+      return;
     }
-    setIsAssistantReplying(false);
-    setInput('');
-  };
 
-  const scrollToLatestMessage = (behavior: ScrollBehavior = 'smooth') => {
-    messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
-  };
+    if (message.pendingApprovalId == null && !message.needsApproval) {
+      return;
+    }
 
-  useEffect(() => {
-    syncConversationView(conversationId);
-  }, [conversationId, isNewConversation]);
+    void (async () => {
+      let approvalId = message.pendingApprovalId;
+      let taskId = message.taskId?.trim() || '';
+
+      if (approvalId == null && taskId) {
+        try {
+          const task = await getAgentTask(taskId);
+          approvalId = await resolvePendingApprovalId(task, projectId, conversationId);
+        } catch (error) {
+          setAlertMessage(formatApiErrorMessage(error));
+          return;
+        }
+      }
+
+      if (approvalId != null && !taskId) {
+        try {
+          const detail = await getApprovalDetail(approvalId);
+          taskId = detail.taskId?.trim() || '';
+        } catch (error) {
+          setAlertMessage(formatApiErrorMessage(error));
+          return;
+        }
+      }
+
+      if (approvalId == null) {
+        setAlertMessage('승인할 항목을 찾지 못했습니다. 승인 탭에서 확인해주세요.');
+        return;
+      }
+
+      if (!taskId) {
+        setAlertMessage('이어서 진행할 작업 ID를 찾지 못했습니다.');
+        return;
+      }
+
+      decideApprovalMutation.mutate({
+        approvalId,
+        action,
+        taskId,
+        messageId: message.messageId,
+      });
+    })();
+  };
 
   useEffect(() => {
     const content = initialPrompt?.trim();
@@ -263,20 +475,9 @@ function AgentConversationPanel({
     sendMessageMutation.mutate(content, {
       onError: () => clearHomeAgentPromptSendGuard(content),
     });
+    // 홈에서 넘어온 프롬프트는 마운트 시 한 번만 전송한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPrompt]);
-
-  useEffect(() => {
-    const isConversationSwitch = previousConversationIdRef.current !== conversationId;
-    previousConversationIdRef.current = conversationId;
-
-    const frameId = window.requestAnimationFrame(() => {
-      scrollToLatestMessage(isConversationSwitch ? 'instant' : 'smooth');
-    });
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
-  }, [conversationId, displayMessages, isAssistantReplying]);
 
   useEffect(() => {
     return () => {
@@ -294,15 +495,28 @@ function AgentConversationPanel({
               워크스페이스입니다. 메시지를 입력하면 대화가 시작됩니다.
             </div>
           ) : null}
-          {displayMessages.map((message) => (
-            <MessageBubble key={message.messageId} message={message} />
-          ))}
-          {isAssistantReplying ? (
-            <div className="px-3.5 py-3 text-[13px] text-[#94a3b8]">
-              SYS.AI Agent가 답변을 작성 중입니다...
-            </div>
-          ) : null}
-          <div ref={messagesEndRef} aria-hidden="true" className="h-px shrink-0" />
+          {showMessageSkeletons
+            ? [0, 1, 2, 3].map((item) => (
+                <AssistantReplySkeleton key={`message-skeleton-${item}`} />
+              ))
+            : displayMessages.map((message) => (
+                <MessageBubble
+                  key={message.messageId}
+                  message={message}
+                  isDecideBusy={decideApprovalMutation.isPending}
+                  onApprove={() => handleDecideApproval(message, 'approve')}
+                  onReject={() => handleDecideApproval(message, 'reject')}
+                />
+              ))}
+          {isSending || isAssistantReplying ? <AssistantReplySkeleton /> : null}
+          <div
+            key={`${displayMessages.length}-${isAssistantReplying ? 'replying' : 'idle'}`}
+            ref={(node) => {
+              node?.scrollIntoView({ block: 'end' });
+            }}
+            aria-hidden="true"
+            className="h-px shrink-0"
+          />
         </div>
       </div>
 
@@ -341,12 +555,21 @@ function AgentConversationPanel({
           </button>
         </div>
       </footer>
+
+      <AppAlertDialog
+        open={alertMessage != null}
+        message={alertMessage ?? ''}
+        onOpenChange={handleAlertOpenChange}
+      />
     </>
   );
 }
 
 type MessageBubbleProps = {
   message: ConversationMessage;
+  isDecideBusy: boolean;
+  onApprove: () => void;
+  onReject: () => void;
 };
 
 const MESSAGE_URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -377,9 +600,22 @@ function linkifyMessageContent(content: string, linkClassName: string) {
   });
 }
 
-function MessageBubble({ message }: MessageBubbleProps) {
+function AssistantReplySkeleton() {
+  return (
+    <div aria-hidden="true" className="px-3.5 py-3">
+      <div className="flex flex-col gap-2">
+        <div className="h-3 w-[78%] animate-pulse rounded bg-[#e2e8f0]" />
+        <div className="h-3 w-[92%] animate-pulse rounded bg-[#e2e8f0]" />
+        <div className="h-3 w-[64%] animate-pulse rounded bg-[#f1f5f9]" />
+      </div>
+    </div>
+  );
+}
+
+function MessageBubble({ message, isDecideBusy, onApprove, onReject }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
+  const showApprovalActions = isAssistant && message.needsApproval === true;
   const linkClassName = isUser
     ? 'underline underline-offset-2 hover:text-[#5b21b6]'
     : 'text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]';
@@ -398,6 +634,26 @@ function MessageBubble({ message }: MessageBubbleProps) {
         <p className="whitespace-pre-wrap">
           {linkifyMessageContent(message.content, linkClassName)}
         </p>
+        {showApprovalActions ? (
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              disabled={isDecideBusy}
+              onClick={onReject}
+              className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold text-[#64748b] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              거절
+            </button>
+            <button
+              type="button"
+              disabled={isDecideBusy}
+              onClick={onApprove}
+              className="h-8 rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isDecideBusy ? '처리 중' : '승인'}
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );

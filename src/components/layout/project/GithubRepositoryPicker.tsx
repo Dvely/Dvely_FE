@@ -8,6 +8,8 @@ type GithubRepositoryPickerProps = {
   onSelect?: (repository: GithubRepository) => void;
 };
 
+const skeletonItems = Array.from({ length: 4 }, (_, index) => `github-repo-skeleton-${index}`);
+
 function GithubRepositoryPicker({ onSelect }: GithubRepositoryPickerProps) {
   const [open, setOpen] = useState(false);
   const [selectedFullName, setSelectedFullName] = useState<string | null>(null);
@@ -16,7 +18,6 @@ function GithubRepositoryPicker({ onSelect }: GithubRepositoryPickerProps) {
   const { data: repositories = [], isLoading } = useGithubRepositoryListQuery('github-picker', {
     enabled: open,
   });
-  const skeletonItems = Array.from({ length: 4 }, (_, index) => `repo-skeleton-${index}`);
 
   const handleSelect = useCallback(
     (repository: GithubRepository) => {
@@ -77,12 +78,15 @@ function GithubRepositoryPicker({ onSelect }: GithubRepositoryPickerProps) {
             {isLoading ? (
               <ul>
                 {skeletonItems.map((key) => (
-                  <li key={key} className="h-[72px] animate-pulse rounded-lg bg-[#f8fafc]" />
+                  <li key={key} className="rounded-lg px-3 py-2.5">
+                    <div className="h-4 w-40 animate-pulse rounded bg-[#e2e8f0]" />
+                    <div className="mt-2 h-3 w-full animate-pulse rounded bg-[#f1f5f9]" />
+                  </li>
                 ))}
               </ul>
             ) : repositories.length === 0 ? (
-              <p className="px-3 py-8 text-center text-[12px] text-[#94a3b8]">
-                연결할 수 있는 저장소가 없습니다.
+              <p className="px-3 py-6 text-center text-[12px] text-[#94a3b8]">
+                연결할 저장소가 없습니다.
               </p>
             ) : (
               <ul>
