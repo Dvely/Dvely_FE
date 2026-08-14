@@ -31,6 +31,28 @@ import {
   type PostProjectRepositoryReqType,
   type PostProjectRepositoryResType,
 } from '@/types/projects.type';
+import {
+  getProjectCostBudgetResSchema,
+  getProjectInfrastructureConfigurationHistoryResSchema,
+  getProjectInfrastructureConfigurationResSchema,
+  getProjectInfrastructureSettingsResSchema,
+  getProjectRepositorySettingsResSchema,
+  patchProjectChatSettingsReqSchema,
+  projectChatSettingsSchema,
+  putProjectCostBudgetReqSchema,
+  putProjectInfrastructureConfigurationReqSchema,
+  putProjectInfrastructureSettingsReqSchema,
+  type GetProjectCostBudgetResType,
+  type GetProjectInfrastructureConfigurationHistoryResType,
+  type GetProjectInfrastructureConfigurationResType,
+  type GetProjectInfrastructureSettingsResType,
+  type GetProjectRepositorySettingsResType,
+  type PatchProjectChatSettingsReqType,
+  type ProjectChatSettings,
+  type PutProjectCostBudgetReqType,
+  type PutProjectInfrastructureConfigurationReqType,
+  type PutProjectInfrastructureSettingsReqType,
+} from '@/types/projectSettings.type';
 
 const endpoint = '/projects';
 const defaultQueryOptions = {
@@ -202,6 +224,165 @@ async function deleteProject(params: DeleteProjectParamsType) {
     .catch(errorResponse());
 }
 
+/** 프로젝트 GitHub 저장소 연결 해제 API DELETE */
+async function deleteProjectRepository(projectId: number) {
+  return Http.instance
+    .delete(`${endpoint}/${projectId}/repository`)
+    .then(succesResponse)
+    .catch(errorResponse());
+}
+
+/** 프로젝트 Chat 승인 정책 조회 API GET */
+async function getProjectChatSettings(projectId: number) {
+  return Http.instance
+    .get<ProjectChatSettings>(`${endpoint}/${projectId}/settings/chat`)
+    .then((response) => {
+      const data = succesResponse<ProjectChatSettings>(response);
+      return projectChatSettingsSchema.parse(data);
+    })
+    .catch(errorResponse());
+}
+
+/** 프로젝트 Chat 승인 정책 수정 API PATCH */
+async function patchProjectChatSettings(projectId: number, params: PatchProjectChatSettingsReqType) {
+  const payload = patchProjectChatSettingsReqSchema.parse(params);
+
+  return Http.instance
+    .patch<ProjectChatSettings>(`${endpoint}/${projectId}/settings/chat`, payload)
+    .then((response) => {
+      const data = succesResponse<ProjectChatSettings>(response);
+      return projectChatSettingsSchema.parse(data);
+    })
+    .catch(errorResponse());
+}
+
+/** 프로젝트 Infrastructure 설정 조회 API GET */
+async function getProjectInfrastructureSettings(projectId: number) {
+  return Http.instance
+    .get<GetProjectInfrastructureSettingsResType>(`${endpoint}/${projectId}/settings/infrastructure`)
+    .then((response) => {
+      const data = succesResponse<GetProjectInfrastructureSettingsResType>(response);
+      return getProjectInfrastructureSettingsResSchema.parse(data);
+    })
+    .catch(errorResponse());
+}
+
+/** 프로젝트 클라우드 연결 선택 API PUT */
+async function putProjectInfrastructureSettings(
+  projectId: number,
+  params: PutProjectInfrastructureSettingsReqType,
+) {
+  const payload = putProjectInfrastructureSettingsReqSchema.parse(params);
+
+  return Http.instance
+    .put<GetProjectInfrastructureSettingsResType>(
+      `${endpoint}/${projectId}/settings/infrastructure`,
+      payload,
+    )
+    .then((response) => {
+      const data = succesResponse<GetProjectInfrastructureSettingsResType>(response);
+      return getProjectInfrastructureSettingsResSchema.parse(data);
+    })
+    .catch(errorResponse());
+}
+
+/** 프로젝트 클라우드 연결 선택 해제 API DELETE */
+async function deleteProjectInfrastructureSettings(projectId: number) {
+  return Http.instance
+    .delete(`${endpoint}/${projectId}/settings/infrastructure`)
+    .then(succesResponse)
+    .catch(errorResponse());
+}
+
+/** 프로젝트 인프라 구성 조회 API GET */
+async function getProjectInfrastructureConfiguration(projectId: number) {
+  return Http.instance
+    .get<GetProjectInfrastructureConfigurationResType>(
+      `${endpoint}/${projectId}/settings/infrastructure/configuration`,
+    )
+    .then((response) => {
+      const data = succesResponse<GetProjectInfrastructureConfigurationResType>(response);
+      return getProjectInfrastructureConfigurationResSchema.parse(data);
+    })
+    .catch(errorResponse());
+}
+
+/** 프로젝트 인프라 구성 수정 API PUT */
+async function putProjectInfrastructureConfiguration(
+  projectId: number,
+  params: PutProjectInfrastructureConfigurationReqType,
+) {
+  const payload = putProjectInfrastructureConfigurationReqSchema.parse(params);
+
+  return Http.instance
+    .put<GetProjectInfrastructureConfigurationResType>(
+      `${endpoint}/${projectId}/settings/infrastructure/configuration`,
+      payload,
+    )
+    .then((response) => {
+      const data = succesResponse<GetProjectInfrastructureConfigurationResType>(response);
+      return getProjectInfrastructureConfigurationResSchema.parse(data);
+    })
+    .catch(errorResponse());
+}
+
+/** 프로젝트 인프라 구성 히스토리 조회 API GET */
+async function getProjectInfrastructureConfigurationHistory(projectId: number, limit?: number) {
+  return Http.instance
+    .get<GetProjectInfrastructureConfigurationHistoryResType>(
+      `${endpoint}/${projectId}/settings/infrastructure/configuration/history`,
+      { params: limit != null ? { limit } : undefined },
+    )
+    .then((response) => {
+      const data = succesResponse<GetProjectInfrastructureConfigurationHistoryResType>(response);
+      return getProjectInfrastructureConfigurationHistoryResSchema.parse(data);
+    })
+    .catch(errorResponse());
+}
+
+/** 프로젝트 비용 예산 조회 API GET */
+async function getProjectCostBudget(projectId: number) {
+  return Http.instance
+    .get<GetProjectCostBudgetResType>(`${endpoint}/${projectId}/settings/cost-budget`)
+    .then((response) => {
+      const data = succesResponse<GetProjectCostBudgetResType>(response);
+      return getProjectCostBudgetResSchema.parse(data);
+    })
+    .catch(errorResponse());
+}
+
+/** 프로젝트 비용 예산 수정 API PUT */
+async function putProjectCostBudget(projectId: number, params: PutProjectCostBudgetReqType) {
+  const payload = putProjectCostBudgetReqSchema.parse(params);
+
+  return Http.instance
+    .put<GetProjectCostBudgetResType>(`${endpoint}/${projectId}/settings/cost-budget`, payload)
+    .then((response) => {
+      const data = succesResponse<GetProjectCostBudgetResType>(response);
+      return getProjectCostBudgetResSchema.parse(data);
+    })
+    .catch(errorResponse());
+}
+
+/** 프로젝트 비용 예산 삭제 API DELETE */
+async function deleteProjectCostBudget(projectId: number) {
+  return Http.instance
+    .delete(`${endpoint}/${projectId}/settings/cost-budget`)
+    .then(succesResponse)
+    .catch(errorResponse());
+}
+
+/** 프로젝트 저장소 설정 조회 API GET */
+async function getProjectRepositorySettings(projectId: number) {
+  return Http.instance
+    .get<GetProjectRepositorySettingsResType>(`${endpoint}/${projectId}/settings/repository`)
+    .then((response) => {
+      const data = succesResponse<GetProjectRepositorySettingsResType>(response);
+      return getProjectRepositorySettingsResSchema.parse(data);
+    })
+    .catch(errorResponse());
+}
+
 /** GitHub 저장소 목록 조회 Query Hook */
 function useGithubRepositoryListQuery(queryKey: unknown, options?: { enabled?: boolean }) {
   if (!queryKey) throw new Error('queryKey is required');
@@ -209,6 +390,16 @@ function useGithubRepositoryListQuery(queryKey: unknown, options?: { enabled?: b
     queryKey: ['github-repository-list', queryKey],
     queryFn: getGithubRepositoryList,
     enabled: options?.enabled ?? true,
+    ...defaultQueryOptions,
+  });
+}
+
+function useProjectRepositorySettingsQuery(queryKey: unknown, projectId: number) {
+  if (!queryKey) throw new Error('queryKey is required');
+  return useQuery({
+    queryKey: ['project-repository-settings', queryKey, projectId],
+    queryFn: () => getProjectRepositorySettings(projectId),
+    enabled: !!projectId,
     ...defaultQueryOptions,
   });
 }
@@ -315,9 +506,23 @@ export {
   getProjectOverview,
   getProjectRepositoryHealth,
   postProjectRepository,
+  deleteProjectRepository,
   patchProject,
   deleteProject,
+  getProjectChatSettings,
+  patchProjectChatSettings,
+  getProjectInfrastructureSettings,
+  putProjectInfrastructureSettings,
+  deleteProjectInfrastructureSettings,
+  getProjectInfrastructureConfiguration,
+  putProjectInfrastructureConfiguration,
+  getProjectInfrastructureConfigurationHistory,
+  getProjectCostBudget,
+  putProjectCostBudget,
+  deleteProjectCostBudget,
+  getProjectRepositorySettings,
   useGithubRepositoryListQuery,
+  useProjectRepositorySettingsQuery,
   useProjectListQuery,
   useProjectDetailQuery,
   useProjectActivityLogListQuery,

@@ -16,6 +16,7 @@ import {
   getConversationMessageList,
   useProjectConversationListQuery,
 } from '@/api/chat';
+import { postProjectRepository, useProjectRepositorySettingsQuery } from '@/api/projects';
 import type { GetProjectDetailResType, GithubRepository } from '@/types/projects.type';
 import {
   AGENT_CHAT_QUERY_KEY,
@@ -70,8 +71,34 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     });
 
   const queryClient = useQueryClient();
+  const { data: repositorySettings } = useProjectRepositorySettingsQuery(
+    'project-agent-page',
+    projectId,
+  );
+  const connectRepositoryMutation = useMutation({
+    mutationFn: (repository: GithubRepository) =>
+      postProjectRepository(projectId, {
+        repositoryMode: 'existing',
+        repositoryName: repository.name,
+        repositoryFullName: repository.fullName,
+        repositoryVisibility: repository.visibility,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['project-repository-settings'] });
+    },
+  });
+
+  const connectedRepoLabel = connectedRepo?.fullName ?? repositorySettings?.repositoryFullName;
 
   const isPipelineRunning = pipelineRun.status === 'running';
+
+  const handleSelectRepository = useCallback(
+    (repository: GithubRepository) => {
+      setConnectedRepo(repository);
+      connectRepositoryMutation.mutate(repository);
+    },
+    [connectRepositoryMutation],
+  );
 
   const handleDeployPipelineStart = useCallback(async () => {
     pipelineAbortRef.current?.abort();
@@ -306,8 +333,8 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             </div>
             <div className="flex min-w-0 flex-1 items-center rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-1.5">
               <span className="truncate text-[12px] text-[#64748b]">
-                {connectedRepo
-                  ? `/${connectedRepo.fullName}`
+                {connectedRepoLabel
+                  ? `/${connectedRepoLabel}`
                   : previewPhase === 'ready'
                     ? previewUrl
                     : '/'}
@@ -319,7 +346,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <GithubRepositoryPicker onSelect={(repository) => setConnectedRepo(repository)} />
+            <GithubRepositoryPicker onSelect={handleSelectRepository} />
             <button
               type="button"
               className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 text-[12px] font-semibold text-[#334155]"

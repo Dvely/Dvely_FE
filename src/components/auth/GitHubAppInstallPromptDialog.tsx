@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouterState } from '@tanstack/react-router';
 import { GitBranch } from 'lucide-react';
 import { fetchAndPersistUserInfo } from '@/api/user';
-import { fetchGitHubAppInstallUrl } from '@/api/auth';
+import { fetchGitHubAppInstallUrl, fetchGitHubAppReauthorizeUrl } from '@/api/auth';
 import { GITHUB_APP_INSTALL_REQUIRED_EVENT } from '@/constants/authEvents';
 import {
   GITHUB_APP_INSTALL_POPUP_NAME,
@@ -13,13 +13,21 @@ import {
 function GitHubAppInstallPromptDialog() {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [promptMode, setPromptMode] = useState<'install' | 'reauthorize'>('install');
 
   // 앱 마운트 시 체크 — 이미 로그인된 상태(새로고침 등)에서도 감지
   useEffect(() => {
     if (!localStorage.getItem('accessToken')) return;
 
     void fetchAndPersistUserInfo().then((response) => {
-      if (response.data && !response.data.githubAppInstalled) {
+      if (!response.data) return;
+      if (!response.data.githubAppInstalled) {
+        setPromptMode('install');
+        setOpen(true);
+        return;
+      }
+      if (response.data.githubAppTokenExpired) {
+        setPromptMode('reauthorize');
         setOpen(true);
       }
     });
@@ -27,7 +35,10 @@ function GitHubAppInstallPromptDialog() {
 
   // OAuth 로그인 직후 이벤트 수신
   useEffect(() => {
-    const handleRequired = () => setOpen(true);
+    const handleRequired = () => {
+      setPromptMode('install');
+      setOpen(true);
+    };
     window.addEventListener(GITHUB_APP_INSTALL_REQUIRED_EVENT, handleRequired);
     return () => window.removeEventListener(GITHUB_APP_INSTALL_REQUIRED_EVENT, handleRequired);
   }, []);
@@ -57,7 +68,10 @@ function GitHubAppInstallPromptDialog() {
   const handleConfirm = async () => {
     setIsLoading(true);
     try {
-      const result = await fetchGitHubAppInstallUrl();
+      const result =
+        promptMode === 'reauthorize'
+          ? await fetchGitHubAppReauthorizeUrl()
+          : await fetchGitHubAppInstallUrl();
       if (!result?.data?.url) return;
 
       window.open(result.data.url, GITHUB_APP_INSTALL_POPUP_NAME, GITHUB_OAUTH_POPUP_FEATURES);

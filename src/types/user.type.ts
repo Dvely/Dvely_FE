@@ -12,6 +12,14 @@ const userSchema = z.object({
   avatarUrl: z.string().nullable().prefault(''),
   /** GitHub App 설치 여부 */
   githubAppInstalled: z.boolean(),
+  /** GitHub App User Token 연동 여부 */
+  githubAppTokenLinked: z.boolean().nullable().prefault(null),
+  /** GitHub App User Token 만료 여부 */
+  githubAppTokenExpired: z.boolean().nullable().prefault(null),
+  /** GitHub App Access Token 만료 시각. 없으면 null */
+  githubAppAccessTokenExpiresAt: z.string().nullable().prefault(''),
+  /** GitHub App Refresh Token 만료 시각. 없으면 null */
+  githubAppRefreshTokenExpiresAt: z.string().nullable().prefault(''),
 });
 
 /**

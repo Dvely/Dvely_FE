@@ -12,7 +12,14 @@ type TokenPair = {
   expiredAt: string;
 };
 
-type AccessByRefreshResponse = {
+type AuthRefreshResponse = {
+  status?: number;
+  code?: string;
+  message?: string;
+  data?: {
+    accessToken?: string | TokenPair;
+    refreshToken?: string | TokenPair;
+  };
   result?: {
     accessToken?: TokenPair;
   };
@@ -53,8 +60,17 @@ class Http {
     return localStorage.getItem('refreshToken');
   }
 
-  private setAccessToken(accessToken: TokenPair) {
-    localStorage.setItem('accessToken', accessToken.value);
+  private setAccessTokenValue(accessToken: string) {
+    localStorage.setItem('accessToken', accessToken);
+  }
+
+  private normalizeStoredToken(token: unknown): string | null {
+    if (typeof token === 'string' && token.length > 0) return token;
+    if (token && typeof token === 'object' && 'value' in token) {
+      const value = (token as TokenPair).value;
+      return typeof value === 'string' && value.length > 0 ? value : null;
+    }
+    return null;
   }
 
   private clearTokens() {
@@ -104,7 +120,8 @@ class Http {
   // endpoint guards
   // =========================
   private isAccessByRefreshRequest(config: RetriableRequestConfig) {
-    return (config.url ?? '').includes('/user/access-by-refresh');
+    const url = config.url ?? '';
+    return url.includes('/auth/refresh') || url.includes('/user/access-by-refresh');
   }
 
   private withAuthHeader(config: RetriableRequestConfig, token: string) {
@@ -129,18 +146,25 @@ class Http {
     }
 
     try {
-      const res = await this.refreshClient.post<AccessByRefreshResponse>(
-        '/user/access-by-refresh',
-        { token: refreshToken },
+      const res = await this.refreshClient.post<AuthRefreshResponse>('/auth/refresh', {
+        refreshToken,
+      });
+
+      const payload = res.data?.data ?? res.data?.result;
+      const accessToken = this.normalizeStoredToken(payload?.accessToken);
+      const nextRefreshToken = this.normalizeStoredToken(
+        payload && 'refreshToken' in payload ? payload.refreshToken : undefined,
       );
 
-      const accessToken = res.data?.result?.accessToken;
-      if (!accessToken?.value || !accessToken?.expiredAt) {
-        throw new Error('access-by-refresh response missing accessToken');
+      if (!accessToken) {
+        throw new Error('auth refresh response missing accessToken');
       }
 
-      this.setAccessToken(accessToken);
-      return accessToken.value;
+      this.setAccessTokenValue(accessToken);
+      if (nextRefreshToken) {
+        localStorage.setItem('refreshToken', nextRefreshToken);
+      }
+      return accessToken;
     } catch (e) {
       const err = e as AxiosError;
       const status = err?.response?.status;

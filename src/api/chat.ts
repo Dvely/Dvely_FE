@@ -15,6 +15,7 @@ import {
   postProjectConversationCreateParamsSchema,
   postProjectConversationCreateResSchema,
   getTrashConversationListResSchema,
+  deleteTrashConversationParamsSchema,
   postTrashConversationRestoreParamsSchema,
   postTrashConversationRestoreResSchema,
   type GetConversationDetailResType,
@@ -153,6 +154,18 @@ async function postTrashConversationRestore(conversationId: number) {
     .catch(errorResponse());
 }
 
+/** 휴지통 대화 영구 삭제 API DELETE */
+async function deleteTrashConversation(conversationId: number) {
+  const { conversationId: id } = deleteTrashConversationParamsSchema.parse({
+    conversationId,
+  });
+
+  return Http.instance
+    .delete(`${trashEndpoint}/conversations/${id}`)
+    .then(succesResponse)
+    .catch(errorResponse());
+}
+
 /** 대화 상세 조회 Query Hook */
 function useConversationDetailQuery(queryKey: unknown, conversationId: number) {
   if (!queryKey) throw new Error('queryKey is required');
@@ -206,6 +219,7 @@ export {
   deleteConversation,
   getTrashConversationList,
   postTrashConversationRestore,
+  deleteTrashConversation,
   useConversationDetailQuery,
   useConversationMessageListQuery,
   useProjectConversationListQuery,

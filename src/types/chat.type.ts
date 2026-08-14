@@ -80,6 +80,14 @@ const postTrashConversationRestoreParamsSchema = z.object({
 const postTrashConversationRestoreResSchema = conversationResponseSchema;
 
 /**
+ * DELETE /trash/conversations/{conversationId} 휴지통 대화 영구 삭제 요청 (path)
+ */
+const deleteTrashConversationParamsSchema = z.object({
+  /** 영구 삭제할 대화 ID */
+  conversationId: z.number().int(),
+});
+
+/**
  * GET /trash/conversations 휴지통 대화 목록 조회 응답
  */
 const getTrashConversationListResSchema = z.array(conversationResponseSchema);
@@ -154,6 +162,8 @@ type PostTrashConversationRestoreParamsType = z.infer<
 >;
 /** POST /trash/conversations/{conversationId}/restore 휴지통 대화 복구 응답 */
 type PostTrashConversationRestoreResType = z.infer<typeof postTrashConversationRestoreResSchema>;
+/** DELETE /trash/conversations/{conversationId} 휴지통 대화 영구 삭제 요청 (path) */
+type DeleteTrashConversationParamsType = z.infer<typeof deleteTrashConversationParamsSchema>;
 /** GET /trash/conversations 휴지통 대화 목록 조회 응답 */
 type GetTrashConversationListResType = z.infer<typeof getTrashConversationListResSchema>;
 /** 대화 메시지 정보 */
@@ -178,6 +188,7 @@ export {
   postProjectConversationCreateResSchema,
   postTrashConversationRestoreParamsSchema,
   postTrashConversationRestoreResSchema,
+  deleteTrashConversationParamsSchema,
   getTrashConversationListResSchema,
   conversationMessageSchema,
   getConversationMessageListParamsSchema,
@@ -194,6 +205,7 @@ export {
   type PostProjectConversationCreateResType,
   type PostTrashConversationRestoreParamsType,
   type PostTrashConversationRestoreResType,
+  type DeleteTrashConversationParamsType,
   type GetTrashConversationListResType,
   type ConversationMessage,
   type GetConversationMessageListParamsType,
