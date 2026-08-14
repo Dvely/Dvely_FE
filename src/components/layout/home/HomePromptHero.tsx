@@ -4,7 +4,6 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useProjectListQuery } from '@/api/projects';
 import {
   formatProjectDisplayName,
-  markHomeChatProject,
   setPendingHomeAgentPrompt,
 } from '@/components/layout/project/agentChat.utils';
 import HomeProjectListPopover from '@/components/layout/home/HomeProjectListPopover';
@@ -84,7 +83,6 @@ function HomePromptHero() {
     const message = attachedTemplate ? `[${attachedTemplate.title} 템플릿] ${trimmed}` : trimmed;
 
     setSubmitError(null);
-    markHomeChatProject(targetProjectId);
     setPendingHomeAgentPrompt(message);
     clearHomePromptTemplate();
     setAttachedTemplate(null);
