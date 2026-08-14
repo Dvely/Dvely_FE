@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { FolderPlus, X } from 'lucide-react';
 import { postProjectCreate } from '@/api/projects';
+import { rememberProjectTaskId } from '@/components/layout/project/agentChat.utils';
 import { cn } from '@/lib/utils';
 
 type ProjectCreateDialogProps = {
@@ -32,12 +33,16 @@ function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogProps) {
     setIsSubmitting(true);
 
     try {
-      await postProjectCreate({
+      const created = await postProjectCreate({
         name: trimmedName,
         startMode: 'blank',
         templateType: null,
         draftMode: 'fast',
       });
+
+      if (created.taskId) {
+        rememberProjectTaskId(created.projectId, created.taskId);
+      }
 
       await queryClient.invalidateQueries({ queryKey: ['project-list'] });
       onOpenChange(false);

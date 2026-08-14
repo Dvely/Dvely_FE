@@ -21,6 +21,8 @@ import {
   postProjectRepository,
   useProjectRepositorySettingsQuery,
 } from '@/api/projects';
+import { postProjectPreviewSession, useProjectPreviewQuery } from '@/api/preview';
+import { extractApiErrorMessage } from '@/utils/response';
 import {
   postProjectRepositoryReqSchema,
   type GetProjectDetailResType,
@@ -33,7 +35,6 @@ import {
   AGENT_CHAT_QUERY_KEY,
   consumePendingHomeAgentPrompt,
   formatProjectDisplayName,
-  readSessionMessages,
 } from '@/components/layout/project/agentChat.utils';
 import {
   deriveAgentPreviewPhase,
@@ -71,7 +72,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [connectedRepo, setConnectedRepo] = useState<GithubRepository | null>(null);
   const [hasDisconnectedRepository, setHasDisconnectedRepository] = useState(false);
   const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
-  const [previewRevision, setPreviewRevision] = useState(0);
+  const [previewFrameKey, setPreviewFrameKey] = useState(0);
   const [pipelineRun, setPipelineRun] = useState<PipelineRun>(() => createIdlePipelineRun());
   const pipelineAbortRef = useRef<AbortController | null>(null);
 
@@ -181,30 +182,52 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     ? activeConversationId
     : (activeConversationId ?? activeConversations[0]?.conversationId ?? null);
 
-  const previewPhase = useMemo(() => {
-    void previewRevision;
+  const {
+    data: projectPreview,
+    isLoading: isPreviewLoading,
+    isFetching: isPreviewFetching,
+    refetch: refetchProjectPreview,
+  } = useProjectPreviewQuery('project-agent-page', projectId);
 
-    if (isNewConversation || resolvedConversationId === null) {
-      return deriveAgentPreviewPhase([]);
-    }
+  const previewUrl = useMemo(
+    () =>
+      projectPreview?.status === 'ACTIVE' ? deriveAgentPreviewUrl(projectPreview.previewUrl) : '',
+    [projectPreview?.previewUrl, projectPreview?.status],
+  );
 
-    return deriveAgentPreviewPhase(readSessionMessages(resolvedConversationId));
-  }, [resolvedConversationId, isNewConversation, previewRevision]);
+  const previewPhase = useMemo(
+    () =>
+      deriveAgentPreviewPhase({
+        previewUrl,
+        sessionStatus: projectPreview?.status,
+      }),
+    [previewUrl, projectPreview?.status],
+  );
 
-  const previewUrl = useMemo(() => {
-    void previewRevision;
+  const provisionPreviewMutation = useMutation({
+    mutationFn: () => postProjectPreviewSession(projectId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ['project-preview-session', 'project-agent-page', projectId],
+      });
+    },
+  });
 
-    if (isNewConversation || resolvedConversationId === null) {
-      return deriveAgentPreviewUrl([]);
-    }
+  const handleRefreshPreview = () => {
+    setRightPanelView('preview');
+    setPreviewFrameKey((key) => key + 1);
+    void refetchProjectPreview();
+  };
 
-    return deriveAgentPreviewUrl(readSessionMessages(resolvedConversationId));
-  }, [resolvedConversationId, isNewConversation, previewRevision]);
+  const handleLoadPreview = () => {
+    setRightPanelView('preview');
+    provisionPreviewMutation.mutate();
+  };
 
-  const handleConversationActivity = (conversationId: number) => {
-    if (conversationId === resolvedConversationId) {
-      setPreviewRevision((revision) => revision + 1);
-    }
+  const handleConversationActivity = (_conversationId: number) => {
+    void queryClient.invalidateQueries({
+      queryKey: ['project-preview-session', 'project-agent-page', projectId],
+    });
   };
 
   const invalidateConversationQueries = () => {
@@ -297,7 +320,9 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               setIsNewConversation(false);
               setActiveConversationId(conversationId);
               setSidebarTab('conversation');
-              setPreviewRevision((revision) => revision + 1);
+              void queryClient.invalidateQueries({
+                queryKey: ['project-preview-session', 'project-agent-page', projectId],
+              });
               void queryClient.prefetchQuery({
                 queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, conversationId],
                 queryFn: () => getConversationMessageList(conversationId),
@@ -321,7 +346,6 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             onConversationCreated={(conversationId) => {
               setActiveConversationId(conversationId);
               setIsNewConversation(false);
-              setPreviewRevision((revision) => revision + 1);
             }}
             onConversationActivity={handleConversationActivity}
             onDeployPipelineStart={handleDeployPipelineStart}
@@ -360,8 +384,9 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               </button>
               <button
                 type="button"
-                className="rounded p-1.5 text-[#94a3b8] hover:bg-white"
-                aria-label="새로고침"
+                onClick={handleRefreshPreview}
+                className="cursor-pointer rounded p-1.5 text-[#94a3b8] hover:bg-white"
+                aria-label="미리보기 새로고침"
               >
                 <RotateCcw className="size-3.5" />
               </button>
@@ -435,10 +460,11 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             </button>
             <button
               type="button"
-              className="flex size-8 items-center justify-center rounded-lg border border-[#e2e8f0] bg-white text-[#64748b]"
-              aria-label="새로고침"
+              onClick={handleRefreshPreview}
+              className="flex size-8 cursor-pointer items-center justify-center rounded-lg border border-[#e2e8f0] bg-white text-[#64748b]"
+              aria-label="미리보기 불러오기"
             >
-              <RefreshCw className="size-3.5" />
+              <RefreshCw className={`size-3.5 ${isPreviewFetching ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </header>
@@ -448,7 +474,21 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
         ) : rightPanelView === 'pipeline' ? (
           <ProjectPipelinePanel run={pipelineRun} isRunning={isPipelineRunning} />
         ) : (
-          <AgentSitePreviewPanel phase={previewPhase} previewUrl={previewUrl} />
+          <AgentSitePreviewPanel
+            phase={previewPhase}
+            previewUrl={previewUrl}
+            frameKey={previewFrameKey}
+            isLoading={isPreviewLoading && !previewUrl}
+            onLoadPreview={handleLoadPreview}
+            failureReason={
+              projectPreview?.failureReason?.trim() ||
+              extractApiErrorMessage(provisionPreviewMutation.error) ||
+              ''
+            }
+            isProvisioning={
+              projectPreview?.status === 'PROVISIONING' || provisionPreviewMutation.isPending
+            }
+          />
         )}
       </section>
     </div>

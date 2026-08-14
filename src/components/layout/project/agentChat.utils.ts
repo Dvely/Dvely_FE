@@ -35,6 +35,7 @@ export function createLocalMessage(
 export const AGENT_CHAT_QUERY_KEY = 'project-agent';
 
 const sessionMessagesByConversation = new Map<number, ConversationMessage[]>();
+const taskIdByConversation = new Map<number, string>();
 
 export function readSessionMessages(conversationId: number): ConversationMessage[] {
   return sessionMessagesByConversation.get(conversationId) ?? [];
@@ -42,6 +43,29 @@ export function readSessionMessages(conversationId: number): ConversationMessage
 
 export function writeSessionMessages(conversationId: number, messages: ConversationMessage[]) {
   sessionMessagesByConversation.set(conversationId, messages);
+}
+
+export function rememberConversationTaskId(conversationId: number, taskId: string) {
+  const trimmed = taskId.trim();
+  if (!trimmed) return;
+  taskIdByConversation.set(conversationId, trimmed);
+}
+
+const taskIdByProject = new Map<number, string>();
+
+export function rememberProjectTaskId(projectId: number, taskId: string) {
+  const trimmed = taskId.trim();
+  if (!trimmed) return;
+  taskIdByProject.set(projectId, trimmed);
+}
+
+export function readProjectTaskId(projectId: number) {
+  return taskIdByProject.get(projectId) ?? null;
+}
+
+export function readConversationTaskId(conversationId: number | null) {
+  if (conversationId == null) return null;
+  return taskIdByConversation.get(conversationId) ?? null;
 }
 
 /** 서버 메시지에 세션의 승인 버튼 상태·아직 저장 안 된 로컬 메시지를 합친다. */

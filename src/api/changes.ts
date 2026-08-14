@@ -1,6 +1,7 @@
 import Http from '@/utils/httpClients';
 import { useQuery } from '@tanstack/react-query';
 import { errorResponse, succesResponse } from '@/utils/response';
+import type { ApiResponse } from '@/types/response.type';
 import {
   getChangeDetailResSchema,
   getChangeDiffResSchema,
@@ -17,13 +18,20 @@ const defaultQueryOptions = {
   refetchOnReconnect: false,
 } as const;
 
+function unwrapApiData<T>(body: T | ApiResponse<T>): T {
+  if (body && typeof body === 'object' && 'data' in body && body.data != null) {
+    return body.data;
+  }
+  return body as T;
+}
+
 /** 프로젝트 Change 목록 조회 API GET */
 async function getProjectChangeList(projectId: number) {
   return Http.instance
-    .get<GetProjectChangeListResType>(`/projects/${projectId}/changes`)
+    .get<ApiResponse<GetProjectChangeListResType>>(`/projects/${projectId}/changes`)
     .then((response) => {
-      const data = succesResponse<GetProjectChangeListResType>(response);
-      return getProjectChangeListResSchema.parse(data);
+      const body = succesResponse<ApiResponse<GetProjectChangeListResType>>(response);
+      return getProjectChangeListResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }

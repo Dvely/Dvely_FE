@@ -12,6 +12,12 @@ const previewResourceUsageSchema = z.object({
 });
 
 /**
+ * 프로젝트 프리뷰 세션 상태
+ * @example "ACTIVE"
+ */
+const projectPreviewSessionStatusSchema = z.enum(['ACTIVE', 'PROVISIONING', 'FAILED']);
+
+/**
  * GET /preview-sessions/{sessionId}/status Preview 세션 상태 응답
  */
 const getPreviewSessionStatusResSchema = z.object({
@@ -49,13 +55,55 @@ const getPreviewSessionLogsResSchema = z.object({
   logText: z.string().nullable().prefault(''),
 });
 
+/**
+ * GET|POST /projects/{projectId}/preview-session 경로
+ */
+const getProjectPreviewSessionParamsSchema = z.object({
+  /** 프리뷰 세션을 조회할 프로젝트 ID */
+  projectId: z.number().int(),
+});
+
+/**
+ * GET|POST /projects/{projectId}/preview-session 프로젝트 프리뷰 세션 응답
+ */
+const getProjectPreviewSessionResSchema = z.object({
+  /** Preview 세션 ID */
+  sessionId: z.string().nullable().prefault(''),
+  /** 프로젝트 ID */
+  projectId: z.number().int(),
+  /** 이 프리뷰를 만든 Agent 작업 ID. 프로젝트 단위 프리뷰는 null */
+  taskId: z.string().nullable().prefault(''),
+  /** ACTIVE | PROVISIONING | FAILED. 세션이 없으면 null */
+  status: projectPreviewSessionStatusSchema.nullable().prefault(null),
+  /** 프리뷰 주소. status=ACTIVE 일 때만 값이 있음 */
+  previewUrl: z.string().nullable().prefault(''),
+  /** 컨테이너 회수 시각. 없으면 null */
+  expiresAt: z.string().nullable().prefault(''),
+  /** status=FAILED 일 때의 실패 사유. 없으면 null */
+  failureReason: z.string().nullable().prefault(''),
+});
+
+const postProjectPreviewSessionResSchema = getProjectPreviewSessionResSchema;
+
 type GetPreviewSessionStatusResType = z.infer<typeof getPreviewSessionStatusResSchema>;
 type GetPreviewSessionLogsResType = z.infer<typeof getPreviewSessionLogsResSchema>;
+type ProjectPreviewSessionStatus = z.infer<typeof projectPreviewSessionStatusSchema>;
+type GetProjectPreviewSessionParamsType = z.infer<typeof getProjectPreviewSessionParamsSchema>;
+type GetProjectPreviewSessionResType = z.infer<typeof getProjectPreviewSessionResSchema>;
+type PostProjectPreviewSessionResType = z.infer<typeof postProjectPreviewSessionResSchema>;
 
 export {
   previewResourceUsageSchema,
+  projectPreviewSessionStatusSchema,
   getPreviewSessionStatusResSchema,
   getPreviewSessionLogsResSchema,
+  getProjectPreviewSessionParamsSchema,
+  getProjectPreviewSessionResSchema,
+  postProjectPreviewSessionResSchema,
   type GetPreviewSessionStatusResType,
   type GetPreviewSessionLogsResType,
+  type ProjectPreviewSessionStatus,
+  type GetProjectPreviewSessionParamsType,
+  type GetProjectPreviewSessionResType,
+  type PostProjectPreviewSessionResType,
 };
