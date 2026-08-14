@@ -5,7 +5,6 @@ import {
   projectStatusSchema,
   repositoryBindingStatusSchema,
   repositoryHealthStatusSchema,
-  repositoryModeSchema,
   repositoryVisibilitySchema,
   startModeSchema,
 } from '@/types/common.enum';
@@ -112,18 +111,62 @@ const postProjectCreateResSchema = z.object({
 });
 
 /**
- * POST /projects/{projectId}/repository 프로젝트 GitHub 저장소 연결 요청
+ * GitHub 저장소 이름
  */
-const postProjectRepositoryReqSchema = z.object({
-  /** 저장소 연결 방식 */
-  repositoryMode: repositoryModeSchema,
+const githubRepositoryNameSchema = z.object({
   /** 새 저장소 생성 시 사용할 저장소 이름 */
-  repositoryName: z.string().nullable().prefault(''),
+  repositoryName: z
+    .string()
+    .min(1, '저장소 이름을 입력해주세요.')
+    .max(100, '저장소 이름은 100자 이하여야 합니다.')
+    .regex(/^[A-Za-z0-9._-]+$/, '영문, 숫자, 하이픈(-), 밑줄(_), 점(.)만 사용할 수 있습니다.')
+    .refine((value) => value !== '.' && value !== '..', {
+      message: '저장소 이름이 올바르지 않습니다.',
+    })
+    .prefault(''),
+});
+
+/**
+ * POST /projects/{projectId}/repository 새 저장소 생성 폼
+ */
+const postProjectRepositoryCreateFormSchema = githubRepositoryNameSchema.extend({
+  /** 새 저장소 생성 시 공개 범위 */
+  repositoryVisibility: repositoryVisibilitySchema,
+});
+
+/**
+ * POST /projects/{projectId}/repository 새 저장소 생성 요청
+ */
+const postProjectRepositoryCreateReqSchema = githubRepositoryNameSchema.extend({
+  /** 저장소 연결 방식 */
+  repositoryMode: z.literal('create'),
   /** 기존 저장소 연결 시 owner/repo 형식의 전체 이름 */
   repositoryFullName: z.string().nullable().prefault(''),
   /** 새 저장소 생성 시 공개 범위. 값이 없으면 PRIVATE */
   repositoryVisibility: repositoryVisibilitySchema.nullable().prefault(null),
 });
+
+/**
+ * POST /projects/{projectId}/repository 기존 저장소 연결 요청
+ */
+const postProjectRepositoryExistingReqSchema = z.object({
+  /** 저장소 연결 방식 */
+  repositoryMode: z.literal('existing'),
+  /** 새 저장소 생성 시 사용할 저장소 이름 */
+  repositoryName: z.string().nullable().prefault(''),
+  /** 기존 저장소 연결 시 owner/repo 형식의 전체 이름 */
+  repositoryFullName: z.string().min(1, '연결할 저장소를 선택해주세요.').prefault(''),
+  /** 새 저장소 생성 시 공개 범위. 값이 없으면 PRIVATE */
+  repositoryVisibility: repositoryVisibilitySchema.nullable().prefault(null),
+});
+
+/**
+ * POST /projects/{projectId}/repository 프로젝트 GitHub 저장소 연결 요청
+ */
+const postProjectRepositoryReqSchema = z.discriminatedUnion('repositoryMode', [
+  postProjectRepositoryCreateReqSchema,
+  postProjectRepositoryExistingReqSchema,
+]);
 
 /**
  * GET /projects/{projectId}/repository-health 프로젝트 저장소 health 응답
@@ -262,6 +305,10 @@ type PatchProjectReqType = z.infer<typeof patchProjectReqSchema>;
 type PostProjectCreateReqType = z.infer<typeof postProjectCreateReqSchema>;
 /** POST /projects 프로젝트 생성 응답 */
 type PostProjectCreateResType = z.infer<typeof postProjectCreateResSchema>;
+/** GitHub 저장소 이름 */
+type GithubRepositoryName = z.infer<typeof githubRepositoryNameSchema>;
+/** POST /projects/{projectId}/repository 새 저장소 생성 폼 */
+type PostProjectRepositoryCreateFormType = z.infer<typeof postProjectRepositoryCreateFormSchema>;
 /** POST /projects/{projectId}/repository 프로젝트 GitHub 저장소 연결 요청 */
 type PostProjectRepositoryReqType = z.infer<typeof postProjectRepositoryReqSchema>;
 /** GET /projects/{projectId}/repository-healty 프로젝트 저장소 health 응답 */
@@ -296,6 +343,10 @@ export {
   patchProjectReqSchema,
   postProjectCreateReqSchema,
   postProjectCreateResSchema,
+  githubRepositoryNameSchema,
+  postProjectRepositoryCreateFormSchema,
+  postProjectRepositoryCreateReqSchema,
+  postProjectRepositoryExistingReqSchema,
   postProjectRepositoryReqSchema,
   getProjectRepositoryHealthResSchema,
   projectLatestCommitSchema,
@@ -316,6 +367,8 @@ export {
   type PatchProjectReqType,
   type PostProjectCreateReqType,
   type PostProjectCreateResType,
+  type GithubRepositoryName,
+  type PostProjectRepositoryCreateFormType,
   type PostProjectRepositoryReqType,
   type GetProjectRepositoryHealthResType,
   type ProjectLatestCommit,
