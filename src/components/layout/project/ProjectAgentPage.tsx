@@ -21,7 +21,11 @@ import {
   postProjectRepository,
   useProjectRepositorySettingsQuery,
 } from '@/api/projects';
-import { postProjectPreviewSession, useProjectPreviewQuery } from '@/api/preview';
+import {
+  postProjectPreviewSession,
+  usePreviewAccessQuery,
+  useProjectPreviewQuery,
+} from '@/api/preview';
 import { extractApiErrorMessage } from '@/utils/response';
 import {
   postProjectRepositoryReqSchema,
@@ -189,11 +193,32 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     refetch: refetchProjectPreview,
   } = useProjectPreviewQuery('project-agent-page', projectId);
 
+  const activePreviewSessionId =
+    projectPreview?.status === 'ACTIVE' && projectPreview.sessionId
+      ? projectPreview.sessionId
+      : null;
+
+  // 게이트웨이는 URL만으로 열리지 않는다 — 표시 직전 열람 권한(소유권 쿠키)을 발급받고,
+  // 토큰이 회전되므로 세션 응답이 아니라 이 응답의 previewUrl을 iframe에 쓴다 (Issue #77)
+  const {
+    data: previewAccess,
+    isLoading: isPreviewAccessLoading,
+    isError: isPreviewAccessError,
+    error: previewAccessError,
+  } = usePreviewAccessQuery('project-agent-page', activePreviewSessionId, previewFrameKey);
+
   const previewUrl = useMemo(
     () =>
-      projectPreview?.status === 'ACTIVE' ? deriveAgentPreviewUrl(projectPreview.previewUrl) : '',
-    [projectPreview?.previewUrl, projectPreview?.status],
+      activePreviewSessionId && previewAccess
+        ? deriveAgentPreviewUrl(previewAccess.previewUrl)
+        : '',
+    [activePreviewSessionId, previewAccess],
   );
+
+  // 발급 실패(권한 만료·종료된 세션 등)면 세션 상태를 다시 동기화한다
+  useEffect(() => {
+    if (isPreviewAccessError) void refetchProjectPreview();
+  }, [isPreviewAccessError, refetchProjectPreview]);
 
   const previewPhase = useMemo(
     () =>
@@ -221,6 +246,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
 
   const handleLoadPreview = () => {
     setRightPanelView('preview');
+    setPreviewFrameKey((key) => key + 1);
     provisionPreviewMutation.mutate();
   };
 
@@ -478,11 +504,12 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             phase={previewPhase}
             previewUrl={previewUrl}
             frameKey={previewFrameKey}
-            isLoading={isPreviewLoading && !previewUrl}
+            isLoading={(isPreviewLoading || isPreviewAccessLoading) && !previewUrl}
             onLoadPreview={handleLoadPreview}
             failureReason={
               projectPreview?.failureReason?.trim() ||
               extractApiErrorMessage(provisionPreviewMutation.error) ||
+              extractApiErrorMessage(previewAccessError) ||
               ''
             }
             isProvisioning={
