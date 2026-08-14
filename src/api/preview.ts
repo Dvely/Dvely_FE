@@ -81,11 +81,11 @@ async function getProjectPreviewSession(projectId: number) {
       validateStatus: (status) => status === 200 || status === 204,
     })
     .then((response) => {
-      if (response.status === 204 || response.data == null || response.data === '') {
+      const body = response.data as ApiResponse<GetProjectPreviewSessionResType> | '' | null | undefined;
+      if (response.status === 204 || body == null || body === '') {
         return emptyProjectPreviewSession(id);
       }
 
-      const body = succesResponse<ApiResponse<GetProjectPreviewSessionResType>>(response);
       return getProjectPreviewSessionResSchema.parse({
         ...emptyProjectPreviewSession(id),
         ...unwrapApiData(body),
