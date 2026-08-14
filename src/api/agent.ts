@@ -42,9 +42,11 @@ async function postAgentDecision(params: PostAgentDecisionReqType) {
   const payload = postAgentDecisionReqSchema.parse(params);
 
   return Http.instance
-    .post<PostAgentDecisionResType>(`${endpoint}/decision`, payload)
+    .post<ApiResponse<PostAgentDecisionResType>>(`${endpoint}/decision`, payload)
     .then((response) => {
-      const data = succesResponse<PostAgentDecisionResType>(response);
+      const body = succesResponse<ApiResponse<PostAgentDecisionResType>>(response);
+      const data =
+        body && typeof body === 'object' && 'data' in body && body.data != null ? body.data : body;
       return postAgentDecisionResSchema.parse(data);
     })
     .catch(errorResponse());

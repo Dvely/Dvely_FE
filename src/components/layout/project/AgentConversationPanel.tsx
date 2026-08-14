@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SendHorizontal } from 'lucide-react';
 import { postConversationMessageCreate, postProjectConversationCreate } from '@/api/chat';
-import { pollAgentTask } from '@/api/agent';
+import { pollAgentTask, postAgentDecision } from '@/api/agent';
+import AppAlertDialog from '@/components/common/AppAlertDialog';
 import type { GetAgentTaskResType } from '@/types/agent.type';
 import type { ConversationMessage } from '@/types/chat.type';
 import {
@@ -61,6 +62,26 @@ function formatAgentTaskReply(task: GetAgentTaskResType) {
   }
 }
 
+function formatApiErrorMessage(error: unknown) {
+  if (!(error instanceof Error) || !error.message) {
+    return '요청 처리 중 오류가 발생했습니다.';
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(error.message);
+    if (parsed && typeof parsed === 'object' && 'message' in parsed) {
+      const message = (parsed as { message?: unknown }).message;
+      if (typeof message === 'string' && message.trim()) {
+        return message.trim();
+      }
+    }
+  } catch {
+    // 일반 문자열 오류 메시지는 그대로 사용한다.
+  }
+
+  return error.message;
+}
+
 function AgentConversationPanel({
   projectId,
   projectName,
@@ -73,6 +94,7 @@ function AgentConversationPanel({
   const [input, setInput] = useState('');
   const [displayMessages, setDisplayMessages] = useState<ConversationMessage[]>([]);
   const [isAssistantReplying, setIsAssistantReplying] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -93,7 +115,17 @@ function AgentConversationPanel({
 
       const createdMessage = await postConversationMessageCreate(targetConversationId, { content });
 
-      // 로컬 유저 메시지에 서버 taskId를 붙여 프리뷰/폴링 상태를 맞춘다.
+      let taskId = createdMessage.taskId?.trim() || '';
+      if (!taskId) {
+        const decision = await postAgentDecision({
+          content,
+          aiProvider: 'OPENAI',
+          projectId,
+          conversationId: targetConversationId,
+        });
+        taskId = decision.taskId;
+      }
+
       const sessionMessages = readSessionMessages(targetConversationId);
       const lastUserIndex = [...sessionMessages]
         .map((message, index) => ({ message, index }))
@@ -101,25 +133,25 @@ function AgentConversationPanel({
         .find(({ message }) => message.role === 'user' && message.content === content)?.index;
       if (lastUserIndex != null) {
         const nextMessages = sessionMessages.map((message, index) =>
-          index === lastUserIndex ? { ...message, taskId: createdMessage.taskId } : message,
+          index === lastUserIndex ? { ...message, taskId } : message,
         );
         writeSessionMessages(targetConversationId, nextMessages);
       }
 
       let task: GetAgentTaskResType | null = null;
 
-      if (createdMessage.taskId) {
+      if (taskId) {
         setIsAssistantReplying(true);
         pollAbortRef.current?.abort();
         const controller = new AbortController();
         pollAbortRef.current = controller;
-        task = await pollAgentTask(createdMessage.taskId, { signal: controller.signal });
+        task = await pollAgentTask(taskId, { signal: controller.signal });
       }
 
       return {
         conversationId: targetConversationId,
         task,
-        taskId: createdMessage.taskId,
+        taskId,
       };
     },
     onMutate: (content) => {
@@ -167,16 +199,9 @@ function AgentConversationPanel({
           conversationId: targetConversationId,
           taskId: result.taskId,
         });
-        const assistantMessage = createLocalMessage(
-          targetConversationId,
-          'assistant',
+        setAlertMessage(
           '메시지는 저장됐지만 AI 작업이 생성되지 않았습니다. 백엔드 Decision Agent(AI 키/설정)를 확인해주세요.',
         );
-        setDisplayMessages((prev) => {
-          const next = [...prev, assistantMessage];
-          writeSessionMessages(targetConversationId, next);
-          return next;
-        });
       }
 
       setIsAssistantReplying(false);
@@ -190,21 +215,9 @@ function AgentConversationPanel({
 
       console.error('[agent] send/poll failed', error);
 
-      const targetConversationId = conversationId ?? context?.draftConversationId ?? null;
-      if (targetConversationId != null && context?.userMessage) {
-        const assistantMessage = createLocalMessage(
-          targetConversationId,
-          'assistant',
-          error instanceof Error
-            ? `작업 확인 중 오류가 발생했습니다: ${error.message}`
-            : '작업 확인 중 오류가 발생했습니다.',
-        );
-        setDisplayMessages((prev) => {
-          const next = [...prev, assistantMessage];
-          writeSessionMessages(targetConversationId, next);
-          return next;
-        });
-      } else {
+      setAlertMessage(formatApiErrorMessage(error));
+
+      if (!(conversationId != null && context?.userMessage)) {
         setInput(content);
         if (context?.userMessage) {
           setDisplayMessages((prev) =>
@@ -233,6 +246,10 @@ function AgentConversationPanel({
       event.preventDefault();
       handleSend();
     }
+  };
+
+  const handleAlertOpenChange = (open: boolean) => {
+    if (!open) setAlertMessage(null);
   };
 
   const syncConversationView = (targetConversationId: number | null) => {
@@ -341,6 +358,12 @@ function AgentConversationPanel({
           </button>
         </div>
       </footer>
+
+      <AppAlertDialog
+        open={alertMessage != null}
+        message={alertMessage ?? ''}
+        onOpenChange={handleAlertOpenChange}
+      />
     </>
   );
 }
