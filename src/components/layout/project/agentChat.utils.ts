@@ -2,14 +2,22 @@ import type { ConversationMessage } from '@/types/chat.type';
 
 let localMessageId = -1;
 
+type CreateLocalMessageOptions = {
+  tokenCount?: number;
+  taskId?: string | null;
+  pendingApprovalId?: number | null;
+  needsApproval?: boolean | null;
+};
+
 export function createLocalMessage(
   conversationId: number,
   role: 'user' | 'assistant',
   content: string,
-  tokenCount = role === 'assistant' ? 96 : 0,
+  options: CreateLocalMessageOptions = {},
 ): ConversationMessage {
   const messageId = localMessageId;
   localMessageId -= 1;
+  const tokenCount = options.tokenCount ?? (role === 'assistant' ? 96 : 0);
 
   return {
     messageId,
@@ -18,7 +26,9 @@ export function createLocalMessage(
     content,
     tokenCount,
     createdAt: new Date().toISOString(),
-    taskId: null,
+    taskId: options.taskId ?? null,
+    pendingApprovalId: options.pendingApprovalId ?? null,
+    needsApproval: options.needsApproval ?? null,
   };
 }
 

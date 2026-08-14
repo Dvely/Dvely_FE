@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SendHorizontal } from 'lucide-react';
 import { postConversationMessageCreate, postProjectConversationCreate } from '@/api/chat';
-import { pollAgentTask, postAgentDecision } from '@/api/agent';
+import { pollAgentTask, postAgentDecision, getAgentTask } from '@/api/agent';
+import { getProjectApprovalList, postApprovalApprove, postApprovalReject } from '@/api/approvals';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
 import type { GetAgentTaskResType } from '@/types/agent.type';
 import type { ConversationMessage } from '@/types/chat.type';
@@ -62,6 +63,27 @@ function formatAgentTaskReply(task: GetAgentTaskResType) {
   }
 }
 
+const APPROVAL_WAIT_STATUSES = new Set(['WAITING_APPROVAL', 'WAITING_RESULT_APPROVAL']);
+
+async function resolvePendingApprovalId(
+  task: GetAgentTaskResType,
+  projectId: number,
+  conversationId: number | null,
+) {
+  if (task.pendingApprovalId != null) return task.pendingApprovalId;
+  if (!APPROVAL_WAIT_STATUSES.has(task.status)) return null;
+
+  const approvals = await getProjectApprovalList(projectId);
+  const pending = approvals.find((approval) => {
+    if (approval.status !== 'PENDING') return false;
+    if (approval.taskId && approval.taskId === task.taskId) return true;
+    if (conversationId != null && approval.conversationId === conversationId) return true;
+    return false;
+  });
+
+  return pending?.approvalId ?? approvals.find((approval) => approval.status === 'PENDING')?.approvalId ?? null;
+}
+
 function formatApiErrorMessage(error: unknown) {
   if (!(error instanceof Error) || !error.message) {
     return '요청 처리 중 오류가 발생했습니다.';
@@ -116,6 +138,7 @@ function AgentConversationPanel({
       const createdMessage = await postConversationMessageCreate(targetConversationId, { content });
 
       let taskId = createdMessage.taskId?.trim() || '';
+      let decisionApprovalIds: number[] = [];
       if (!taskId) {
         const decision = await postAgentDecision({
           content,
@@ -124,6 +147,7 @@ function AgentConversationPanel({
           conversationId: targetConversationId,
         });
         taskId = decision.taskId;
+        decisionApprovalIds = decision.approvalIds;
       }
 
       const sessionMessages = readSessionMessages(targetConversationId);
@@ -148,10 +172,17 @@ function AgentConversationPanel({
         task = await pollAgentTask(taskId, { signal: controller.signal });
       }
 
+      const pendingApprovalId = task
+        ? (await resolvePendingApprovalId(task, projectId, targetConversationId)) ??
+          decisionApprovalIds[0] ??
+          null
+        : null;
+
       return {
         conversationId: targetConversationId,
         task,
         taskId,
+        pendingApprovalId,
       };
     },
     onMutate: (content) => {
@@ -188,6 +219,11 @@ function AgentConversationPanel({
           targetConversationId,
           'assistant',
           formatAgentTaskReply(result.task),
+          {
+            taskId: result.task.taskId,
+            pendingApprovalId: result.pendingApprovalId,
+            needsApproval: APPROVAL_WAIT_STATUSES.has(result.task.status),
+          },
         );
         setDisplayMessages((prev) => {
           const next = [...prev, assistantMessage];
@@ -229,6 +265,78 @@ function AgentConversationPanel({
     },
   });
 
+  const decideApprovalMutation = useMutation({
+    mutationFn: async ({
+      approvalId,
+      action,
+      taskId,
+      messageId,
+    }: {
+      approvalId: number;
+      action: 'approve' | 'reject';
+      taskId: string;
+      messageId: number;
+    }) => {
+      if (action === 'approve') {
+        await postApprovalApprove(approvalId);
+      } else {
+        await postApprovalReject(approvalId);
+      }
+
+      pollAbortRef.current?.abort();
+      const controller = new AbortController();
+      pollAbortRef.current = controller;
+      const task = await pollAgentTask(taskId, { signal: controller.signal });
+      const pendingApprovalId = await resolvePendingApprovalId(task, projectId, conversationId);
+
+      return { task, messageId, pendingApprovalId };
+    },
+    onMutate: () => {
+      setIsAssistantReplying(true);
+    },
+    onSuccess: ({ task, messageId, pendingApprovalId }) => {
+      const targetConversationId = conversationId;
+      if (targetConversationId == null) return;
+
+      const assistantMessage = createLocalMessage(
+        targetConversationId,
+        'assistant',
+        formatAgentTaskReply(task),
+        {
+          taskId: task.taskId,
+          pendingApprovalId,
+          needsApproval: APPROVAL_WAIT_STATUSES.has(task.status),
+        },
+      );
+
+      setDisplayMessages((prev) => {
+        const next = [
+          ...prev.map((message) =>
+            message.messageId === messageId
+              ? { ...message, pendingApprovalId: null, needsApproval: false }
+              : message,
+          ),
+          assistantMessage,
+        ];
+        writeSessionMessages(targetConversationId, next);
+        return next;
+      });
+
+      void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
+      setIsAssistantReplying(false);
+      onConversationActivityRef.current?.(targetConversationId);
+    },
+    onError: (error) => {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setIsAssistantReplying(false);
+        return;
+      }
+
+      setAlertMessage(formatApiErrorMessage(error));
+      setIsAssistantReplying(false);
+    },
+  });
+
   const isSending = sendMessageMutation.isPending;
   const isInputLocked = isSending || isAssistantReplying;
   const showWelcome =
@@ -250,6 +358,49 @@ function AgentConversationPanel({
 
   const handleAlertOpenChange = (open: boolean) => {
     if (!open) setAlertMessage(null);
+  };
+
+  const handleDecideApproval = (
+    message: ConversationMessage,
+    action: 'approve' | 'reject',
+  ) => {
+    if (
+      !message.taskId ||
+      decideApprovalMutation.isPending ||
+      isAssistantReplying
+    ) {
+      return;
+    }
+
+    if (message.pendingApprovalId == null && !message.needsApproval) {
+      return;
+    }
+
+    void (async () => {
+      let approvalId = message.pendingApprovalId;
+
+      if (approvalId == null) {
+        try {
+          const task = await getAgentTask(message.taskId as string);
+          approvalId = await resolvePendingApprovalId(task, projectId, conversationId);
+        } catch (error) {
+          setAlertMessage(formatApiErrorMessage(error));
+          return;
+        }
+      }
+
+      if (approvalId == null) {
+        setAlertMessage('승인할 항목을 찾지 못했습니다. 승인 탭에서 확인해주세요.');
+        return;
+      }
+
+      decideApprovalMutation.mutate({
+        approvalId,
+        action,
+        taskId: message.taskId as string,
+        messageId: message.messageId,
+      });
+    })();
   };
 
   const syncConversationView = (targetConversationId: number | null) => {
@@ -312,7 +463,13 @@ function AgentConversationPanel({
             </div>
           ) : null}
           {displayMessages.map((message) => (
-            <MessageBubble key={message.messageId} message={message} />
+            <MessageBubble
+              key={message.messageId}
+              message={message}
+              isDecideBusy={decideApprovalMutation.isPending}
+              onApprove={() => handleDecideApproval(message, 'approve')}
+              onReject={() => handleDecideApproval(message, 'reject')}
+            />
           ))}
           {isAssistantReplying ? (
             <div className="px-3.5 py-3 text-[13px] text-[#94a3b8]">
@@ -370,6 +527,9 @@ function AgentConversationPanel({
 
 type MessageBubbleProps = {
   message: ConversationMessage;
+  isDecideBusy: boolean;
+  onApprove: () => void;
+  onReject: () => void;
 };
 
 const MESSAGE_URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -400,9 +560,11 @@ function linkifyMessageContent(content: string, linkClassName: string) {
   });
 }
 
-function MessageBubble({ message }: MessageBubbleProps) {
+function MessageBubble({ message, isDecideBusy, onApprove, onReject }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
+  const showApprovalActions =
+    isAssistant && (message.pendingApprovalId != null || message.needsApproval === true);
   const linkClassName = isUser
     ? 'underline underline-offset-2 hover:text-[#5b21b6]'
     : 'text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]';
@@ -421,6 +583,26 @@ function MessageBubble({ message }: MessageBubbleProps) {
         <p className="whitespace-pre-wrap">
           {linkifyMessageContent(message.content, linkClassName)}
         </p>
+        {showApprovalActions ? (
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              disabled={isDecideBusy}
+              onClick={onReject}
+              className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold text-[#64748b] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              거절
+            </button>
+            <button
+              type="button"
+              disabled={isDecideBusy}
+              onClick={onApprove}
+              className="h-8 rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isDecideBusy ? '처리 중' : '승인'}
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
