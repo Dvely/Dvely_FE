@@ -85,12 +85,26 @@ const getProjectPreviewSessionResSchema = z.object({
 
 const postProjectPreviewSessionResSchema = getProjectPreviewSessionResSchema;
 
+/**
+ * POST /preview-sessions/{sessionId}/access 프리뷰 열람 권한 발급 응답.
+ * 소유권 쿠키는 Set-Cookie로 내려와 브라우저가 자동 보관한다(HttpOnly — FE가 값을 다룰 일 없음)
+ */
+const postPreviewAccessResSchema = z.object({
+  /** Preview 세션 ID */
+  sessionId: z.string().min(1, '세션 ID가 없습니다.').prefault(''),
+  /** 이 호출로 새로 발급된 프리뷰 주소. 이전 주소는 회전으로 즉시 무효 */
+  previewUrl: z.string().min(1, '프리뷰 주소가 없습니다.'),
+  /** 세션 만료 시각. 없으면 null */
+  expiresAt: z.string().nullable().prefault(''),
+});
+
 type GetPreviewSessionStatusResType = z.infer<typeof getPreviewSessionStatusResSchema>;
 type GetPreviewSessionLogsResType = z.infer<typeof getPreviewSessionLogsResSchema>;
 type ProjectPreviewSessionStatus = z.infer<typeof projectPreviewSessionStatusSchema>;
 type GetProjectPreviewSessionParamsType = z.infer<typeof getProjectPreviewSessionParamsSchema>;
 type GetProjectPreviewSessionResType = z.infer<typeof getProjectPreviewSessionResSchema>;
 type PostProjectPreviewSessionResType = z.infer<typeof postProjectPreviewSessionResSchema>;
+type PostPreviewAccessResType = z.infer<typeof postPreviewAccessResSchema>;
 
 export {
   previewResourceUsageSchema,
@@ -100,10 +114,12 @@ export {
   getProjectPreviewSessionParamsSchema,
   getProjectPreviewSessionResSchema,
   postProjectPreviewSessionResSchema,
+  postPreviewAccessResSchema,
   type GetPreviewSessionStatusResType,
   type GetPreviewSessionLogsResType,
   type ProjectPreviewSessionStatus,
   type GetProjectPreviewSessionParamsType,
   type GetProjectPreviewSessionResType,
   type PostProjectPreviewSessionResType,
+  type PostPreviewAccessResType,
 };
