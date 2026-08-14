@@ -140,10 +140,17 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
+            # 2026-08-13~14 배포 7연속 실패. 이 스텝이 exit 1로 끝나는데 로그에는
+            # ======END====== 다음이 곧바로 "Process exited with status 1" 이라 어느 줄에서
+            # 죽었는지 알 방법이 없었다(ssh-action이 원격 출력을 남기지 않는다).
+            # 다음 실패에서 바로 지목할 수 있도록 실행 흔적을 남긴다.
+            set -x
 
             # 업로드된 tar가 빌드 산출물 그대로인지 대조한다.
+            # --status 를 붙이지 않는 이유: 붙이면 어떤 파일이 왜 어긋났는지도 같이 사라져
+            # "체크섬이 틀렸다"는 사실만 남는다. 조용한 실패를 만들지 않는다.
             cd "${STAGING_DIR}"
-            if ! sha256sum -c --status dist.tar.gz.sha256; then
+            if ! sha256sum -c dist.tar.gz.sha256; then
               echo "::error::tar 체크섬이 일치하지 않습니다. 배포를 중단합니다."
               exit 1
             fi
@@ -198,23 +205,6 @@ jobs:
 
             rm -rf "${STAGING_DIR}"
 
-            # 오래된 릴리스 정리. 현재 릴리스와 직전 릴리스(prev)는 절대 지우지 않는다.
-            #
-            # `ls -t` 가 아니라 find + %T@ 로 정렬하는 이유: ls의 시간 정렬은 초 단위라
-            # 같은 초에 만들어진 디렉터리끼리 동률이 나면 이름순으로 떨어진다. 그러면
-            # 오래된 릴리스가 아니라 이름이 뒤인 최신 릴리스가 지워진다 — 실제로 확인했다.
-            # %T@ 는 나노초까지 찍으므로 동률이 생기지 않는다.
-            keep_current="releases/${RELEASE_SHA}"
-            keep_prev="${prev_target:-}"
-            find releases -mindepth 1 -maxdepth 1 -type d -printf '%T@\t%P\n' \
-              | sort -rn | tail -n +$((KEEP_RELEASES + 1)) | cut -f2- | while read -r name; do
-              old="releases/${name}"
-              [ "${old}" = "${keep_current}" ] && continue
-              [ "${old}" = "${keep_prev}" ] && continue
-              echo "오래된 릴리스 삭제: ${old}"
-              rm -rf "${old}"
-            done
-
             echo "${RELEASE_SHA} 교체 완료 (직전: ${prev_target:-없음})"
         env:
           # 커밋 메시지나 브랜치명은 원격 셸로 넘기지 않는다. 이 값들은 작성자가 임의로
@@ -257,6 +247,55 @@ jobs:
             curl -fsS -k -o /dev/null -H 'Host: qeploy.com' https://127.0.0.1/api/v1/auth/github/url
 
             echo "검증 통과: ${RELEASE_SHA} (asset ${asset})"
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+
+      # 오래된 릴리스 정리. 교체·검증이 다 끝난 뒤에 돌리고, 실패해도 배포는 성공으로 둔다.
+      #
+      # 원래 Swap release 안에 있었는데, 2026-08-13 배포부터 여기서 조용히 exit 1 이 나면서
+      # 7번 연속으로 배포가 빨간 X 로 끝났다. 실제로는 심볼릭 링크 교체까지 정상이었고
+      # 프로덕션도 최신 커밋을 내주고 있었지만, 스텝이 실패로 끝나 Verify deployment 가
+      # 통째로 스킵됐다 — 디스크 청소가 실패했다는 이유로 "배포가 제대로 됐는지" 확인을
+      # 못 하는 구조였다. 그래서 스텝을 분리하고 continue-on-error 를 건다.
+      # 릴리스가 계속 쌓이는 건 디스크(29G 중 35% 사용)로 감당되고, 넘치기 전에 눈에 띈다.
+      - name: Prune old releases
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT || 22 }}
+          envs: FRONTEND_DIR,KEEP_RELEASES,RELEASE_SHA
+          script_stop: true
+          script: |
+            set -euo pipefail
+            set -x
+            cd "${FRONTEND_DIR}"
+
+            # 현재 릴리스와 직전 릴리스(prev)는 절대 지우지 않는다.
+            # prev 는 Swap release 가 방금 갱신해 둔 링크라 여기서 다시 읽으면 된다.
+            keep_current="releases/${RELEASE_SHA}"
+            keep_prev="$(readlink prev || true)"
+
+            # `ls -t` 가 아니라 find + %T@ 로 정렬하는 이유: ls의 시간 정렬은 초 단위라
+            # 같은 초에 만들어진 디렉터리끼리 동률이 나면 이름순으로 떨어진다. 그러면
+            # 오래된 릴리스가 아니라 이름이 뒤인 최신 릴리스가 지워진다 — 실제로 확인했다.
+            # %T@ 는 나노초까지 찍으므로 동률이 생기지 않는다.
+            #
+            # 건너뛰기를 `[ ... ] && continue` 가 아니라 if 로 쓴다. 앞의 형태는 조건이
+            # 거짓일 때 목록 전체가 1을 돌려줘 set -e 와 맞물리면 아무 출력 없이 셸이
+            # 죽을 수 있다 — 위에 적은 조용한 실패의 유력한 후보였다.
+            find releases -mindepth 1 -maxdepth 1 -type d -printf '%T@\t%P\n' \
+              | sort -rn | tail -n +$((KEEP_RELEASES + 1)) | cut -f2- | while read -r name; do
+              old="releases/${name}"
+              if [ "${old}" = "${keep_current}" ]; then continue; fi
+              if [ "${old}" = "${keep_prev}" ]; then continue; fi
+              echo "오래된 릴리스 삭제: ${old}"
+              rm -rf "${old}"
+            done
+
+            echo "정리 완료. 남은 릴리스: $(find releases -mindepth 1 -maxdepth 1 -type d | wc -l)개"
         env:
           RELEASE_SHA: ${{ github.sha }}
 
