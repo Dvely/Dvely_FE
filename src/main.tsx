@@ -7,6 +7,12 @@ import './index.css';
 import '@/lib/i18n';
 import { router } from './router';
 
+if (import.meta.env.DEV) {
+  void import('@locator/runtime').then(({ default: setupLocatorUI }) => {
+    setupLocatorUI();
+  });
+}
+
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById('root')!).render(
