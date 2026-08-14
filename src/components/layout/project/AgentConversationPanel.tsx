@@ -9,7 +9,6 @@ import {
 import {
   getAgentTask,
   pollAgentTask,
-  postAgentDecision,
   SETTLED_AGENT_TASK_STATUSES,
 } from '@/api/agent';
 import {
@@ -28,6 +27,8 @@ import {
   mergeConversationMessages,
   migrateSessionMessages,
   readSessionMessages,
+  rememberConversationTaskId,
+  rememberProjectTaskId,
   shouldSendHomeAgentPromptOnce,
   writeSessionMessages,
 } from '@/components/layout/project/agentChat.utils';
@@ -162,18 +163,19 @@ function AgentConversationPanel({
 
       const createdMessage = await postConversationMessageCreate(targetConversationId, { content });
 
-      let taskId = createdMessage.taskId?.trim() || '';
-      let decisionApprovalIds: number[] = [];
+      const taskId = createdMessage.taskId?.trim() || '';
       if (!taskId) {
-        const decision = await postAgentDecision({
-          content,
-          aiProvider: 'OPENAI',
-          projectId,
+        return {
           conversationId: targetConversationId,
-        });
-        taskId = decision.taskId;
-        decisionApprovalIds = decision.approvalIds;
+          task: null,
+          taskId: '',
+          pendingApprovalId: null,
+        };
       }
+
+      rememberConversationTaskId(targetConversationId, taskId);
+      rememberProjectTaskId(projectId, taskId);
+      onConversationActivity?.(targetConversationId);
 
       const sessionMessages = readSessionMessages(targetConversationId);
       const lastUserIndex = [...sessionMessages]
@@ -187,20 +189,16 @@ function AgentConversationPanel({
         writeSessionMessages(targetConversationId, nextMessages);
       }
 
-      let task: GetAgentTaskResType | null = null;
+      pollAbortRef.current?.abort();
+      const controller = new AbortController();
+      pollAbortRef.current = controller;
+      const task = await pollAgentTask(taskId, { signal: controller.signal });
 
-      if (taskId) {
-        pollAbortRef.current?.abort();
-        const controller = new AbortController();
-        pollAbortRef.current = controller;
-        task = await pollAgentTask(taskId, { signal: controller.signal });
-      }
-
-      const pendingApprovalId = task
-        ? ((await resolvePendingApprovalId(task, projectId, targetConversationId)) ??
-          decisionApprovalIds[0] ??
-          null)
-        : null;
+      const pendingApprovalId = await resolvePendingApprovalId(
+        task,
+        projectId,
+        targetConversationId,
+      );
 
       return {
         conversationId: targetConversationId,
@@ -253,6 +251,10 @@ function AgentConversationPanel({
         onConversationCreated(targetConversationId);
       }
 
+      if (result.taskId) {
+        rememberConversationTaskId(targetConversationId, result.taskId);
+      }
+
       void queryClient.invalidateQueries({
         queryKey: ['project-conversation-list', AGENT_CHAT_QUERY_KEY, projectId],
       });
@@ -266,7 +268,7 @@ function AgentConversationPanel({
           taskId: result.taskId,
         });
         setAlertMessage(
-          '메시지는 저장됐지만 AI 작업이 생성되지 않았습니다. 백엔드 Decision Agent(AI 키/설정)를 확인해주세요.',
+          '메시지는 저장됐지만 작업이 시작되지 않았습니다. 다시 요청해 주세요.',
         );
       }
 
@@ -316,6 +318,7 @@ function AgentConversationPanel({
       pollAbortRef.current?.abort();
       const controller = new AbortController();
       pollAbortRef.current = controller;
+      rememberConversationTaskId(conversationId ?? 0, taskId);
       const task = await pollAgentTask(taskId, {
         signal: controller.signal,
         until: (nextTask) => {
@@ -346,6 +349,9 @@ function AgentConversationPanel({
     onSuccess: ({ task, messageId, pendingApprovalId }) => {
       const targetConversationId = conversationId;
       if (targetConversationId == null) return;
+
+      rememberConversationTaskId(targetConversationId, task.taskId);
+      rememberProjectTaskId(projectId, task.taskId);
 
       const needsApproval = APPROVAL_WAIT_STATUSES.has(task.status) && pendingApprovalId != null;
 

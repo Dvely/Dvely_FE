@@ -24,6 +24,13 @@ import {
 
 const endpoint = '/agent';
 
+function unwrapApiData<T>(body: T | ApiResponse<T>): T {
+  if (body && typeof body === 'object' && 'data' in body && body.data != null) {
+    return body.data;
+  }
+  return body as T;
+}
+
 /** 폴링을 멈춰도 되는 태스크 상태(완료·실패·입력/승인 대기) */
 const SETTLED_AGENT_TASK_STATUSES = new Set<AgentTaskStatus>([
   'DONE',
@@ -45,9 +52,7 @@ async function postAgentDecision(params: PostAgentDecisionReqType) {
     .post<ApiResponse<PostAgentDecisionResType>>(`${endpoint}/decision`, payload)
     .then((response) => {
       const body = succesResponse<ApiResponse<PostAgentDecisionResType>>(response);
-      const data =
-        body && typeof body === 'object' && 'data' in body && body.data != null ? body.data : body;
-      return postAgentDecisionResSchema.parse(data);
+      return postAgentDecisionResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -65,7 +70,7 @@ async function getAgentTask(taskId: string) {
     .get<ApiResponse<GetAgentTaskResType>>(`${endpoint}/tasks/${id}`)
     .then((response) => {
       const body = succesResponse<ApiResponse<GetAgentTaskResType>>(response);
-      return getAgentTaskResSchema.parse(body.data);
+      return getAgentTaskResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -257,8 +262,11 @@ function useAgentTaskQuery(queryKey: unknown, taskId: string | null) {
     enabled: typeof taskId === 'string' && taskId.length > 0,
     gcTime: 0,
     refetchInterval: (query) => {
-      const status = query.state.data?.status;
-      if (!status || SETTLED_AGENT_TASK_STATUSES.has(status)) return false;
+      const task = query.state.data;
+      if (task?.previewUrl?.trim()) return false;
+      if (task?.status === 'DONE' || task?.status === 'FAILED' || task?.status === 'CANCELLED') {
+        return false;
+      }
       return DEFAULT_POLL_INTERVAL_MS;
     },
   });

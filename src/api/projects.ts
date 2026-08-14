@@ -129,7 +129,9 @@ async function postProjectCreate(params: PostProjectCreateReqType) {
     .post<ApiResponse<PostProjectCreateResType>>(endpoint, payload)
     .then((response) => {
       const body = succesResponse<ApiResponse<PostProjectCreateResType>>(response);
-      return postProjectCreateResSchema.parse(body.data);
+      const data =
+        body && typeof body === 'object' && 'data' in body && body.data != null ? body.data : body;
+      return postProjectCreateResSchema.parse(data);
     })
     .catch(errorResponse());
 }

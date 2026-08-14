@@ -1,17 +1,34 @@
 import type { ConversationMessage } from '@/types/chat.type';
+import type { ProjectPreviewSessionStatus } from '@/types/preview.type';
 
-export type AgentPreviewPhase = 'empty' | 'building' | 'ready';
+export type AgentPreviewPhase = 'empty' | 'building' | 'ready' | 'unavailable';
 
-export function deriveAgentPreviewUrl(_messages: ConversationMessage[]): string {
-  void _messages;
-  return '';
+export function deriveAgentPreviewUrl(taskPreviewUrl?: string | null): string {
+  const raw = taskPreviewUrl?.trim() ?? '';
+  if (!raw) return '';
+  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+
+  const apiBase = import.meta.env.VITE_API_URL as string;
+  try {
+    const origin = new URL(apiBase, window.location.origin).origin;
+    return raw.startsWith('/') ? `${origin}${raw}` : `${apiBase.replace(/\/$/, '')}/${raw}`;
+  } catch {
+    return raw;
+  }
 }
 
-/** taskId가 있는 사용자 메시지가 있으면 에이전트 작업 진행 중으로 본다. */
-export function deriveAgentPreviewPhase(messages: ConversationMessage[]): AgentPreviewPhase {
-  const hasQueuedTask = messages.some(
-    (message) => message.role === 'user' && Boolean(message.taskId),
-  );
-  if (hasQueuedTask) return 'building';
+type DeriveAgentPreviewPhaseInput = {
+  previewUrl: string;
+  sessionStatus?: ProjectPreviewSessionStatus | null;
+  messages?: ConversationMessage[];
+};
+
+export function deriveAgentPreviewPhase({
+  previewUrl,
+  sessionStatus,
+}: DeriveAgentPreviewPhaseInput): AgentPreviewPhase {
+  if (sessionStatus === 'ACTIVE' && previewUrl.trim()) return 'ready';
+  if (sessionStatus === 'PROVISIONING') return 'building';
+  if (sessionStatus === 'FAILED') return 'unavailable';
   return 'empty';
 }
