@@ -85,59 +85,59 @@ function ProjectApprovalsPage({ projectId }: ProjectApprovalsPageProps) {
         {actionError ? <p className="mt-3 text-[12px] text-[#dc2626]">{actionError}</p> : null}
 
         <ul className="mt-4 flex flex-col gap-2">
-          {isApprovalsLoading
-            ? skeletonItems.map((key) => (
-                <li key={key} className="rounded-xl border border-[#f1f5f9] p-4">
-                  <div className="h-4 w-40 animate-pulse rounded bg-[#e2e8f0]" />
-                  <div className="mt-2 h-3 w-full animate-pulse rounded bg-[#f1f5f9]" />
-                </li>
-              ))
-            : approvals.length === 0
-              ? (
-                  <li className="rounded-xl border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-[13px] text-[#94a3b8]">
-                    대기 중인 승인이 없습니다.
-                  </li>
-                )
-              : approvals.map((approval) => {
-                  const isBusy = busyApprovalId === approval.approvalId;
-                  const isPending = approval.status === 'PENDING';
+          {isApprovalsLoading ? (
+            skeletonItems.map((key) => (
+              <li key={key} className="rounded-xl border border-[#f1f5f9] p-4">
+                <div className="h-4 w-40 animate-pulse rounded bg-[#e2e8f0]" />
+                <div className="mt-2 h-3 w-full animate-pulse rounded bg-[#f1f5f9]" />
+              </li>
+            ))
+          ) : approvals.length === 0 ? (
+            <li className="rounded-xl border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-[13px] text-[#94a3b8]">
+              대기 중인 승인이 없습니다.
+            </li>
+          ) : (
+            approvals.map((approval) => {
+              const isBusy = busyApprovalId === approval.approvalId;
+              const isPending = approval.status === 'PENDING';
 
-                  return (
-                    <li
-                      key={approval.approvalId}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#f1f5f9] px-4 py-3"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-semibold text-[#0f172a]">
-                          {approval.summary || approval.type}
-                        </p>
-                        <p className="mt-1 text-[11px] text-[#94a3b8]">
-                          {approval.type} · {approval.status} · {approval.createdAt}
-                        </p>
-                      </div>
-                      {isPending ? (
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            disabled={isBusy}
-                            onClick={() => void handleDecide(approval.approvalId, 'reject')}
-                            className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold text-[#64748b] disabled:opacity-50"
-                          >
-                            거절
-                          </button>
-                          <button
-                            type="button"
-                            disabled={isBusy}
-                            onClick={() => void handleDecide(approval.approvalId, 'approve')}
-                            className="h-8 rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white disabled:opacity-50"
-                          >
-                            {isBusy ? '처리 중' : '승인'}
-                          </button>
-                        </div>
-                      ) : null}
-                    </li>
-                  );
-                })}
+              return (
+                <li
+                  key={approval.approvalId}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#f1f5f9] px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold text-[#0f172a]">
+                      {approval.summary || approval.type}
+                    </p>
+                    <p className="mt-1 text-[11px] text-[#94a3b8]">
+                      {approval.type} · {approval.status} · {approval.createdAt}
+                    </p>
+                  </div>
+                  {isPending ? (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => void handleDecide(approval.approvalId, 'reject')}
+                        className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold text-[#64748b] disabled:opacity-50"
+                      >
+                        거절
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => void handleDecide(approval.approvalId, 'approve')}
+                        className="h-8 rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white disabled:opacity-50"
+                      >
+                        {isBusy ? '처리 중' : '승인'}
+                      </button>
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })
+          )}
         </ul>
       </section>
 

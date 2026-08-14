@@ -67,7 +67,11 @@ function ProjectEnvironmentPage({ projectId }: ProjectEnvironmentPageProps) {
     }
   };
 
-  const handleToggleSecret = async (variableId: number, nextSecret: boolean, currentValue: string) => {
+  const handleToggleSecret = async (
+    variableId: number,
+    nextSecret: boolean,
+    currentValue: string,
+  ) => {
     try {
       await patchEnvironmentVariable(projectId, variableId, {
         value: currentValue,
@@ -127,51 +131,51 @@ function ProjectEnvironmentPage({ projectId }: ProjectEnvironmentPageProps) {
       <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
         <h2 className="text-[16px] font-bold text-[#0f172a]">환경변수 목록</h2>
         <ul className="mt-4 flex flex-col gap-2">
-          {isLoading
-            ? skeletonItems.map((key) => (
-                <li key={key} className="h-12 animate-pulse rounded-xl bg-[#f8fafc]" />
-              ))
-            : variables.length === 0
-              ? (
-                  <li className="rounded-xl border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-[13px] text-[#94a3b8]">
-                    등록된 환경변수가 없습니다.
-                  </li>
-                )
-              : variables.map((item) => (
-                  <li
-                    key={item.environmentVariableId}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#f1f5f9] px-4 py-3"
+          {isLoading ? (
+            skeletonItems.map((key) => (
+              <li key={key} className="h-12 animate-pulse rounded-xl bg-[#f8fafc]" />
+            ))
+          ) : variables.length === 0 ? (
+            <li className="rounded-xl border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-[13px] text-[#94a3b8]">
+              등록된 환경변수가 없습니다.
+            </li>
+          ) : (
+            variables.map((item) => (
+              <li
+                key={item.environmentVariableId}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#f1f5f9] px-4 py-3"
+              >
+                <div>
+                  <p className="font-mono text-[13px] font-semibold text-[#0f172a]">{item.key}</p>
+                  <p className="mt-1 text-[11px] text-[#94a3b8]">
+                    {item.scope} · {item.secret ? 'secret' : 'plain'}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void handleToggleSecret(
+                        item.environmentVariableId,
+                        !item.secret,
+                        item.value || '',
+                      )
+                    }
+                    className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
                   >
-                    <div>
-                      <p className="font-mono text-[13px] font-semibold text-[#0f172a]">{item.key}</p>
-                      <p className="mt-1 text-[11px] text-[#94a3b8]">
-                        {item.scope} · {item.secret ? 'secret' : 'plain'}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void handleToggleSecret(
-                            item.environmentVariableId,
-                            !item.secret,
-                            item.value || '',
-                          )
-                        }
-                        className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
-                      >
-                        Secret 전환
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteMutation.mutate(item.environmentVariableId)}
-                        className="h-8 rounded-lg border border-[#fecaca] px-3 text-[12px] font-semibold text-[#dc2626]"
-                      >
-                        삭제
-                      </button>
-                    </div>
-                  </li>
-                ))}
+                    Secret 전환
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteMutation.mutate(item.environmentVariableId)}
+                    className="h-8 rounded-lg border border-[#fecaca] px-3 text-[12px] font-semibold text-[#dc2626]"
+                  >
+                    삭제
+                  </button>
+                </div>
+              </li>
+            ))
+          )}
         </ul>
       </section>
 

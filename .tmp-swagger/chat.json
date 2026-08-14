@@ -1,0 +1,344 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Qeploy API",
+    "description": "Qeploy backend API — natural-language driven web app generation, GitHub Pages/BYOC deployment, domain binding, and cloud infrastructure operation.\n\n### Common response envelope\nEvery response (except SSE, redirects, GitHub webhook callback, and the preview proxy) is wrapped as:\n```json\n{ \"status\": 200, \"code\": \"SUCCESS\", \"message\": \"...\", \"data\": { } }\n```\n`data` is omitted (not `null`) on responses with no body (e.g. 204). Frontend clients should unwrap `data` after checking `response.ok`; see `docs/FRONTEND_API_GUIDE.md` for the reference `http.ts` implementation.\n\n### Error codes\nErrors use the same envelope with `data` omitted. `code` is one of: `BAD_REQUEST`(400) · `UNAUTHORIZED`(401) · `INVALID_TOKEN`(401) · `EXPIRED_REFRESH_TOKEN`(401) · `REVOKED_REFRESH_TOKEN`(401) · `FORBIDDEN`(403) · `GITHUB_APP_NOT_INSTALLED`(403) · `NOT_FOUND`(404) · `METHOD_NOT_ALLOWED`(405) · `CONFLICT`(409) · `INTERNAL_SERVER_ERROR`(500). `message` carries the specific, human-readable detail — treat `code` as the stable machine-readable discriminator.\n\n### Authentication\nBearer JWT (see the **JWT TOKEN** security scheme below). Obtain a token via the GitHub OAuth flow (`Auth` group), then send `Authorization: Bearer {accessToken}` on every authenticated request. Access tokens expire in 1 hour; use `POST /api/v1/auth/refresh` (rotation — both tokens are replaced) before that. A small set of endpoints are unauthenticated by design: GitHub OAuth/App URL and callback endpoints, `POST /api/v1/auth/refresh`, and `POST /api/v1/webhook/github` (GitHub-signed, not JWT).\n",
+    "version": "0.0.1"
+  },
+  "servers": [{ "url": "/" }],
+  "security": [{ "JWT TOKEN": [] }],
+  "tags": [{ "name": "Chat", "description": "프로젝트별 대화 세션과 메시지 관리 API" }],
+  "paths": {
+    "/api/v1/trash/conversations/{conversationId}/restore": {
+      "post": {
+        "tags": ["Chat"],
+        "summary": "휴지통 대화 복구",
+        "description": "휴지통의 대화를 복구합니다. 삭제 후 7일이 지난 대화는 복구할 수 없습니다. 원래 프로젝트가 삭제된 경우 동일 저장소를 연결한 활성 프로젝트로 복구를 시도합니다.",
+        "operationId": "restoreConversation",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "description": "복구할 대화 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ConversationResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/conversations": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "프로젝트 대화 목록 조회",
+        "description": "프로젝트에 속한 삭제되지 않은 대화 세션 목록을 최신 수정순으로 조회합니다. 프로젝트 작업 화면의 대화 목록을 렌더링할 때 사용합니다.",
+        "operationId": "getConversations",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "대화 목록을 조회할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ConversationResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Chat"],
+        "summary": "프로젝트 대화 생성",
+        "description": "프로젝트에 새 대화 세션을 생성합니다. 요청한 유저가 프로젝트 소유자인지 확인한 뒤 빈 대화 세션을 반환합니다.",
+        "operationId": "createConversation",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "대화를 생성할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ConversationResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/{conversationId}/messages": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "대화 메시지 목록 조회",
+        "description": "대화 세션에 저장된 메시지를 생성순으로 조회합니다. 삭제되지 않은 현재 유저 소유 대화에 대해서만 메시지를 반환합니다.",
+        "operationId": "getMessages",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "description": "메시지 목록을 조회할 대화 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/MessageResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Chat"],
+        "summary": "대화 메시지 생성",
+        "description": "대화 세션에 사용자 메시지를 저장합니다. 저장 직후 Decision Agent가 해당 메시지를 동기적으로 판단하여 승인 정책에 따라 Agent 작업을 큐잉(제출)까지 수행합니다(외부 AI API 호출 포함, 승인이 필요한 경우 승인 대기 상태로 큐잉됩니다). 응답(MessageResponse)의 taskId에 생성된 Agent 작업의 ID가 담기며 (판단 실패 시 null), GET /api/v1/agent/tasks/{taskId}로 진행 상황을 폴링할 수 있습니다.",
+        "operationId": "sendMessage",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "description": "메시지를 저장할 대화 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/SendMessageRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/MessageResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/trash/conversations": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "휴지통 대화 목록 조회",
+        "description": "현재 유저의 휴지통 대화 중 삭제 후 7일이 지나지 않은 대화만 조회합니다. 원래 프로젝트가 삭제된 경우 동일 저장소를 연결한 활성 프로젝트 ID로 보정될 수 있습니다.",
+        "operationId": "getTrashConversations",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ConversationResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/{conversationId}": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "대화 상세 조회",
+        "description": "삭제되지 않은 대화 세션의 메타데이터를 조회합니다. 대화 ID가 현재 유저 소유가 아니거나 휴지통에 있으면 조회되지 않습니다.",
+        "operationId": "getConversation",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "description": "조회할 대화 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ConversationResponse" } }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Chat"],
+        "summary": "대화 삭제",
+        "description": "대화 세션을 휴지통으로 이동합니다. 실제 메시지 데이터는 즉시 삭제하지 않고 deleted/deletedAt 상태를 기록합니다.",
+        "operationId": "deleteConversation",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "description": "휴지통으로 이동할 대화 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      }
+    },
+    "/api/v1/trash/conversations/{conversationId}": {
+      "delete": {
+        "tags": ["Chat"],
+        "summary": "휴지통 대화 영구 삭제",
+        "description": "휴지통의 대화와 메시지를 즉시 영구 삭제합니다. Agent/Approval/Change 이력은 대화 참조만 해제하고 보존합니다.",
+        "operationId": "permanentlyDeleteConversation",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "description": "영구 삭제할 휴지통 대화 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ConversationResponse": {
+        "type": "object",
+        "description": "대화 세션 정보",
+        "properties": {
+          "conversationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "대화 ID",
+            "example": 101
+          },
+          "projectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "대화가 속한 프로젝트 ID",
+            "example": 12
+          },
+          "title": { "type": "string", "description": "대화 제목", "example": "FAQ 섹션 추가" },
+          "projectName": {
+            "type": "string",
+            "description": "프로젝트 이름",
+            "example": "qeploy-landing"
+          },
+          "deleted": { "type": "boolean", "description": "휴지통 이동 여부", "example": false },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "휴지통 이동 시각. 삭제되지 않은 대화는 null"
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "휴지통 자동 영구 삭제 예정 시각"
+          },
+          "remainingRetentionDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "남은 보관일. 일반 대화는 null",
+            "example": 6
+          },
+          "createdAt": { "type": "string", "format": "date-time", "description": "대화 생성 시각" },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "대화 마지막 수정 시각"
+          }
+        }
+      },
+      "SendMessageRequest": {
+        "type": "object",
+        "description": "대화 메시지 생성 요청",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "저장할 사용자 메시지 본문",
+            "example": "랜딩 페이지에 FAQ 섹션을 추가해줘",
+            "minLength": 1
+          }
+        },
+        "required": ["content"]
+      },
+      "MessageResponse": {
+        "type": "object",
+        "description": "대화 메시지 정보",
+        "properties": {
+          "messageId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "메시지 ID",
+            "example": 3001
+          },
+          "conversationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "메시지가 속한 대화 ID",
+            "example": 101
+          },
+          "role": {
+            "type": "string",
+            "description": "메시지 역할. 현재 메시지 생성 API는 USER만 저장합니다.",
+            "example": "user"
+          },
+          "content": {
+            "type": "string",
+            "description": "메시지 본문",
+            "example": "랜딩 페이지에 FAQ 섹션을 추가해줘"
+          },
+          "tokenCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "메시지 토큰 수. 현재 사용자 메시지는 0으로 저장됩니다.",
+            "example": 0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "메시지 생성 시각"
+          },
+          "taskId": {
+            "type": "string",
+            "description": "메시지 저장과 함께 큐잉된 Agent 작업의 taskId. 승인 정책에 따라 작업이 정상 접수된 경우에만 값이 채워지며, Decision Agent 판단 실패 등으로 작업이 생성되지 않았거나 과거 메시지를 조회하는 경우(GET messages)에는 null입니다. 값이 있으면 GET /api/v1/agent/tasks/{taskId}로 진행 상황을 폴링할 수 있습니다.",
+            "example": "a1b2c3d4e5f6"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "JWT TOKEN": {
+        "type": "http",
+        "name": "JWT TOKEN",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

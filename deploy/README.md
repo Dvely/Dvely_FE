@@ -26,10 +26,10 @@
 
 ## 워크플로
 
-| 파일 | 언제 | 하는 일 |
-| --- | --- | --- |
-| `.github/workflows/ci.yml` | `main` 대상 PR, `main` push | `bun install --frozen-lockfile` → typecheck → lint → build |
-| `.github/workflows/deploy-ec2.yml` | `main` push(= PR 병합), 수동 | 러너에서 빌드 → tar 업로드 → 릴리스 교체 → 검증 |
+| 파일                               | 언제                         | 하는 일                                                    |
+| ---------------------------------- | ---------------------------- | ---------------------------------------------------------- |
+| `.github/workflows/ci.yml`         | `main` 대상 PR, `main` push  | `bun install --frozen-lockfile` → typecheck → lint → build |
+| `.github/workflows/deploy-ec2.yml` | `main` push(= PR 병합), 수동 | 러너에서 빌드 → tar 업로드 → 릴리스 교체 → 검증            |
 
 빌드는 러너에서 한다. 서버는 메모리 3.8GB에 MySQL·백엔드·Docker가 이미 올라가 있어
 `bun install && bun run build`를 돌리기에 여유가 없다. 서버로는 `dist` 산출물만 보낸다.
@@ -52,12 +52,12 @@
 
 **Secrets**
 
-| 이름 | 값 |
-| --- | --- |
-| `EC2_HOST` | `13.251.154.173` |
-| `EC2_USER` | `ubuntu` |
-| `EC2_SSH_KEY` | `~/.ssh/dvely-key.pem` 내용 전체 |
-| `EC2_SSH_PORT` | (선택) 기본 22 |
+| 이름           | 값                               |
+| -------------- | -------------------------------- |
+| `EC2_HOST`     | `13.251.154.173`                 |
+| `EC2_USER`     | `ubuntu`                         |
+| `EC2_SSH_KEY`  | `~/.ssh/dvely-key.pem` 내용 전체 |
+| `EC2_SSH_PORT` | (선택) 기본 22                   |
 
 `EC2_SSH_KEY`는 반드시 CLI로 등록한다. 웹 UI에 붙여넣으면 줄바꿈이 뭉개져
 `ssh: no key found`로 실패한다.
@@ -68,8 +68,8 @@ gh secret set EC2_SSH_KEY < ~/.ssh/dvely-key.pem --repo Dvely/Dvely_FE
 
 **Variables**
 
-| 이름 | 값 |
-| --- | --- |
+| 이름           | 값                          |
+| -------------- | --------------------------- |
 | `VITE_API_URL` | `https://qeploy.com/api/v1` |
 
 시크릿이 아니라 변수인 이유: 이 값은 클라이언트 번들에 그대로 구워져 공개된다.

@@ -12,7 +12,10 @@ export const Route = createFileRoute('/_authenticated/project/$slug/pipeline')({
 function ProjectPipelineRoute() {
   const { slug } = ProjectSlugRoute.useParams();
   const parsedProjectId = Number(slug);
-  const { data: project, isLoading } = useProjectDetailQuery('project-pipeline-page', parsedProjectId);
+  const { data: project, isLoading } = useProjectDetailQuery(
+    'project-pipeline-page',
+    parsedProjectId,
+  );
 
   if (isLoading) {
     return <div className="p-6 text-sm text-[#94a3b8]">프로젝트 상세를 불러오는 중...</div>;

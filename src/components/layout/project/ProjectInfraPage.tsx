@@ -33,9 +33,8 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
   const [formError, setFormError] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
-  const { data: connections = [], isLoading: isConnectionsLoading } = useCloudConnectionListQuery(
-    'project-infra-page',
-  );
+  const { data: connections = [], isLoading: isConnectionsLoading } =
+    useCloudConnectionListQuery('project-infra-page');
   const { data: infraSettings, isLoading: isInfraLoading } = useQuery({
     queryKey: ['project-infra-settings', projectId],
     queryFn: () => getProjectInfrastructureSettings(projectId),
@@ -92,7 +91,9 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
     onSuccess: invalidate,
   });
 
-  const handleToggleChat = async (field: 'changeApprovalRequired' | 'deploymentApprovalRequired') => {
+  const handleToggleChat = async (
+    field: 'changeApprovalRequired' | 'deploymentApprovalRequired',
+  ) => {
     if (!chatSettings) return;
     try {
       await patchProjectChatSettings(projectId, {

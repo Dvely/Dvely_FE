@@ -129,56 +129,54 @@ function MeCloudConnectionsPanel() {
       <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
         <h3 className="text-[14px] font-bold text-[#0f172a]">등록된 연결</h3>
         <ul className="mt-3 flex flex-col gap-2">
-          {isLoading
-            ? skeletonItems.map((key) => (
-                <li key={key} className="h-14 animate-pulse rounded-xl bg-[#f8fafc]" />
-              ))
-            : connections.length === 0
-              ? (
-                  <li className="rounded-xl border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-[13px] text-[#94a3b8]">
-                    등록된 클라우드 연결이 없습니다.
-                  </li>
-                )
-              : connections.map((connection) => (
-                  <li
-                    key={connection.cloudConnectionId}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#f1f5f9] px-4 py-3"
+          {isLoading ? (
+            skeletonItems.map((key) => (
+              <li key={key} className="h-14 animate-pulse rounded-xl bg-[#f8fafc]" />
+            ))
+          ) : connections.length === 0 ? (
+            <li className="rounded-xl border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-[13px] text-[#94a3b8]">
+              등록된 클라우드 연결이 없습니다.
+            </li>
+          ) : (
+            connections.map((connection) => (
+              <li
+                key={connection.cloudConnectionId}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#f1f5f9] px-4 py-3"
+              >
+                <div>
+                  <p className="text-[13px] font-semibold text-[#0f172a]">
+                    {connection.displayName}
+                  </p>
+                  <p className="text-[11px] text-[#94a3b8]">
+                    {connection.provider} · {connection.region} · {connection.status}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleHealth(connection.cloudConnectionId)}
+                    className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
                   >
-                    <div>
-                      <p className="text-[13px] font-semibold text-[#0f172a]">
-                        {connection.displayName}
-                      </p>
-                      <p className="text-[11px] text-[#94a3b8]">
-                        {connection.provider} · {connection.region} · {connection.status}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => void handleHealth(connection.cloudConnectionId)}
-                        className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
-                      >
-                        Health
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          postCloudConnectionVerificationJob(connection.cloudConnectionId)
-                        }
-                        className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
-                      >
-                        재검증
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteMutation.mutate(connection.cloudConnectionId)}
-                        className="h-8 rounded-lg border border-[#fecaca] px-3 text-[12px] font-semibold text-[#dc2626]"
-                      >
-                        해제
-                      </button>
-                    </div>
-                  </li>
-                ))}
+                    Health
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => postCloudConnectionVerificationJob(connection.cloudConnectionId)}
+                    className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
+                  >
+                    재검증
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteMutation.mutate(connection.cloudConnectionId)}
+                    className="h-8 rounded-lg border border-[#fecaca] px-3 text-[12px] font-semibold text-[#dc2626]"
+                  >
+                    해제
+                  </button>
+                </div>
+              </li>
+            ))
+          )}
         </ul>
       </section>
     </div>

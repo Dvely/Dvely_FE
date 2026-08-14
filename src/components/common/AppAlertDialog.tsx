@@ -55,7 +55,10 @@ function AppAlertDialog({
         className="relative z-10 w-full max-w-[400px] overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.12)]"
       >
         <div className="px-6 pb-4 pt-6">
-          <h2 id="app-alert-title" className="text-[18px] font-semibold tracking-tight text-[#0f172a]">
+          <h2
+            id="app-alert-title"
+            className="text-[18px] font-semibold tracking-tight text-[#0f172a]"
+          >
             {title}
           </h2>
           <p

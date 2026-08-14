@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { postTrashConversationRestore, deleteTrashConversation, useTrashConversationListQuery } from '@/api/chat';
+import {
+  postTrashConversationRestore,
+  deleteTrashConversation,
+  useTrashConversationListQuery,
+} from '@/api/chat';
 import AgentTrashListPanel from '@/components/layout/project/AgentTrashListPanel';
 
 const TRASH_PAGE_QUERY_KEY = 'trash-page';

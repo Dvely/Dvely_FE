@@ -1,6 +1,7 @@
 import Http from '@/utils/httpClients';
 import { useQuery } from '@tanstack/react-query';
 import { errorResponse, succesResponse } from '@/utils/response';
+import type { ApiResponse } from '@/types/response.type';
 import {
   getApprovalDetailResSchema,
   getProjectApprovalListResSchema,
@@ -9,6 +10,13 @@ import {
   type GetProjectApprovalListResType,
   type PostApprovalDecideResType,
 } from '@/types/approval.type';
+
+function unwrapApiData<T>(body: T | ApiResponse<T>): T {
+  if (body && typeof body === 'object' && 'data' in body && body.data != null) {
+    return body.data;
+  }
+  return body as T;
+}
 
 const defaultQueryOptions = {
   gcTime: 0,
@@ -20,10 +28,10 @@ const defaultQueryOptions = {
 /** 프로젝트 승인 목록 조회 API GET */
 async function getProjectApprovalList(projectId: number) {
   return Http.instance
-    .get<GetProjectApprovalListResType>(`/projects/${projectId}/approvals`)
+    .get<ApiResponse<GetProjectApprovalListResType>>(`/projects/${projectId}/approvals`)
     .then((response) => {
-      const data = succesResponse<GetProjectApprovalListResType>(response);
-      return getProjectApprovalListResSchema.parse(data);
+      const body = succesResponse<ApiResponse<GetProjectApprovalListResType>>(response);
+      return getProjectApprovalListResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -31,10 +39,10 @@ async function getProjectApprovalList(projectId: number) {
 /** 승인 상세 조회 API GET */
 async function getApprovalDetail(approvalId: number) {
   return Http.instance
-    .get<GetApprovalDetailResType>(`/approvals/${approvalId}`)
+    .get<ApiResponse<GetApprovalDetailResType>>(`/approvals/${approvalId}`)
     .then((response) => {
-      const data = succesResponse<GetApprovalDetailResType>(response);
-      return getApprovalDetailResSchema.parse(data);
+      const body = succesResponse<ApiResponse<GetApprovalDetailResType>>(response);
+      return getApprovalDetailResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -42,10 +50,10 @@ async function getApprovalDetail(approvalId: number) {
 /** Agent 작업 승인 API POST */
 async function postApprovalApprove(approvalId: number) {
   return Http.instance
-    .post<PostApprovalDecideResType>(`/approvals/${approvalId}/approve`)
+    .post<ApiResponse<PostApprovalDecideResType>>(`/approvals/${approvalId}/approve`)
     .then((response) => {
-      const data = succesResponse<PostApprovalDecideResType>(response);
-      return postApprovalDecideResSchema.parse(data);
+      const body = succesResponse<ApiResponse<PostApprovalDecideResType>>(response);
+      return postApprovalDecideResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -53,10 +61,10 @@ async function postApprovalApprove(approvalId: number) {
 /** Agent 작업 거절 API POST */
 async function postApprovalReject(approvalId: number) {
   return Http.instance
-    .post<PostApprovalDecideResType>(`/approvals/${approvalId}/reject`)
+    .post<ApiResponse<PostApprovalDecideResType>>(`/approvals/${approvalId}/reject`)
     .then((response) => {
-      const data = succesResponse<PostApprovalDecideResType>(response);
-      return postApprovalDecideResSchema.parse(data);
+      const body = succesResponse<ApiResponse<PostApprovalDecideResType>>(response);
+      return postApprovalDecideResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }

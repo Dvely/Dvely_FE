@@ -1,0 +1,1886 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Qeploy API",
+    "description": "Qeploy backend API — natural-language driven web app generation, GitHub Pages/BYOC deployment, domain binding, and cloud infrastructure operation.\n\n### Common response envelope\nEvery response (except SSE, redirects, GitHub webhook callback, and the preview proxy) is wrapped as:\n```json\n{ \"status\": 200, \"code\": \"SUCCESS\", \"message\": \"...\", \"data\": { } }\n```\n`data` is omitted (not `null`) on responses with no body (e.g. 204). Frontend clients should unwrap `data` after checking `response.ok`; see `docs/FRONTEND_API_GUIDE.md` for the reference `http.ts` implementation.\n\n### Error codes\nErrors use the same envelope with `data` omitted. `code` is one of: `BAD_REQUEST`(400) · `UNAUTHORIZED`(401) · `INVALID_TOKEN`(401) · `EXPIRED_REFRESH_TOKEN`(401) · `REVOKED_REFRESH_TOKEN`(401) · `FORBIDDEN`(403) · `GITHUB_APP_NOT_INSTALLED`(403) · `NOT_FOUND`(404) · `METHOD_NOT_ALLOWED`(405) · `CONFLICT`(409) · `INTERNAL_SERVER_ERROR`(500). `message` carries the specific, human-readable detail — treat `code` as the stable machine-readable discriminator.\n\n### Authentication\nBearer JWT (see the **JWT TOKEN** security scheme below). Obtain a token via the GitHub OAuth flow (`Auth` group), then send `Authorization: Bearer {accessToken}` on every authenticated request. Access tokens expire in 1 hour; use `POST /api/v1/auth/refresh` (rotation — both tokens are replaced) before that. A small set of endpoints are unauthenticated by design: GitHub OAuth/App URL and callback endpoints, `POST /api/v1/auth/refresh`, and `POST /api/v1/webhook/github` (GitHub-signed, not JWT).\n",
+    "version": "0.0.1"
+  },
+  "servers": [{ "url": "/" }],
+  "security": [{ "JWT TOKEN": [] }],
+  "tags": [
+    { "name": "Approval", "description": "Agent 작업 승인 및 거절 API" },
+    {
+      "name": "Project",
+      "description": "프로젝트 생성, 조회, 수정, 삭제와 GitHub 저장소 연결/상태 확인 API"
+    },
+    {
+      "name": "Change",
+      "description": "Agent CODE 작업 결과(코드 변경) 조회 API. 변경 상태와 diff를 제공합니다."
+    }
+  ],
+  "paths": {
+    "/api/v1/projects/{projectId}/settings/infrastructure": {
+      "get": {
+        "tags": ["Project"],
+        "summary": "프로젝트 Infrastructure 설정 조회",
+        "description": "프로젝트에 현재 선택된 클라우드 연결(BYOC)을 조회합니다. 아직 아무 연결도 선택하지 않았으면 cloudConnectionId 이하 필드가 모두 null인 200 응답입니다.",
+        "operationId": "getInfrastructureSettings",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ProjectInfrastructureSettingsResponse" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Project"],
+        "summary": "프로젝트 클라우드 연결 선택",
+        "description": "실제 권한 확인이 완료된 CONNECTED 연결만 선택할 수 있습니다.",
+        "operationId": "updateInfrastructureSettings",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectInfrastructureSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ProjectInfrastructureSettingsResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Project"],
+        "summary": "프로젝트 클라우드 연결 선택 해제",
+        "description": "프로젝트의 클라우드 연결 선택을 해제합니다(연결 자체는 삭제하지 않음). 이미 미선택 상태에서 호출해도 204입니다(멱등).",
+        "operationId": "clearInfrastructureSettings",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      }
+    },
+    "/api/v1/projects/{projectId}/settings/infrastructure/configuration": {
+      "get": {
+        "tags": ["Project"],
+        "summary": "프로젝트 인프라 설정 조회",
+        "description": "배포 아키텍처/컴퓨팅 티어/스토리지/네트워크 4개 설정과 승인 대기 중인 변경을 조회합니다. CONNECTED 클라우드 연결이 선택되지 않은 프로젝트도 200으로 응답하며 configurable=false로 표시합니다.",
+        "operationId": "getInfrastructureConfiguration",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "설정을 조회할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectInfrastructureConfigurationResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Project"],
+        "summary": "프로젝트 인프라 설정 저장/변경",
+        "description": "CONNECTED 클라우드 연결이 선택되어 있어야 합니다(아니면 409). Chat 설정의 infraApprovalRequired가 true(기본값)면 즉시 적용되지 않고 INFRA_OPERATION 승인이 생성되며 settings는 기존 값을 유지한 채 pendingChange로 대기 건이 반환됩니다. false면 즉시 적용됩니다. 현재 적용값과 완전히 동일한 요청은 이력·승인 생성 없이 현재 상태 그대로 반환됩니다(no-op). 승인 대기 중인 변경이 이미 있으면 409를 반환합니다(먼저 처리 필요).",
+        "operationId": "updateInfrastructureConfiguration",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "설정을 저장할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectInfrastructureConfigurationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectInfrastructureConfigurationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/settings/cost-budget": {
+      "get": {
+        "tags": ["Project"],
+        "summary": "프로젝트 비용 추정 및 예산 조회",
+        "description": "저장된 인프라 구성 기준으로 정적 가격표(가정 기반 추정치이며 실시간 클라우드 요금이 아님)를 사용해 월 예상 비용을 매 요청마다 온더플라이로 계산합니다(계산 결과는 저장하지 않음). 인프라가 구성되지 않았거나 CONNECTED 클라우드 연결이 선택되지 않은 프로젝트도 200으로 응답하며 costAvailable=false와 함께 추정 필드는 null/빈 배열로 표시합니다.",
+        "operationId": "getCostBudget",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "비용/예산을 조회할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ProjectCostBudgetResponse" } }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Project"],
+        "summary": "프로젝트 월 예산 설정",
+        "description": "월 예산 금액을 저장합니다(upsert, 멱등). 통화는 USD만 지원하며, 인프라가 구성되지 않은 프로젝트도 예산을 먼저 설정할 수 있습니다(design D5). 저장 직후 재계산된 비용/예산 상태를 GET과 동일한 shape로 함께 반환해 FE가 경고 상태를 즉시 갱신할 수 있습니다.",
+        "operationId": "updateCostBudget",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "예산을 설정할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateProjectBudgetRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ProjectCostBudgetResponse" } }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Project"],
+        "summary": "프로젝트 월 예산 해제",
+        "description": "예산 설정을 제거합니다. 미설정 상태에서 호출해도 204입니다(infra settings의 clear와 동일한 멱등 시맨틱).",
+        "operationId": "clearCostBudget",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "예산을 해제할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      }
+    },
+    "/api/v1/projects": {
+      "get": {
+        "tags": ["Project"],
+        "summary": "프로젝트 목록 조회",
+        "description": "현재 유저가 소유한 삭제되지 않은 프로젝트 목록을 최신 수정순으로 조회합니다. 프로젝트 홈의 카드 목록 렌더링에 사용합니다.",
+        "operationId": "getProjects",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ProjectSummaryResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Project"],
+        "summary": "프로젝트 생성",
+        "description": "프로젝트를 DRAFT 상태로 저장하고 startMode/templateType/draftMode에 맞는 초기 코드 생성 Agent task를 제출합니다. GitHub 저장소 연결은 생성 후 별도로 처리합니다.",
+        "operationId": "createProject",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateProjectRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ProjectCreateResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/repository": {
+      "post": {
+        "tags": ["Project"],
+        "summary": "프로젝트 GitHub 저장소 연결",
+        "description": "프로젝트에 GitHub 저장소를 연결합니다. repositoryMode가 create이면 새 저장소를 만들고, existing이면 repositoryFullName으로 기존 저장소 접근 가능 여부를 확인합니다. 연결 후 preview 브랜치를 준비하고 저장소 binding/health 상태를 갱신합니다.",
+        "operationId": "connectRepository",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "저장소를 연결할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ConnectProjectRepositoryRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ProjectRepositoryResponse" } }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Project"],
+        "summary": "프로젝트 GitHub 저장소 연결 해제",
+        "description": "프로젝트에서 GitHub 저장소 연결 정보를 제거합니다. GitHub 저장소·워크플로·Pages는 삭제되지 않으며, 배포 이력·도메인 연결 등 다른 도메인의 상태도 별도로 정리하지 않습니다(자연 단절). 해제 후 POST로 동일하거나 다른 저장소를 다시 연결할 수 있습니다.",
+        "operationId": "disconnectRepository",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "저장소 연결을 해제할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      }
+    },
+    "/api/v1/approvals/{approvalId}/reject": {
+      "post": {
+        "tags": ["Approval"],
+        "summary": "Agent 작업 거절",
+        "description": "PENDING 승인을 REJECTED로 확정합니다. 해당 taskId를 취소시킵니다. PENDING이 아닌 승인에 호출하면 409를 반환합니다.",
+        "operationId": "reject",
+        "parameters": [
+          {
+            "name": "approvalId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/ApprovalResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/approvals/{approvalId}/approve": {
+      "post": {
+        "tags": ["Approval"],
+        "summary": "Agent 작업 승인",
+        "description": "PENDING 승인을 APPROVED로 확정합니다. 해당 taskId의 모든 필요 승인이 완료되면 대기 중이던 Agent task가 자동으로 재개(QUEUED)됩니다. PENDING이 아닌 승인에 호출하면 409를 반환합니다.",
+        "operationId": "approve",
+        "parameters": [
+          {
+            "name": "approvalId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/ApprovalResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}": {
+      "get": {
+        "tags": ["Project"],
+        "summary": "프로젝트 상세 조회",
+        "description": "프로젝트의 이름, 상태, 시작 방식, 템플릿, 작성 모드 등 기본 메타데이터를 조회합니다.",
+        "operationId": "getProject",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "조회할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ProjectDetailResponse" } }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Project"],
+        "summary": "프로젝트 삭제",
+        "description": "프로젝트를 삭제합니다. deleteMode가 없으면 PROJECT_ONLY로 처리되어 프로젝트를 soft delete하고 대화는 휴지통으로 이동합니다. PROJECT_AND_REPOSITORY를 지정하면 연결된 GitHub 저장소 삭제를 시도하고 관련 대화를 함께 제거합니다.",
+        "operationId": "deleteProject",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "삭제할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          },
+          {
+            "name": "deleteMode",
+            "in": "query",
+            "description": "삭제 범위. PROJECT_ONLY(기본값) | PROJECT_AND_REPOSITORY",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      },
+      "patch": {
+        "tags": ["Project"],
+        "summary": "프로젝트 수정",
+        "description": "프로젝트명을 수정합니다. 현재 공개 API에서는 프로젝트 이름만 수정할 수 있습니다.",
+        "operationId": "updateProject",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "수정할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateProjectRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ProjectDetailResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/settings/chat": {
+      "get": {
+        "tags": ["Project"],
+        "summary": "프로젝트 Chat 승인 정책 조회",
+        "description": "Agent가 CODE/DEPLOY/DOMAIN_BIND/INFRA_OPERATE 작업을 실행하기 전 사용자 승인을 요구할지 여부를 4개 항목으로 조회합니다. 프로젝트 생성 시 모두 기본값으로 초기화되어 있습니다.",
+        "operationId": "getChatSettings",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ProjectChatSettingsResponse" } }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Project"],
+        "summary": "프로젝트 Chat 승인 정책 수정",
+        "description": "4개 항목 전체를 갱신합니다(전체 문서 PUT과 동일한 시맨틱 — 부분 수정 불가, 요청 DTO의 모든 필드가 필수입니다).",
+        "operationId": "updateChatSettings",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateProjectChatSettingsRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ProjectChatSettingsResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/settings/repository": {
+      "get": {
+        "tags": ["Project"],
+        "summary": "프로젝트 Repository 설정 조회",
+        "description": "연결된 GitHub 저장소 정보와 기본 브랜치를 조회합니다. 저장소가 연결되지 않은 프로젝트도 200과 connected=false로 응답합니다. defaultBranch는 매 요청마다 GitHub에서 라이브 조회하므로 GitHub 왕복 지연(p95 약 500ms)이 추가되며, 조회에 실패하면 null로 degrade합니다.",
+        "operationId": "getRepositorySettings",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "설정을 조회할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ProjectRepositorySettingsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/settings/infrastructure/configuration/history": {
+      "get": {
+        "tags": ["Project"],
+        "summary": "프로젝트 인프라 설정 변경 이력 조회",
+        "description": "limit 기본 50, 최대 200(초과 시 200으로 보정, 0·음수는 50으로 보정). 최신순(생성시각 desc). PENDING_APPROVAL·REJECTED를 포함한 모든 상태를 반환합니다(감사 목적).",
+        "operationId": "getInfrastructureConfigurationHistory",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "이력을 조회할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "조회 개수. 기본 50, 최대 200",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ProjectInfrastructureChangeResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/repository-health": {
+      "get": {
+        "tags": ["Project"],
+        "summary": "프로젝트 저장소 health 확인",
+        "description": "프로젝트에 연결된 GitHub 저장소가 존재하고 현재 유저가 접근 가능한지 확인합니다. 연결 저장소가 없으면 REPOSITORY_NOT_FOUND를 반환합니다.",
+        "operationId": "getRepositoryHealth",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "저장소 상태를 확인할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/RepositoryHealthResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/overview": {
+      "get": {
+        "tags": ["Project"],
+        "summary": "프로젝트 개요 조회",
+        "description": "현재 도메인 URL, 배포 상태와 버전, 최근 운영 이벤트 3개, 최신 커밋, 저장소·클라우드 상태와 운영 조치를 조회합니다.",
+        "operationId": "getOverview",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "개요를 조회할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ProjectOverviewResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/commits": {
+      "get": {
+        "tags": ["Project"],
+        "summary": "프로젝트 커밋 목록 조회",
+        "description": "프로젝트에 연결된 GitHub 저장소의 최근 커밋 목록을 조회합니다. 저장소가 아직 연결되지 않은 프로젝트는 빈 목록을 반환합니다.",
+        "operationId": "getCommits",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "커밋 목록을 조회할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ProjectCommitResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/changes": {
+      "get": {
+        "tags": ["Change"],
+        "summary": "프로젝트 Change 목록 조회",
+        "description": "프로젝트에서 실행된 모든 Agent CODE 작업(코드 변경) 이력을 조회합니다.",
+        "operationId": "getProjectChanges",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ChangeResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/approvals": {
+      "get": {
+        "tags": ["Approval"],
+        "summary": "프로젝트 승인 목록 조회",
+        "description": "프로젝트에서 생성된 모든 승인 요청을 상태(PENDING/APPROVED/REJECTED/CANCELLED)와 무관하게 최신순으로 조회합니다.",
+        "operationId": "getProjectApprovals",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ApprovalResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/activity-logs": {
+      "get": {
+        "tags": ["Project"],
+        "summary": "프로젝트 활동 로그 조회",
+        "description": "Deployment, Change, Approval, Domain의 실제 저장 이력을 프로젝트 생성 이벤트와 함께 최신순으로 조회합니다.",
+        "operationId": "getActivityLogs",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "활동 로그를 조회할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ProjectActivityLogResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/github/repositories": {
+      "get": {
+        "tags": ["Project"],
+        "summary": "GitHub 저장소 목록 조회",
+        "description": "현재 유저가 GitHub App/OAuth 연동으로 접근할 수 있는 저장소 목록을 조회합니다. 기존 저장소를 프로젝트에 연결하는 화면에서 사용합니다.",
+        "operationId": "getGithubRepositories",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/GithubRepositoryResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/changes/{changeId}": {
+      "get": {
+        "tags": ["Change"],
+        "summary": "Change 상세 조회",
+        "description": "코드 변경 한 건의 상태·요약·연결된 taskId/previewSessionId를 조회합니다.",
+        "operationId": "getChange",
+        "parameters": [
+          {
+            "name": "changeId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/ChangeResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/changes/{changeId}/diff": {
+      "get": {
+        "tags": ["Change"],
+        "summary": "Change diff 조회",
+        "description": "코드 변경의 git diff 텍스트를 조회합니다.",
+        "operationId": "getDiff",
+        "parameters": [
+          {
+            "name": "changeId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/ChangeDiffResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/approvals/{approvalId}": {
+      "get": {
+        "tags": ["Approval"],
+        "summary": "승인 상세 조회",
+        "description": "승인 요청 한 건의 유형(CHANGE/DEPLOYMENT/DOMAIN_BINDING/INFRA_OPERATION), 상태, 연결된 taskId·요약을 조회합니다.",
+        "operationId": "getApproval",
+        "parameters": [
+          {
+            "name": "approvalId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/ApprovalResponse" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UpdateProjectInfrastructureSettingsRequest": {
+        "type": "object",
+        "description": "프로젝트에 클라우드 연결 선택 요청. 대상 연결이 CONNECTED 상태가 아니면 409를 반환합니다.",
+        "properties": {
+          "cloudConnectionId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "선택할 클라우드 연결 ID (GET /cloud-connections로 조회)",
+            "example": 3
+          }
+        },
+        "required": ["cloudConnectionId"]
+      },
+      "ProjectInfrastructureSettingsResponse": {
+        "type": "object",
+        "description": "프로젝트에 선택된 클라우드 연결. 아직 아무 연결도 선택하지 않았으면 cloudConnectionId 이하 필드가 모두 null입니다.",
+        "properties": {
+          "projectId": { "type": "integer", "format": "int64", "description": "프로젝트 ID" },
+          "cloudConnectionId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "선택된 클라우드 연결 ID. 미선택 시 null"
+          },
+          "provider": {
+            "type": "string",
+            "description": "클라우드 provider",
+            "enum": ["AWS", "GCP"]
+          },
+          "displayName": { "type": "string", "description": "연결 이름" },
+          "region": { "type": "string", "description": "리전" },
+          "status": {
+            "type": "string",
+            "description": "연결 상태. CONNECTED만 인프라 설정(configuration) 편집 가능",
+            "enum": [
+              "VALIDATED",
+              "VERIFYING",
+              "CHECKING",
+              "CONNECTED",
+              "PERMISSION_MISSING",
+              "BILLING_DISABLED",
+              "REGION_UNSUPPORTED",
+              "INVALID_CREDENTIAL",
+              "UNKNOWN_ERROR"
+            ]
+          },
+          "lastCheckedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "연결의 마지막 상태 확인 시각"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "이 선택이 마지막으로 변경된 시각"
+          }
+        }
+      },
+      "UpdateProjectInfrastructureConfigurationRequest": {
+        "type": "object",
+        "description": "프로젝트 인프라 설정 저장/변경 요청. 전체 문서 PUT — 필드 4개 모두 필수",
+        "properties": {
+          "deploymentArchitecture": {
+            "type": "string",
+            "description": "배포 아키텍처",
+            "enum": ["SERVER", "CONTAINER", "SERVERLESS"],
+            "example": "CONTAINER",
+            "minLength": 1
+          },
+          "computeTier": {
+            "type": "string",
+            "description": "컴퓨팅 티어(provider-중립)",
+            "enum": ["MICRO", "SMALL", "MEDIUM", "LARGE"],
+            "example": "SMALL",
+            "minLength": 1
+          },
+          "storageType": {
+            "type": "string",
+            "description": "스토리지 종류",
+            "enum": ["NONE", "OBJECT_STORAGE"],
+            "example": "OBJECT_STORAGE",
+            "minLength": 1
+          },
+          "networkAccess": {
+            "type": "string",
+            "description": "네트워크 공개 범위",
+            "enum": ["PUBLIC", "PRIVATE"],
+            "example": "PUBLIC",
+            "minLength": 1
+          }
+        },
+        "required": ["computeTier", "deploymentArchitecture", "networkAccess", "storageType"]
+      },
+      "PendingChange": {
+        "type": "object",
+        "description": "승인 대기 중인 인프라 설정 변경",
+        "properties": {
+          "changeId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "변경 이력 ID",
+            "example": 12
+          },
+          "approvalId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "이 변경을 게이트하는 Approval ID",
+            "example": 34
+          },
+          "action": {
+            "type": "string",
+            "description": "최초 저장인지 변경인지",
+            "enum": ["CREATED", "UPDATED"],
+            "example": "UPDATED"
+          },
+          "deploymentArchitecture": {
+            "type": "string",
+            "description": "요청된 배포 아키텍처",
+            "enum": ["SERVER", "CONTAINER", "SERVERLESS"],
+            "example": "SERVERLESS"
+          },
+          "computeTier": {
+            "type": "string",
+            "description": "요청된 컴퓨팅 티어",
+            "enum": ["MICRO", "SMALL", "MEDIUM", "LARGE"],
+            "example": "MICRO"
+          },
+          "storageType": {
+            "type": "string",
+            "description": "요청된 스토리지 종류",
+            "enum": ["NONE", "OBJECT_STORAGE"],
+            "example": "NONE"
+          },
+          "networkAccess": {
+            "type": "string",
+            "description": "요청된 네트워크 공개 범위",
+            "enum": ["PUBLIC", "PRIVATE"],
+            "example": "PUBLIC"
+          },
+          "createdAt": { "type": "string", "format": "date-time", "description": "변경 요청 시각" }
+        }
+      },
+      "ProjectInfrastructureConfigurationResponse": {
+        "type": "object",
+        "description": "프로젝트 인프라 설정 조회/저장 응답 (GET·PUT 공통 shape)",
+        "properties": {
+          "projectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로젝트 ID",
+            "example": 1
+          },
+          "configurable": {
+            "type": "boolean",
+            "description": "CONNECTED 상태의 클라우드 연결이 선택되어 있어 설정을 편집할 수 있는지 여부",
+            "example": true
+          },
+          "settings": {
+            "$ref": "#/components/schemas/Settings",
+            "description": "현재 적용된 설정. 한 번도 저장한 적 없으면 null"
+          },
+          "pendingChange": {
+            "$ref": "#/components/schemas/PendingChange",
+            "description": "승인 대기 중인 변경. 없으면 null"
+          }
+        }
+      },
+      "Settings": {
+        "type": "object",
+        "description": "현재 적용된 인프라 설정",
+        "properties": {
+          "deploymentArchitecture": {
+            "type": "string",
+            "description": "배포 아키텍처",
+            "enum": ["SERVER", "CONTAINER", "SERVERLESS"],
+            "example": "CONTAINER"
+          },
+          "computeTier": {
+            "type": "string",
+            "description": "컴퓨팅 티어",
+            "enum": ["MICRO", "SMALL", "MEDIUM", "LARGE"],
+            "example": "SMALL"
+          },
+          "storageType": {
+            "type": "string",
+            "description": "스토리지 종류",
+            "enum": ["NONE", "OBJECT_STORAGE"],
+            "example": "OBJECT_STORAGE"
+          },
+          "networkAccess": {
+            "type": "string",
+            "description": "네트워크 공개 범위",
+            "enum": ["PUBLIC", "PRIVATE"],
+            "example": "PUBLIC"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "설정이 마지막으로 적용된 시각"
+          }
+        }
+      },
+      "UpdateProjectBudgetRequest": {
+        "type": "object",
+        "description": "프로젝트 월 예산 설정 요청 (upsert, 멱등)",
+        "properties": {
+          "monthlyBudgetAmount": {
+            "type": "number",
+            "description": "월 예산 금액. 0보다 커야 하고 소수점 둘째 자리까지 허용",
+            "example": 50.0,
+            "minimum": 0.01
+          },
+          "currency": {
+            "type": "string",
+            "description": "통화. null 또는 'USD'만 허용 — 그 외 값은 400",
+            "example": "USD"
+          }
+        },
+        "required": ["monthlyBudgetAmount"]
+      },
+      "BudgetResponse": {
+        "type": "object",
+        "description": "설정된 월 예산",
+        "properties": {
+          "monthlyBudgetAmount": {
+            "type": "number",
+            "description": "월 예산 금액",
+            "example": 50.0
+          },
+          "currency": { "type": "string", "description": "통화", "example": "USD" },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "예산이 마지막으로 저장된 시각"
+          }
+        }
+      },
+      "ProjectCostBudgetResponse": {
+        "type": "object",
+        "description": "프로젝트 비용 추정/예산 조회·저장 응답 (GET·PUT 공통 shape). estimatedMonthlyCost 등 비용 필드는 정적 가격표 기반의 가정 추정치이며 실시간 클라우드 요금이 아닙니다.",
+        "properties": {
+          "projectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로젝트 ID",
+            "example": 1
+          },
+          "costAvailable": {
+            "type": "boolean",
+            "description": "인프라 구성이 존재하고 CONNECTED 클라우드 연결이 선택되어 비용 추정이 가능한지 여부",
+            "example": true
+          },
+          "provider": {
+            "type": "string",
+            "description": "추정에 사용된 클라우드 provider. 비가용 시 null",
+            "enum": ["AWS", "GCP"],
+            "example": "AWS"
+          },
+          "currency": { "type": "string", "description": "통화 (USD 고정)", "example": "USD" },
+          "estimatedMonthlyCost": {
+            "type": "number",
+            "description": "월 예상 비용 합계(resourceCosts 합계와 항상 일치). 비가용 시 null",
+            "example": 26.15
+          },
+          "resourceCosts": {
+            "type": "array",
+            "description": "리소스별 비용 내역. 비가용 시 빈 배열",
+            "items": { "$ref": "#/components/schemas/ResourceCostResponse" }
+          },
+          "assumptions": {
+            "type": "array",
+            "description": "추정에 사용된 사용량 가정 문구",
+            "items": { "type": "string" }
+          },
+          "priceTableVersion": {
+            "type": "string",
+            "description": "정적 가격표 버전",
+            "example": "2026-07.static.1"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/BudgetResponse",
+            "description": "설정된 예산. 미설정 시 null"
+          },
+          "budgetStatus": {
+            "type": "string",
+            "description": "예산 대비 상태",
+            "enum": ["NO_BUDGET", "WITHIN_BUDGET", "OVER_BUDGET", "NOT_EVALUABLE"],
+            "example": "WITHIN_BUDGET"
+          },
+          "budgetUsagePercent": {
+            "type": "number",
+            "description": "예산 대비 사용률(%), 소수 첫째 자리. 산출 불가 시 null",
+            "example": 52.3
+          }
+        }
+      },
+      "ResourceCostResponse": {
+        "type": "object",
+        "description": "리소스별 월 비용",
+        "properties": {
+          "resourceType": {
+            "type": "string",
+            "description": "리소스 종류",
+            "enum": ["COMPUTE", "STORAGE", "NETWORK"],
+            "example": "COMPUTE"
+          },
+          "description": {
+            "type": "string",
+            "description": "설명",
+            "example": "SERVER · SMALL (AWS)"
+          },
+          "monthlyCost": { "type": "number", "description": "월 비용", "example": 17.0 }
+        }
+      },
+      "CreateProjectRequest": {
+        "type": "object",
+        "description": "프로젝트 생성 요청",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "프로젝트 이름",
+            "example": "my-landing",
+            "minLength": 1
+          },
+          "startMode": {
+            "type": "string",
+            "description": "프로젝트 시작 방식",
+            "enum": ["blank", "template"],
+            "example": "blank",
+            "minLength": 1,
+            "pattern": "(?i)blank|template"
+          },
+          "templateType": {
+            "type": "string",
+            "description": "템플릿 유형. startMode가 템플릿 기반일 때 사용",
+            "example": "landing",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "draftMode": {
+            "type": "string",
+            "description": "초안 생성 방식",
+            "enum": ["fast", "quality"],
+            "example": "fast",
+            "minLength": 1,
+            "pattern": "(?i)fast|quality"
+          }
+        },
+        "required": ["draftMode", "name", "startMode"]
+      },
+      "ProjectCreateResponse": {
+        "type": "object",
+        "description": "프로젝트 생성 응답",
+        "properties": {
+          "projectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "생성된 프로젝트 ID",
+            "example": 12
+          },
+          "name": { "type": "string", "description": "프로젝트 이름", "example": "my-landing" },
+          "status": {
+            "type": "string",
+            "description": "프로젝트 상태",
+            "enum": ["DRAFT", "ACTIVE", "ARCHIVED"],
+            "example": "DRAFT"
+          },
+          "taskId": { "type": "string", "description": "초기 코드 생성 Agent task ID" },
+          "taskStatus": { "type": "string", "description": "초기 코드 생성 task 상태" },
+          "approvalIds": {
+            "type": "array",
+            "description": "초기 코드 생성에 필요한 승인 ID",
+            "items": { "type": "integer", "format": "int64" }
+          }
+        }
+      },
+      "ConnectProjectRepositoryRequest": {
+        "type": "object",
+        "description": "프로젝트 GitHub 저장소 연결 요청",
+        "properties": {
+          "repositoryMode": {
+            "type": "string",
+            "description": "저장소 연결 방식. create/create_new/new 또는 existing/import/import_existing 지원",
+            "example": "create"
+          },
+          "repositoryName": {
+            "type": "string",
+            "description": "새 저장소 생성 시 사용할 저장소 이름",
+            "example": "my-landing-repo"
+          },
+          "repositoryFullName": {
+            "type": "string",
+            "description": "기존 저장소 연결 시 owner/repo 형식의 전체 이름",
+            "example": "qeploy/my-landing-repo"
+          },
+          "repositoryVisibility": {
+            "type": "string",
+            "description": "새 저장소 생성 시 공개 범위. 값이 없으면 PRIVATE",
+            "enum": ["PUBLIC", "PRIVATE"],
+            "example": "PRIVATE"
+          }
+        }
+      },
+      "ProjectRepositoryResponse": {
+        "type": "object",
+        "description": "프로젝트 GitHub 저장소 연결 결과",
+        "properties": {
+          "projectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로젝트 ID",
+            "example": 12
+          },
+          "repositoryFullName": {
+            "type": "string",
+            "description": "연결된 GitHub 저장소 전체 이름",
+            "example": "qeploy/my-landing-repo"
+          },
+          "repositoryVisibility": {
+            "type": "string",
+            "description": "저장소 공개 범위",
+            "enum": ["PUBLIC", "PRIVATE"],
+            "example": "PRIVATE"
+          },
+          "bindingStatus": {
+            "type": "string",
+            "description": "저장소 연결 상태",
+            "enum": ["NOT_BOUND", "BOUND"],
+            "example": "BOUND"
+          },
+          "repositoryHealth": {
+            "type": "string",
+            "description": "저장소 health 상태",
+            "enum": [
+              "HEALTHY",
+              "REPOSITORY_NOT_FOUND",
+              "ACCESS_DENIED",
+              "PERMISSION_MISMATCH",
+              "UNKNOWN_ERROR"
+            ],
+            "example": "HEALTHY"
+          }
+        }
+      },
+      "ApprovalResponse": {
+        "type": "object",
+        "description": "사용자 승인 정보",
+        "properties": {
+          "approvalId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "승인 ID",
+            "example": 34
+          },
+          "projectId": { "type": "integer", "format": "int64", "description": "프로젝트 ID" },
+          "conversationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "대화 ID. standalone 승인(예: 인프라 설정 변경)은 연결된 대화가 없어 null"
+          },
+          "taskId": {
+            "type": "string",
+            "description": "연결된 Agent task ID. standalone 승인은 taskId가 없어 null"
+          },
+          "type": {
+            "type": "string",
+            "description": "승인 유형. RESULT는 계획 승인이 아니라 CODE 실행 '결과'(preview+diff) 확인 승인 — ResultApprovalGate가 마지막 CODE step 완료 직후에만 생성합니다.",
+            "enum": ["CHANGE", "DEPLOYMENT", "DOMAIN_BINDING", "INFRA_OPERATION", "RESULT"],
+            "example": "DEPLOYMENT"
+          },
+          "status": {
+            "type": "string",
+            "description": "승인 상태. PENDING만 approve/reject 가능(그 외 호출 시 409)",
+            "enum": ["PENDING", "APPROVED", "REJECTED", "CANCELLED"],
+            "example": "PENDING"
+          },
+          "summary": {
+            "type": "string",
+            "description": "승인창에 표시되는 한 줄 요약. 서비스/비용 영향이 있으면 [서비스 영향]/[비용 증가 가능] 마커가 앞에 붙을 수 있음"
+          },
+          "createdAt": { "type": "string", "format": "date-time", "description": "승인 생성 시각" },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "APPROVED/REJECTED/CANCELLED로 확정된 시각. PENDING이면 null"
+          }
+        }
+      },
+      "UpdateProjectRequest": {
+        "type": "object",
+        "description": "프로젝트 수정 요청",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "변경할 프로젝트 이름",
+            "example": "new-project-name",
+            "minLength": 1
+          }
+        },
+        "required": ["name"]
+      },
+      "ProjectDetailResponse": {
+        "type": "object",
+        "description": "프로젝트 상세 정보",
+        "properties": {
+          "projectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로젝트 ID",
+            "example": 12
+          },
+          "name": { "type": "string", "description": "프로젝트 이름", "example": "my-landing" },
+          "status": {
+            "type": "string",
+            "description": "프로젝트 상태",
+            "enum": ["DRAFT", "ACTIVE", "ARCHIVED"],
+            "example": "DRAFT"
+          },
+          "startMode": {
+            "type": "string",
+            "description": "프로젝트 시작 방식",
+            "example": "blank"
+          },
+          "templateType": { "type": "string", "description": "템플릿 유형" },
+          "draftMode": { "type": "string", "description": "초안 생성 방식", "example": "fast" },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "프로젝트 생성 시각"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "프로젝트 마지막 수정 시각"
+          }
+        }
+      },
+      "UpdateProjectChatSettingsRequest": {
+        "type": "object",
+        "description": "프로젝트 Chat 승인 정책 수정 요청. changeApprovalRequired~infraApprovalRequired 4개 필드는 전체 문서 PUT과 동일하게 필수(부분 수정 불가). resultApprovalRequired만 예외적으로 nullable — null이면 현재 값을 유지합니다 (구버전 FE가 이 필드를 모르고 보내는 요청도 그대로 동작하도록, design D4/§5.5).",
+        "properties": {
+          "changeApprovalRequired": {
+            "type": "boolean",
+            "description": "CODE(코드 변경) 작업 승인 필요 여부"
+          },
+          "deploymentApprovalRequired": {
+            "type": "boolean",
+            "description": "DEPLOY(배포) 작업 승인 필요 여부"
+          },
+          "domainApprovalRequired": {
+            "type": "boolean",
+            "description": "DOMAIN_BIND(도메인 연결/해제) 작업 승인 필요 여부"
+          },
+          "infraApprovalRequired": {
+            "type": "boolean",
+            "description": "INFRA_OPERATE 중 서비스/비용 영향 작업 승인 필요 여부"
+          },
+          "resultApprovalRequired": {
+            "type": "boolean",
+            "description": "실행 결과(preview·diff) 확인 후 main 반영 승인 필요 여부. null이면 현재 값 유지"
+          }
+        },
+        "required": [
+          "changeApprovalRequired",
+          "deploymentApprovalRequired",
+          "domainApprovalRequired",
+          "infraApprovalRequired"
+        ]
+      },
+      "ProjectChatSettingsResponse": {
+        "type": "object",
+        "description": "프로젝트별 Agent 승인 정책. true인 항목은 Agent가 해당 작업을 실행하기 전(또는 결과를 main에 반영하기 전) 사용자 승인을 요구합니다.",
+        "properties": {
+          "projectId": { "type": "integer", "format": "int64", "description": "프로젝트 ID" },
+          "changeApprovalRequired": {
+            "type": "boolean",
+            "description": "CODE(코드 변경) 작업 승인 필요 여부"
+          },
+          "deploymentApprovalRequired": {
+            "type": "boolean",
+            "description": "DEPLOY(배포) 작업 승인 필요 여부"
+          },
+          "domainApprovalRequired": {
+            "type": "boolean",
+            "description": "DOMAIN_BIND(도메인 연결/해제) 작업 승인 필요 여부"
+          },
+          "infraApprovalRequired": {
+            "type": "boolean",
+            "description": "INFRA_OPERATE 중 서비스/비용 영향 작업(예: 인프라 설정 변경, preview 재시작) 승인 필요 여부. 기본값 true"
+          },
+          "resultApprovalRequired": {
+            "type": "boolean",
+            "description": "실행 결과(preview·diff) 확인 후 main 반영(RESULT) 승인 필요 여부. 기본값 true. false면 CODE 작업 완료 후에도 결과 승인 게이트 없이 현행(배포 시점 merge) 흐름을 따릅니다."
+          }
+        }
+      },
+      "ProjectSummaryResponse": {
+        "type": "object",
+        "description": "프로젝트 목록 항목",
+        "properties": {
+          "projectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로젝트 ID",
+            "example": 12
+          },
+          "name": { "type": "string", "description": "프로젝트 이름", "example": "my-landing" },
+          "deployStatus": {
+            "type": "string",
+            "description": "현재 배포 상태",
+            "enum": ["DRAFT", "PENDING", "IN_PROGRESS", "PREVIEW_READY", "LIVE", "FAILED"],
+            "example": "DRAFT"
+          },
+          "currentUrl": { "type": "string", "description": "현재 배포 URL. 배포 전이면 null" },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "프로젝트 마지막 수정 시각"
+          },
+          "updatedAtRelativeText": {
+            "type": "string",
+            "description": "마지막 수정 시각의 상대 표현",
+            "example": "2시간 전"
+          }
+        }
+      },
+      "ProjectRepositorySettingsResponse": {
+        "type": "object",
+        "description": "프로젝트 Repository 설정 조회 응답. 저장소가 연결되지 않은 프로젝트도 200으로 응답하며 connected=false로 표시합니다.",
+        "properties": {
+          "projectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로젝트 ID",
+            "example": 12
+          },
+          "connected": {
+            "type": "boolean",
+            "description": "GitHub 저장소 연결 여부",
+            "example": true
+          },
+          "repositoryFullName": {
+            "type": "string",
+            "description": "연결된 GitHub 저장소 전체 이름. 미연결 시 null",
+            "example": "qeploy/my-landing-repo"
+          },
+          "repositoryUrl": {
+            "type": "string",
+            "description": "GitHub 저장소 URL. 미연결 시 null",
+            "example": "https://github.com/qeploy/my-landing-repo"
+          },
+          "defaultBranch": {
+            "type": "string",
+            "description": "기본 브랜치. GitHub 라이브 조회 결과이며 미연결이거나 조회에 실패하면 null",
+            "example": "main"
+          },
+          "repositoryVisibility": {
+            "type": "string",
+            "description": "저장소 공개 범위",
+            "enum": ["PUBLIC", "PRIVATE"],
+            "example": "PRIVATE"
+          },
+          "bindingStatus": {
+            "type": "string",
+            "description": "저장소 연결 상태",
+            "enum": ["NOT_BOUND", "BOUND"],
+            "example": "BOUND"
+          },
+          "repositoryHealth": {
+            "type": "string",
+            "description": "저장소 health 상태 (저장된 값. 라이브 재확인은 GET /repository-health 사용)",
+            "enum": [
+              "HEALTHY",
+              "REPOSITORY_NOT_FOUND",
+              "ACCESS_DENIED",
+              "PERMISSION_MISMATCH",
+              "UNKNOWN_ERROR"
+            ],
+            "example": "HEALTHY"
+          },
+          "connectedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "저장소 연결 시각. 레거시 연결 행이거나 미연결 시 null"
+          },
+          "lastSyncedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "webhook 기준 마지막 head 동기화 시각"
+          }
+        }
+      },
+      "ProjectInfrastructureChangeResponse": {
+        "type": "object",
+        "description": "인프라 설정 변경 이력 한 건 (BI-129) — PENDING_APPROVAL·REJECTED를 포함한 모든 상태",
+        "properties": {
+          "changeId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "변경 이력 ID",
+            "example": 12
+          },
+          "action": {
+            "type": "string",
+            "description": "최초 저장인지 변경인지",
+            "enum": ["CREATED", "UPDATED"],
+            "example": "UPDATED"
+          },
+          "status": {
+            "type": "string",
+            "description": "변경 처리 상태",
+            "enum": ["APPLIED", "PENDING_APPROVAL", "REJECTED"],
+            "example": "APPLIED"
+          },
+          "deploymentArchitecture": {
+            "type": "string",
+            "description": "요청 시점 배포 아키텍처",
+            "enum": ["SERVER", "CONTAINER", "SERVERLESS"],
+            "example": "CONTAINER"
+          },
+          "computeTier": {
+            "type": "string",
+            "description": "요청 시점 컴퓨팅 티어",
+            "enum": ["MICRO", "SMALL", "MEDIUM", "LARGE"],
+            "example": "SMALL"
+          },
+          "storageType": {
+            "type": "string",
+            "description": "요청 시점 스토리지 종류",
+            "enum": ["NONE", "OBJECT_STORAGE"],
+            "example": "OBJECT_STORAGE"
+          },
+          "networkAccess": {
+            "type": "string",
+            "description": "요청 시점 네트워크 공개 범위",
+            "enum": ["PUBLIC", "PRIVATE"],
+            "example": "PUBLIC"
+          },
+          "approvalId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "이 변경을 게이트한 Approval ID. 즉시 적용된 변경은 null",
+            "example": 34
+          },
+          "actorUserId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "변경을 요청한 사용자 ID",
+            "example": 7
+          },
+          "createdAt": { "type": "string", "format": "date-time", "description": "변경 요청 시각" },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "APPLIED/REJECTED로 확정된 시각. 대기 중이면 null"
+          }
+        }
+      },
+      "RepositoryHealthResponse": {
+        "type": "object",
+        "description": "프로젝트 저장소 health 응답",
+        "properties": {
+          "health": {
+            "type": "string",
+            "description": "저장소 접근 상태",
+            "enum": [
+              "HEALTHY",
+              "REPOSITORY_NOT_FOUND",
+              "ACCESS_DENIED",
+              "PERMISSION_MISMATCH",
+              "UNKNOWN_ERROR"
+            ],
+            "example": "HEALTHY"
+          }
+        }
+      },
+      "ProjectActivityLogResponse": {
+        "type": "object",
+        "description": "프로젝트 활동 로그",
+        "properties": {
+          "type": { "type": "string", "description": "활동 유형", "example": "PROJECT_CREATED" },
+          "message": {
+            "type": "string",
+            "description": "활동 메시지",
+            "example": "프로젝트가 생성되었습니다: my-landing"
+          },
+          "occurredAt": { "type": "string", "format": "date-time", "description": "활동 발생 시각" }
+        }
+      },
+      "ProjectCloudSummaryResponse": {
+        "type": "object",
+        "description": "Overview 프로젝트 클라우드 연결 요약",
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "description": "CONNECTED 클라우드 연결이 선택되어 있는지 여부. false면 이하 필드는 모두 null"
+          },
+          "cloudConnectionId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "선택된 클라우드 연결 ID. 미설정 시 null"
+          },
+          "provider": {
+            "type": "string",
+            "description": "클라우드 provider",
+            "enum": ["AWS", "GCP"]
+          },
+          "displayName": { "type": "string", "description": "연결 이름" },
+          "region": { "type": "string", "description": "리전" },
+          "status": {
+            "type": "string",
+            "description": "연결 상태",
+            "enum": [
+              "VALIDATED",
+              "VERIFYING",
+              "CHECKING",
+              "CONNECTED",
+              "PERMISSION_MISSING",
+              "BILLING_DISABLED",
+              "REGION_UNSUPPORTED",
+              "INVALID_CREDENTIAL",
+              "UNKNOWN_ERROR"
+            ]
+          },
+          "lastCheckedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "마지막 상태 확인 시각"
+          }
+        }
+      },
+      "ProjectCommitResponse": {
+        "type": "object",
+        "description": "프로젝트 저장소 커밋 정보",
+        "properties": {
+          "sha": { "type": "string", "description": "커밋 SHA", "example": "a1b2c3d4" },
+          "message": {
+            "type": "string",
+            "description": "커밋 메시지",
+            "example": "Add landing page"
+          },
+          "author": { "type": "string", "description": "커밋 작성자", "example": "qeploy" },
+          "committedAt": { "type": "string", "format": "date-time", "description": "커밋 시각" },
+          "relativeTime": {
+            "type": "string",
+            "description": "현재 시각 기준 상대 커밋 시간",
+            "example": "2시간 전"
+          }
+        }
+      },
+      "ProjectDomainSummaryResponse": {
+        "type": "object",
+        "description": "Overview 현재 우선 도메인 요약. 연결된 도메인이 없으면 이 객체 자체가 null입니다.",
+        "properties": {
+          "domainId": { "type": "integer", "format": "int64", "description": "도메인 ID" },
+          "hostname": { "type": "string", "description": "전체 hostname" },
+          "url": { "type": "string", "description": "https://hostname 형식의 접속 URL" },
+          "type": {
+            "type": "string",
+            "description": "도메인 타입",
+            "enum": ["managed_subdomain", "custom_domain", "purchasable_domain"]
+          },
+          "hostingTarget": {
+            "type": "string",
+            "description": "배포 대상",
+            "enum": ["GITHUB_PAGES", "AWS", "GCP"]
+          },
+          "status": {
+            "type": "string",
+            "description": "연결 상태",
+            "enum": ["REQUESTED", "PROVISIONING", "VERIFYING", "CONNECTED", "FAILED"]
+          },
+          "httpsEnforced": { "type": "boolean", "description": "HTTPS 강제 여부" },
+          "certificateStatus": {
+            "type": "string",
+            "description": "TLS 인증서 발급 상태",
+            "enum": ["PENDING", "PROVISIONING", "ACTIVE", "FAILED"]
+          },
+          "certificateExpiresAt": {
+            "type": "string",
+            "format": "date",
+            "description": "인증서 만료일. 미발급 시 null"
+          },
+          "lastCheckedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "마지막 DNS 검증 확인 시각"
+          }
+        }
+      },
+      "ProjectOperationActionResponse": {
+        "type": "object",
+        "description": "Overview 운영 조치. 프로젝트 상태에 따라 각 조치의 즉시 실행 가능 여부와 사유를 안내합니다.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "조치 종류",
+            "enum": [
+              "DEPLOY",
+              "MANAGE_DOMAIN",
+              "MANAGE_CLOUD",
+              "OPEN_AI_AGENT",
+              "PROJECT_SETTINGS",
+              "REMOVE_PROJECT"
+            ],
+            "example": "DEPLOY"
+          },
+          "available": {
+            "type": "boolean",
+            "description": "지금 바로 실행 가능한지 여부. DEPLOY는 저장소 미연결이거나 배포 진행 중이면 false, 그 외 조치는 항상 true"
+          },
+          "reason": {
+            "type": "string",
+            "description": "현재 상태에 대한 설명. available=false인 이유 또는 현재 상태 요약"
+          }
+        }
+      },
+      "ProjectOverviewResponse": {
+        "type": "object",
+        "description": "프로젝트 개요 정보",
+        "properties": {
+          "currentUrl": { "type": "string", "description": "현재 배포 URL. 배포 전이면 null" },
+          "deployStatus": {
+            "type": "string",
+            "description": "현재 배포 상태",
+            "enum": ["DRAFT", "PENDING", "IN_PROGRESS", "PREVIEW_READY", "LIVE", "FAILED"],
+            "example": "DRAFT"
+          },
+          "currentVersion": { "type": "string", "description": "현재 배포 버전" },
+          "repositoryVersion": {
+            "type": "string",
+            "description": "GitHub webhook으로 동기화된 최신 vN 저장소 태그"
+          },
+          "recentChanges": {
+            "type": "array",
+            "description": "Deployment, Change, Approval, Domain의 최근 이벤트 3개",
+            "items": { "$ref": "#/components/schemas/ProjectActivityLogResponse" }
+          },
+          "latestCommit": {
+            "$ref": "#/components/schemas/ProjectCommitResponse",
+            "description": "연결 저장소의 최신 커밋. 저장소가 없으면 null"
+          },
+          "repositoryHealth": {
+            "$ref": "#/components/schemas/RepositoryHealthResponse",
+            "description": "연결 저장소 health 요약"
+          },
+          "domainSummary": {
+            "$ref": "#/components/schemas/ProjectDomainSummaryResponse",
+            "description": "현재 우선 도메인 요약. 연결된 도메인이 없으면 null"
+          },
+          "cloudSummary": {
+            "$ref": "#/components/schemas/ProjectCloudSummaryResponse",
+            "description": "프로젝트에 선택된 클라우드 연결 상태"
+          },
+          "operationActions": {
+            "type": "array",
+            "description": "현재 프로젝트 상태에 따른 운영 조치",
+            "items": { "$ref": "#/components/schemas/ProjectOperationActionResponse" }
+          }
+        }
+      },
+      "ChangeResponse": {
+        "type": "object",
+        "description": "Agent CODE 작업 1건의 코드 변경 결과. CODE 작업이 성공할 때마다 1건씩 생성됩니다.",
+        "properties": {
+          "changeId": { "type": "integer", "format": "int64", "description": "Change ID" },
+          "projectId": { "type": "integer", "format": "int64", "description": "프로젝트 ID" },
+          "conversationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "변경을 발생시킨 대화 ID"
+          },
+          "taskId": { "type": "string", "description": "변경을 생성한 Agent task ID" },
+          "previewSessionId": {
+            "type": "string",
+            "description": "변경 결과를 미리 볼 수 있는 Preview 세션 ID. 세션이 만료/종료됐을 수 있음"
+          },
+          "status": {
+            "type": "string",
+            "description": "변경 상태. PREVIEW_READY: preview까지만 반영(결과 승인 대기 또는 게이트 미발동), MERGED: 결과 승인 후 main에 반영됨, REJECTED: 결과 승인 거절로 main 미반영(preview에만 잔존), DEPLOYED: 실제 배포에 포함됨",
+            "enum": ["PREVIEW_READY", "MERGED", "REJECTED", "DEPLOYED"],
+            "example": "PREVIEW_READY"
+          },
+          "summary": { "type": "string", "description": "변경 내용 요약" },
+          "approvalId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "이 변경을 MERGED/REJECTED로 결정한 RESULT 승인 ID. 결과 승인 게이트가 발동하지 않은(legacy) 변경은 null"
+          },
+          "prNumber": {
+            "type": "integer",
+            "format": "int32",
+            "description": "preview→main 반영 PR 번호. 신규 커밋이 없어 PR 없이 반영 처리된 경우 null"
+          },
+          "mergeCommitSha": {
+            "type": "string",
+            "description": "main 반영 커밋 SHA. MERGED 상태에서만 값이 있음"
+          },
+          "mergedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "main 반영(MERGED로 전이된) 시각"
+          },
+          "createdAt": { "type": "string", "format": "date-time", "description": "생성 시각" },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "마지막 수정 시각(MERGED/REJECTED/DEPLOYED로 전이된 시각 등)"
+          }
+        }
+      },
+      "GithubRepositoryResponse": {
+        "type": "object",
+        "description": "GitHub 저장소 정보",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "description": "owner/repo 형식의 저장소 전체 이름",
+            "example": "qeploy/my-landing-repo"
+          },
+          "name": { "type": "string", "description": "저장소 이름", "example": "my-landing-repo" },
+          "owner": {
+            "type": "string",
+            "description": "저장소 소유자 GitHub 로그인명",
+            "example": "qeploy"
+          },
+          "description": { "type": "string", "description": "GitHub 저장소 설명" },
+          "visibility": {
+            "type": "string",
+            "description": "저장소 공개 범위",
+            "enum": ["PUBLIC", "PRIVATE"],
+            "example": "PUBLIC"
+          },
+          "defaultBranch": { "type": "string", "description": "기본 브랜치명", "example": "main" },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "GitHub 저장소 마지막 수정 시각"
+          }
+        }
+      },
+      "ChangeDiffResponse": {
+        "type": "object",
+        "description": "코드 변경의 git diff",
+        "properties": {
+          "changeId": { "type": "integer", "format": "int64", "description": "Change ID" },
+          "diff": { "type": "string", "description": "unified diff 형식의 변경 내용 텍스트" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "JWT TOKEN": {
+        "type": "http",
+        "name": "JWT TOKEN",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

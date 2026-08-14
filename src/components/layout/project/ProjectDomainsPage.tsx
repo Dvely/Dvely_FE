@@ -143,7 +143,10 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
         ) : searchResult?.results?.length ? (
           <ul className="mt-3 divide-y divide-[#f1f5f9] rounded-lg border border-[#f1f5f9]">
             {searchResult.results.map((item) => (
-              <li key={item.hostname} className="flex items-center justify-between px-3 py-2 text-[12px]">
+              <li
+                key={item.hostname}
+                className="flex items-center justify-between px-3 py-2 text-[12px]"
+              >
                 <span>{item.hostname}</span>
                 <span className="text-[#94a3b8]">
                   {item.available ? '사용 가능' : '사용 불가'}
@@ -158,64 +161,64 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
       <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
         <h2 className="text-[16px] font-bold text-[#0f172a]">연결된 도메인</h2>
         <ul className="mt-4 flex flex-col gap-2">
-          {isLoading
-            ? skeletonItems.map((key) => (
-                <li key={key} className="h-16 animate-pulse rounded-xl bg-[#f8fafc]" />
-              ))
-            : domains.length === 0
-              ? (
-                  <li className="rounded-xl border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-[13px] text-[#94a3b8]">
-                    연결된 도메인이 없습니다.
-                  </li>
-                )
-              : domains.map((domain) => (
-                  <li key={domain.domainId} className="rounded-xl border border-[#f1f5f9] px-4 py-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="text-[13px] font-semibold text-[#0f172a]">{domain.hostname}</p>
-                        <p className="mt-1 text-[11px] text-[#94a3b8]">
-                          {domain.status} · {domain.hostingTarget}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSelectedDomainId((current) =>
-                              current === domain.domainId ? null : domain.domainId,
-                            )
-                          }
-                          className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
-                        >
-                          DNS 가이드
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => verifyMutation.mutate(domain.domainId)}
-                          className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
-                        >
-                          검증 재시도
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => unbindMutation.mutate(domain.domainId)}
-                          className="h-8 rounded-lg border border-[#fecaca] px-3 text-[12px] font-semibold text-[#dc2626]"
-                        >
-                          해제
-                        </button>
-                      </div>
-                    </div>
-                    {selectedDomainId === domain.domainId && guide ? (
-                      <ul className="mt-3 rounded-lg bg-[#f8fafc] p-3 text-[12px] text-[#475569]">
-                        {guide.records.map((record) => (
-                          <li key={`${record.host}-${record.value}`}>
-                            {record.type} {record.host} → {record.value}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </li>
-                ))}
+          {isLoading ? (
+            skeletonItems.map((key) => (
+              <li key={key} className="h-16 animate-pulse rounded-xl bg-[#f8fafc]" />
+            ))
+          ) : domains.length === 0 ? (
+            <li className="rounded-xl border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-[13px] text-[#94a3b8]">
+              연결된 도메인이 없습니다.
+            </li>
+          ) : (
+            domains.map((domain) => (
+              <li key={domain.domainId} className="rounded-xl border border-[#f1f5f9] px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-[13px] font-semibold text-[#0f172a]">{domain.hostname}</p>
+                    <p className="mt-1 text-[11px] text-[#94a3b8]">
+                      {domain.status} · {domain.hostingTarget}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedDomainId((current) =>
+                          current === domain.domainId ? null : domain.domainId,
+                        )
+                      }
+                      className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
+                    >
+                      DNS 가이드
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => verifyMutation.mutate(domain.domainId)}
+                      className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
+                    >
+                      검증 재시도
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => unbindMutation.mutate(domain.domainId)}
+                      className="h-8 rounded-lg border border-[#fecaca] px-3 text-[12px] font-semibold text-[#dc2626]"
+                    >
+                      해제
+                    </button>
+                  </div>
+                </div>
+                {selectedDomainId === domain.domainId && guide ? (
+                  <ul className="mt-3 rounded-lg bg-[#f8fafc] p-3 text-[12px] text-[#475569]">
+                    {guide.records.map((record) => (
+                      <li key={`${record.host}-${record.value}`}>
+                        {record.type} {record.host} → {record.value}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </li>
+            ))
+          )}
         </ul>
       </section>
     </div>

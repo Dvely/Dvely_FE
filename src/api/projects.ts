@@ -244,7 +244,10 @@ async function getProjectChatSettings(projectId: number) {
 }
 
 /** 프로젝트 Chat 승인 정책 수정 API PATCH */
-async function patchProjectChatSettings(projectId: number, params: PatchProjectChatSettingsReqType) {
+async function patchProjectChatSettings(
+  projectId: number,
+  params: PatchProjectChatSettingsReqType,
+) {
   const payload = patchProjectChatSettingsReqSchema.parse(params);
 
   return Http.instance
@@ -259,7 +262,9 @@ async function patchProjectChatSettings(projectId: number, params: PatchProjectC
 /** 프로젝트 Infrastructure 설정 조회 API GET */
 async function getProjectInfrastructureSettings(projectId: number) {
   return Http.instance
-    .get<GetProjectInfrastructureSettingsResType>(`${endpoint}/${projectId}/settings/infrastructure`)
+    .get<GetProjectInfrastructureSettingsResType>(
+      `${endpoint}/${projectId}/settings/infrastructure`,
+    )
     .then((response) => {
       const data = succesResponse<GetProjectInfrastructureSettingsResType>(response);
       return getProjectInfrastructureSettingsResSchema.parse(data);

@@ -142,13 +142,20 @@ function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogProps) {
 
           <div className="mt-2.5 flex items-center justify-between gap-2 px-1">
             <p className="text-[12px] text-[#94a3b8]">
-              {trimmedName.length < 2 ? '2자 이상 입력해 주세요.' : '이 이름으로 프로젝트가 생성됩니다.'}
+              {trimmedName.length < 2
+                ? '2자 이상 입력해 주세요.'
+                : '이 이름으로 프로젝트가 생성됩니다.'}
             </p>
-            <span className="shrink-0 text-[12px] tabular-nums text-[#cbd5e1]">{name.length}/50</span>
+            <span className="shrink-0 text-[12px] tabular-nums text-[#cbd5e1]">
+              {name.length}/50
+            </span>
           </div>
 
           {errorMessage ? (
-            <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-[13px] text-red-600" role="alert">
+            <p
+              className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-[13px] text-red-600"
+              role="alert"
+            >
               {errorMessage}
             </p>
           ) : null}

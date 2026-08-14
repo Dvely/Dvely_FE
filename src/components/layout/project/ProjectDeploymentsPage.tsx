@@ -65,7 +65,9 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
   const analyzeMutation = useMutation({
     mutationFn: postDeploymentFailureAnalysis,
     onSuccess: (_, deploymentId) => {
-      void queryClient.invalidateQueries({ queryKey: ['deployment-failure-analysis', deploymentId] });
+      void queryClient.invalidateQueries({
+        queryKey: ['deployment-failure-analysis', deploymentId],
+      });
     },
   });
 
@@ -82,7 +84,9 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
     <div className="flex flex-col gap-5">
       <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
         <h2 className="text-[16px] font-bold text-[#0f172a]">배포 요청</h2>
-        <p className="mt-1 text-[13px] text-[#64748b]">최신 커밋 또는 선택한 버전으로 배포합니다.</p>
+        <p className="mt-1 text-[13px] text-[#64748b]">
+          최신 커밋 또는 선택한 버전으로 배포합니다.
+        </p>
         {formError ? <p className="mt-3 text-[12px] text-[#dc2626]">{formError}</p> : null}
         <div className="mt-4 flex flex-wrap items-end gap-2">
           <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-[12px] font-medium text-[#475569]">
@@ -114,75 +118,75 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
       <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
         <h2 className="text-[16px] font-bold text-[#0f172a]">배포 이력</h2>
         <ul className="mt-4 flex flex-col gap-2">
-          {isLoading
-            ? skeletonItems.map((key) => (
-                <li key={key} className="h-16 animate-pulse rounded-xl bg-[#f8fafc]" />
-              ))
-            : deployments.length === 0
-              ? (
-                  <li className="rounded-xl border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-[13px] text-[#94a3b8]">
-                    배포 이력이 없습니다.
-                  </li>
-                )
-              : deployments.map((item) => {
-                  const isSelected = selectedHistoryId === item.historyId;
+          {isLoading ? (
+            skeletonItems.map((key) => (
+              <li key={key} className="h-16 animate-pulse rounded-xl bg-[#f8fafc]" />
+            ))
+          ) : deployments.length === 0 ? (
+            <li className="rounded-xl border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-[13px] text-[#94a3b8]">
+              배포 이력이 없습니다.
+            </li>
+          ) : (
+            deployments.map((item) => {
+              const isSelected = selectedHistoryId === item.historyId;
 
-                  return (
-                    <li key={item.historyId} className="rounded-xl border border-[#f1f5f9]">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSelectedHistoryId((current) =>
-                            current === item.historyId ? null : item.historyId,
-                          )
-                        }
-                        className="flex w-full items-center justify-between px-4 py-3 text-left"
-                      >
-                        <div>
-                          <p className="text-[13px] font-semibold text-[#0f172a]">
-                            {item.versionLabel || item.deployTargetType}
-                          </p>
-                          <p className="mt-1 text-[11px] text-[#94a3b8]">
-                            {item.status} · {item.triggeredAt}
-                          </p>
-                        </div>
-                        <span className="text-[12px] text-[#64748b]">
-                          {item.deployedUrl || 'URL 없음'}
-                        </span>
-                      </button>
-                      {isSelected ? (
-                        <div className="border-t border-[#f1f5f9] px-4 py-3">
-                          <div className="mb-3 flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => retryMutation.mutate(item.historyId)}
-                              className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
-                            >
-                              재시도
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => analyzeMutation.mutate(item.historyId)}
-                              className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
-                            >
-                              실패 분석
-                            </button>
-                          </div>
-                          {analysis?.summary ? (
-                            <p className="mb-2 text-[12px] text-[#7c3aed]">{analysis.summary}</p>
-                          ) : null}
-                          {isLogsLoading ? (
-                            <div className="h-24 animate-pulse rounded bg-[#f8fafc]" />
-                          ) : (
-                            <pre className="max-h-56 overflow-auto rounded-lg bg-[#0f172a] p-3 text-[11px] text-[#e2e8f0]">
-                              {logs?.logText || '로그가 없습니다.'}
-                            </pre>
-                          )}
-                        </div>
+              return (
+                <li key={item.historyId} className="rounded-xl border border-[#f1f5f9]">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedHistoryId((current) =>
+                        current === item.historyId ? null : item.historyId,
+                      )
+                    }
+                    className="flex w-full items-center justify-between px-4 py-3 text-left"
+                  >
+                    <div>
+                      <p className="text-[13px] font-semibold text-[#0f172a]">
+                        {item.versionLabel || item.deployTargetType}
+                      </p>
+                      <p className="mt-1 text-[11px] text-[#94a3b8]">
+                        {item.status} · {item.triggeredAt}
+                      </p>
+                    </div>
+                    <span className="text-[12px] text-[#64748b]">
+                      {item.deployedUrl || 'URL 없음'}
+                    </span>
+                  </button>
+                  {isSelected ? (
+                    <div className="border-t border-[#f1f5f9] px-4 py-3">
+                      <div className="mb-3 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => retryMutation.mutate(item.historyId)}
+                          className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
+                        >
+                          재시도
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => analyzeMutation.mutate(item.historyId)}
+                          className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
+                        >
+                          실패 분석
+                        </button>
+                      </div>
+                      {analysis?.summary ? (
+                        <p className="mb-2 text-[12px] text-[#7c3aed]">{analysis.summary}</p>
                       ) : null}
-                    </li>
-                  );
-                })}
+                      {isLogsLoading ? (
+                        <div className="h-24 animate-pulse rounded bg-[#f8fafc]" />
+                      ) : (
+                        <pre className="max-h-56 overflow-auto rounded-lg bg-[#0f172a] p-3 text-[11px] text-[#e2e8f0]">
+                          {logs?.logText || '로그가 없습니다.'}
+                        </pre>
+                      )}
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })
+          )}
         </ul>
       </section>
     </div>

@@ -76,12 +76,16 @@ type PollAgentTaskOptions = {
   intervalMs?: number;
   maxAttempts?: number;
   signal?: AbortSignal;
+  /** true면 폴링을 종료한다. 없으면 종료·입력/승인 대기 상태에서 멈춘다. */
+  until?: (task: GetAgentTaskResType) => boolean;
 };
 
 /** 에이전트 태스크가 종료·입력/승인 대기 상태가 될 때까지 폴링한다. */
 async function pollAgentTask(taskId: string, options: PollAgentTaskOptions = {}) {
   const intervalMs = options.intervalMs ?? DEFAULT_POLL_INTERVAL_MS;
   const maxAttempts = options.maxAttempts ?? DEFAULT_MAX_POLL_ATTEMPTS;
+  const isComplete =
+    options.until ?? ((task: GetAgentTaskResType) => SETTLED_AGENT_TASK_STATUSES.has(task.status));
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     if (options.signal?.aborted) {
@@ -89,7 +93,7 @@ async function pollAgentTask(taskId: string, options: PollAgentTaskOptions = {})
     }
 
     const task = await getAgentTask(taskId);
-    if (SETTLED_AGENT_TASK_STATUSES.has(task.status)) {
+    if (isComplete(task)) {
       return task;
     }
 
@@ -169,10 +173,7 @@ function parseSseChunk(chunk: string): AgentTaskEvent | null {
 }
 
 /** 에이전트 태스크 이벤트 SSE 스트림. envelope 없이 text/event-stream을 직접 수신한다. */
-async function openAgentTaskEventStream(
-  taskId: string,
-  options: OpenAgentTaskEventStreamOptions,
-) {
+async function openAgentTaskEventStream(taskId: string, options: OpenAgentTaskEventStreamOptions) {
   const params = getAgentTaskEventStreamParamsSchema.parse({
     taskId,
     afterEventId: options.afterEventId ?? 0,

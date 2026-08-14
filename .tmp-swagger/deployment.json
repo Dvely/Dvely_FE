@@ -1,0 +1,552 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Qeploy API",
+    "description": "Qeploy backend API — natural-language driven web app generation, GitHub Pages/BYOC deployment, domain binding, and cloud infrastructure operation.\n\n### Common response envelope\nEvery response (except SSE, redirects, GitHub webhook callback, and the preview proxy) is wrapped as:\n```json\n{ \"status\": 200, \"code\": \"SUCCESS\", \"message\": \"...\", \"data\": { } }\n```\n`data` is omitted (not `null`) on responses with no body (e.g. 204). Frontend clients should unwrap `data` after checking `response.ok`; see `docs/FRONTEND_API_GUIDE.md` for the reference `http.ts` implementation.\n\n### Error codes\nErrors use the same envelope with `data` omitted. `code` is one of: `BAD_REQUEST`(400) · `UNAUTHORIZED`(401) · `INVALID_TOKEN`(401) · `EXPIRED_REFRESH_TOKEN`(401) · `REVOKED_REFRESH_TOKEN`(401) · `FORBIDDEN`(403) · `GITHUB_APP_NOT_INSTALLED`(403) · `NOT_FOUND`(404) · `METHOD_NOT_ALLOWED`(405) · `CONFLICT`(409) · `INTERNAL_SERVER_ERROR`(500). `message` carries the specific, human-readable detail — treat `code` as the stable machine-readable discriminator.\n\n### Authentication\nBearer JWT (see the **JWT TOKEN** security scheme below). Obtain a token via the GitHub OAuth flow (`Auth` group), then send `Authorization: Bearer {accessToken}` on every authenticated request. Access tokens expire in 1 hour; use `POST /api/v1/auth/refresh` (rotation — both tokens are replaced) before that. A small set of endpoints are unauthenticated by design: GitHub OAuth/App URL and callback endpoints, `POST /api/v1/auth/refresh`, and `POST /api/v1/webhook/github` (GitHub-signed, not JWT).\n",
+    "version": "0.0.1"
+  },
+  "servers": [{ "url": "/" }],
+  "security": [{ "JWT TOKEN": [] }],
+  "tags": [
+    {
+      "name": "Deployment",
+      "description": "배포 버전 관리 API. 프로젝트의 merge 기반 버전 목록 조회 및 배포 이력을 제공합니다."
+    }
+  ],
+  "paths": {
+    "/api/v1/projects/{projectId}/deployments": {
+      "get": {
+        "tags": ["Deployment"],
+        "summary": "배포 이력 목록 조회",
+        "description": "프로젝트에서 실행된 모든 배포 이력을 최신순으로 반환합니다. 성공/실패 여부와 관계없이 배포를 요청한 모든 이력을 포함합니다.",
+        "operationId": "getDeploymentHistories",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "조회할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/DeploymentHistoryResponse" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Deployment"],
+        "summary": "GitHub Pages 배포 요청",
+        "description": "영속 Deployment Job을 생성하고 즉시 PENDING 상태로 반환합니다. worker가 프로젝트를 GitHub Pages로 배포합니다. deployTargetType이 LATEST이면 default branch의 최신 커밋 기준으로 배포하고, VERSION이면 versionName에 지정한 git tag 기준으로 배포합니다.",
+        "operationId": "deploy",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "배포할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/DeployRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/DeployResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/deployments/{deploymentId}/retry": {
+      "post": {
+        "tags": ["Deployment"],
+        "summary": "배포 재시도",
+        "description": "실패(FAILED)한 배포를 새 배포 이력으로 재큐잉합니다(기존 이력을 되돌리지 않음 — 실패 기록은 감사 목적으로 보존). 대상과 동일한 deployTargetType으로, VERSION이면 동일 버전으로 재시도합니다. 요청 본문은 없습니다. 대상이 FAILED가 아니면 409를 반환합니다.",
+        "operationId": "retryDeployment",
+        "parameters": [
+          {
+            "name": "deploymentId",
+            "in": "path",
+            "description": "재시도할 배포 이력 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": { "*/*": { "schema": { "$ref": "#/components/schemas/DeployResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/deployments/{deploymentId}/failure-analysis": {
+      "get": {
+        "tags": ["Deployment"],
+        "summary": "배포 실패 원인 분석 조회",
+        "description": "저장된 분석 결과만 반환합니다(부작용 없음, LLM/GitHub 호출 없음). 아직 분석을 실행한 적이 없으면 404를 반환하며, 이 경우 실행 API(POST)를 호출해야 합니다.",
+        "operationId": "getFailureAnalysis",
+        "parameters": [
+          {
+            "name": "deploymentId",
+            "in": "path",
+            "description": "조회할 배포 이력 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/DeploymentFailureAnalysisResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Deployment"],
+        "summary": "배포 실패 원인 분석 실행",
+        "description": "실패(FAILED)한 배포의 GitHub Actions 로그를 수집해 원인을 분석합니다. 이미 저장된 분석이 있으면 LLM을 다시 호출하지 않고 그대로 반환합니다(멱등). 신규 분석은 로그 수집과 LLM 호출로 인해 응답까지 약 15~30초가 걸릴 수 있습니다. 대상이 FAILED가 아니면 409를 반환합니다.",
+        "operationId": "analyzeFailure",
+        "parameters": [
+          {
+            "name": "deploymentId",
+            "in": "path",
+            "description": "분석할 배포 이력 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/DeploymentFailureAnalysisResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/versions/{versionId}": {
+      "get": {
+        "tags": ["Deployment"],
+        "summary": "버전 상세 조회",
+        "description": "특정 버전의 상세 정보를 반환합니다. 버전 목록에서 항목을 선택했을 때 merge 유저, PR 번호, 배포 URL 등 상세 내용을 보여주는 화면에서 사용합니다.",
+        "operationId": "getVersionDetail",
+        "parameters": [
+          {
+            "name": "versionId",
+            "in": "path",
+            "description": "조회할 버전 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/VersionDetailResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/versions": {
+      "get": {
+        "tags": ["Deployment"],
+        "summary": "프로젝트 버전 목록 조회",
+        "description": "프로젝트에 연결된 저장소의 merge 커밋을 기준으로 생성된 버전 목록을 반환합니다. 배포 히스토리 화면에서 버전별 배포 상태와 커밋 정보를 보여줄 때 사용합니다.",
+        "operationId": "getVersions",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "버전 목록을 조회할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/VersionResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/deployment-candidates": {
+      "get": {
+        "tags": ["Deployment"],
+        "summary": "배포 가능 후보 목록 조회",
+        "description": "프로젝트의 배포 이력 중 성공(LIVE, PREVIEW_READY) 상태인 버전만 추려 반환합니다. 재배포 또는 롤백 대상 선택 화면에서 배포 가능한 후보 목록을 보여줄 때 사용합니다.",
+        "operationId": "getDeploymentCandidates",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "후보 목록을 조회할 프로젝트 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/DeploymentCandidateResponse" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deployments/{deploymentId}": {
+      "get": {
+        "tags": ["Deployment"],
+        "summary": "배포 상태 조회",
+        "description": "특정 배포의 현재 상태를 반환합니다. status가 IN_PROGRESS인 경우 GitHub Actions의 실시간 빌드 상태(buildStatus)도 함께 반환합니다. buildStatus: queued(대기 중) | in_progress(빌드 중) | completed(빌드 완료). status가 LIVE 또는 FAILED이면 buildStatus는 null입니다.",
+        "operationId": "getDeploymentStatus",
+        "parameters": [
+          {
+            "name": "deploymentId",
+            "in": "path",
+            "description": "조회할 배포 이력 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/DeploymentStatusResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deployments/{deploymentId}/logs": {
+      "get": {
+        "tags": ["Deployment"],
+        "summary": "배포 로그 조회",
+        "description": "특정 배포의 GitHub Actions 빌드 로그를 반환합니다. jobs 필드에는 각 Job의 step별 실행 상태가 포함됩니다. logText에는 첫 번째 Job의 전체 로그 텍스트가 포함됩니다. workflowRunId가 null인 경우 run_id가 아직 기록되지 않은 상태입니다.",
+        "operationId": "getDeploymentLogs",
+        "parameters": [
+          {
+            "name": "deploymentId",
+            "in": "path",
+            "description": "조회할 배포 이력 ID",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": { "schema": { "$ref": "#/components/schemas/DeploymentLogsResponse" } }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DeployRequest": {
+        "type": "object",
+        "description": "배포 요청",
+        "properties": {
+          "deployTargetType": {
+            "type": "string",
+            "description": "배포 기준 타입. LATEST: 최신 작업(default branch HEAD), VERSION: 특정 git tag 기준",
+            "enum": ["LATEST", "VERSION"]
+          },
+          "versionName": {
+            "type": "string",
+            "description": "배포할 버전명 (git tag). deployTargetType이 VERSION일 때 필수입니다. 예: v1.0.0"
+          }
+        },
+        "required": ["deployTargetType"]
+      },
+      "DeployResponse": {
+        "type": "object",
+        "description": "배포 요청 결과",
+        "properties": {
+          "deploymentId": { "type": "integer", "format": "int64", "description": "배포 ID" },
+          "projectId": { "type": "integer", "format": "int64", "description": "프로젝트 ID" },
+          "deployTargetType": {
+            "type": "string",
+            "description": "배포 기준 타입 (LATEST, VERSION)"
+          },
+          "versionName": {
+            "type": "string",
+            "description": "요청한 버전명. LATEST는 worker가 tag를 확정하기 전까지 null"
+          },
+          "status": {
+            "type": "string",
+            "description": "배포 진행 상태 (PENDING, IN_PROGRESS, LIVE, FAILED)"
+          },
+          "pagesUrl": {
+            "type": "string",
+            "description": "GitHub Pages URL. worker가 배포 준비를 마치기 전은 null"
+          },
+          "createdAt": { "type": "string", "format": "date-time", "description": "배포 요청 시각" }
+        }
+      },
+      "DeploymentFailureAnalysisResponse": {
+        "type": "object",
+        "description": "배포 실패 원인 분석 결과",
+        "properties": {
+          "deploymentId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "분석 대상 배포 이력 ID"
+          },
+          "summary": {
+            "type": "string",
+            "description": "비개발자용 실패 원인 요약 (한국어, 3문장 이내)"
+          },
+          "logExcerpt": { "type": "string", "description": "원인 로그 발췌 (최대 12,000자)" },
+          "suggestedFix": { "type": "string", "description": "가장 가능성 높은 수정 방법 1개" },
+          "analysisSource": {
+            "type": "string",
+            "description": "분석 방식 (LLM | RULE_BASED). LLM 장애 시 RULE_BASED로 자동 대체됩니다."
+          },
+          "analyzedAt": { "type": "string", "format": "date-time", "description": "분석 완료 시각" }
+        }
+      },
+      "VersionDetailResponse": {
+        "type": "object",
+        "description": "배포 버전 상세 정보",
+        "properties": {
+          "versionId": { "type": "integer", "format": "int64", "description": "버전 ID" },
+          "versionName": { "type": "string", "description": "버전명 (예: v1.0.0)" },
+          "commitSha": { "type": "string", "description": "기준 merge 커밋 SHA" },
+          "title": { "type": "string", "description": "PR 제목 또는 merge 커밋 메시지" },
+          "description": { "type": "string", "description": "PR 본문 또는 커밋 메시지 본문" },
+          "deployStatus": {
+            "type": "string",
+            "description": "배포 상태 (DRAFT, PREVIEW_READY, LIVE, FAILED)"
+          },
+          "deployedUrl": { "type": "string", "description": "배포된 서비스 URL. 배포 전이면 null" },
+          "mergedBy": { "type": "string", "description": "merge한 유저의 GitHub 로그인명" },
+          "mergedByAvatarUrl": {
+            "type": "string",
+            "description": "merge한 유저의 GitHub 프로필 이미지 URL"
+          },
+          "prNumber": {
+            "type": "integer",
+            "format": "int32",
+            "description": "연결된 PR 번호. PR 없이 직접 merge된 경우 null"
+          },
+          "mergedAt": { "type": "string", "format": "date-time", "description": "merge 시각" }
+        }
+      },
+      "VersionResponse": {
+        "type": "object",
+        "description": "프로젝트 배포 버전 정보",
+        "properties": {
+          "versionId": { "type": "integer", "format": "int64", "description": "버전 ID" },
+          "versionName": { "type": "string", "description": "버전명 (예: v1.0.0)" },
+          "commitSha": { "type": "string", "description": "기준 merge 커밋 SHA" },
+          "title": { "type": "string", "description": "PR 제목 또는 merge 커밋 메시지" },
+          "deployStatus": {
+            "type": "string",
+            "description": "배포 상태 (DRAFT, PREVIEW_READY, LIVE, FAILED)"
+          },
+          "mergedAt": { "type": "string", "format": "date-time", "description": "merge 시각" }
+        }
+      },
+      "DeploymentHistoryResponse": {
+        "type": "object",
+        "description": "배포 이력 응답",
+        "properties": {
+          "historyId": { "type": "integer", "format": "int64", "description": "배포 이력 ID" },
+          "projectId": { "type": "integer", "format": "int64", "description": "프로젝트 ID" },
+          "deployTargetType": {
+            "type": "string",
+            "description": "배포 대상 유형 (LATEST | VERSION)"
+          },
+          "versionLabel": {
+            "type": "string",
+            "description": "버전 라벨. PENDING LATEST 요청만 worker 확정 전 null 가능"
+          },
+          "deployedUrl": { "type": "string", "description": "배포된 GitHub Pages URL" },
+          "status": {
+            "type": "string",
+            "description": "배포 상태 (PENDING | IN_PROGRESS | LIVE | FAILED)"
+          },
+          "triggeredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "배포 트리거 시각"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "상태 마지막 변경 시각"
+          },
+          "retriedFromHistoryId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "재시도로 생성된 이력인 경우 원본 배포 이력 ID. 재시도가 아니면 null"
+          }
+        }
+      },
+      "DeploymentCandidateResponse": {
+        "type": "object",
+        "description": "배포 가능 후보 버전 정보. 과거 배포 이력 중 성공(LIVE, PREVIEW_READY)한 버전만 포함됩니다.",
+        "properties": {
+          "versionId": { "type": "integer", "format": "int64", "description": "버전 ID" },
+          "versionName": { "type": "string", "description": "버전명 (예: v1.0.0)" },
+          "commitSha": { "type": "string", "description": "기준 merge 커밋 SHA" },
+          "title": { "type": "string", "description": "PR 제목 또는 merge 커밋 메시지" },
+          "deployStatus": {
+            "type": "string",
+            "description": "마지막 성공 배포 상태 (LIVE, PREVIEW_READY)"
+          },
+          "deployedUrl": { "type": "string", "description": "마지막으로 배포된 서비스 URL" },
+          "deployedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "마지막 성공 배포 시각"
+          }
+        }
+      },
+      "DeploymentStatusResponse": {
+        "type": "object",
+        "description": "배포 상태 응답",
+        "properties": {
+          "historyId": { "type": "integer", "format": "int64", "description": "배포 이력 ID" },
+          "projectId": { "type": "integer", "format": "int64", "description": "프로젝트 ID" },
+          "deployTargetType": {
+            "type": "string",
+            "description": "배포 대상 유형 (LATEST | VERSION)"
+          },
+          "versionLabel": { "type": "string", "description": "버전 라벨" },
+          "deployedUrl": { "type": "string", "description": "배포 URL" },
+          "status": {
+            "type": "string",
+            "description": "배포 상태 (PENDING | IN_PROGRESS | LIVE | FAILED)"
+          },
+          "buildStatus": {
+            "type": "string",
+            "description": "GitHub Actions 빌드 상태. IN_PROGRESS일 때만 유효. queued(대기) | in_progress(빌드 중) | completed(빌드 완료)"
+          },
+          "buildConclusion": {
+            "type": "string",
+            "description": "GitHub Actions 빌드 결론. buildStatus가 completed일 때만 유효. success | failure | cancelled | null"
+          },
+          "triggeredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "배포 트리거 시각"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "상태 마지막 변경 시각"
+          }
+        }
+      },
+      "DeploymentLogsResponse": {
+        "type": "object",
+        "description": "배포 로그 응답",
+        "properties": {
+          "historyId": { "type": "integer", "format": "int64", "description": "배포 이력 ID" },
+          "workflowRunId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "GitHub Actions workflow run ID. null이면 run_id가 아직 기록되지 않은 상태"
+          },
+          "jobs": {
+            "type": "array",
+            "description": "Job 목록. 각 Job의 step별 실행 상태 포함",
+            "items": { "$ref": "#/components/schemas/JobResponse" }
+          },
+          "logText": {
+            "type": "string",
+            "description": "첫 번째 Job의 전체 로그 텍스트. 각 줄은 타임스탬프로 시작"
+          }
+        }
+      },
+      "JobResponse": {
+        "type": "object",
+        "description": "GitHub Actions Job 정보",
+        "properties": {
+          "jobId": { "type": "integer", "format": "int64", "description": "Job ID" },
+          "name": { "type": "string", "description": "Job 이름" },
+          "status": {
+            "type": "string",
+            "description": "실행 상태: queued | in_progress | completed"
+          },
+          "conclusion": {
+            "type": "string",
+            "description": "완료 결과: success | failure | cancelled | null(미완료)"
+          },
+          "steps": {
+            "type": "array",
+            "description": "Step 목록",
+            "items": { "$ref": "#/components/schemas/StepResponse" }
+          }
+        }
+      },
+      "StepResponse": {
+        "type": "object",
+        "description": "GitHub Actions Step 정보",
+        "properties": {
+          "number": { "type": "integer", "format": "int32", "description": "Step 번호" },
+          "name": { "type": "string", "description": "Step 이름" },
+          "status": {
+            "type": "string",
+            "description": "실행 상태: queued | in_progress | completed"
+          },
+          "conclusion": {
+            "type": "string",
+            "description": "완료 결과: success | failure | cancelled | null(미완료)"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "JWT TOKEN": {
+        "type": "http",
+        "name": "JWT TOKEN",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

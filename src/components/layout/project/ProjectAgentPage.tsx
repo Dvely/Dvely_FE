@@ -132,28 +132,32 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     [conversations],
   );
 
+  const resolvedConversationId = isNewConversation
+    ? activeConversationId
+    : (activeConversationId ?? activeConversations[0]?.conversationId ?? null);
+
   const previewPhase = useMemo(() => {
     void previewRevision;
 
-    if (isNewConversation || activeConversationId === null) {
+    if (isNewConversation || resolvedConversationId === null) {
       return deriveAgentPreviewPhase([]);
     }
 
-    return deriveAgentPreviewPhase(readSessionMessages(activeConversationId));
-  }, [activeConversationId, isNewConversation, previewRevision]);
+    return deriveAgentPreviewPhase(readSessionMessages(resolvedConversationId));
+  }, [resolvedConversationId, isNewConversation, previewRevision]);
 
   const previewUrl = useMemo(() => {
     void previewRevision;
 
-    if (isNewConversation || activeConversationId === null) {
+    if (isNewConversation || resolvedConversationId === null) {
       return deriveAgentPreviewUrl([]);
     }
 
-    return deriveAgentPreviewUrl(readSessionMessages(activeConversationId));
-  }, [activeConversationId, isNewConversation, previewRevision]);
+    return deriveAgentPreviewUrl(readSessionMessages(resolvedConversationId));
+  }, [resolvedConversationId, isNewConversation, previewRevision]);
 
   const handleConversationActivity = (conversationId: number) => {
-    if (conversationId === activeConversationId) {
+    if (conversationId === resolvedConversationId) {
       setPreviewRevision((revision) => revision + 1);
     }
   };
@@ -243,7 +247,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             conversations={activeConversations}
             isLoading={isConversationsLoading}
             deletingConversationId={deletingConversationId}
-            activeConversationId={activeConversationId}
+            activeConversationId={resolvedConversationId}
             onSelectChat={(conversationId) => {
               setIsNewConversation(false);
               setActiveConversationId(conversationId);
@@ -263,10 +267,10 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           />
         ) : (
           <AgentConversationPanel
-            key={String(activeConversationId ?? 'new')}
+            key={String(resolvedConversationId ?? 'new')}
             projectId={projectId}
             projectName={formatProjectDisplayName(project.name, project.projectId)}
-            conversationId={activeConversationId}
+            conversationId={resolvedConversationId}
             isNewConversation={isNewConversation}
             initialPrompt={isNewConversation ? homePrompt : null}
             onConversationCreated={(conversationId) => {

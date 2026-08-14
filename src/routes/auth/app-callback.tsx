@@ -11,7 +11,8 @@ type AppCallbackSearch = {
 
 export const Route = createFileRoute('/auth/app-callback')({
   validateSearch: (search: Record<string, unknown>): AppCallbackSearch => ({
-    installation_id: typeof search.installation_id === 'string' ? search.installation_id : undefined,
+    installation_id:
+      typeof search.installation_id === 'string' ? search.installation_id : undefined,
     setup_action: typeof search.setup_action === 'string' ? search.setup_action : undefined,
     state: typeof search.state === 'string' ? search.state : undefined,
   }),

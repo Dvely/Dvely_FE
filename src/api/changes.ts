@@ -60,9 +60,4 @@ function useProjectChangeListQuery(queryKey: unknown, projectId: number) {
   });
 }
 
-export {
-  getProjectChangeList,
-  getChangeDetail,
-  getChangeDiff,
-  useProjectChangeListQuery,
-};
+export { getProjectChangeList, getChangeDetail, getChangeDiff, useProjectChangeListQuery };
