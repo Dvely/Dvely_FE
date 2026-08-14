@@ -188,10 +188,11 @@ async function getProjectRepositoryHealth(projectId: number) {
 
 /** 프로젝트 GitHub 저장소 연결 API POST */
 async function postProjectRepository(projectId: number, params: PostProjectRepositoryReqType) {
+  const { projectId: id } = getProjectDetailParamsSchema.parse({ projectId });
   const payload = postProjectRepositoryReqSchema.parse(params);
 
   return Http.instance
-    .post<ApiResponse<PostProjectRepositoryResType>>(`${endpoint}/${projectId}/repository`, payload)
+    .post<ApiResponse<PostProjectRepositoryResType>>(`${endpoint}/${id}/repository`, payload)
     .then((response) => {
       const body = succesResponse<ApiResponse<PostProjectRepositoryResType>>(response);
       return postProjectRepositoryResSchema.parse(body.data);
@@ -226,8 +227,10 @@ async function deleteProject(params: DeleteProjectParamsType) {
 
 /** 프로젝트 GitHub 저장소 연결 해제 API DELETE */
 async function deleteProjectRepository(projectId: number) {
+  const { projectId: id } = getProjectDetailParamsSchema.parse({ projectId });
+
   return Http.instance
-    .delete(`${endpoint}/${projectId}/repository`)
+    .delete(`${endpoint}/${id}/repository`)
     .then(succesResponse)
     .catch(errorResponse());
 }
@@ -380,10 +383,12 @@ async function deleteProjectCostBudget(projectId: number) {
 /** 프로젝트 저장소 설정 조회 API GET */
 async function getProjectRepositorySettings(projectId: number) {
   return Http.instance
-    .get<GetProjectRepositorySettingsResType>(`${endpoint}/${projectId}/settings/repository`)
+    .get<ApiResponse<GetProjectRepositorySettingsResType>>(
+      `${endpoint}/${projectId}/settings/repository`,
+    )
     .then((response) => {
-      const data = succesResponse<GetProjectRepositorySettingsResType>(response);
-      return getProjectRepositorySettingsResSchema.parse(data);
+      const body = succesResponse<ApiResponse<GetProjectRepositorySettingsResType>>(response);
+      return getProjectRepositorySettingsResSchema.parse(body.data);
     })
     .catch(errorResponse());
 }

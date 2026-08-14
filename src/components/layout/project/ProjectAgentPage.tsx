@@ -16,8 +16,19 @@ import {
   getConversationMessageList,
   useProjectConversationListQuery,
 } from '@/api/chat';
-import { postProjectRepository, useProjectRepositorySettingsQuery } from '@/api/projects';
-import type { GetProjectDetailResType, GithubRepository } from '@/types/projects.type';
+import {
+  deleteProjectRepository,
+  postProjectRepository,
+  useProjectRepositorySettingsQuery,
+} from '@/api/projects';
+import {
+  postProjectRepositoryReqSchema,
+  type GetProjectDetailResType,
+  type GithubRepository,
+  type PostProjectRepositoryCreateFormType,
+  type PostProjectRepositoryReqType,
+} from '@/types/projects.type';
+import { toGithubRepositoryFromBinding } from '@/components/layout/project/githubRepository.utils';
 import {
   AGENT_CHAT_QUERY_KEY,
   consumePendingHomeAgentPrompt,
@@ -58,6 +69,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [isNewConversation, setIsNewConversation] = useState(() => homePrompt !== null);
   const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
   const [connectedRepo, setConnectedRepo] = useState<GithubRepository | null>(null);
+  const [hasDisconnectedRepository, setHasDisconnectedRepository] = useState(false);
   const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
   const [previewRevision, setPreviewRevision] = useState(0);
   const [pipelineRun, setPipelineRun] = useState<PipelineRun>(() => createIdlePipelineRun());
@@ -76,26 +88,59 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     projectId,
   );
   const connectRepositoryMutation = useMutation({
-    mutationFn: (repository: GithubRepository) =>
-      postProjectRepository(projectId, {
-        repositoryMode: 'existing',
-        repositoryName: repository.name,
-        repositoryFullName: repository.fullName,
-        repositoryVisibility: repository.visibility,
-      }),
+    mutationFn: (params: PostProjectRepositoryReqType) => postProjectRepository(projectId, params),
+    onSuccess: async (result) => {
+      setConnectedRepo(toGithubRepositoryFromBinding(result));
+      setHasDisconnectedRepository(false);
+      await queryClient.invalidateQueries({ queryKey: ['project-repository-settings'] });
+      await queryClient.invalidateQueries({ queryKey: ['github-repository-list'] });
+    },
+  });
+  const disconnectRepositoryMutation = useMutation({
+    mutationFn: () => deleteProjectRepository(projectId),
     onSuccess: async () => {
+      setConnectedRepo(null);
+      setHasDisconnectedRepository(true);
       await queryClient.invalidateQueries({ queryKey: ['project-repository-settings'] });
     },
   });
 
-  const connectedRepoLabel = connectedRepo?.fullName ?? repositorySettings?.repositoryFullName;
+  const connectedRepoLabel = hasDisconnectedRepository
+    ? null
+    : (connectedRepo?.fullName ?? repositorySettings?.repositoryFullName);
+  const isRepositoryConnected =
+    !hasDisconnectedRepository && (connectedRepo != null || repositorySettings?.connected === true);
+  const isRepositoryBusy =
+    connectRepositoryMutation.isPending || disconnectRepositoryMutation.isPending;
 
   const isPipelineRunning = pipelineRun.status === 'running';
 
+  const handleDisconnectRepository = useCallback(async () => {
+    await disconnectRepositoryMutation.mutateAsync();
+  }, [disconnectRepositoryMutation]);
+
   const handleSelectRepository = useCallback(
-    (repository: GithubRepository) => {
-      setConnectedRepo(repository);
-      connectRepositoryMutation.mutate(repository);
+    async (repository: GithubRepository) => {
+      const payload = postProjectRepositoryReqSchema.parse({
+        repositoryMode: 'existing',
+        repositoryName: repository.name,
+        repositoryFullName: repository.fullName,
+        repositoryVisibility: repository.visibility,
+      });
+      await connectRepositoryMutation.mutateAsync(payload);
+    },
+    [connectRepositoryMutation],
+  );
+
+  const handleCreateRepository = useCallback(
+    async (params: PostProjectRepositoryCreateFormType) => {
+      const payload = postProjectRepositoryReqSchema.parse({
+        repositoryMode: 'create',
+        repositoryName: params.repositoryName,
+        repositoryFullName: null,
+        repositoryVisibility: params.repositoryVisibility,
+      });
+      await connectRepositoryMutation.mutateAsync(payload);
     },
     [connectRepositoryMutation],
   );
@@ -350,7 +395,15 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <GithubRepositoryPicker onSelect={handleSelectRepository} />
+            <GithubRepositoryPicker
+              defaultRepositoryName={project.name}
+              connectedRepositoryFullName={connectedRepoLabel}
+              isConnected={isRepositoryConnected}
+              isSubmitting={isRepositoryBusy}
+              onSelect={handleSelectRepository}
+              onCreate={handleCreateRepository}
+              onDisconnect={handleDisconnectRepository}
+            />
             <button
               type="button"
               className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 text-[12px] font-semibold text-[#334155]"
