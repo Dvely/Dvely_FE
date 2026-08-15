@@ -395,8 +395,11 @@ function AgentConversationPanel({
       onConversationActivity?.(targetConversationId);
     },
     onError: (error, variables) => {
-      // onMutate에서 낙관적으로 감췄던 승인을 되돌린다 — 실패했으면 아직 대기 중이다
+      // onMutate에서 낙관적으로 감췄던 승인을 되돌린다 — 실패했으면 아직 대기 중이다.
+      // 다만 방치 승인은 서버가 TTL로 CANCELLED 처리하므로(409) 상태를 다시 읽는다.
+      // PENDING이면 카드가 돌아오고, 이미 닫혔으면 사라진다
       setPendingApprovalId(variables.approvalId);
+      void queryClient.invalidateQueries({ queryKey: ['approval-detail'] });
 
       if (error instanceof DOMException && error.name === 'AbortError') {
         setIsAssistantReplying(false);
