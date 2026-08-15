@@ -30,7 +30,6 @@ import {
   readConversationTaskId,
   readSessionMessages,
   rememberConversationTaskId,
-  rememberProjectTaskId,
   shouldSendHomeAgentPromptOnce,
   writeSessionMessages,
 } from '@/components/layout/project/agentChat.utils';
@@ -208,7 +207,6 @@ function AgentConversationPanel({
       }
 
       rememberConversationTaskId(targetConversationId, taskId);
-      rememberProjectTaskId(projectId, taskId);
       onConversationActivity?.(targetConversationId);
 
       const sessionMessages = readSessionMessages(targetConversationId);
@@ -374,7 +372,6 @@ function AgentConversationPanel({
       if (targetConversationId == null) return;
 
       rememberConversationTaskId(targetConversationId, task.taskId);
-      rememberProjectTaskId(projectId, task.taskId);
 
       const needsApproval = APPROVAL_WAIT_STATUSES.has(task.status) && pendingApprovalId != null;
       setPendingApprovalId(needsApproval ? pendingApprovalId : null);

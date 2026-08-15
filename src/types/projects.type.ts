@@ -7,7 +7,6 @@ import {
   repositoryHealthStatusSchema,
   repositoryVisibilitySchema,
   startModeSchema,
-  agentTaskStatusSchema,
 } from '@/types/common.enum';
 
 /**
@@ -109,12 +108,6 @@ const postProjectCreateResSchema = z.object({
   name: z.string().min(1, '프로젝트 이름이 없습니다.').prefault(''),
   /** 프로젝트 상태 */
   status: projectStatusSchema,
-  /** 초기 CODE 작업 ID. 없으면 null */
-  taskId: z.string().nullable().prefault(''),
-  /** 초기 에이전트 태스크 상태. 없으면 null */
-  taskStatus: agentTaskStatusSchema.nullable().prefault(null),
-  /** 생성 직후 승인 대기 ID 목록 */
-  approvalIds: z.array(z.number().int()).prefault([]),
 });
 
 /**

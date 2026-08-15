@@ -47,18 +47,6 @@ export function rememberConversationTaskId(conversationId: number, taskId: strin
   taskIdByConversation.set(conversationId, trimmed);
 }
 
-const taskIdByProject = new Map<number, string>();
-
-export function rememberProjectTaskId(projectId: number, taskId: string) {
-  const trimmed = taskId.trim();
-  if (!trimmed) return;
-  taskIdByProject.set(projectId, trimmed);
-}
-
-export function readProjectTaskId(projectId: number) {
-  return taskIdByProject.get(projectId) ?? null;
-}
-
 export function readConversationTaskId(conversationId: number | null) {
   if (conversationId == null) return null;
   return taskIdByConversation.get(conversationId) ?? null;
