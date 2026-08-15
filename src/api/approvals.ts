@@ -47,10 +47,14 @@ async function getApprovalDetail(approvalId: number) {
     .catch(errorResponse());
 }
 
-/** Agent 작업 승인 API POST */
-async function postApprovalApprove(approvalId: number) {
+/**
+ * Agent 작업 승인 API POST.
+ * payload는 승인 응답의 input 명세에 맞춘 `{ [input.field]: 값 }`.
+ * 생략하거나 빈 값을 보내면 서버가 input.defaultValue를 쓴다.
+ */
+async function postApprovalApprove(approvalId: number, payload?: Record<string, string>) {
   return Http.instance
-    .post<ApiResponse<PostApprovalDecideResType>>(`/approvals/${approvalId}/approve`)
+    .post<ApiResponse<PostApprovalDecideResType>>(`/approvals/${approvalId}/approve`, payload)
     .then((response) => {
       const body = succesResponse<ApiResponse<PostApprovalDecideResType>>(response);
       return postApprovalDecideResSchema.parse(unwrapApiData(body));
@@ -79,9 +83,24 @@ function useProjectApprovalListQuery(queryKey: unknown, projectId: number) {
   });
 }
 
+/**
+ * 대기 중인 승인 상세 조회 쿼리.
+ * 승인 유형·입력 명세는 서버만 알고 있으므로, 화면은 채팅 본문이 아니라 이 응답으로 그린다.
+ */
+function useApprovalDetailQuery(queryKey: unknown, approvalId: number | null) {
+  if (!queryKey) throw new Error('queryKey is required');
+  return useQuery({
+    queryKey: ['approval-detail', queryKey, approvalId],
+    queryFn: () => getApprovalDetail(approvalId as number),
+    enabled: typeof approvalId === 'number' && approvalId > 0,
+    ...defaultQueryOptions,
+  });
+}
+
 export {
   getProjectApprovalList,
   getApprovalDetail,
+  useApprovalDetailQuery,
   postApprovalApprove,
   postApprovalReject,
   useProjectApprovalListQuery,

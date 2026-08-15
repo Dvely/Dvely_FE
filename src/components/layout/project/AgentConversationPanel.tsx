@@ -13,11 +13,12 @@ import {
 } from '@/api/agent';
 import {
   getProjectApprovalList,
-  getApprovalDetail,
   postApprovalApprove,
   postApprovalReject,
+  useApprovalDetailQuery,
 } from '@/api/approvals';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
+import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
 import type { GetAgentTaskResType } from '@/types/agent.type';
 import type { ConversationMessage } from '@/types/chat.type';
 import {
@@ -26,6 +27,7 @@ import {
   createLocalMessage,
   mergeConversationMessages,
   migrateSessionMessages,
+  readConversationTaskId,
   readSessionMessages,
   rememberConversationTaskId,
   rememberProjectTaskId,
@@ -143,6 +145,8 @@ function AgentConversationPanel({
   const [overlayMessages, setOverlayMessages] = useState<ConversationMessage[]>([]);
   const [isAssistantReplying, setIsAssistantReplying] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  // 승인 대기 여부는 서버만 안다 — 채팅 본문에서 유추하지 않는다
+  const [pendingApprovalId, setPendingApprovalId] = useState<number | null>(null);
 
   const queryClient = useQueryClient();
   const { data: serverMessages, isLoading: isMessagesLoading } = useConversationMessageListQuery(
@@ -154,6 +158,34 @@ function AgentConversationPanel({
     [serverMessages, overlayMessages],
   );
   const pollAbortRef = useRef<AbortController | null>(null);
+
+  const { data: pendingApproval } = useApprovalDetailQuery(AGENT_CHAT_QUERY_KEY, pendingApprovalId);
+  const activeApproval = pendingApproval?.status === 'PENDING' ? pendingApproval : null;
+
+  // 대화를 열거나 바꿀 때 마지막 태스크로 승인 대기 상태를 서버에서 복원한다
+  useEffect(() => {
+    const taskId = readConversationTaskId(conversationId);
+    if (!taskId) {
+      setPendingApprovalId(null);
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const task = await getAgentTask(taskId);
+        const approvalId = await resolvePendingApprovalId(task, projectId, conversationId);
+        if (!cancelled) setPendingApprovalId(approvalId);
+      } catch {
+        // 복원에 실패하면 승인 없음으로 둔다 — 없는 승인을 띄우는 것보다 낫다
+        if (!cancelled) setPendingApprovalId(null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId, projectId]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -231,6 +263,7 @@ function AgentConversationPanel({
 
       const sessionMessages = readSessionMessages(targetConversationId);
       const pendingApprovalId = result.task?.pendingApprovalId ?? result.pendingApprovalId ?? null;
+      setPendingApprovalId(pendingApprovalId);
       const nextMessages = result.task
         ? [
             ...sessionMessages,
@@ -306,14 +339,16 @@ function AgentConversationPanel({
       action,
       taskId,
       messageId,
+      payload,
     }: {
       approvalId: number;
       action: 'approve' | 'reject';
       taskId: string;
       messageId: number;
+      payload?: Record<string, string>;
     }) => {
       if (action === 'approve') {
-        await postApprovalApprove(approvalId);
+        await postApprovalApprove(approvalId, payload);
       } else {
         await postApprovalReject(approvalId);
       }
@@ -339,6 +374,7 @@ function AgentConversationPanel({
     },
     onMutate: ({ messageId }) => {
       setIsAssistantReplying(true);
+      setPendingApprovalId(null);
       setOverlayMessages((prev) => {
         const next = mergeConversationMessages(serverMessages ?? [], prev).map((message) =>
           message.messageId === messageId
@@ -357,6 +393,7 @@ function AgentConversationPanel({
       rememberProjectTaskId(projectId, task.taskId);
 
       const needsApproval = APPROVAL_WAIT_STATUSES.has(task.status) && pendingApprovalId != null;
+      setPendingApprovalId(needsApproval ? pendingApprovalId : null);
 
       const assistantMessage = createLocalMessage(
         targetConversationId,
@@ -386,7 +423,10 @@ function AgentConversationPanel({
       setIsAssistantReplying(false);
       onConversationActivity?.(targetConversationId);
     },
-    onError: (error) => {
+    onError: (error, variables) => {
+      // onMutate에서 낙관적으로 감췄던 승인을 되돌린다 — 실패했으면 아직 대기 중이다
+      setPendingApprovalId(variables.approvalId);
+
       if (error instanceof DOMException && error.name === 'AbortError') {
         setIsAssistantReplying(false);
         return;
@@ -436,56 +476,28 @@ function AgentConversationPanel({
     if (!open) setAlertMessage(null);
   };
 
-  const handleDecideApproval = (message: ConversationMessage, action: 'approve' | 'reject') => {
-    if (decideApprovalMutation.isPending || isAssistantReplying) {
+  const handleDecideApproval = (
+    action: 'approve' | 'reject',
+    payload?: Record<string, string>,
+  ) => {
+    if (decideApprovalMutation.isPending || isAssistantReplying || !activeApproval) {
       return;
     }
 
-    if (message.pendingApprovalId == null && !message.needsApproval) {
+    const taskId = activeApproval.taskId?.trim() || readConversationTaskId(conversationId);
+    if (!taskId) {
+      setAlertMessage('이어서 진행할 작업 ID를 찾지 못했습니다.');
       return;
     }
 
-    void (async () => {
-      let approvalId = message.pendingApprovalId;
-      let taskId = message.taskId?.trim() || '';
-
-      if (approvalId == null && taskId) {
-        try {
-          const task = await getAgentTask(taskId);
-          approvalId = await resolvePendingApprovalId(task, projectId, conversationId);
-        } catch (error) {
-          setAlertMessage(formatApiErrorMessage(error));
-          return;
-        }
-      }
-
-      if (approvalId != null && !taskId) {
-        try {
-          const detail = await getApprovalDetail(approvalId);
-          taskId = detail.taskId?.trim() || '';
-        } catch (error) {
-          setAlertMessage(formatApiErrorMessage(error));
-          return;
-        }
-      }
-
-      if (approvalId == null) {
-        setAlertMessage('승인할 항목을 찾지 못했습니다. 승인 탭에서 확인해주세요.');
-        return;
-      }
-
-      if (!taskId) {
-        setAlertMessage('이어서 진행할 작업 ID를 찾지 못했습니다.');
-        return;
-      }
-
-      decideApprovalMutation.mutate({
-        approvalId,
-        action,
-        taskId,
-        messageId: message.messageId,
-      });
-    })();
+    decideApprovalMutation.mutate({
+      approvalId: activeApproval.approvalId,
+      action,
+      taskId,
+      // 승인 카드는 특정 메시지에 매달려 있지 않다 — 되돌릴 메시지가 없다는 뜻으로 -1을 넘긴다
+      messageId: -1,
+      payload,
+    });
   };
 
   useEffect(() => {
@@ -520,14 +532,17 @@ function AgentConversationPanel({
                 <AssistantReplySkeleton key={`message-skeleton-${item}`} />
               ))
             : displayMessages.map((message) => (
-                <MessageBubble
-                  key={message.messageId}
-                  message={message}
-                  isDecideBusy={decideApprovalMutation.isPending}
-                  onApprove={() => handleDecideApproval(message, 'approve')}
-                  onReject={() => handleDecideApproval(message, 'reject')}
-                />
+                <MessageBubble key={message.messageId} message={message} />
               ))}
+          {activeApproval ? (
+            <AgentApprovalCard
+              key={activeApproval.approvalId}
+              approval={activeApproval}
+              isBusy={decideApprovalMutation.isPending}
+              onApprove={(payload) => handleDecideApproval('approve', payload)}
+              onReject={() => handleDecideApproval('reject')}
+            />
+          ) : null}
           {isSending || isAssistantReplying ? <AssistantReplySkeleton /> : null}
           <div
             key={`${displayMessages.length}-${isAssistantReplying ? 'replying' : 'idle'}`}
@@ -587,9 +602,6 @@ function AgentConversationPanel({
 
 type MessageBubbleProps = {
   message: ConversationMessage;
-  isDecideBusy: boolean;
-  onApprove: () => void;
-  onReject: () => void;
 };
 
 const MESSAGE_URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -632,10 +644,9 @@ function AssistantReplySkeleton() {
   );
 }
 
-function MessageBubble({ message, isDecideBusy, onApprove, onReject }: MessageBubbleProps) {
+function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
-  const showApprovalActions = isAssistant && message.needsApproval === true;
   const linkClassName = isUser
     ? 'underline underline-offset-2 hover:text-[#5b21b6]'
     : 'text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]';
@@ -654,26 +665,6 @@ function MessageBubble({ message, isDecideBusy, onApprove, onReject }: MessageBu
         <p className="whitespace-pre-wrap">
           {linkifyMessageContent(message.content, linkClassName)}
         </p>
-        {showApprovalActions ? (
-          <div className="mt-3 flex gap-2">
-            <button
-              type="button"
-              disabled={isDecideBusy}
-              onClick={onReject}
-              className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold text-[#64748b] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              거절
-            </button>
-            <button
-              type="button"
-              disabled={isDecideBusy}
-              onClick={onApprove}
-              className="h-8 rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isDecideBusy ? '처리 중' : '승인'}
-            </button>
-          </div>
-        ) : null}
       </div>
     </div>
   );
