@@ -5,8 +5,6 @@ let localMessageId = -1;
 type CreateLocalMessageOptions = {
   tokenCount?: number;
   taskId?: string | null;
-  pendingApprovalId?: number | null;
-  needsApproval?: boolean | null;
 };
 
 export function createLocalMessage(
@@ -27,8 +25,6 @@ export function createLocalMessage(
     tokenCount,
     createdAt: new Date().toISOString(),
     taskId: options.taskId ?? null,
-    pendingApprovalId: options.pendingApprovalId ?? null,
-    needsApproval: options.needsApproval ?? null,
   };
 }
 
@@ -105,8 +101,6 @@ export function mergeConversationMessages(
     return {
       ...message,
       taskId: sessionMessage.taskId || message.taskId,
-      pendingApprovalId: sessionMessage.pendingApprovalId ?? message.pendingApprovalId,
-      needsApproval: sessionMessage.needsApproval ?? message.needsApproval,
     };
   });
 

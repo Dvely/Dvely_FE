@@ -271,11 +271,7 @@ function AgentConversationPanel({
               targetConversationId,
               'assistant',
               formatAgentTaskReply(result.task),
-              {
-                taskId: result.task.taskId,
-                pendingApprovalId,
-                needsApproval: APPROVAL_WAIT_STATUSES.has(result.task.status),
-              },
+              { taskId: result.task.taskId },
             ),
           ]
         : sessionMessages;
@@ -338,13 +334,11 @@ function AgentConversationPanel({
       approvalId,
       action,
       taskId,
-      messageId,
       payload,
     }: {
       approvalId: number;
       action: 'approve' | 'reject';
       taskId: string;
-      messageId: number;
       payload?: Record<string, string>;
     }) => {
       if (action === 'approve') {
@@ -370,22 +364,13 @@ function AgentConversationPanel({
       const nextPendingApprovalId = await resolvePendingApprovalId(task, projectId, conversationId);
       const pendingApprovalId = nextPendingApprovalId === approvalId ? null : nextPendingApprovalId;
 
-      return { task, messageId, pendingApprovalId, decidedApprovalId: approvalId };
+      return { task, pendingApprovalId, decidedApprovalId: approvalId };
     },
-    onMutate: ({ messageId }) => {
+    onMutate: () => {
       setIsAssistantReplying(true);
       setPendingApprovalId(null);
-      setOverlayMessages((prev) => {
-        const next = mergeConversationMessages(serverMessages ?? [], prev).map((message) =>
-          message.messageId === messageId
-            ? { ...message, pendingApprovalId: null, needsApproval: false }
-            : message,
-        );
-        if (conversationId != null) writeSessionMessages(conversationId, next);
-        return next;
-      });
     },
-    onSuccess: ({ task, messageId, pendingApprovalId }) => {
+    onSuccess: ({ task, pendingApprovalId }) => {
       const targetConversationId = conversationId;
       if (targetConversationId == null) return;
 
@@ -399,20 +384,12 @@ function AgentConversationPanel({
         targetConversationId,
         'assistant',
         formatAgentTaskReply(task),
-        {
-          taskId: task.taskId,
-          pendingApprovalId: needsApproval ? pendingApprovalId : null,
-          needsApproval,
-        },
+        { taskId: task.taskId },
       );
 
       setOverlayMessages((prev) => {
         const next = [
-          ...mergeConversationMessages(serverMessages ?? [], prev).map((message) =>
-            message.messageId === messageId
-              ? { ...message, pendingApprovalId: null, needsApproval: false }
-              : message,
-          ),
+          ...mergeConversationMessages(serverMessages ?? [], prev),
           assistantMessage,
         ];
         writeSessionMessages(targetConversationId, next);
@@ -494,8 +471,6 @@ function AgentConversationPanel({
       approvalId: activeApproval.approvalId,
       action,
       taskId,
-      // 승인 카드는 특정 메시지에 매달려 있지 않다 — 되돌릴 메시지가 없다는 뜻으로 -1을 넘긴다
-      messageId: -1,
       payload,
     });
   };
