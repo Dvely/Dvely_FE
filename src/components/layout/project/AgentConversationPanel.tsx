@@ -104,11 +104,10 @@ async function resolvePendingApprovalId(
     return false;
   });
 
-  return (
-    pending?.approvalId ??
-    approvals.find((approval) => approval.status === 'PENDING')?.approvalId ??
-    null
-  );
+  // 이 태스크·대화에 속한 승인만 쓴다. 예전에는 매칭이 실패하면 프로젝트 안 아무 PENDING이나
+  // 집어왔는데, 스캐폴딩 승인이 WAITING_APPROVAL로 남아 쌓이는 구조라 다른 대화의 승인 카드가
+  // 뜰 수 있었다. 승인은 되돌리기 어려우므로 엉뚱한 것을 띄우느니 아무것도 안 띄운다.
+  return pending?.approvalId ?? null;
 }
 
 function formatApiErrorMessage(error: unknown) {

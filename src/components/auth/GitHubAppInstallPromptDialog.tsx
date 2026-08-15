@@ -56,7 +56,10 @@ function GitHubAppInstallPromptDialog() {
         setOpen(true);
         return;
       }
-      if (response.data.githubAppTokenExpired) {
+      // githubAppTokenExpired가 아니다 — 그 값은 액세스 토큰의 신선도만 나타내고,
+      // 서버가 GitHub을 호출하는 경로마다 리프레시 토큰으로 자동 재발급한다.
+      // 그걸로 판단하면 멀쩡히 권한 있는 사용자에게 8시간마다 모달이 떴다.
+      if (response.data.githubAppReauthorizationRequired) {
         setPromptMode('reauthorize');
         setOpen(true);
       }
