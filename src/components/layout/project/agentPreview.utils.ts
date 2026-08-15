@@ -3,8 +3,12 @@ import type { ProjectPreviewSessionStatus } from '@/types/preview.type';
 
 export type AgentPreviewPhase = 'empty' | 'building' | 'ready' | 'unavailable';
 
-export function deriveAgentPreviewUrl(taskPreviewUrl?: string | null): string {
-  const raw = taskPreviewUrl?.trim() ?? '';
+/**
+ * 열람 권한 발급(POST /preview-sessions/{id}/access) 응답의 previewUrl을 iframe에 넣을 절대 주소로 바꾼다.
+ * Agent 태스크 응답의 previewUrl이 아니다 — 그쪽은 토큰이 회전되어 이미 무효일 수 있다.
+ */
+export function resolvePreviewFrameUrl(accessPreviewUrl?: string | null): string {
+  const raw = accessPreviewUrl?.trim() ?? '';
   if (!raw) return '';
   if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
 

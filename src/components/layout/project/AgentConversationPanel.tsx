@@ -52,6 +52,8 @@ type AgentConversationPanelProps = {
   initialPrompt?: string | null;
   onConversationCreated: (conversationId: number) => void;
   onConversationActivity?: (conversationId: number) => void;
+  /** Agent 태스크가 도는 중인지 알린다. 프리뷰 세션 폴링을 열어 두는 데 쓰인다 */
+  onAgentTaskActiveChange?: (isActive: boolean) => void;
   /** 배포 제안(약 2~3분) 수락 시 파이프라인 실행 */
   onDeployPipelineStart?: () => Promise<void>;
 };
@@ -135,6 +137,7 @@ function AgentConversationPanel({
   initialPrompt,
   onConversationCreated,
   onConversationActivity,
+  onAgentTaskActiveChange,
 }: AgentConversationPanelProps) {
   const [input, setInput] = useState('');
   const [overlayMessages, setOverlayMessages] = useState<ConversationMessage[]>([]);
@@ -396,6 +399,17 @@ function AgentConversationPanel({
 
   const isSending = sendMessageMutation.isPending;
   const isInputLocked = isSending || isAssistantReplying;
+
+  // 세 경로 모두 mutationFn 안에서 태스크가 끝날 때까지 폴링하므로, 이 값이 참인 동안이 곧 작업 구간이다
+  const isAgentTaskActive = isInputLocked || decideApprovalMutation.isPending;
+
+  useEffect(() => {
+    onAgentTaskActiveChange?.(isAgentTaskActive);
+  }, [isAgentTaskActive, onAgentTaskActiveChange]);
+
+  // 작업 중에 패널이 사라지면 부모가 참인 채로 남아 폴링이 멈추지 않는다
+  useEffect(() => () => onAgentTaskActiveChange?.(false), [onAgentTaskActiveChange]);
+
   const showMessageSkeletons = isMessagesLoading && displayMessages.length === 0;
   const showWelcome =
     !showMessageSkeletons &&
