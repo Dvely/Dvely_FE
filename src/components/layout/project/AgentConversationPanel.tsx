@@ -380,23 +380,21 @@ function AgentConversationPanel({
       const needsApproval = APPROVAL_WAIT_STATUSES.has(task.status) && pendingApprovalId != null;
       setPendingApprovalId(needsApproval ? pendingApprovalId : null);
 
-      const assistantMessage = createLocalMessage(
-        targetConversationId,
-        'assistant',
-        formatAgentTaskReply(task),
-        { taskId: task.taskId },
-      );
-
-      setOverlayMessages((prev) => {
-        const next = [
-          ...mergeConversationMessages(serverMessages ?? [], prev),
-          assistantMessage,
-        ];
-        writeSessionMessages(targetConversationId, next);
-        return next;
-      });
+      // 태스크가 끝났으면 게이트 안내와 결과가 서버에 기록돼 있다.
+      // 로컬 임시 메시지를 덧붙이면 곧 도착할 서버 메시지와 겹치므로 오버레이를 비우고
+      // 서버 목록을 단일 출처로 삼는다 (기존 메시지는 그대로 남아 화면이 비지 않는다)
+      setOverlayMessages([]);
+      writeSessionMessages(targetConversationId, []);
 
       void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
+      // 승인은 서버 쪽 상태를 바꾼다 — 결정 뒤 화면에 남아 있는 옛 값을 걷어낸다.
+      // 메시지: 게이트 안내와 결과가 서버에 기록되므로 다시 읽어야 이력이 보인다
+      // 저장소 설정·프로젝트: REPOSITORY_BINDING 승인이 저장소를 붙인다
+      void queryClient.invalidateQueries({
+        queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, targetConversationId],
+      });
+      void queryClient.invalidateQueries({ queryKey: ['project-repository-settings'] });
+      void queryClient.invalidateQueries({ queryKey: ['project-detail'] });
       setIsAssistantReplying(false);
       onConversationActivity?.(targetConversationId);
     },
