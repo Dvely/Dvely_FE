@@ -71,6 +71,10 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
 
   const copy = APPROVAL_COPY[approval.type];
   const summary = approval.summary?.trim() ?? '';
+  // summary가 입력 기본값을 되풀이할 뿐이면(예: "[저장소 연결] my-repo") 아래 입력 필드와
+  // 같은 값이 두 번 보인다. 그럴 때는 입력 필드만 남긴다
+  const showSummary =
+    summary !== '' && !(input?.defaultValue && summary.includes(input.defaultValue));
   const error = input ? validateInputValue(input, value) : null;
   const showError = touched && error !== null;
 
@@ -93,8 +97,8 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
       <p className="text-[13px] font-semibold text-[#4c1d95]">{copy.title}</p>
       <p className="mt-1 text-[12px] leading-relaxed text-[#6d28d9]">{copy.description}</p>
 
-      {summary ? (
-        <p className="mt-2 break-all rounded-lg bg-white px-2.5 py-2 text-[12px] text-[#475569]">
+      {showSummary ? (
+        <p className="mt-2 break-all border-l-2 border-[#ddd6fe] pl-2.5 text-[12px] leading-relaxed text-[#6d28d9]/80">
           {summary}
         </p>
       ) : null}
