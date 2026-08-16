@@ -205,7 +205,13 @@ const getProjectCommitListResSchema = z.array(projectLatestCommitSchema);
  * 프로젝트 활동 유형
  * @example "PROJECT_CREATED"
  */
-const projectActivityTypeSchema = z.enum(['PROJECT_CREATED']);
+/**
+ * 활동 유형. 화면은 이 값을 배지 문자열로 보여줄 뿐 분기하지 않으므로 열린 문자열로 받는다.
+ * 닫힌 enum이면 서버가 새 유형을 추가할 때마다 목록 전체가 파싱에 실패해 표가 통째로 빈다.
+ * 알려진 값: PROJECT_CREATED, APPROVAL_APPROVED, APPROVAL_REJECTED,
+ * CHANGE_MERGED, CHANGE_PREVIEW_READY
+ */
+const projectActivityTypeSchema = z.string().min(1, '활동 유형이 없습니다.').prefault('');
 
 /**
  * 프로젝트 활동 로그

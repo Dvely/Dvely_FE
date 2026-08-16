@@ -166,7 +166,15 @@ function ProjectDetailPage({
                             </td>
                           </tr>
                         ))
-                      : activityRows.map((row) => (
+                      : activityRows.length === 0
+                        ? (
+                            <tr>
+                              <td colSpan={3} className="px-4 py-4 text-[12px] text-[#94a3b8]">
+                                표시할 이력이 없습니다.
+                              </td>
+                            </tr>
+                          )
+                        : activityRows.map((row) => (
                           <tr key={`${row.type}-${row.occurredAt}`} className="text-[#334155]">
                             <td className="px-4 py-3">{row.message}</td>
                             <td className="px-4 py-3 text-[#64748b]">{row.occurredAt}</td>
