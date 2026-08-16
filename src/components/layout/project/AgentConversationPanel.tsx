@@ -261,23 +261,15 @@ function AgentConversationPanel({
         migrateSessionMessages(context.draftConversationId, targetConversationId);
       }
 
-      const sessionMessages = readSessionMessages(targetConversationId);
       const pendingApprovalId = result.task?.pendingApprovalId ?? result.pendingApprovalId ?? null;
       setPendingApprovalId(pendingApprovalId);
-      const nextMessages = result.task
-        ? [
-            ...sessionMessages,
-            createLocalMessage(
-              targetConversationId,
-              'assistant',
-              formatAgentTaskReply(result.task),
-              { taskId: result.task.taskId },
-            ),
-          ]
-        : sessionMessages;
 
-      writeSessionMessages(targetConversationId, nextMessages);
-      setOverlayMessages(nextMessages);
+      // 어시스턴트 답변을 task.summary 로 직접 만들지 않는다. 서버가 같은 사건을
+      // chat_messages 에 이미 적어두는데 문구가 달라서(요약 전문 vs 짧은 안내) 병합에
+      // 걸리지 않고 두 벌로 보였다. 새로고침하면 서버 것만 남아 하나로 줄던 게 그 증거다.
+      // 사용자 메시지는 오버레이에 남겨 둔다 — 서버 목록이 도착하면 본문이 같아 병합된다.
+      const sessionMessages = readSessionMessages(targetConversationId);
+      setOverlayMessages(sessionMessages);
 
       if (isNewConversation || conversationId === null) {
         onConversationCreated(targetConversationId);
@@ -293,6 +285,13 @@ function AgentConversationPanel({
       void queryClient.invalidateQueries({
         queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, targetConversationId],
       });
+
+      // 실패는 알림으로 확실히 알린다. 서술은 서버 메시지에 맡겼는데 실패 시에도 서버가
+      // 채팅에 남기는지 확인되지 않아, 스켈레톤만 사라지고 아무 말이 없는 상황을 막는다.
+      // 말풍선이 아니라 알림이라 서버 메시지와 겹치지 않는다
+      if (result.task?.status === 'FAILED' || result.task?.status === 'CANCELLED') {
+        setAlertMessage(formatAgentTaskReply(result.task));
+      }
 
       if (!result.task && context?.userMessage) {
         console.warn('[agent] message created without taskId', {
