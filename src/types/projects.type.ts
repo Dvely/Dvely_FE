@@ -250,8 +250,6 @@ const getProjectOverviewResSchema = z.object({
   deployStatus: deployStatusSchema,
   /** 현재 배포 버전 */
   currentVersion: z.string().min(1, '배포 버전이 없습니다.').prefault(''),
-  /** 최근 프로젝트 변경 요약 */
-  recentChanges: z.array(z.string().min(1, '변경 요약이 없습니다.').prefault('')),
   /** 연결 저장소의 최신 커밋. 저장소가 없으면 null */
   latestCommit: projectLatestCommitSchema.nullable().prefault(null),
   /** 트래픽 요약. 현재는 외부 지표 미연동 안내 문구 */

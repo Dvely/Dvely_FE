@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { ArrowLeft, Play, Settings } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Play, Settings } from 'lucide-react';
+import { formatActivityTime } from '@/lib/projectActivity';
 import { formatProjectDisplayName } from '@/components/layout/project/agentChat.utils';
+import ProjectActivityDetailDialog from '@/components/layout/project/ProjectActivityDetailDialog';
 import ProjectSettingsDialog from '@/components/layout/project/ProjectSettingsDialog';
 import ProjectWorkspaceNav from '@/components/layout/project/ProjectWorkspaceNav';
 import type {
@@ -10,6 +12,7 @@ import type {
   GetProjectDetailResType,
   GetProjectOverviewResType,
   GetProjectRepositoryHealthResType,
+  ProjectActivityLog,
 } from '@/types/projects.type';
 
 const projectStatusLabel: Record<GetProjectDetailResType['status'], string> = {
@@ -34,30 +37,6 @@ type ProjectDetailPageProps = {
   isRelatedLoading?: boolean;
 };
 
-/**
- * CHANGE_* 활동은 message에 에이전트 요약 마크다운이 통째로 들어와 30줄을 넘는다.
- * message가 "<라벨>: <본문>" 구조라 앞 두 줄만 봐도 의미가 통하므로, 기본은 접어 두고
- * 원할 때만 펼친다. 전문은 대화 화면에도 그대로 남아 있다.
- */
-function isLongActivityMessage(message: string): boolean {
-  return message.includes('\n') || message.length > 120;
-}
-
-/** 활동 발생 시각. ISO 문자열을 그대로 보여주고 있었다 */
-function formatActivityTime(iso: string): string {
-  if (!iso) return '';
-
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-
-  return date.toLocaleString('ko-KR', {
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 function ProjectDetailPage({
   projectId,
   project,
@@ -71,16 +50,7 @@ function ProjectDetailPage({
   const isPending = project.status === 'DRAFT';
   const latestCommit = commits[0] ?? overview?.latestCommit ?? null;
   const activityRows = activityLogs.slice(0, 5);
-  const [expandedActivityKeys, setExpandedActivityKeys] = useState<Set<string>>(new Set());
-
-  const toggleActivityRow = (rowKey: string) => {
-    setExpandedActivityKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(rowKey)) next.delete(rowKey);
-      else next.add(rowKey);
-      return next;
-    });
-  };
+  const [detailActivity, setDetailActivity] = useState<ProjectActivityLog | null>(null);
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#f8fafc]">
@@ -177,12 +147,13 @@ function ProjectDetailPage({
 
               <h3 className="mt-6 text-[14px] font-bold text-[#0f172a]">최근 반영 이력</h3>
               <div className="mt-3 overflow-hidden rounded-lg border border-[#f1f5f9]">
-                <table className="w-full text-left text-[13px]">
+                {/* table-fixed 여야 내용 칸이 남은 폭만 차지하고 truncate가 먹는다 */}
+                <table className="w-full table-fixed text-left text-[13px]">
                   <thead className="bg-[#f8fafc] text-[12px] font-semibold text-[#64748b]">
                     <tr>
                       <th className="px-4 py-2.5 font-semibold">내용</th>
-                      <th className="px-4 py-2.5 font-semibold">시간</th>
-                      <th className="px-4 py-2.5 font-semibold">상태</th>
+                      <th className="w-[120px] px-4 py-2.5 font-semibold">시간</th>
+                      <th className="w-[200px] px-4 py-2.5 font-semibold">상태</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#f1f5f9]">
@@ -208,38 +179,40 @@ function ProjectDetailPage({
                               </td>
                             </tr>
                           )
-                        : activityRows.map((row) => {
-                          const rowKey = `${row.type}-${row.occurredAt}`;
-                          const isExpanded = expandedActivityKeys.has(rowKey);
-
-                          return (
-                          <tr key={rowKey} className="text-[#334155]">
-                            <td className="px-4 py-3">
-                              <span className={isExpanded ? 'whitespace-pre-wrap' : 'line-clamp-2'}>
-                                {row.message}
-                              </span>
-                              {isLongActivityMessage(row.message) ? (
-                                <button
-                                  type="button"
-                                  aria-expanded={isExpanded}
-                                  onClick={() => toggleActivityRow(rowKey)}
-                                  className="mt-1 cursor-pointer text-[12px] font-medium text-[#7c3aed] hover:underline"
-                                >
-                                  {isExpanded ? '접기' : '자세히'}
-                                </button>
-                              ) : null}
+                        : activityRows.map((row) => (
+                          <tr
+                            key={`${row.type}-${row.occurredAt}`}
+                            onClick={() => setDetailActivity(row)}
+                            className="cursor-pointer text-[#334155] transition hover:bg-[#f8fafc]"
+                          >
+                            {/* CHANGE_* 는 30줄짜리 마크다운이 들어온다. 목록은 한 줄로 자르고
+                                전문은 상세 모달에서 본다 */}
+                            <td className="max-w-0 px-4 py-3">
+                              <p className="truncate">{row.message}</p>
                             </td>
                             <td className="whitespace-nowrap px-4 py-3 text-[#64748b]">
                               {formatActivityTime(row.occurredAt)}
                             </td>
                             <td className="px-4 py-3">
-                              <span className="rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
-                                {row.type}
-                              </span>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="truncate rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
+                                  {row.type}
+                                </span>
+                                <button
+                                  type="button"
+                                  aria-label={`${row.type} 상세 보기`}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setDetailActivity(row);
+                                  }}
+                                  className="shrink-0 cursor-pointer text-[#94a3b8] transition hover:text-[#0f172a]"
+                                >
+                                  <ChevronRight className="size-4" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
-                          );
-                        })}
+                        ))}
                   </tbody>
                 </table>
               </div>
@@ -286,6 +259,11 @@ function ProjectDetailPage({
           </div>
         </div>
       </div>
+
+      <ProjectActivityDetailDialog
+        activity={detailActivity}
+        onClose={() => setDetailActivity(null)}
+      />
 
       <ProjectSettingsDialog
         open={isSettingsOpen}
