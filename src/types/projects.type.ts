@@ -92,7 +92,13 @@ const postProjectCreateReqSchema = z.object({
   name: z.string().min(1, '프로젝트 이름을 입력해주세요.').prefault(''),
   /** 프로젝트 시작 방식 */
   startMode: startModeSchema,
-  /** 템플릿 유형. startMode가 템플릿 기반일 때 사용 */
+  /**
+   * 사용자가 고른 콘텐츠 템플릿. startMode가 템플릿 기반일 때 사용한다.
+   * 빌드 프레임워크가 아니다 — nextjs·vite 같은 이름을 넣지 말 것.
+   * 배포가 이 값을 publish 디렉터리 힌트로 읽던 폴백이 있었고(백엔드 #134로 제거),
+   * 프레임워크 이름을 넣으면 빈 산출물이 조용히 배포됐다.
+   * 지금은 저장만 되고 코드 생성에 반영되지 않는다.
+   */
   templateType: z.string().nullable().prefault(''),
   /** 초안 생성 방식. 값이 없으면 fast로 보정됩니다. */
   draftMode: z.string().nullable().prefault(''),
