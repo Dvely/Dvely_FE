@@ -34,6 +34,15 @@ type ProjectDetailPageProps = {
   isRelatedLoading?: boolean;
 };
 
+/**
+ * CHANGE_* 활동은 message에 에이전트 요약 마크다운이 통째로 들어와 30줄을 넘는다.
+ * message가 "<라벨>: <본문>" 구조라 앞 두 줄만 봐도 의미가 통하므로, 기본은 접어 두고
+ * 원할 때만 펼친다. 전문은 대화 화면에도 그대로 남아 있다.
+ */
+function isLongActivityMessage(message: string): boolean {
+  return message.includes('\n') || message.length > 120;
+}
+
 /** 활동 발생 시각. ISO 문자열을 그대로 보여주고 있었다 */
 function formatActivityTime(iso: string): string {
   if (!iso) return '';
@@ -62,6 +71,16 @@ function ProjectDetailPage({
   const isPending = project.status === 'DRAFT';
   const latestCommit = commits[0] ?? overview?.latestCommit ?? null;
   const activityRows = activityLogs.slice(0, 5);
+  const [expandedActivityKeys, setExpandedActivityKeys] = useState<Set<string>>(new Set());
+
+  const toggleActivityRow = (rowKey: string) => {
+    setExpandedActivityKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(rowKey)) next.delete(rowKey);
+      else next.add(rowKey);
+      return next;
+    });
+  };
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#f8fafc]">
@@ -189,14 +208,26 @@ function ProjectDetailPage({
                               </td>
                             </tr>
                           )
-                        : activityRows.map((row) => (
-                          <tr key={`${row.type}-${row.occurredAt}`} className="text-[#334155]">
-                            {/* 에이전트 요약 마크다운이 통째로 들어와 한 행이 화면 절반을
-                                차지하는 경우가 있다. 서버에서 줄이기 전까지 두 줄로 막는다 */}
+                        : activityRows.map((row) => {
+                          const rowKey = `${row.type}-${row.occurredAt}`;
+                          const isExpanded = expandedActivityKeys.has(rowKey);
+
+                          return (
+                          <tr key={rowKey} className="text-[#334155]">
                             <td className="px-4 py-3">
-                              <span className="line-clamp-2" title={row.message}>
+                              <span className={isExpanded ? 'whitespace-pre-wrap' : 'line-clamp-2'}>
                                 {row.message}
                               </span>
+                              {isLongActivityMessage(row.message) ? (
+                                <button
+                                  type="button"
+                                  aria-expanded={isExpanded}
+                                  onClick={() => toggleActivityRow(rowKey)}
+                                  className="mt-1 cursor-pointer text-[12px] font-medium text-[#7c3aed] hover:underline"
+                                >
+                                  {isExpanded ? '접기' : '자세히'}
+                                </button>
+                              ) : null}
                             </td>
                             <td className="whitespace-nowrap px-4 py-3 text-[#64748b]">
                               {formatActivityTime(row.occurredAt)}
@@ -207,7 +238,8 @@ function ProjectDetailPage({
                               </span>
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                   </tbody>
                 </table>
               </div>
