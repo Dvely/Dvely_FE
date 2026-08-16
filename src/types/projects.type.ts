@@ -207,9 +207,11 @@ const getProjectCommitListResSchema = z.array(projectLatestCommitSchema);
  */
 /**
  * 활동 유형. 화면은 이 값을 배지 문자열로 보여줄 뿐 분기하지 않으므로 열린 문자열로 받는다.
- * 닫힌 enum이면 서버가 새 유형을 추가할 때마다 목록 전체가 파싱에 실패해 표가 통째로 빈다.
- * 알려진 값: PROJECT_CREATED, APPROVAL_APPROVED, APPROVAL_REJECTED,
- * CHANGE_MERGED, CHANGE_PREVIEW_READY
+ *
+ * 고정 목록이 아니다 — 서버가 `접두사 + 상태 enum`으로 조합해 만든다
+ * (`DEPLOYMENT_` `CHANGE_` `APPROVAL_` `DOMAIN_` + 각 상태, 그리고 `PROJECT_CREATED`).
+ * 네 enum 중 어디에 값이 하나 늘어도 새 유형이 저절로 생기므로 닫힌 enum으로 두면
+ * 목록 전체가 파싱에 실패해 표가 통째로 빈다. 실제로 그렇게 비어 있었다.
  */
 const projectActivityTypeSchema = z.string().min(1, '활동 유형이 없습니다.').prefault('');
 

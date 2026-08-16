@@ -34,6 +34,21 @@ type ProjectDetailPageProps = {
   isRelatedLoading?: boolean;
 };
 
+/** 활동 발생 시각. ISO 문자열을 그대로 보여주고 있었다 */
+function formatActivityTime(iso: string): string {
+  if (!iso) return '';
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+
+  return date.toLocaleString('ko-KR', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 function ProjectDetailPage({
   projectId,
   project,
@@ -176,8 +191,16 @@ function ProjectDetailPage({
                           )
                         : activityRows.map((row) => (
                           <tr key={`${row.type}-${row.occurredAt}`} className="text-[#334155]">
-                            <td className="px-4 py-3">{row.message}</td>
-                            <td className="px-4 py-3 text-[#64748b]">{row.occurredAt}</td>
+                            {/* 에이전트 요약 마크다운이 통째로 들어와 한 행이 화면 절반을
+                                차지하는 경우가 있다. 서버에서 줄이기 전까지 두 줄로 막는다 */}
+                            <td className="px-4 py-3">
+                              <span className="line-clamp-2" title={row.message}>
+                                {row.message}
+                              </span>
+                            </td>
+                            <td className="whitespace-nowrap px-4 py-3 text-[#64748b]">
+                              {formatActivityTime(row.occurredAt)}
+                            </td>
                             <td className="px-4 py-3">
                               <span className="rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
                                 {row.type}
