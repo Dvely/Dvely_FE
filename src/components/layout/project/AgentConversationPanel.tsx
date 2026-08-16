@@ -6,11 +6,7 @@ import {
   postProjectConversationCreate,
   useConversationMessageListQuery,
 } from '@/api/chat';
-import {
-  getAgentTask,
-  pollAgentTask,
-  SETTLED_AGENT_TASK_STATUSES,
-} from '@/api/agent';
+import { pollAgentTask, SETTLED_AGENT_TASK_STATUSES } from '@/api/agent';
 import {
   getProjectApprovalList,
   postApprovalApprove,
@@ -160,10 +156,13 @@ function AgentConversationPanel({
   const { data: pendingApproval } = useApprovalDetailQuery(AGENT_CHAT_QUERY_KEY, pendingApprovalId);
   const activeApproval = pendingApproval?.status === 'PENDING' ? pendingApproval : null;
 
-  // 대화를 열거나 바꿀 때 마지막 태스크로 승인 대기 상태를 서버에서 복원한다
+  // 대화를 열거나 바꿀 때 미결 승인을 서버에서 복원한다.
+  //
+  // taskId로 복원하면 안 된다 — taskId는 메시지 생성 응답에만 실려 오고 메모리에만 남아서,
+  // 새로고침하면 사라진다. 그러면 승인은 PENDING인데 카드가 없어 결정할 방법이 없어진다.
+  // 승인 목록에는 conversationId·taskId·input이 다 들어 있으므로 이쪽으로 찾는다.
   useEffect(() => {
-    const taskId = readConversationTaskId(conversationId);
-    if (!taskId) {
+    if (conversationId == null) {
       setPendingApprovalId(null);
       return;
     }
@@ -171,9 +170,13 @@ function AgentConversationPanel({
     let cancelled = false;
     void (async () => {
       try {
-        const task = await getAgentTask(taskId);
-        const approvalId = await resolvePendingApprovalId(task, projectId, conversationId);
-        if (!cancelled) setPendingApprovalId(approvalId);
+        const approvals = await getProjectApprovalList(projectId);
+        // 반드시 conversationId로 거른다. 프로젝트 단위로 찾으면 conversationId가 null인
+        // 고아 스캐폴딩 승인이 잡혀서, 다른 대화의 승인 카드가 뜨던 문제가 재현된다
+        const pending = approvals.find(
+          (approval) => approval.status === 'PENDING' && approval.conversationId === conversationId,
+        );
+        if (!cancelled) setPendingApprovalId(pending?.approvalId ?? null);
       } catch {
         // 복원에 실패하면 승인 없음으로 둔다 — 없는 승인을 띄우는 것보다 낫다
         if (!cancelled) setPendingApprovalId(null);
