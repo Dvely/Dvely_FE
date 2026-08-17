@@ -55,31 +55,9 @@ type AgentConversationPanelProps = {
   onDeployPipelineStart?: () => Promise<void>;
 };
 
-function formatAgentTaskReply(task: GetAgentTaskResType) {
-  switch (task.status) {
-    case 'DONE':
-      return task.summary?.trim() || '작업을 완료했습니다.';
-    case 'FAILED':
-      return (
-        task.error?.trim() ||
-        task.suggestedFix?.trim() ||
-        '작업에 실패했습니다. 잠시 후 다시 시도해주세요.'
-      );
-    case 'CANCELLED':
-      return '작업이 취소되었습니다.';
-    case 'WAITING_INPUT':
-      return task.question?.trim() || '추가 입력이 필요합니다.';
-    case 'WAITING_APPROVAL':
-      return (
-        task.summary?.trim() ||
-        '작업 실행 전 승인이 필요합니다. 아래 버튼으로 승인하거나 거절해 주세요.'
-      );
-    case 'WAITING_RESULT_APPROVAL':
-      return task.summary?.trim() || '결과 승인이 필요합니다. 미리보기를 확인한 뒤 승인해 주세요.';
-    default:
-      return task.summary?.trim() || '작업 상태를 확인했습니다.';
-  }
-}
+// 태스크 상태를 사람이 읽을 문구로 옮기던 formatAgentTaskReply 는 없앴다.
+// 서버가 모든 종료 상태를 chat_messages 에 남기므로 FE 가 같은 사건을 다시 서술하면
+// 문구만 다른 두 벌이 된다. 서술은 서버 하나가 소유한다.
 
 const APPROVAL_WAIT_STATUSES = new Set(['WAITING_APPROVAL', 'WAITING_RESULT_APPROVAL']);
 
@@ -285,13 +263,6 @@ function AgentConversationPanel({
       void queryClient.invalidateQueries({
         queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, targetConversationId],
       });
-
-      // 실패는 알림으로 확실히 알린다. 서술은 서버 메시지에 맡겼는데 실패 시에도 서버가
-      // 채팅에 남기는지 확인되지 않아, 스켈레톤만 사라지고 아무 말이 없는 상황을 막는다.
-      // 말풍선이 아니라 알림이라 서버 메시지와 겹치지 않는다
-      if (result.task?.status === 'FAILED' || result.task?.status === 'CANCELLED') {
-        setAlertMessage(formatAgentTaskReply(result.task));
-      }
 
       if (!result.task && context?.userMessage) {
         console.warn('[agent] message created without taskId', {
