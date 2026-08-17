@@ -49,7 +49,8 @@ function ProjectApprovalsPage({ projectId }: ProjectApprovalsPageProps) {
   };
 
   const approveMutation = useMutation({
-    mutationFn: postApprovalApprove,
+    // 승인 탭은 입력 없이 기본값으로 승인한다 — react-query가 넘기는 두 번째 인자를 본문으로 보내지 않도록 감싼다
+    mutationFn: (approvalId: number) => postApprovalApprove(approvalId),
     onSuccess: invalidateApprovals,
   });
   const rejectMutation = useMutation({

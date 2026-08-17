@@ -10,6 +10,36 @@ import {
   GITHUB_OAUTH_POPUP_FEATURES,
 } from '@/constants/githubOAuth';
 
+/**
+ * 두 모드는 사용자가 처한 상황이 다르다.
+ * install은 아직 권한을 준 적이 없는 경우, reauthorize는 이미 준 권한의 인증이 만료된 경우다.
+ * 같은 문구를 쓰면 이미 권한을 준 사용자가 "왜 또 권한을 달라고 하지?" 하고 당황한다.
+ */
+const PROMPT_COPY = {
+  install: {
+    title: 'GitHub 접근 권한 설정 필요',
+    description: (
+      <>
+        저장소를 불러오려면 GitHub에 대한 접근 권한 허용이 필요합니다.
+        <br />
+        아래 버튼을 눌러 권한을 설정해 주세요.
+      </>
+    ),
+    confirmLabel: '권한 허용하기',
+  },
+  reauthorize: {
+    title: 'GitHub 연결이 만료되었습니다',
+    description: (
+      <>
+        권한은 그대로 있지만 GitHub 인증이 만료되어 저장소에 접근할 수 없습니다.
+        <br />
+        아래 버튼을 눌러 다시 인증해 주세요.
+      </>
+    ),
+    confirmLabel: '다시 인증하기',
+  },
+} as const;
+
 function GitHubAppInstallPromptDialog() {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +56,10 @@ function GitHubAppInstallPromptDialog() {
         setOpen(true);
         return;
       }
-      if (response.data.githubAppTokenExpired) {
+      // githubAppTokenExpired가 아니다 — 그 값은 액세스 토큰의 신선도만 나타내고,
+      // 서버가 GitHub을 호출하는 경로마다 리프레시 토큰으로 자동 재발급한다.
+      // 그걸로 판단하면 멀쩡히 권한 있는 사용자에게 8시간마다 모달이 떴다.
+      if (response.data.githubAppReauthorizationRequired) {
         setPromptMode('reauthorize');
         setOpen(true);
       }
@@ -47,6 +80,8 @@ function GitHubAppInstallPromptDialog() {
     if (event.origin !== window.location.origin) return;
     if (event.data?.type !== GITHUB_APP_INSTALL_SUCCESS_MESSAGE) return;
     setOpen(false);
+    // 저장된 사용자 정보에 옛 만료 플래그가 남지 않도록 다시 읽는다
+    void fetchAndPersistUserInfo();
   }, []);
 
   useEffect(() => {
@@ -82,6 +117,8 @@ function GitHubAppInstallPromptDialog() {
 
   if (!open || pathname === '/') return null;
 
+  const copy = PROMPT_COPY[promptMode];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-[#0f172a]/30 backdrop-blur-[2px]" />
@@ -96,13 +133,9 @@ function GitHubAppInstallPromptDialog() {
             <GitBranch className="size-5 text-[#0f172a]" strokeWidth={1.75} aria-hidden />
           </span>
           <h2 className="mt-4 text-[20px] font-semibold tracking-tight text-[#0f172a]">
-            GitHub 접근 권한 설정 필요
+            {copy.title}
           </h2>
-          <p className="mt-2 text-[14px] leading-relaxed text-[#64748b]">
-            저장소를 불러오려면 GitHub에 대한 접근 권한 허용이 필요합니다.
-            <br />
-            아래 버튼을 눌러 권한을 설정해 주세요.
-          </p>
+          <p className="mt-2 text-[14px] leading-relaxed text-[#64748b]">{copy.description}</p>
         </div>
 
         <div className="px-6 py-5">
@@ -113,7 +146,7 @@ function GitHubAppInstallPromptDialog() {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f172a] py-3 text-[14px] font-semibold text-white transition hover:bg-[#1e293b] disabled:opacity-50"
           >
             <GitBranch className="size-4" strokeWidth={1.75} aria-hidden />
-            {isLoading ? '로딩 중...' : '권한 허용하기'}
+            {isLoading ? '로딩 중...' : copy.confirmLabel}
           </button>
         </div>
       </div>

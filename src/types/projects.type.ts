@@ -7,7 +7,6 @@ import {
   repositoryHealthStatusSchema,
   repositoryVisibilitySchema,
   startModeSchema,
-  agentTaskStatusSchema,
 } from '@/types/common.enum';
 
 /**
@@ -93,7 +92,13 @@ const postProjectCreateReqSchema = z.object({
   name: z.string().min(1, '프로젝트 이름을 입력해주세요.').prefault(''),
   /** 프로젝트 시작 방식 */
   startMode: startModeSchema,
-  /** 템플릿 유형. startMode가 템플릿 기반일 때 사용 */
+  /**
+   * 사용자가 고른 콘텐츠 템플릿. startMode가 템플릿 기반일 때 사용한다.
+   * 빌드 프레임워크가 아니다 — nextjs·vite 같은 이름을 넣지 말 것.
+   * 배포가 이 값을 publish 디렉터리 힌트로 읽던 폴백이 있었고(백엔드 #134로 제거),
+   * 프레임워크 이름을 넣으면 빈 산출물이 조용히 배포됐다.
+   * 지금은 저장만 되고 코드 생성에 반영되지 않는다.
+   */
   templateType: z.string().nullable().prefault(''),
   /** 초안 생성 방식. 값이 없으면 fast로 보정됩니다. */
   draftMode: z.string().nullable().prefault(''),
@@ -109,12 +114,6 @@ const postProjectCreateResSchema = z.object({
   name: z.string().min(1, '프로젝트 이름이 없습니다.').prefault(''),
   /** 프로젝트 상태 */
   status: projectStatusSchema,
-  /** 초기 CODE 작업 ID. 없으면 null */
-  taskId: z.string().nullable().prefault(''),
-  /** 초기 에이전트 태스크 상태. 없으면 null */
-  taskStatus: agentTaskStatusSchema.nullable().prefault(null),
-  /** 생성 직후 승인 대기 ID 목록 */
-  approvalIds: z.array(z.number().int()).prefault([]),
 });
 
 /**
@@ -206,7 +205,15 @@ const getProjectCommitListResSchema = z.array(projectLatestCommitSchema);
  * 프로젝트 활동 유형
  * @example "PROJECT_CREATED"
  */
-const projectActivityTypeSchema = z.enum(['PROJECT_CREATED']);
+/**
+ * 활동 유형. 화면은 이 값을 배지 문자열로 보여줄 뿐 분기하지 않으므로 열린 문자열로 받는다.
+ *
+ * 고정 목록이 아니다 — 서버가 `접두사 + 상태 enum`으로 조합해 만든다
+ * (`DEPLOYMENT_` `CHANGE_` `APPROVAL_` `DOMAIN_` + 각 상태, 그리고 `PROJECT_CREATED`).
+ * 네 enum 중 어디에 값이 하나 늘어도 새 유형이 저절로 생기므로 닫힌 enum으로 두면
+ * 목록 전체가 파싱에 실패해 표가 통째로 빈다. 실제로 그렇게 비어 있었다.
+ */
+const projectActivityTypeSchema = z.string().min(1, '활동 유형이 없습니다.').prefault('');
 
 /**
  * 프로젝트 활동 로그
@@ -243,8 +250,6 @@ const getProjectOverviewResSchema = z.object({
   deployStatus: deployStatusSchema,
   /** 현재 배포 버전 */
   currentVersion: z.string().min(1, '배포 버전이 없습니다.').prefault(''),
-  /** 최근 프로젝트 변경 요약 */
-  recentChanges: z.array(z.string().min(1, '변경 요약이 없습니다.').prefault('')),
   /** 연결 저장소의 최신 커밋. 저장소가 없으면 null */
   latestCommit: projectLatestCommitSchema.nullable().prefault(null),
   /** 트래픽 요약. 현재는 외부 지표 미연동 안내 문구 */

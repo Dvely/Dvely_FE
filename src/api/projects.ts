@@ -111,6 +111,20 @@ async function getProjectDetailBundle(projectId: number) {
     throw projectResult.reason;
   }
 
+  // 곁다리 조회는 실패해도 화면을 살리려고 빈 값으로 떨어뜨린다.
+  // 그래서 스키마가 어긋나도 콘솔에 아무것도 안 남아 원인을 찾기 어렵다 — 최소한 흔적은 남긴다
+  const settledParts = {
+    overview: overviewResult,
+    commits: commitsResult,
+    activityLogs: activityLogsResult,
+    repositoryHealth: repositoryHealthResult,
+  };
+  Object.entries(settledParts).forEach(([name, result]) => {
+    if (result.status === 'rejected') {
+      console.warn(`[project-detail] ${name} 조회 실패 — 빈 값으로 표시합니다`, result.reason);
+    }
+  });
+
   return {
     project: projectResult.value,
     overview: overviewResult.status === 'fulfilled' ? overviewResult.value : undefined,

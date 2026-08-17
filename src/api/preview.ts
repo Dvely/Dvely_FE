@@ -135,13 +135,23 @@ function usePreviewAccessQuery(queryKey: unknown, sessionId: string | null, fram
     enabled: typeof sessionId === 'string' && sessionId.length > 0,
     gcTime: 0,
     staleTime: Infinity,
-    retry: 1,
+    // 재시도도 토큰을 회전시킨다 — 첫 응답이 늦게 도착하면 그 주소가 이미 무효라 404가 된다.
+    // 실패는 그대로 드러내고, 사용자가 새로고침(frameKey)으로 다시 발급받게 둔다.
+    retry: 0,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
 }
 
-function useProjectPreviewQuery(queryKey: unknown, projectId: number) {
+/**
+ * 프로젝트의 현재 프리뷰 세션 쿼리.
+ * isAgentTaskActive는 Agent 작업이 도는 중인지 — 세션이 아직 없어도 폴링을 유지할지 결정한다.
+ */
+function useProjectPreviewQuery(
+  queryKey: unknown,
+  projectId: number,
+  isAgentTaskActive = false,
+) {
   if (!queryKey) throw new Error('queryKey is required');
 
   return useQuery({
@@ -151,7 +161,13 @@ function useProjectPreviewQuery(queryKey: unknown, projectId: number) {
     gcTime: 0,
     refetchOnWindowFocus: true,
     refetchInterval: (query) => {
-      if (query.state.data?.status === 'PROVISIONING') return PROJECT_PREVIEW_POLL_MS;
+      const status = query.state.data?.status;
+      if (status === 'PROVISIONING') return PROJECT_PREVIEW_POLL_MS;
+      // 세션이 아직 없어도(204) Agent 작업 중이면 계속 지켜본다.
+      // CODE 스텝이 세션을 만드는 시점은 이 쿼리의 첫 조회보다 늦을 수 있는데,
+      // 여기서 멈추면 PROVISIONING → ACTIVE 전이를 통째로 놓치고 작업이 끝날 때까지
+      // "프리뷰 없음" 화면이 남는다.
+      if (isAgentTaskActive && status == null) return PROJECT_PREVIEW_POLL_MS;
       return false;
     },
   });

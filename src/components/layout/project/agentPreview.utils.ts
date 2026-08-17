@@ -3,8 +3,18 @@ import type { ProjectPreviewSessionStatus } from '@/types/preview.type';
 
 export type AgentPreviewPhase = 'empty' | 'building' | 'ready' | 'unavailable';
 
-export function deriveAgentPreviewUrl(taskPreviewUrl?: string | null): string {
-  const raw = taskPreviewUrl?.trim() ?? '';
+/**
+ * 열람 권한 발급(POST /preview-sessions/{id}/access) 응답의 previewUrl을 iframe에 넣을 절대 주소로 바꾼다.
+ * Agent 태스크 응답의 previewUrl이 아니다 — 그쪽은 토큰이 회전되어 이미 무효일 수 있다.
+ *
+ * 게이트웨이는 현재 항상 절대 URL을 준다(`QEPLOY_PREVIEW_GATEWAY_BASE_URL` + 경로).
+ * 아래 상대 경로 분기는 방어용이고, 프리뷰가 같은 오리진이라는 보장이 되지 못한다.
+ * iframe이 열리는 근거는 그 설정값이 페이지와 같은 오리진이라는 것 하나다 — 게이트웨이를
+ * 별도 도메인으로 분리하면 CSP frame-ancestors에 막혀 조용히 빈 화면이 된다.
+ * cross-origin iframe이라 FE는 그 실패를 감지할 수 없으니, 분리 시 서버 쪽 설정을 같이 넓혀야 한다.
+ */
+export function resolvePreviewFrameUrl(accessPreviewUrl?: string | null): string {
+  const raw = accessPreviewUrl?.trim() ?? '';
   if (!raw) return '';
   if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
 

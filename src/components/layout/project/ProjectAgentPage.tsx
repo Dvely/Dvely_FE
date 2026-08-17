@@ -42,7 +42,7 @@ import {
 } from '@/components/layout/project/agentChat.utils';
 import {
   deriveAgentPreviewPhase,
-  deriveAgentPreviewUrl,
+  resolvePreviewFrameUrl,
 } from '@/components/layout/project/agentPreview.utils';
 import AgentChatListPanel from '@/components/layout/project/AgentChatListPanel';
 import AgentConversationPanel from '@/components/layout/project/AgentConversationPanel';
@@ -77,6 +77,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [hasDisconnectedRepository, setHasDisconnectedRepository] = useState(false);
   const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
   const [previewFrameKey, setPreviewFrameKey] = useState(0);
+  const [isAgentTaskActive, setIsAgentTaskActive] = useState(false);
   const [pipelineRun, setPipelineRun] = useState<PipelineRun>(() => createIdlePipelineRun());
   const pipelineAbortRef = useRef<AbortController | null>(null);
 
@@ -191,7 +192,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     isLoading: isPreviewLoading,
     isFetching: isPreviewFetching,
     refetch: refetchProjectPreview,
-  } = useProjectPreviewQuery('project-agent-page', projectId);
+  } = useProjectPreviewQuery('project-agent-page', projectId, isAgentTaskActive);
 
   const activePreviewSessionId =
     projectPreview?.status === 'ACTIVE' && projectPreview.sessionId
@@ -210,7 +211,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const previewUrl = useMemo(
     () =>
       activePreviewSessionId && previewAccess
-        ? deriveAgentPreviewUrl(previewAccess.previewUrl)
+        ? resolvePreviewFrameUrl(previewAccess.previewUrl)
         : '',
     [activePreviewSessionId, previewAccess],
   );
@@ -250,7 +251,12 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     provisionPreviewMutation.mutate();
   };
 
-  const handleConversationActivity = (_conversationId: number) => {
+  // AgentConversationPanel이 매 렌더에서 부르므로 identity를 고정한다
+  const handleAgentTaskActiveChange = useCallback((isActive: boolean) => {
+    setIsAgentTaskActive(isActive);
+  }, []);
+
+  const handleConversationActivity = () => {
     void queryClient.invalidateQueries({
       queryKey: ['project-preview-session', 'project-agent-page', projectId],
     });
@@ -374,6 +380,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               setIsNewConversation(false);
             }}
             onConversationActivity={handleConversationActivity}
+            onAgentTaskActiveChange={handleAgentTaskActiveChange}
             onDeployPipelineStart={handleDeployPipelineStart}
           />
         )}

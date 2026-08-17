@@ -6,18 +6,15 @@ import {
   postProjectConversationCreate,
   useConversationMessageListQuery,
 } from '@/api/chat';
-import {
-  getAgentTask,
-  pollAgentTask,
-  SETTLED_AGENT_TASK_STATUSES,
-} from '@/api/agent';
+import { pollAgentTask, SETTLED_AGENT_TASK_STATUSES } from '@/api/agent';
 import {
   getProjectApprovalList,
-  getApprovalDetail,
   postApprovalApprove,
   postApprovalReject,
+  useApprovalDetailQuery,
 } from '@/api/approvals';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
+import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
 import type { GetAgentTaskResType } from '@/types/agent.type';
 import type { ConversationMessage } from '@/types/chat.type';
 import {
@@ -26,9 +23,9 @@ import {
   createLocalMessage,
   mergeConversationMessages,
   migrateSessionMessages,
+  readConversationTaskId,
   readSessionMessages,
   rememberConversationTaskId,
-  rememberProjectTaskId,
   shouldSendHomeAgentPromptOnce,
   writeSessionMessages,
 } from '@/components/layout/project/agentChat.utils';
@@ -52,35 +49,15 @@ type AgentConversationPanelProps = {
   initialPrompt?: string | null;
   onConversationCreated: (conversationId: number) => void;
   onConversationActivity?: (conversationId: number) => void;
+  /** Agent 태스크가 도는 중인지 알린다. 프리뷰 세션 폴링을 열어 두는 데 쓰인다 */
+  onAgentTaskActiveChange?: (isActive: boolean) => void;
   /** 배포 제안(약 2~3분) 수락 시 파이프라인 실행 */
   onDeployPipelineStart?: () => Promise<void>;
 };
 
-function formatAgentTaskReply(task: GetAgentTaskResType) {
-  switch (task.status) {
-    case 'DONE':
-      return task.summary?.trim() || '작업을 완료했습니다.';
-    case 'FAILED':
-      return (
-        task.error?.trim() ||
-        task.suggestedFix?.trim() ||
-        '작업에 실패했습니다. 잠시 후 다시 시도해주세요.'
-      );
-    case 'CANCELLED':
-      return '작업이 취소되었습니다.';
-    case 'WAITING_INPUT':
-      return task.question?.trim() || '추가 입력이 필요합니다.';
-    case 'WAITING_APPROVAL':
-      return (
-        task.summary?.trim() ||
-        '작업 실행 전 승인이 필요합니다. 아래 버튼으로 승인하거나 거절해 주세요.'
-      );
-    case 'WAITING_RESULT_APPROVAL':
-      return task.summary?.trim() || '결과 승인이 필요합니다. 미리보기를 확인한 뒤 승인해 주세요.';
-    default:
-      return task.summary?.trim() || '작업 상태를 확인했습니다.';
-  }
-}
+// 태스크 상태를 사람이 읽을 문구로 옮기던 formatAgentTaskReply 는 없앴다.
+// 서버가 모든 종료 상태를 chat_messages 에 남기므로 FE 가 같은 사건을 다시 서술하면
+// 문구만 다른 두 벌이 된다. 서술은 서버 하나가 소유한다.
 
 const APPROVAL_WAIT_STATUSES = new Set(['WAITING_APPROVAL', 'WAITING_RESULT_APPROVAL']);
 
@@ -100,11 +77,10 @@ async function resolvePendingApprovalId(
     return false;
   });
 
-  return (
-    pending?.approvalId ??
-    approvals.find((approval) => approval.status === 'PENDING')?.approvalId ??
-    null
-  );
+  // 이 태스크·대화에 속한 승인만 쓴다. 예전에는 매칭이 실패하면 프로젝트 안 아무 PENDING이나
+  // 집어왔는데, 스캐폴딩 승인이 WAITING_APPROVAL로 남아 쌓이는 구조라 다른 대화의 승인 카드가
+  // 뜰 수 있었다. 승인은 되돌리기 어려우므로 엉뚱한 것을 띄우느니 아무것도 안 띄운다.
+  return pending?.approvalId ?? null;
 }
 
 function formatApiErrorMessage(error: unknown) {
@@ -135,11 +111,14 @@ function AgentConversationPanel({
   initialPrompt,
   onConversationCreated,
   onConversationActivity,
+  onAgentTaskActiveChange,
 }: AgentConversationPanelProps) {
   const [input, setInput] = useState('');
   const [overlayMessages, setOverlayMessages] = useState<ConversationMessage[]>([]);
   const [isAssistantReplying, setIsAssistantReplying] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  // 승인 대기 여부는 서버만 안다 — 채팅 본문에서 유추하지 않는다
+  const [pendingApprovalId, setPendingApprovalId] = useState<number | null>(null);
 
   const queryClient = useQueryClient();
   const { data: serverMessages, isLoading: isMessagesLoading } = useConversationMessageListQuery(
@@ -151,6 +130,41 @@ function AgentConversationPanel({
     [serverMessages, overlayMessages],
   );
   const pollAbortRef = useRef<AbortController | null>(null);
+
+  const { data: pendingApproval } = useApprovalDetailQuery(AGENT_CHAT_QUERY_KEY, pendingApprovalId);
+  const activeApproval = pendingApproval?.status === 'PENDING' ? pendingApproval : null;
+
+  // 대화를 열거나 바꿀 때 미결 승인을 서버에서 복원한다.
+  //
+  // taskId로 복원하면 안 된다 — taskId는 메시지 생성 응답에만 실려 오고 메모리에만 남아서,
+  // 새로고침하면 사라진다. 그러면 승인은 PENDING인데 카드가 없어 결정할 방법이 없어진다.
+  // 승인 목록에는 conversationId·taskId·input이 다 들어 있으므로 이쪽으로 찾는다.
+  useEffect(() => {
+    if (conversationId == null) {
+      setPendingApprovalId(null);
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const approvals = await getProjectApprovalList(projectId);
+        // 반드시 conversationId로 거른다. 프로젝트 단위로 찾으면 conversationId가 null인
+        // 고아 스캐폴딩 승인이 잡혀서, 다른 대화의 승인 카드가 뜨던 문제가 재현된다
+        const pending = approvals.find(
+          (approval) => approval.status === 'PENDING' && approval.conversationId === conversationId,
+        );
+        if (!cancelled) setPendingApprovalId(pending?.approvalId ?? null);
+      } catch {
+        // 복원에 실패하면 승인 없음으로 둔다 — 없는 승인을 띄우는 것보다 낫다
+        if (!cancelled) setPendingApprovalId(null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId, projectId]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -174,7 +188,6 @@ function AgentConversationPanel({
       }
 
       rememberConversationTaskId(targetConversationId, taskId);
-      rememberProjectTaskId(projectId, taskId);
       onConversationActivity?.(targetConversationId);
 
       const sessionMessages = readSessionMessages(targetConversationId);
@@ -226,26 +239,15 @@ function AgentConversationPanel({
         migrateSessionMessages(context.draftConversationId, targetConversationId);
       }
 
-      const sessionMessages = readSessionMessages(targetConversationId);
       const pendingApprovalId = result.task?.pendingApprovalId ?? result.pendingApprovalId ?? null;
-      const nextMessages = result.task
-        ? [
-            ...sessionMessages,
-            createLocalMessage(
-              targetConversationId,
-              'assistant',
-              formatAgentTaskReply(result.task),
-              {
-                taskId: result.task.taskId,
-                pendingApprovalId,
-                needsApproval: APPROVAL_WAIT_STATUSES.has(result.task.status),
-              },
-            ),
-          ]
-        : sessionMessages;
+      setPendingApprovalId(pendingApprovalId);
 
-      writeSessionMessages(targetConversationId, nextMessages);
-      setOverlayMessages(nextMessages);
+      // 어시스턴트 답변을 task.summary 로 직접 만들지 않는다. 서버가 같은 사건을
+      // chat_messages 에 이미 적어두는데 문구가 달라서(요약 전문 vs 짧은 안내) 병합에
+      // 걸리지 않고 두 벌로 보였다. 새로고침하면 서버 것만 남아 하나로 줄던 게 그 증거다.
+      // 사용자 메시지는 오버레이에 남겨 둔다 — 서버 목록이 도착하면 본문이 같아 병합된다.
+      const sessionMessages = readSessionMessages(targetConversationId);
+      setOverlayMessages(sessionMessages);
 
       if (isNewConversation || conversationId === null) {
         onConversationCreated(targetConversationId);
@@ -302,15 +304,15 @@ function AgentConversationPanel({
       approvalId,
       action,
       taskId,
-      messageId,
+      payload,
     }: {
       approvalId: number;
       action: 'approve' | 'reject';
       taskId: string;
-      messageId: number;
+      payload?: Record<string, string>;
     }) => {
       if (action === 'approve') {
-        await postApprovalApprove(approvalId);
+        await postApprovalApprove(approvalId, payload);
       } else {
         await postApprovalReject(approvalId);
       }
@@ -332,58 +334,46 @@ function AgentConversationPanel({
       const nextPendingApprovalId = await resolvePendingApprovalId(task, projectId, conversationId);
       const pendingApprovalId = nextPendingApprovalId === approvalId ? null : nextPendingApprovalId;
 
-      return { task, messageId, pendingApprovalId, decidedApprovalId: approvalId };
+      return { task, pendingApprovalId, decidedApprovalId: approvalId };
     },
-    onMutate: ({ messageId }) => {
+    onMutate: () => {
       setIsAssistantReplying(true);
-      setOverlayMessages((prev) => {
-        const next = mergeConversationMessages(serverMessages ?? [], prev).map((message) =>
-          message.messageId === messageId
-            ? { ...message, pendingApprovalId: null, needsApproval: false }
-            : message,
-        );
-        if (conversationId != null) writeSessionMessages(conversationId, next);
-        return next;
-      });
+      setPendingApprovalId(null);
     },
-    onSuccess: ({ task, messageId, pendingApprovalId }) => {
+    onSuccess: ({ task, pendingApprovalId }) => {
       const targetConversationId = conversationId;
       if (targetConversationId == null) return;
 
       rememberConversationTaskId(targetConversationId, task.taskId);
-      rememberProjectTaskId(projectId, task.taskId);
 
       const needsApproval = APPROVAL_WAIT_STATUSES.has(task.status) && pendingApprovalId != null;
+      setPendingApprovalId(needsApproval ? pendingApprovalId : null);
 
-      const assistantMessage = createLocalMessage(
-        targetConversationId,
-        'assistant',
-        formatAgentTaskReply(task),
-        {
-          taskId: task.taskId,
-          pendingApprovalId: needsApproval ? pendingApprovalId : null,
-          needsApproval,
-        },
-      );
-
-      setOverlayMessages((prev) => {
-        const next = [
-          ...mergeConversationMessages(serverMessages ?? [], prev).map((message) =>
-            message.messageId === messageId
-              ? { ...message, pendingApprovalId: null, needsApproval: false }
-              : message,
-          ),
-          assistantMessage,
-        ];
-        writeSessionMessages(targetConversationId, next);
-        return next;
-      });
+      // 태스크가 끝났으면 게이트 안내와 결과가 서버에 기록돼 있다.
+      // 로컬 임시 메시지를 덧붙이면 곧 도착할 서버 메시지와 겹치므로 오버레이를 비우고
+      // 서버 목록을 단일 출처로 삼는다 (기존 메시지는 그대로 남아 화면이 비지 않는다)
+      setOverlayMessages([]);
+      writeSessionMessages(targetConversationId, []);
 
       void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
+      // 승인은 서버 쪽 상태를 바꾼다 — 결정 뒤 화면에 남아 있는 옛 값을 걷어낸다.
+      // 메시지: 게이트 안내와 결과가 서버에 기록되므로 다시 읽어야 이력이 보인다
+      // 저장소 설정·프로젝트: REPOSITORY_BINDING 승인이 저장소를 붙인다
+      void queryClient.invalidateQueries({
+        queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, targetConversationId],
+      });
+      void queryClient.invalidateQueries({ queryKey: ['project-repository-settings'] });
+      void queryClient.invalidateQueries({ queryKey: ['project-detail'] });
       setIsAssistantReplying(false);
       onConversationActivity?.(targetConversationId);
     },
-    onError: (error) => {
+    onError: (error, variables) => {
+      // onMutate에서 낙관적으로 감췄던 승인을 되돌린다 — 실패했으면 아직 대기 중이다.
+      // 다만 방치 승인은 서버가 TTL로 CANCELLED 처리하므로(409) 상태를 다시 읽는다.
+      // PENDING이면 카드가 돌아오고, 이미 닫혔으면 사라진다
+      setPendingApprovalId(variables.approvalId);
+      void queryClient.invalidateQueries({ queryKey: ['approval-detail'] });
+
       if (error instanceof DOMException && error.name === 'AbortError') {
         setIsAssistantReplying(false);
         return;
@@ -396,6 +386,17 @@ function AgentConversationPanel({
 
   const isSending = sendMessageMutation.isPending;
   const isInputLocked = isSending || isAssistantReplying;
+
+  // 세 경로 모두 mutationFn 안에서 태스크가 끝날 때까지 폴링하므로, 이 값이 참인 동안이 곧 작업 구간이다
+  const isAgentTaskActive = isInputLocked || decideApprovalMutation.isPending;
+
+  useEffect(() => {
+    onAgentTaskActiveChange?.(isAgentTaskActive);
+  }, [isAgentTaskActive, onAgentTaskActiveChange]);
+
+  // 작업 중에 패널이 사라지면 부모가 참인 채로 남아 폴링이 멈추지 않는다
+  useEffect(() => () => onAgentTaskActiveChange?.(false), [onAgentTaskActiveChange]);
+
   const showMessageSkeletons = isMessagesLoading && displayMessages.length === 0;
   const showWelcome =
     !showMessageSkeletons &&
@@ -422,56 +423,26 @@ function AgentConversationPanel({
     if (!open) setAlertMessage(null);
   };
 
-  const handleDecideApproval = (message: ConversationMessage, action: 'approve' | 'reject') => {
-    if (decideApprovalMutation.isPending || isAssistantReplying) {
+  const handleDecideApproval = (
+    action: 'approve' | 'reject',
+    payload?: Record<string, string>,
+  ) => {
+    if (decideApprovalMutation.isPending || isAssistantReplying || !activeApproval) {
       return;
     }
 
-    if (message.pendingApprovalId == null && !message.needsApproval) {
+    const taskId = activeApproval.taskId?.trim() || readConversationTaskId(conversationId);
+    if (!taskId) {
+      setAlertMessage('이어서 진행할 작업 ID를 찾지 못했습니다.');
       return;
     }
 
-    void (async () => {
-      let approvalId = message.pendingApprovalId;
-      let taskId = message.taskId?.trim() || '';
-
-      if (approvalId == null && taskId) {
-        try {
-          const task = await getAgentTask(taskId);
-          approvalId = await resolvePendingApprovalId(task, projectId, conversationId);
-        } catch (error) {
-          setAlertMessage(formatApiErrorMessage(error));
-          return;
-        }
-      }
-
-      if (approvalId != null && !taskId) {
-        try {
-          const detail = await getApprovalDetail(approvalId);
-          taskId = detail.taskId?.trim() || '';
-        } catch (error) {
-          setAlertMessage(formatApiErrorMessage(error));
-          return;
-        }
-      }
-
-      if (approvalId == null) {
-        setAlertMessage('승인할 항목을 찾지 못했습니다. 승인 탭에서 확인해주세요.');
-        return;
-      }
-
-      if (!taskId) {
-        setAlertMessage('이어서 진행할 작업 ID를 찾지 못했습니다.');
-        return;
-      }
-
-      decideApprovalMutation.mutate({
-        approvalId,
-        action,
-        taskId,
-        messageId: message.messageId,
-      });
-    })();
+    decideApprovalMutation.mutate({
+      approvalId: activeApproval.approvalId,
+      action,
+      taskId,
+      payload,
+    });
   };
 
   useEffect(() => {
@@ -506,14 +477,17 @@ function AgentConversationPanel({
                 <AssistantReplySkeleton key={`message-skeleton-${item}`} />
               ))
             : displayMessages.map((message) => (
-                <MessageBubble
-                  key={message.messageId}
-                  message={message}
-                  isDecideBusy={decideApprovalMutation.isPending}
-                  onApprove={() => handleDecideApproval(message, 'approve')}
-                  onReject={() => handleDecideApproval(message, 'reject')}
-                />
+                <MessageBubble key={message.messageId} message={message} />
               ))}
+          {activeApproval ? (
+            <AgentApprovalCard
+              key={activeApproval.approvalId}
+              approval={activeApproval}
+              isBusy={decideApprovalMutation.isPending}
+              onApprove={(payload) => handleDecideApproval('approve', payload)}
+              onReject={() => handleDecideApproval('reject')}
+            />
+          ) : null}
           {isSending || isAssistantReplying ? <AssistantReplySkeleton /> : null}
           <div
             key={`${displayMessages.length}-${isAssistantReplying ? 'replying' : 'idle'}`}
@@ -573,9 +547,6 @@ function AgentConversationPanel({
 
 type MessageBubbleProps = {
   message: ConversationMessage;
-  isDecideBusy: boolean;
-  onApprove: () => void;
-  onReject: () => void;
 };
 
 const MESSAGE_URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -618,10 +589,9 @@ function AssistantReplySkeleton() {
   );
 }
 
-function MessageBubble({ message, isDecideBusy, onApprove, onReject }: MessageBubbleProps) {
+function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
-  const showApprovalActions = isAssistant && message.needsApproval === true;
   const linkClassName = isUser
     ? 'underline underline-offset-2 hover:text-[#5b21b6]'
     : 'text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]';
@@ -640,26 +610,6 @@ function MessageBubble({ message, isDecideBusy, onApprove, onReject }: MessageBu
         <p className="whitespace-pre-wrap">
           {linkifyMessageContent(message.content, linkClassName)}
         </p>
-        {showApprovalActions ? (
-          <div className="mt-3 flex gap-2">
-            <button
-              type="button"
-              disabled={isDecideBusy}
-              onClick={onReject}
-              className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold text-[#64748b] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              거절
-            </button>
-            <button
-              type="button"
-              disabled={isDecideBusy}
-              onClick={onApprove}
-              className="h-8 rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isDecideBusy ? '처리 중' : '승인'}
-            </button>
-          </div>
-        ) : null}
       </div>
     </div>
   );

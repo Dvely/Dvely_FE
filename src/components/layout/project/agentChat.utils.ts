@@ -5,8 +5,6 @@ let localMessageId = -1;
 type CreateLocalMessageOptions = {
   tokenCount?: number;
   taskId?: string | null;
-  pendingApprovalId?: number | null;
-  needsApproval?: boolean | null;
 };
 
 export function createLocalMessage(
@@ -27,8 +25,6 @@ export function createLocalMessage(
     tokenCount,
     createdAt: new Date().toISOString(),
     taskId: options.taskId ?? null,
-    pendingApprovalId: options.pendingApprovalId ?? null,
-    needsApproval: options.needsApproval ?? null,
   };
 }
 
@@ -49,18 +45,6 @@ export function rememberConversationTaskId(conversationId: number, taskId: strin
   const trimmed = taskId.trim();
   if (!trimmed) return;
   taskIdByConversation.set(conversationId, trimmed);
-}
-
-const taskIdByProject = new Map<number, string>();
-
-export function rememberProjectTaskId(projectId: number, taskId: string) {
-  const trimmed = taskId.trim();
-  if (!trimmed) return;
-  taskIdByProject.set(projectId, trimmed);
-}
-
-export function readProjectTaskId(projectId: number) {
-  return taskIdByProject.get(projectId) ?? null;
 }
 
 export function readConversationTaskId(conversationId: number | null) {
@@ -105,62 +89,15 @@ export function mergeConversationMessages(
     return {
       ...message,
       taskId: sessionMessage.taskId || message.taskId,
-      pendingApprovalId: sessionMessage.pendingApprovalId ?? message.pendingApprovalId,
-      needsApproval: sessionMessage.needsApproval ?? message.needsApproval,
     };
   });
 
   const localOnly = sessionMessages.filter((message) => !usedSessionIds.has(message.messageId));
 
-  return applyApprovalActionState([...mergedServer, ...localOnly]);
-}
-
-function parseApprovalIdFromPlan(content: string) {
-  const match = content.match(/\[(\d+)\]/);
-  if (!match) return null;
-
-  const approvalId = Number(match[1]);
-  return Number.isInteger(approvalId) ? approvalId : null;
-}
-
-function isApprovalPlanContent(content: string) {
-  return content.includes('승인 후 실행');
-}
-
-function isApprovalResolvedContent(content: string) {
-  return (
-    content.includes('모든 승인이 완료') ||
-    content.includes('작업을 시작') ||
-    content.includes('작업 중 오류') ||
-    content.includes('작업이 취소')
-  );
-}
-
-/** 아직 처리되지 않은 승인 계획 메시지에만 승인/거절 버튼을 붙인다. */
-export function applyApprovalActionState(messages: ConversationMessage[]): ConversationMessage[] {
-  return messages.map((message, index) => {
-    if (message.needsApproval === false) {
-      return { ...message, needsApproval: false, pendingApprovalId: null };
-    }
-
-    if (message.role !== 'assistant' || !isApprovalPlanContent(message.content)) {
-      return message;
-    }
-
-    const alreadyResolved = messages
-      .slice(index + 1)
-      .some((later) => later.role === 'assistant' && isApprovalResolvedContent(later.content));
-
-    if (alreadyResolved) {
-      return { ...message, needsApproval: false, pendingApprovalId: null };
-    }
-
-    return {
-      ...message,
-      needsApproval: true,
-      pendingApprovalId: message.pendingApprovalId ?? parseApprovalIdFromPlan(message.content),
-    };
-  });
+  // 승인 UI는 여기서 만들지 않는다 — 무엇이 승인 대기인지는 서버(태스크의 pendingApprovalId
+  // → 승인 상세)만 알고 있다. 예전에는 본문에 '승인 후 실행'과 '[숫자]'가 있으면 버튼을 붙였는데,
+  // 모델이 그 문장을 지어내면 존재하지 않는 승인 버튼이 그대로 떴다.
+  return [...mergedServer, ...localOnly];
 }
 
 /** 새 대화 생성 전 임시 ID(0)에 쌓인 메시지를 실제 conversationId로 옮긴다. */

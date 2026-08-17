@@ -2,7 +2,6 @@ import { useCallback, useEffect, useId, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { FolderPlus, X } from 'lucide-react';
 import { postProjectCreate } from '@/api/projects';
-import { rememberProjectTaskId } from '@/components/layout/project/agentChat.utils';
 import { cn } from '@/lib/utils';
 
 type ProjectCreateDialogProps = {
@@ -33,16 +32,13 @@ function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogProps) {
     setIsSubmitting(true);
 
     try {
-      const created = await postProjectCreate({
+      // 프로젝트 생성은 프로젝트 행만 만든다 — 코드 생성은 사용자가 대화로 첫 요청을 보낼 때 시작한다
+      await postProjectCreate({
         name: trimmedName,
         startMode: 'blank',
         templateType: null,
         draftMode: 'fast',
       });
-
-      if (created.taskId) {
-        rememberProjectTaskId(created.projectId, created.taskId);
-      }
 
       await queryClient.invalidateQueries({ queryKey: ['project-list'] });
       onOpenChange(false);

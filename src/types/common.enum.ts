@@ -225,6 +225,7 @@ const approvalTypeSchema = z.enum([
   'DEPLOYMENT',
   'DOMAIN_BINDING',
   'INFRA_OPERATION',
+  'REPOSITORY_BINDING',
   'RESULT',
 ]);
 
