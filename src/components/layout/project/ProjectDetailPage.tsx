@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft, ChevronRight, Play, Settings } from 'lucide-react';
 import { formatActivityTime } from '@/lib/projectActivity';
+import { toSafeHttpUrl } from '@/lib/safeUrl';
 import { formatProjectDisplayName } from '@/components/layout/project/agentChat.utils';
 import ProjectActivityDetailDialog from '@/components/layout/project/ProjectActivityDetailDialog';
 import ProjectSettingsDialog from '@/components/layout/project/ProjectSettingsDialog';
@@ -51,6 +52,9 @@ function ProjectDetailPage({
   const latestCommit = commits[0] ?? overview?.latestCommit ?? null;
   const activityRows = activityLogs.slice(0, 5);
   const [detailActivity, setDetailActivity] = useState<ProjectActivityLog | null>(null);
+  // 링크로 쓰기 전에 스킴을 검증한다 — javascript: 가 섞이면 클릭 시 실행된다
+  const currentUrlHref = toSafeHttpUrl(overview?.currentUrl);
+  const domainHref = toSafeHttpUrl(overview?.domainSummary?.url);
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#f8fafc]">
@@ -141,7 +145,19 @@ function ProjectDetailPage({
                 <div className="mt-2 h-4 w-2/3 animate-pulse rounded bg-[#e2e8f0]" />
               ) : (
                 <p className="mt-2 text-[13px] leading-relaxed text-[#64748b]">
-                  {overview?.currentUrl ?? '프로젝트가 라이브되면 여기에 URL이 표시됩니다.'}
+                  {/* 도메인을 연결하면 서버가 currentUrl 을 커스텀 도메인으로 승격시킨다 */}
+                  {currentUrlHref ? (
+                    <a
+                      href={currentUrlHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="break-all text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]"
+                    >
+                      {currentUrlHref}
+                    </a>
+                  ) : (
+                    '프로젝트가 라이브되면 여기에 URL이 표시됩니다.'
+                  )}
                 </p>
               )}
 
@@ -250,7 +266,31 @@ function ProjectDetailPage({
                 ) : (
                   <div className="mt-3 space-y-2 text-[13px] leading-relaxed text-[#94a3b8]">
                     <p>{overview?.trafficSummary ?? '트래픽 요약 정보가 없습니다.'}</p>
-                    <p>{overview?.domainSummary ?? '도메인 요약 정보가 없습니다.'}</p>
+                    {/*
+                      url 은 status 가 CONNECTED 일 때만 채워진다 — 값이 있으면 지금 열어도 되는
+                      주소라는 뜻이라 그대로 링크 노출 조건으로 쓴다.
+                      certificateStatus / httpsEnforced 는 일부러 안 보여준다. GitHub Pages 대상은
+                      Cloudflare 프록시 때문에 인증서 검증이 끝나지 않아 영원히 PENDING 으로 남는다
+                      (BE #154). 브라우저 HTTPS 는 엣지 인증서로 정상이라 사용자 문제는 없지만,
+                      그 값을 표시하면 끝나지 않는 진행 표시가 된다.
+                    */}
+                    {domainHref ? (
+                      <p>
+                        도메인:{' '}
+                        <a
+                          href={domainHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="break-all text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]"
+                        >
+                          {overview?.domainSummary?.hostname}
+                        </a>
+                      </p>
+                    ) : overview?.domainSummary ? (
+                      <p>도메인: {overview.domainSummary.hostname} (연결 확인 중)</p>
+                    ) : (
+                      <p>연결된 도메인이 없습니다.</p>
+                    )}
                     <p>저장소 상태: {repositoryHealth?.health ?? '확인 불가'}</p>
                   </div>
                 )}

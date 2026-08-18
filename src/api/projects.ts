@@ -2,6 +2,7 @@ import Http from '@/utils/httpClients';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { errorResponse, succesResponse } from '@/utils/response';
 import type { ApiResponse } from '@/types/response.type';
+import type { DeployStatus } from '@/types/common.enum';
 import {
   deleteProjectParamsSchema,
   getProjectDetailParamsSchema,
@@ -445,6 +446,15 @@ function useProjectListQuery(queryKey: unknown, options?: UseProjectListQueryOpt
   });
 }
 
+const DEPLOY_POLL_MS = 5000;
+/** 약 10분. 서버가 웹훅을 놓치면 IN_PROGRESS 가 회수되지 않아 상한 없이는 영원히 폴링한다 */
+const MAX_DEPLOY_POLLS = 120;
+
+/** 배포가 아직 끝나지 않은 상태 */
+function isDeployInFlight(status?: DeployStatus) {
+  return status === 'PENDING' || status === 'IN_PROGRESS';
+}
+
 /** 프로젝트 상세 조회 Query Hook */
 function useProjectDetailQuery(queryKey: unknown, projectId: number) {
   if (!queryKey) throw new Error('queryKey is required');
@@ -479,6 +489,11 @@ function useProjectCommitListQuery(queryKey: unknown, projectId: number) {
 }
 
 /** 프로젝트 개요 조회 Query Hook */
+/**
+ * 프로젝트 개요 조회 Query Hook.
+ * 배포 중에는 폴링한다 — 배포 완료는 태스크가 끝난 한참 뒤 GitHub 웹훅으로 확정되므로,
+ * 태스크 종료 시점에 멈추면 LIVE/FAILED 전이를 놓치고 새로고침해야만 보인다.
+ */
 function useProjectOverviewQuery(queryKey: unknown, projectId: number) {
   if (!queryKey) throw new Error('queryKey is required');
   return useQuery({
@@ -486,6 +501,11 @@ function useProjectOverviewQuery(queryKey: unknown, projectId: number) {
     queryFn: () => getProjectOverview(projectId),
     enabled: !!projectId,
     ...defaultQueryOptions,
+    refetchInterval: (query) => {
+      if (!isDeployInFlight(query.state.data?.deployStatus)) return false;
+      if (query.state.dataUpdateCount > MAX_DEPLOY_POLLS) return false;
+      return DEPLOY_POLL_MS;
+    },
   });
 }
 
