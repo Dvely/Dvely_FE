@@ -19,6 +19,7 @@ import {
 import {
   deleteProjectRepository,
   postProjectRepository,
+  useProjectOverviewQuery,
   useProjectRepositorySettingsQuery,
 } from '@/api/projects';
 import {
@@ -193,6 +194,13 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     isFetching: isPreviewFetching,
     refetch: refetchProjectPreview,
   } = useProjectPreviewQuery('project-agent-page', projectId, isAgentTaskActive);
+
+  // 배포 완료는 태스크가 끝난 한참 뒤 GitHub 웹훅으로 확정된다. 이 쿼리가 배포 중에
+  // 스스로 폴링하고, 그동안 서버가 대화에 덧붙이는 완료 안내도 같이 다시 읽게 한다
+  const { data: projectOverview } = useProjectOverviewQuery('project-agent-page', projectId);
+  const isDeployInFlight =
+    projectOverview?.deployStatus === 'PENDING' ||
+    projectOverview?.deployStatus === 'IN_PROGRESS';
 
   const activePreviewSessionId =
     projectPreview?.status === 'ACTIVE' && projectPreview.sessionId
@@ -381,6 +389,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             }}
             onConversationActivity={handleConversationActivity}
             onAgentTaskActiveChange={handleAgentTaskActiveChange}
+            isDeployInFlight={isDeployInFlight}
             onDeployPipelineStart={handleDeployPipelineStart}
           />
         )}

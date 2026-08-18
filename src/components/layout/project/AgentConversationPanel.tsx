@@ -51,6 +51,8 @@ type AgentConversationPanelProps = {
   onConversationActivity?: (conversationId: number) => void;
   /** Agent 태스크가 도는 중인지 알린다. 프리뷰 세션 폴링을 열어 두는 데 쓰인다 */
   onAgentTaskActiveChange?: (isActive: boolean) => void;
+  /** 배포 중이면 서버가 완료 안내를 나중에 덧붙이므로 메시지를 계속 다시 읽는다 */
+  isDeployInFlight?: boolean;
   /** 배포 제안(약 2~3분) 수락 시 파이프라인 실행 */
   onDeployPipelineStart?: () => Promise<void>;
 };
@@ -112,6 +114,7 @@ function AgentConversationPanel({
   onConversationCreated,
   onConversationActivity,
   onAgentTaskActiveChange,
+  isDeployInFlight = false,
 }: AgentConversationPanelProps) {
   const [input, setInput] = useState('');
   const [overlayMessages, setOverlayMessages] = useState<ConversationMessage[]>([]);
@@ -124,6 +127,7 @@ function AgentConversationPanel({
   const { data: serverMessages, isLoading: isMessagesLoading } = useConversationMessageListQuery(
     AGENT_CHAT_QUERY_KEY,
     conversationId ?? 0,
+    isDeployInFlight,
   );
   const displayMessages = useMemo(
     () => mergeConversationMessages(serverMessages ?? [], overlayMessages),

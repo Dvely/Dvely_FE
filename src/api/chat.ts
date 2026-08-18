@@ -178,13 +178,32 @@ function useConversationDetailQuery(queryKey: unknown, conversationId: number) {
 }
 
 /** 대화 메시지 목록 조회 Query Hook */
-function useConversationMessageListQuery(queryKey: unknown, conversationId: number) {
+const AWAITING_SERVER_MESSAGE_POLL_MS = 5000;
+/** 약 10분. 서버가 배포 완료를 영영 못 받는 경우가 있어 상한 없이는 폴링이 안 멈춘다 */
+const MAX_AWAITING_SERVER_MESSAGE_POLLS = 120;
+
+/**
+ * 대화 메시지 조회 Query Hook.
+ * isAwaitingServerMessage는 사용자의 행동 없이 서버가 메시지를 덧붙일 예정인 구간인지다.
+ * 배포 완료 안내가 그런 경우로, 태스크가 끝난 한참 뒤 GitHub 웹훅으로 추가된다.
+ * 그 구간에 폴링하지 않으면 새로고침해야만 보인다.
+ */
+function useConversationMessageListQuery(
+  queryKey: unknown,
+  conversationId: number,
+  isAwaitingServerMessage = false,
+) {
   if (!queryKey) throw new Error('queryKey is required');
   return useQuery({
     queryKey: ['conversation-message-list', queryKey, conversationId],
     queryFn: () => getConversationMessageList(conversationId),
     enabled: Number.isInteger(conversationId) && conversationId > 0,
     gcTime: 0,
+    refetchInterval: (query) => {
+      if (!isAwaitingServerMessage) return false;
+      if (query.state.dataUpdateCount > MAX_AWAITING_SERVER_MESSAGE_POLLS) return false;
+      return AWAITING_SERVER_MESSAGE_POLL_MS;
+    },
   });
 }
 
