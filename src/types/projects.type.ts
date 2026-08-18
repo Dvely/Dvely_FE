@@ -241,6 +241,40 @@ const projectRepositoryHealthSummarySchema = z.object({
 });
 
 /**
+ * 프로젝트 개요에 실리는 연결 도메인 요약.
+ *
+ * 상태 계열 필드는 열린 문자열로 받는다. 화면은 `url` 하나로 링크 노출을 판단하고
+ * 나머지로 분기하지 않는데, 닫힌 enum 으로 두면 서버가 값을 늘릴 때마다 개요 응답
+ * 전체가 파싱에 실패한다. 실제로 이 필드가 문자열 스키마인 채로 객체를 받아
+ * 개요 조회가 통째로 실패하고 있었다.
+ *
+ * `type` 은 서버가 대문자(`MANAGED_SUBDOMAIN`)로 주는데 domain.type.ts 의
+ * domainTypeSchema 는 소문자다. 그 불일치도 여기서 닫지 않는 이유다.
+ */
+const projectDomainSummarySchema = z.object({
+  /** 도메인 ID */
+  domainId: z.number().int(),
+  /** 호스트명 */
+  hostname: z.string().min(1, '호스트명이 없습니다.').prefault(''),
+  /** 접속 주소. status가 CONNECTED일 때만 채워진다 — 값이 있으면 지금 열어도 되는 주소다 */
+  url: z.string().nullable().prefault(null),
+  /** 도메인 유형 */
+  type: z.string().nullable().prefault(null),
+  /** 호스팅 대상 */
+  hostingTarget: z.string().nullable().prefault(null),
+  /** 도메인 상태 */
+  status: z.string().nullable().prefault(null),
+  /** HTTPS 강제 여부 */
+  httpsEnforced: z.boolean().prefault(false),
+  /** 인증서 상태 */
+  certificateStatus: z.string().nullable().prefault(null),
+  /** 인증서 만료 시각. 없으면 null */
+  certificateExpiresAt: z.string().nullable().prefault(null),
+  /** 마지막 확인 시각. 없으면 null */
+  lastCheckedAt: z.string().nullable().prefault(null),
+});
+
+/**
  * GET /projects/{projectId}/overview 프로젝트 개요 조회 응답
  */
 const getProjectOverviewResSchema = z.object({
@@ -256,8 +290,8 @@ const getProjectOverviewResSchema = z.object({
   trafficSummary: z.string().min(1, '트래픽 요약이 없습니다.').prefault(''),
   /** 연결 저장소 health 요약 */
   repositoryHealth: projectRepositoryHealthSummarySchema,
-  /** 도메인 요약. 현재는 관리형 도메인 미연동 안내 문구 */
-  domainSummary: z.string().min(1, '도메인 요약이 없습니다.').prefault(''),
+  /** 연결된 도메인 요약. 연결된 도메인이 없으면 null */
+  domainSummary: projectDomainSummarySchema.nullable().prefault(null),
 });
 
 /**
