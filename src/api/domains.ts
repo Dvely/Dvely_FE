@@ -97,6 +97,18 @@ async function getDomainSearch(keyword: string) {
     .catch(errorResponse());
 }
 
+const DOMAIN_POLL_MS = 10000;
+/** 약 20분. 서버가 확정을 못 하는 경우가 있어 상한 없이는 폴링이 안 멈춘다 */
+const MAX_DOMAIN_POLLS = 120;
+
+/** 서버가 알아서 다음 상태로 옮기는 중인 도메인 */
+const TRANSITIONAL_DOMAIN_STATUSES = new Set(['REQUESTED', 'PROVISIONING', 'VERIFYING']);
+
+/**
+ * 프로젝트 도메인 목록 조회 Query Hook.
+ * 확정 대기 중인 도메인이 있으면 폴링한다 — 검증은 서버 워커가 1분마다 돌려 확정하므로,
+ * 폴링하지 않으면 사용자가 새로고침할 때까지 화면이 VERIFYING 에 멈춰 있다.
+ */
 function useProjectDomainListQuery(queryKey: unknown, projectId: number) {
   if (!queryKey) throw new Error('queryKey is required');
   return useQuery({
@@ -104,6 +116,12 @@ function useProjectDomainListQuery(queryKey: unknown, projectId: number) {
     queryFn: () => getProjectDomainList(projectId),
     enabled: !!projectId,
     ...defaultQueryOptions,
+    refetchInterval: (query) => {
+      const domains = query.state.data;
+      if (!domains?.some((domain) => TRANSITIONAL_DOMAIN_STATUSES.has(domain.status))) return false;
+      if (query.state.dataUpdateCount > MAX_DOMAIN_POLLS) return false;
+      return DOMAIN_POLL_MS;
+    },
   });
 }
 
