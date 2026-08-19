@@ -143,7 +143,9 @@ async function getAgentTaskEventList(taskId: string, afterEventId: number | null
     })
     .then((response) => {
       const body = succesResponse<ApiResponse<GetAgentTaskEventListResType>>(response);
-      return getAgentTaskEventListResSchema.parse(body.data);
+      // AgentController 에 메서드 하나만 봉투 없이 내려간다. 어느 것인지 확정되기 전까지
+      // body.data 를 직접 읽지 않는다 — unwrapApiData 는 raw 여도 그대로 통과시킨다
+      return getAgentTaskEventListResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
