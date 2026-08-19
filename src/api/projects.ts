@@ -447,7 +447,6 @@ function useProjectListQuery(queryKey: unknown, options?: UseProjectListQueryOpt
 }
 
 const DEPLOY_POLL_MS = 5000;
-const BASELINE_OVERVIEW_POLL_MS = 15000;
 
 /** 배포가 아직 끝나지 않은 상태 */
 function isDeployInFlight(status?: DeployStatus) {
@@ -493,25 +492,18 @@ function useProjectCommitListQuery(queryKey: unknown, projectId: number) {
  * 배포 중에는 폴링한다 — 배포 완료는 태스크가 끝난 한참 뒤 GitHub 웹훅으로 확정되므로,
  * 태스크 종료 시점에 멈추면 LIVE/FAILED 전이를 놓치고 새로고침해야만 보인다.
  */
-function useProjectOverviewQuery(
-  queryKey: unknown,
-  projectId: number,
-  isAgentTaskActive = false,
-) {
+function useProjectOverviewQuery(queryKey: unknown, projectId: number) {
   if (!queryKey) throw new Error('queryKey is required');
   return useQuery({
     queryKey: ['project-overview', queryKey, projectId],
     queryFn: () => getProjectOverview(projectId),
     enabled: !!projectId,
     ...defaultQueryOptions,
-    // 배포가 시작된 것도 이 쿼리로만 알 수 있다. 캐시된 상태나 태스크 전이를 보고
-    // 폴링을 켜려 하면 "배포 시작을 알아야 폴링하고 폴링해야 배포 시작을 아는" 교착에
-    // 걸린다 — 실제로 두 번 걸렸다. 그래서 화면이 열려 있는 동안은 항상 지켜보고,
-    // 배포 중인 것이 확인되면 간격만 좁힌다.
+    // 상시 폴링하지 않는다. 이 응답을 만들려고 서버가 GitHub 을 두 번 때리므로
+    // (최근 커밋 · 저장소 상태) 폴링 비용이 다른 조회와 다르다.
+    // 배포 중인 것이 이미 확인된 동안에만 지켜보고, 종료 상태가 되면 멈춘다.
     refetchInterval: (query) =>
-      isAgentTaskActive || isDeployInFlight(query.state.data?.deployStatus)
-        ? DEPLOY_POLL_MS
-        : BASELINE_OVERVIEW_POLL_MS,
+      isDeployInFlight(query.state.data?.deployStatus) ? DEPLOY_POLL_MS : false,
   });
 }
 
