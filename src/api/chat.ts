@@ -179,14 +179,21 @@ function useConversationDetailQuery(queryKey: unknown, conversationId: number) {
 
 /** 대화 메시지 목록 조회 Query Hook */
 const AWAITING_SERVER_MESSAGE_POLL_MS = 5000;
-/** 약 10분. 서버가 배포 완료를 영영 못 받는 경우가 있어 상한 없이는 폴링이 안 멈춘다 */
-const MAX_AWAITING_SERVER_MESSAGE_POLLS = 120;
+const BASELINE_MESSAGE_POLL_MS = 15000;
 
 /**
  * 대화 메시지 조회 Query Hook.
- * isAwaitingServerMessage는 사용자의 행동 없이 서버가 메시지를 덧붙일 예정인 구간인지다.
- * 배포 완료 안내가 그런 경우로, 태스크가 끝난 한참 뒤 GitHub 웹훅으로 추가된다.
- * 그 구간에 폴링하지 않으면 새로고침해야만 보인다.
+ *
+ * 서버는 사용자 행동과 무관한 시점에 메시지를 덧붙인다 — 배포 완료 안내가 대표적으로,
+ * 태스크가 끝난 한참 뒤 GitHub 웹훅으로 추가된다. 그래서 대화를 열어 둔 동안에는
+ * 항상 낮은 빈도로 다시 읽는다.
+ *
+ * "덧붙을 시점을 감지해서 그때만 폴링"은 두 번 실패했다. 전이를 잡아야 하는데 그 전이가
+ * 화면 밖에서 일어나기 때문이다(배포 태스크는 접수만 하고 끝나고, 실제 배포는 그 뒤
+ * 워커가 돈다). 감지 조건을 넓히는 대신 상시 폴링으로 바꿔 조건 자체를 없앤다.
+ *
+ * refetchInterval 은 탭이 백그라운드면 기본적으로 멈추므로(refetchIntervalInBackground
+ * 기본값 false) 보고 있지 않은 탭이 계속 때리지는 않는다.
  */
 function useConversationMessageListQuery(
   queryKey: unknown,
@@ -199,11 +206,9 @@ function useConversationMessageListQuery(
     queryFn: () => getConversationMessageList(conversationId),
     enabled: Number.isInteger(conversationId) && conversationId > 0,
     gcTime: 0,
-    refetchInterval: (query) => {
-      if (!isAwaitingServerMessage) return false;
-      if (query.state.dataUpdateCount > MAX_AWAITING_SERVER_MESSAGE_POLLS) return false;
-      return AWAITING_SERVER_MESSAGE_POLL_MS;
-    },
+    refetchInterval: isAwaitingServerMessage
+      ? AWAITING_SERVER_MESSAGE_POLL_MS
+      : BASELINE_MESSAGE_POLL_MS,
   });
 }
 

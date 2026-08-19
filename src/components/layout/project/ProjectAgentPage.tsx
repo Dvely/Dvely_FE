@@ -19,7 +19,6 @@ import {
 import {
   deleteProjectRepository,
   postProjectRepository,
-  useProjectOverviewQuery,
   useProjectRepositorySettingsQuery,
 } from '@/api/projects';
 import {
@@ -218,17 +217,14 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
 
   // 배포 완료는 태스크가 끝난 한참 뒤 GitHub 웹훅으로 확정된다. 이 쿼리가 배포 중에
   // 스스로 폴링하고, 그동안 서버가 대화에 덧붙이는 완료 안내도 같이 다시 읽게 한다
-  const { data: projectOverview } = useProjectOverviewQuery(
-    'project-agent-page',
-    projectId,
-    isAgentTaskActive || isDeployWatchActive,
-  );
-  // 감시 창 안에서는 개요가 아직 배포 중이라고 말하지 않아도 메시지를 계속 읽는다.
-  // 배포가 30초 안에 끝나 IN_PROGRESS 를 한 번도 못 보고 지나가는 경우가 있다
-  const isDeployInFlight =
-    isDeployWatchActive ||
-    projectOverview?.deployStatus === 'PENDING' ||
-    projectOverview?.deployStatus === 'IN_PROGRESS';
+  // 배포 여부를 개요로 판단하지 않는다. 개요는 한 번 부를 때마다 서버가 GitHub 을 두 번
+  // 때리므로(최근 커밋 · 저장소 상태) 상시 폴링하면 사용자 한 명이 화면 한 장으로
+  // GitHub 레이트 리밋을 크게 갉아먹는다. 완료 안내를 실제로 실어오는 건 대화 메시지
+  // 조회이고 그쪽은 순수 DB 라 싸다 — 그래서 그쪽만 상시 폴링한다.
+  //
+  // 감시 창은 태스크 종료 직후 메시지 간격을 좁히는 용도로만 남긴다. 창이 안 열려도
+  // 기본 폴링이 받아내므로 이제 정확성이 여기에 걸려 있지 않다.
+  const isDeployInFlight = isDeployWatchActive;
 
   const activePreviewSessionId =
     projectPreview?.status === 'ACTIVE' && projectPreview.sessionId
