@@ -494,7 +494,11 @@ function useProjectCommitListQuery(queryKey: unknown, projectId: number) {
  * 배포 중에는 폴링한다 — 배포 완료는 태스크가 끝난 한참 뒤 GitHub 웹훅으로 확정되므로,
  * 태스크 종료 시점에 멈추면 LIVE/FAILED 전이를 놓치고 새로고침해야만 보인다.
  */
-function useProjectOverviewQuery(queryKey: unknown, projectId: number) {
+function useProjectOverviewQuery(
+  queryKey: unknown,
+  projectId: number,
+  isAgentTaskActive = false,
+) {
   if (!queryKey) throw new Error('queryKey is required');
   return useQuery({
     queryKey: ['project-overview', queryKey, projectId],
@@ -502,9 +506,13 @@ function useProjectOverviewQuery(queryKey: unknown, projectId: number) {
     enabled: !!projectId,
     ...defaultQueryOptions,
     refetchInterval: (query) => {
-      if (!isDeployInFlight(query.state.data?.deployStatus)) return false;
       if (query.state.dataUpdateCount > MAX_DEPLOY_POLLS) return false;
-      return DEPLOY_POLL_MS;
+      // 배포가 시작된 것도 이 쿼리로만 알 수 있다. 캐시된 상태만 보고 폴링 여부를 정하면
+      // "배포 시작을 알아야 폴링하고, 폴링해야 배포 시작을 아는" 교착이 된다.
+      // 배포는 Agent 태스크가 띄우므로 태스크가 도는 동안에도 지켜본다
+      if (isAgentTaskActive) return DEPLOY_POLL_MS;
+      if (isDeployInFlight(query.state.data?.deployStatus)) return DEPLOY_POLL_MS;
+      return false;
     },
   });
 }

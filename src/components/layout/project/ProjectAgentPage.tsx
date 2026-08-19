@@ -27,6 +27,7 @@ import {
   usePreviewAccessQuery,
   useProjectPreviewQuery,
 } from '@/api/preview';
+import { fetchAndPersistUserInfo } from '@/api/user';
 import { extractApiErrorMessage } from '@/utils/response';
 import {
   postProjectRepositoryReqSchema,
@@ -56,6 +57,9 @@ import type { PipelineRun } from '@/types/pipeline.type';
 import { useHorizontalPanelResize } from '@/hooks/useHorizontalPanelResize';
 import { cn } from '@/lib/utils';
 
+/** 태스크 종료 후 배포 완료를 지켜보는 시간 */
+const DEPLOY_WATCH_MS = 3 * 60 * 1000;
+
 const AGENT_CHAT_PANEL_MIN_WIDTH = 280;
 const AGENT_CHAT_PANEL_MAX_WIDTH = 640;
 const AGENT_CHAT_PANEL_DEFAULT_WIDTH = 380;
@@ -79,8 +83,11 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
   const [previewFrameKey, setPreviewFrameKey] = useState(0);
   const [isAgentTaskActive, setIsAgentTaskActive] = useState(false);
+  const [deployWatchStartedAt, setDeployWatchStartedAt] = useState<number | null>(null);
+  const [isDeployWatchActive, setIsDeployWatchActive] = useState(false);
   const [pipelineRun, setPipelineRun] = useState<PipelineRun>(() => createIdlePipelineRun());
   const pipelineAbortRef = useRef<AbortController | null>(null);
+  const wasAgentTaskActiveRef = useRef(false);
 
   const { width: chatPanelWidth, handleResizeStart: handleChatPanelResizeStart } =
     useHorizontalPanelResize({
@@ -101,6 +108,11 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
       setHasDisconnectedRepository(false);
       await queryClient.invalidateQueries({ queryKey: ['project-repository-settings'] });
       await queryClient.invalidateQueries({ queryKey: ['github-repository-list'] });
+    },
+    // GitHub 연동이 끊겨서 실패했을 수 있다. 사용자 정보를 다시 읽으면
+    // 재인증이 필요한 경우 모달이 뜬다 — 서버 오류 문구만 보고 막히지 않게 한다
+    onError: () => {
+      void fetchAndPersistUserInfo();
     },
   });
   const disconnectRepositoryMutation = useMutation({
@@ -173,6 +185,15 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     };
   }, []);
 
+  // 태스크 종료 후 이 시간 동안 배포 완료를 지켜본다. 실측 배포는 30~50초라 넉넉하다
+  useEffect(() => {
+    if (deployWatchStartedAt == null) return;
+
+    setIsDeployWatchActive(true);
+    const timer = setTimeout(() => setIsDeployWatchActive(false), DEPLOY_WATCH_MS);
+    return () => clearTimeout(timer);
+  }, [deployWatchStartedAt]);
+
   const { data: conversations = [], isLoading: isConversationsLoading } =
     useProjectConversationListQuery(AGENT_CHAT_QUERY_KEY, projectId);
 
@@ -197,8 +218,15 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
 
   // 배포 완료는 태스크가 끝난 한참 뒤 GitHub 웹훅으로 확정된다. 이 쿼리가 배포 중에
   // 스스로 폴링하고, 그동안 서버가 대화에 덧붙이는 완료 안내도 같이 다시 읽게 한다
-  const { data: projectOverview } = useProjectOverviewQuery('project-agent-page', projectId);
+  const { data: projectOverview } = useProjectOverviewQuery(
+    'project-agent-page',
+    projectId,
+    isAgentTaskActive || isDeployWatchActive,
+  );
+  // 감시 창 안에서는 개요가 아직 배포 중이라고 말하지 않아도 메시지를 계속 읽는다.
+  // 배포가 30초 안에 끝나 IN_PROGRESS 를 한 번도 못 보고 지나가는 경우가 있다
   const isDeployInFlight =
+    isDeployWatchActive ||
     projectOverview?.deployStatus === 'PENDING' ||
     projectOverview?.deployStatus === 'IN_PROGRESS';
 
@@ -259,9 +287,21 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     provisionPreviewMutation.mutate();
   };
 
-  // AgentConversationPanel이 매 렌더에서 부르므로 identity를 고정한다
+  // AgentConversationPanel이 매 렌더에서 부르므로 identity를 고정한다.
+  //
+  // 태스크가 끝나는 순간 감시 창을 연다. 배포 태스크는 "접수했습니다"만 남기고 그 자리에서
+  // 끝나고, 실제 배포는 그 뒤 워커가 비동기로 돌린다 — 즉 배포는 태스크 구간 **밖**에서
+  // 시작해서 끝난다. 상태를 보고 폴링을 켜려 하면 "배포 시작을 알아야 폴링하고 폴링해야
+  // 배포 시작을 안다"는 교착에 계속 걸리므로, 관측 가능한 사건(태스크 종료)을 기점으로
+  // 일정 시간 무조건 지켜본다.
   const handleAgentTaskActiveChange = useCallback((isActive: boolean) => {
     setIsAgentTaskActive(isActive);
+    // 실제로 돌던 태스크가 끝났을 때만 연다. 패널은 마운트 시에도 false를 알리는데
+    // 거기에 반응하면 페이지를 열 때마다 3분씩 폴링하게 된다
+    if (!isActive && wasAgentTaskActiveRef.current) {
+      setDeployWatchStartedAt(Date.now());
+    }
+    wasAgentTaskActiveRef.current = isActive;
   }, []);
 
   const handleConversationActivity = () => {

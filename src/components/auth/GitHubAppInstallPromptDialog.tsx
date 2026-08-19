@@ -3,7 +3,10 @@ import { useRouterState } from '@tanstack/react-router';
 import { GitBranch } from 'lucide-react';
 import { fetchAndPersistUserInfo } from '@/api/user';
 import { fetchGitHubAppInstallUrl, fetchGitHubAppReauthorizeUrl } from '@/api/auth';
-import { GITHUB_APP_INSTALL_REQUIRED_EVENT } from '@/constants/authEvents';
+import {
+  GITHUB_APP_INSTALL_REQUIRED_EVENT,
+  GITHUB_APP_REAUTHORIZATION_REQUIRED_EVENT,
+} from '@/constants/authEvents';
 import {
   GITHUB_APP_INSTALL_POPUP_NAME,
   GITHUB_APP_INSTALL_SUCCESS_MESSAGE,
@@ -74,6 +77,18 @@ function GitHubAppInstallPromptDialog() {
     };
     window.addEventListener(GITHUB_APP_INSTALL_REQUIRED_EVENT, handleRequired);
     return () => window.removeEventListener(GITHUB_APP_INSTALL_REQUIRED_EVENT, handleRequired);
+  }, []);
+
+  // 마운트 시 한 번만 보면 세션 중간에 토큰이 끊긴 경우를 놓친다.
+  // 사용자 정보를 다시 읽는 곳이면 어디든 이 이벤트로 진입점을 띄운다
+  useEffect(() => {
+    const handleReauthorize = () => {
+      setPromptMode('reauthorize');
+      setOpen(true);
+    };
+    window.addEventListener(GITHUB_APP_REAUTHORIZATION_REQUIRED_EVENT, handleReauthorize);
+    return () =>
+      window.removeEventListener(GITHUB_APP_REAUTHORIZATION_REQUIRED_EVENT, handleReauthorize);
   }, []);
 
   const handleInstallSuccess = useCallback((event: MessageEvent) => {
