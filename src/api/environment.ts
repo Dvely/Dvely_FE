@@ -1,6 +1,6 @@
 import Http from '@/utils/httpClients';
 import { useQuery } from '@tanstack/react-query';
-import { errorResponse, succesResponse } from '@/utils/response';
+import { errorResponse, succesResponse, unwrapApiData } from '@/utils/response';
 import {
   environmentVariableSchema,
   getEnvironmentVariableHistoryListResSchema,
@@ -26,8 +26,8 @@ async function getEnvironmentVariableList(projectId: number) {
   return Http.instance
     .get<GetEnvironmentVariableListResType>(`/projects/${projectId}/environment-variables`)
     .then((response) => {
-      const data = succesResponse<GetEnvironmentVariableListResType>(response);
-      return getEnvironmentVariableListResSchema.parse(data);
+      const body = succesResponse<GetEnvironmentVariableListResType>(response);
+      return getEnvironmentVariableListResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -42,8 +42,8 @@ async function postEnvironmentVariableCreate(
   return Http.instance
     .post<EnvironmentVariable>(`/projects/${projectId}/environment-variables`, payload)
     .then((response) => {
-      const data = succesResponse<EnvironmentVariable>(response);
-      return environmentVariableSchema.parse(data);
+      const body = succesResponse<EnvironmentVariable>(response);
+      return environmentVariableSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -62,8 +62,8 @@ async function patchEnvironmentVariable(
       payload,
     )
     .then((response) => {
-      const data = succesResponse<EnvironmentVariable>(response);
-      return environmentVariableSchema.parse(data);
+      const body = succesResponse<EnvironmentVariable>(response);
+      return environmentVariableSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -83,8 +83,8 @@ async function getEnvironmentVariableHistoryList(projectId: number) {
       `/projects/${projectId}/environment-variables/history`,
     )
     .then((response) => {
-      const data = succesResponse<GetEnvironmentVariableHistoryListResType>(response);
-      return getEnvironmentVariableHistoryListResSchema.parse(data);
+      const body = succesResponse<GetEnvironmentVariableHistoryListResType>(response);
+      return getEnvironmentVariableHistoryListResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }

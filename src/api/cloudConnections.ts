@@ -1,6 +1,6 @@
 import Http from '@/utils/httpClients';
 import { useQuery } from '@tanstack/react-query';
-import { errorResponse, succesResponse } from '@/utils/response';
+import { errorResponse, succesResponse, unwrapApiData } from '@/utils/response';
 import {
   getCloudConnectionDetailResSchema,
   getCloudConnectionHealthResSchema,
@@ -29,8 +29,8 @@ async function getCloudConnectionList() {
   return Http.instance
     .get<GetCloudConnectionListResType>(endpoint)
     .then((response) => {
-      const data = succesResponse<GetCloudConnectionListResType>(response);
-      return getCloudConnectionListResSchema.parse(data);
+      const body = succesResponse<GetCloudConnectionListResType>(response);
+      return getCloudConnectionListResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -42,8 +42,8 @@ async function postCloudConnectionCreate(params: PostCloudConnectionCreateReqTyp
   return Http.instance
     .post<PostCloudConnectionCreateResType>(endpoint, payload)
     .then((response) => {
-      const data = succesResponse<PostCloudConnectionCreateResType>(response);
-      return postCloudConnectionCreateResSchema.parse(data);
+      const body = succesResponse<PostCloudConnectionCreateResType>(response);
+      return postCloudConnectionCreateResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -53,8 +53,8 @@ async function getCloudConnectionDetail(cloudConnectionId: number) {
   return Http.instance
     .get<GetCloudConnectionDetailResType>(`${endpoint}/${cloudConnectionId}`)
     .then((response) => {
-      const data = succesResponse<GetCloudConnectionDetailResType>(response);
-      return getCloudConnectionDetailResSchema.parse(data);
+      const body = succesResponse<GetCloudConnectionDetailResType>(response);
+      return getCloudConnectionDetailResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -72,8 +72,8 @@ async function getCloudConnectionHealth(cloudConnectionId: number) {
   return Http.instance
     .get<GetCloudConnectionHealthResType>(`${endpoint}/${cloudConnectionId}/health`)
     .then((response) => {
-      const data = succesResponse<GetCloudConnectionHealthResType>(response);
-      return getCloudConnectionHealthResSchema.parse(data);
+      const body = succesResponse<GetCloudConnectionHealthResType>(response);
+      return getCloudConnectionHealthResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -91,8 +91,8 @@ async function getCloudConnectionVerificationJob(jobId: string) {
   return Http.instance
     .get<GetCloudConnectionVerificationJobResType>(`/cloud-connection-verification-jobs/${jobId}`)
     .then((response) => {
-      const data = succesResponse<GetCloudConnectionVerificationJobResType>(response);
-      return getCloudConnectionVerificationJobResSchema.parse(data);
+      const body = succesResponse<GetCloudConnectionVerificationJobResType>(response);
+      return getCloudConnectionVerificationJobResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }

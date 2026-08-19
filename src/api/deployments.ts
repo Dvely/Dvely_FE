@@ -1,6 +1,6 @@
 import Http from '@/utils/httpClients';
 import { useQuery } from '@tanstack/react-query';
-import { errorResponse, succesResponse } from '@/utils/response';
+import { errorResponse, succesResponse, unwrapApiData } from '@/utils/response';
 import {
   deployResponseSchema,
   deploymentFailureAnalysisSchema,
@@ -34,8 +34,8 @@ async function getProjectDeploymentList(projectId: number) {
   return Http.instance
     .get<GetProjectDeploymentListResType>(`/projects/${projectId}/deployments`)
     .then((response) => {
-      const data = succesResponse<GetProjectDeploymentListResType>(response);
-      return getProjectDeploymentListResSchema.parse(data);
+      const body = succesResponse<GetProjectDeploymentListResType>(response);
+      return getProjectDeploymentListResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -50,9 +50,9 @@ async function postProjectDeploymentCreate(
   return Http.instance
     .post(`/projects/${projectId}/deployments`, payload)
     .then((response) => {
-      const data = succesResponse(response);
-      if (data == null || data === '') return undefined;
-      return deployResponseSchema.parse(data);
+      const body = succesResponse(response);
+      if (body == null || body === '') return undefined;
+      return deployResponseSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -62,8 +62,8 @@ async function postDeploymentRetry(deploymentId: number) {
   return Http.instance
     .post<DeployResponse>(`/deployments/${deploymentId}/retry`)
     .then((response) => {
-      const data = succesResponse<DeployResponse>(response);
-      return deployResponseSchema.parse(data);
+      const body = succesResponse<DeployResponse>(response);
+      return deployResponseSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -73,8 +73,8 @@ async function getDeploymentFailureAnalysis(deploymentId: number) {
   return Http.instance
     .get<DeploymentFailureAnalysis>(`/deployments/${deploymentId}/failure-analysis`)
     .then((response) => {
-      const data = succesResponse<DeploymentFailureAnalysis>(response);
-      return deploymentFailureAnalysisSchema.parse(data);
+      const body = succesResponse<DeploymentFailureAnalysis>(response);
+      return deploymentFailureAnalysisSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -84,8 +84,8 @@ async function postDeploymentFailureAnalysis(deploymentId: number) {
   return Http.instance
     .post<DeploymentFailureAnalysis>(`/deployments/${deploymentId}/failure-analysis`)
     .then((response) => {
-      const data = succesResponse<DeploymentFailureAnalysis>(response);
-      return deploymentFailureAnalysisSchema.parse(data);
+      const body = succesResponse<DeploymentFailureAnalysis>(response);
+      return deploymentFailureAnalysisSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -95,8 +95,8 @@ async function getVersionDetail(versionId: number) {
   return Http.instance
     .get<VersionDetail>(`/versions/${versionId}`)
     .then((response) => {
-      const data = succesResponse<VersionDetail>(response);
-      return versionDetailSchema.parse(data);
+      const body = succesResponse<VersionDetail>(response);
+      return versionDetailSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -106,8 +106,8 @@ async function getProjectVersionList(projectId: number) {
   return Http.instance
     .get<GetProjectVersionListResType>(`/projects/${projectId}/versions`)
     .then((response) => {
-      const data = succesResponse<GetProjectVersionListResType>(response);
-      return getProjectVersionListResSchema.parse(data);
+      const body = succesResponse<GetProjectVersionListResType>(response);
+      return getProjectVersionListResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -117,8 +117,8 @@ async function getProjectDeploymentCandidateList(projectId: number) {
   return Http.instance
     .get<GetProjectDeploymentCandidateListResType>(`/projects/${projectId}/deployment-candidates`)
     .then((response) => {
-      const data = succesResponse<GetProjectDeploymentCandidateListResType>(response);
-      return getProjectDeploymentCandidateListResSchema.parse(data);
+      const body = succesResponse<GetProjectDeploymentCandidateListResType>(response);
+      return getProjectDeploymentCandidateListResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -128,8 +128,8 @@ async function getDeploymentStatus(deploymentId: number) {
   return Http.instance
     .get<DeploymentStatus>(`/deployments/${deploymentId}`)
     .then((response) => {
-      const data = succesResponse<DeploymentStatus>(response);
-      return deploymentStatusSchema.parse(data);
+      const body = succesResponse<DeploymentStatus>(response);
+      return deploymentStatusSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -139,8 +139,8 @@ async function getDeploymentLogs(deploymentId: number) {
   return Http.instance
     .get<DeploymentLogs>(`/deployments/${deploymentId}/logs`)
     .then((response) => {
-      const data = succesResponse<DeploymentLogs>(response);
-      return deploymentLogsSchema.parse(data);
+      const body = succesResponse<DeploymentLogs>(response);
+      return deploymentLogsSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
