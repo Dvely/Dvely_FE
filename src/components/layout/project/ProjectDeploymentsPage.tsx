@@ -16,6 +16,31 @@ type ProjectDeploymentsPageProps = {
 
 const skeletonItems = Array.from({ length: 4 }, (_, index) => `deploy-skeleton-${index}`);
 
+/**
+ * RESULT_UNKNOWN 은 실패가 아니다. 회수 워커가 GitHub 에서 실행을 못 찾고 포기한 것이라
+ * 사이트는 실제로 떠 있을 수 있다. 서버는 이력을 FAILED 로 닫지만 화면까지 그렇게
+ * 말하면 멀쩡히 배포된 것을 실패로 알리게 된다.
+ */
+const DEPLOYMENT_FAILURE_LABEL: Record<string, string> = {
+  WORKFLOW_FAILED: '배포 실패',
+  RETRY_EXHAUSTED: '배포 실패 (재시도 한도 소진)',
+  RESULT_UNKNOWN: '결과 확인 불가',
+};
+
+function describeDeploymentStatus(item: { status: string; errorCode?: string | null }): string {
+  if (item.status !== 'FAILED') return item.status;
+  return DEPLOYMENT_FAILURE_LABEL[item.errorCode ?? ''] ?? item.status;
+}
+
+/**
+ * 상세 사유. 서버 문구를 그대로 보여준다 — 분류(errorCode)는 위 라벨이 맡고,
+ * 이쪽은 "무슨 일이 있었나"를 서버가 아는 대로 전한다.
+ * 분류가 붙기 전에 닫힌 옛 이력은 errorCode 가 null 이고 이 값만 있다.
+ */
+function failureReason(item: { errorMessage?: string | null }) {
+  return item.errorMessage?.trim() || null;
+}
+
 function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
   const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null);
   const [versionName, setVersionName] = useState('');
@@ -146,8 +171,13 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
                         {item.versionLabel || item.deployTargetType}
                       </p>
                       <p className="mt-1 text-[11px] text-[#94a3b8]">
-                        {item.status} · {item.triggeredAt}
+                        {describeDeploymentStatus(item)} · {item.triggeredAt}
                       </p>
+                      {failureReason(item) ? (
+                        <p className="mt-1 text-[11px] leading-relaxed text-[#b91c1c]">
+                          {failureReason(item)}
+                        </p>
+                      ) : null}
                     </div>
                     <span className="text-[12px] text-[#64748b]">
                       {item.deployedUrl || 'URL 없음'}
