@@ -447,8 +447,7 @@ function useProjectListQuery(queryKey: unknown, options?: UseProjectListQueryOpt
 }
 
 const DEPLOY_POLL_MS = 5000;
-/** 약 10분. 서버가 웹훅을 놓치면 IN_PROGRESS 가 회수되지 않아 상한 없이는 영원히 폴링한다 */
-const MAX_DEPLOY_POLLS = 120;
+const BASELINE_OVERVIEW_POLL_MS = 15000;
 
 /** 배포가 아직 끝나지 않은 상태 */
 function isDeployInFlight(status?: DeployStatus) {
@@ -505,15 +504,14 @@ function useProjectOverviewQuery(
     queryFn: () => getProjectOverview(projectId),
     enabled: !!projectId,
     ...defaultQueryOptions,
-    refetchInterval: (query) => {
-      if (query.state.dataUpdateCount > MAX_DEPLOY_POLLS) return false;
-      // 배포가 시작된 것도 이 쿼리로만 알 수 있다. 캐시된 상태만 보고 폴링 여부를 정하면
-      // "배포 시작을 알아야 폴링하고, 폴링해야 배포 시작을 아는" 교착이 된다.
-      // 배포는 Agent 태스크가 띄우므로 태스크가 도는 동안에도 지켜본다
-      if (isAgentTaskActive) return DEPLOY_POLL_MS;
-      if (isDeployInFlight(query.state.data?.deployStatus)) return DEPLOY_POLL_MS;
-      return false;
-    },
+    // 배포가 시작된 것도 이 쿼리로만 알 수 있다. 캐시된 상태나 태스크 전이를 보고
+    // 폴링을 켜려 하면 "배포 시작을 알아야 폴링하고 폴링해야 배포 시작을 아는" 교착에
+    // 걸린다 — 실제로 두 번 걸렸다. 그래서 화면이 열려 있는 동안은 항상 지켜보고,
+    // 배포 중인 것이 확인되면 간격만 좁힌다.
+    refetchInterval: (query) =>
+      isAgentTaskActive || isDeployInFlight(query.state.data?.deployStatus)
+        ? DEPLOY_POLL_MS
+        : BASELINE_OVERVIEW_POLL_MS,
   });
 }
 
