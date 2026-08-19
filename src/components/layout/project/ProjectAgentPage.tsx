@@ -27,6 +27,7 @@ import {
   usePreviewAccessQuery,
   useProjectPreviewQuery,
 } from '@/api/preview';
+import { fetchAndPersistUserInfo } from '@/api/user';
 import { extractApiErrorMessage } from '@/utils/response';
 import {
   postProjectRepositoryReqSchema,
@@ -101,6 +102,11 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
       setHasDisconnectedRepository(false);
       await queryClient.invalidateQueries({ queryKey: ['project-repository-settings'] });
       await queryClient.invalidateQueries({ queryKey: ['github-repository-list'] });
+    },
+    // GitHub 연동이 끊겨서 실패했을 수 있다. 사용자 정보를 다시 읽으면
+    // 재인증이 필요한 경우 모달이 뜬다 — 서버 오류 문구만 보고 막히지 않게 한다
+    onError: () => {
+      void fetchAndPersistUserInfo();
     },
   });
   const disconnectRepositoryMutation = useMutation({
@@ -197,7 +203,11 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
 
   // 배포 완료는 태스크가 끝난 한참 뒤 GitHub 웹훅으로 확정된다. 이 쿼리가 배포 중에
   // 스스로 폴링하고, 그동안 서버가 대화에 덧붙이는 완료 안내도 같이 다시 읽게 한다
-  const { data: projectOverview } = useProjectOverviewQuery('project-agent-page', projectId);
+  const { data: projectOverview } = useProjectOverviewQuery(
+    'project-agent-page',
+    projectId,
+    isAgentTaskActive,
+  );
   const isDeployInFlight =
     projectOverview?.deployStatus === 'PENDING' ||
     projectOverview?.deployStatus === 'IN_PROGRESS';

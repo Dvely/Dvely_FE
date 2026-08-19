@@ -2,6 +2,7 @@ import Http from '@/utils/httpClients';
 import { errorResponse, succesResponse } from '@/utils/response';
 import { getUserMeResSchema, userSchema, type GetUserMeResType } from '@/types/user.type';
 import { clearStoredUser, readStoredUser, writeStoredUser } from '@/lib/userStorage';
+import { dispatchGitHubAppReauthorizationRequired } from '@/constants/authEvents';
 import { useQuery } from '@tanstack/react-query';
 
 const endpoint = '/users';
@@ -58,6 +59,11 @@ async function fetchAndPersistUserInfo() {
   const response = await getUserInfo();
   if (response.data) {
     writeStoredUser(response.data);
+    // 서버가 재인증이 필요하다고 하면 어디서 읽었든 화면에 진입점이 뜨게 한다.
+    // 이 값이 true 인데 버튼이 없으면 사용자는 서버 오류 문구만 보고 막힌다
+    if (response.data.githubAppReauthorizationRequired) {
+      dispatchGitHubAppReauthorizationRequired();
+    }
   }
   return response;
 }

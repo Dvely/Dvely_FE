@@ -13,6 +13,7 @@ import {
   postApprovalReject,
   useApprovalDetailQuery,
 } from '@/api/approvals';
+import { fetchAndPersistUserInfo } from '@/api/user';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
 import type { GetAgentTaskResType } from '@/types/agent.type';
@@ -368,6 +369,9 @@ function AgentConversationPanel({
       });
       void queryClient.invalidateQueries({ queryKey: ['project-repository-settings'] });
       void queryClient.invalidateQueries({ queryKey: ['project-detail'] });
+      // DEPLOYMENT 승인이면 이 시점부터 배포가 돈다. 개요를 다시 읽어야 IN_PROGRESS 를
+      // 보고 폴링이 켜지고, 그래야 웹훅이 나중에 붙이는 완료 안내를 받는다
+      void queryClient.invalidateQueries({ queryKey: ['project-overview'] });
       setIsAssistantReplying(false);
       onConversationActivity?.(targetConversationId);
     },
@@ -385,6 +389,9 @@ function AgentConversationPanel({
 
       setAlertMessage(formatApiErrorMessage(error));
       setIsAssistantReplying(false);
+      // 저장소 연결 승인은 서버가 GitHub 을 호출한다. 연동이 끊겨 실패했다면
+      // 사용자 정보를 다시 읽어 재인증 진입점을 띄운다
+      void fetchAndPersistUserInfo();
     },
   });
 
