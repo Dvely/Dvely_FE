@@ -47,6 +47,14 @@ const deploymentHistorySchema = z.object({
   updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
   /** 재시도 원본 이력 ID. 없으면 null */
   retriedFromHistoryId: z.number().int().nullable().prefault(null),
+  /**
+   * 실패 분류. 성공·진행 중이면 null.
+   * 분류가 붙기 전에 닫힌 옛 이력도 null 이라, errorMessage 만 있는 경우가 있다.
+   * 열린 문자열로 받는다 — 화면은 아는 값만 문구로 바꾸고 모르는 값은 상세로 넘긴다.
+   */
+  errorCode: z.string().nullable().prefault(null),
+  /** 실패 상세. 서버 문구 그대로 온다. 성공·진행 중이면 null */
+  errorMessage: z.string().nullable().prefault(null),
 });
 
 const getProjectDeploymentListResSchema = z.array(deploymentHistorySchema);
