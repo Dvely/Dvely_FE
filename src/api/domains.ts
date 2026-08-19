@@ -1,6 +1,6 @@
 import Http from '@/utils/httpClients';
 import { useQuery } from '@tanstack/react-query';
-import { errorResponse, succesResponse } from '@/utils/response';
+import { errorResponse, succesResponse, unwrapApiData } from '@/utils/response';
 import {
   domainBindingSubmissionSchema,
   domainSchema,
@@ -28,8 +28,8 @@ async function getProjectDomainList(projectId: number) {
   return Http.instance
     .get<GetProjectDomainListResType>(`/projects/${projectId}/domains`)
     .then((response) => {
-      const data = succesResponse<GetProjectDomainListResType>(response);
-      return getProjectDomainListResSchema.parse(data);
+      const body = succesResponse<GetProjectDomainListResType>(response);
+      return getProjectDomainListResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -41,9 +41,9 @@ async function postProjectDomainBind(projectId: number, params: PostProjectDomai
   return Http.instance
     .post(`/projects/${projectId}/domains`, payload)
     .then((response) => {
-      const data = succesResponse(response);
-      if (data == null || data === '') return undefined;
-      return domainBindingSubmissionSchema.parse(data) as DomainBindingSubmission;
+      const body = succesResponse(response);
+      if (body == null || body === '') return undefined;
+      return domainBindingSubmissionSchema.parse(unwrapApiData(body)) as DomainBindingSubmission;
     })
     .catch(errorResponse());
 }
@@ -53,8 +53,8 @@ async function postDomainVerificationCheck(domainId: number) {
   return Http.instance
     .post<Domain>(`/domains/${domainId}/verification-checks`)
     .then((response) => {
-      const data = succesResponse<Domain>(response);
-      return domainSchema.parse(data);
+      const body = succesResponse<Domain>(response);
+      return domainSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -64,8 +64,8 @@ async function getDomainDetail(domainId: number) {
   return Http.instance
     .get<Domain>(`/domains/${domainId}`)
     .then((response) => {
-      const data = succesResponse<Domain>(response);
-      return domainSchema.parse(data);
+      const body = succesResponse<Domain>(response);
+      return domainSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -80,8 +80,8 @@ async function getDomainVerificationGuide(domainId: number) {
   return Http.instance
     .get<GetDomainVerificationGuideResType>(`/domains/${domainId}/verification-guide`)
     .then((response) => {
-      const data = succesResponse<GetDomainVerificationGuideResType>(response);
-      return getDomainVerificationGuideResSchema.parse(data);
+      const body = succesResponse<GetDomainVerificationGuideResType>(response);
+      return getDomainVerificationGuideResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -91,8 +91,8 @@ async function getDomainSearch(keyword: string) {
   return Http.instance
     .get<GetDomainSearchResType>('/domain-search', { params: { keyword } })
     .then((response) => {
-      const data = succesResponse<GetDomainSearchResType>(response);
-      return getDomainSearchResSchema.parse(data);
+      const body = succesResponse<GetDomainSearchResType>(response);
+      return getDomainSearchResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }

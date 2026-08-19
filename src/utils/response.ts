@@ -38,8 +38,27 @@ function readMessageField(value: unknown): string | null {
   return null;
 }
 
+/**
+ * API 봉투(`{status, code, message, data}`)에서 data 를 꺼낸다.
+ * 봉투 없이 본문만 오는 응답도 있어 그 경우는 그대로 돌려준다.
+ */
+export function unwrapApiData<T>(body: T | { data?: T }): T {
+  if (body && typeof body === 'object' && 'data' in body && body.data != null) {
+    return body.data as T;
+  }
+  return body as T;
+}
+
+/**
+ * 서버는 200 을 주는데 zod 파싱이 실패하면 여기로 온다. 그 실패가 조용히 삼켜져
+ * 화면만 비는 사고가 반복돼서(도메인 목록·프로젝트 개요·활동 이력) 개발 모드에서는
+ * 흔적을 남긴다. 사용자에게 보이는 메시지는 그대로 둔다.
+ */
 export function errorResponse() {
   return (err: unknown) => {
+    if (import.meta.env.DEV && !(err instanceof AxiosError)) {
+      console.warn('[api] 응답 처리 실패 — 스키마 불일치일 수 있습니다', err);
+    }
     throw new Error(extractApiErrorMessage(err) ?? '요청 처리 중 오류가 발생했습니다.');
   };
 }
