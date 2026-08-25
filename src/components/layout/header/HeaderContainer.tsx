@@ -49,7 +49,7 @@ function HeaderContainer() {
     >
       <div className="mx-auto flex w-[1440px] items-center justify-between px-40 py-3.5">
         <Link to="/" className="text-sm font-bold tracking-[0.08em] text-slate-900">
-          DVELY
+          Qeploy
         </Link>
         <nav className="flex items-center gap-0.5 text-[#64748B]">
           <Button variant={'ghost'} size={'sm'}>
