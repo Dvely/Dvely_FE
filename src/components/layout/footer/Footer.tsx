@@ -34,7 +34,7 @@ export default function Footer() {
               className="text-[32px] leading-none tracking-[-0.44px] text-[#0B0C12]"
               style={{ fontFamily: 'Georgia, serif' }}
             >
-              Devely
+              Qeploy
             </p>
           </div>
 
@@ -82,7 +82,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-6 flex items-center justify-between border-t border-[#0B0C12]/10 pt-[21px]">
-          <p className="typo-b5-rg text-[#6B6578]">© Devely Demo. All rights reserved.</p>
+          <p className="typo-b5-rg text-[#6B6578]">© Qeploy Demo. All rights reserved.</p>
           <div className="flex items-center gap-[18px] text-[#1A1A1A]/70">
             <button aria-label="회사">
               <img src={companyIcon} alt="회사" />
