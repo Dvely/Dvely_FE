@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"/>
+<title>Qeploy 유스케이스 다이어그램 UC별</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 600px; background: #fff; }
+  .page {
+    width: 600px; height: 600px; padding: 6px 0 0;
+    overflow: hidden;
+    font-family: "Malgun Gothic, Apple SD Gothic Neo, sans-serif";
+  }
+  h1 { text-align: center; font-size: 13px; font-weight: 800; margin-bottom: 1px; }
+  .sub { text-align: center; font-size: 11px; color: #555; font-weight: 700; margin-bottom: 2px; }
+  svg { display: block; margin: 0 auto; }
+</style></head>
+<body>
+<section class="page">
+      <h1>Qeploy 유스케이스 다이어그램</h1>
+      <p class="sub">UC-01 GitHub 로그인</p>
+      
+<svg viewBox="0 0 600 555" width="600" height="555">
+  <rect x="110" y="10" width="380" height="530" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="300.0" y="28" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="12" font-weight="800">Qeploy</text>
+  <ellipse cx="300" cy="120" rx="68" ry="18" fill="#cfcfcf" stroke="#000" stroke-width="2.0"/><text x="300" y="123" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700">GitHub 로그인</text>
+  <ellipse cx="200" cy="270" rx="52" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="200" y="273" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">권한 요청</text>
+  <ellipse cx="400" cy="270" rx="64" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="400" y="273" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">레포 연결·생성·해제</text>
+  <ellipse cx="300" cy="420" rx="60" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="300" y="423" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">서비스 세션 분리</text>
+  <defs><marker id="a1" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#000"/></marker></defs>
+  <g stroke="#000" fill="none" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#a1)">
+    <path d="M250,138 C175,185 190,235 195,252"/>
+    <path d="M350,138 C425,185 410,235 405,252"/>
+    <path d="M300,138 L300,402"/>
+  </g>
+  <text x="205" y="200" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="8" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+  <text x="360" y="200" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="8" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+  <text x="308" y="300" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="8" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+  <line x1="58" y1="120" x2="232" y2="120" stroke="#000" stroke-width="1.2"/>
+  <line x1="368" y1="120" x2="550" y2="70" stroke="#000" stroke-width="1.1"/>
+  <line x1="464" y1="270" x2="550" y2="270" stroke="#000" stroke-width="1.1"/>
+  <g transform="translate(50,88)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">사용자</text><text x="0" y="70" font-size="8" font-weight="400">(주 액터)</text></g>
+  <g transform="translate(552,38)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">GitHub</text></g>
+  <g transform="translate(552,230)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">GitHub API</text></g>
+</svg>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 다이어그램</h1>
+      <p class="sub">UC-02 프로젝트 관리</p>
+      
+<svg viewBox="0 0 600 555" width="600" height="555">
+  <rect x="110" y="10" width="380" height="530" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="300.0" y="28" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="12" font-weight="800">Qeploy</text>
+  <ellipse cx="300" cy="100" rx="68" ry="18" fill="#cfcfcf" stroke="#000" stroke-width="2.0"/><text x="300" y="103" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700">프로젝트 관리</text>
+  <ellipse cx="190" cy="250" rx="56" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="190" y="253" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">프로젝트 목록</text>
+  <ellipse cx="300" cy="250" rx="58" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="300" y="253" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">새 프로젝트 생성</text>
+  <ellipse cx="410" cy="250" rx="50" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="410" y="253" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">ZIP 업로드</text>
+  <ellipse cx="210" cy="410" rx="58" ry="20" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="210" y="406" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">GitHub 레포</text><text x="210" y="418" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">불러오기</text>
+  <ellipse cx="390" cy="410" rx="56" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="390" y="413" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">Overview 진입</text>
+  <defs><marker id="a2" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#000"/></marker></defs>
+  <g stroke="#000" fill="none" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#a2)">
+    <path d="M255,118 C175,170 185,215 188,232"/>
+    <path d="M300,118 L300,232"/>
+    <path d="M345,118 C425,170 415,215 412,232"/>
+    <path d="M270,266 C200,325 205,365 208,388"/>
+    <path d="M330,266 C380,325 388,365 390,388"/>
+  </g>
+  <text x="195" y="185" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="8" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+  <text x="308" y="185" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="8" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+  <text x="375" y="185" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="8" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+  <line x1="58" y1="100" x2="232" y2="100" stroke="#000" stroke-width="1.2"/>
+  <line x1="446" y1="410" x2="550" y2="410" stroke="#000" stroke-width="1.1"/>
+  <g transform="translate(50,68)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">사용자</text><text x="0" y="70" font-size="8" font-weight="400">(주 액터)</text></g>
+  <g transform="translate(552,370)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">GitHub</text></g>
+</svg>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 다이어그램</h1>
+      <p class="sub">UC-03 자연어 작업 요청</p>
+      
+<svg viewBox="0 0 600 555" width="600" height="555">
+  <rect x="110" y="10" width="380" height="530" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="300.0" y="28" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="12" font-weight="800">Qeploy</text>
+  <ellipse cx="235" cy="130" rx="70" ry="18" fill="#cfcfcf" stroke="#000" stroke-width="2.0"/><text x="235" y="133" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700">자연어 작업 요청</text>
+  <ellipse cx="415" cy="90" rx="58" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="415" y="93" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">의사결정 Agent</text>
+  <ellipse cx="415" cy="175" rx="50" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="415" y="178" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">대화 세션</text>
+  <ellipse cx="190" cy="310" rx="54" ry="20" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="190" y="306" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">오버레이</text><text x="190" y="318" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">튜토리얼</text>
+  <ellipse cx="400" cy="310" rx="60" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="400" y="313" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">Docker 미리보기</text>
+  <ellipse cx="400" cy="445" rx="50" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="400" y="448" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">작업 승인</text>
+  <defs><marker id="a3" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#000"/></marker></defs>
+  <g stroke="#000" fill="none" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#a3)">
+    <path d="M305,122 C345,110 360,100 357,90"/>
+    <path d="M305,142 C350,155 365,165 365,173"/>
+    <path d="M210,148 C185,220 185,270 188,288"/>
+    <path d="M280,148 C350,220 390,270 398,292"/>
+    <path d="M280,148 C340,280 390,400 398,427"/>
+  </g>
+  <text x="345" y="95" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="8" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+  <text x="345" y="155" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="8" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+  <text x="280" y="230" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="8" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+  <line x1="58" y1="130" x2="165" y2="130" stroke="#000" stroke-width="1.2"/>
+  <line x1="460" y1="310" x2="550" y2="90" stroke="#000" stroke-width="1.1"/>
+  <line x1="450" y1="445" x2="550" y2="280" stroke="#000" stroke-width="1.1"/>
+  <line x1="450" y1="445" x2="550" y2="445" stroke="#000" stroke-width="1.1"/>
+  <g transform="translate(50,98)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">사용자</text><text x="0" y="70" font-size="8" font-weight="400">(주 액터)</text></g>
+  <g transform="translate(552,50)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">Docker</text></g>
+  <g transform="translate(552,240)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">GitHub</text></g>
+  <g transform="translate(552,405)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">AWS/GCP</text></g>
+</svg>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 다이어그램</h1>
+      <p class="sub">UC-04 Docker 미리보기</p>
+      
+<svg viewBox="0 0 600 555" width="600" height="555">
+  <rect x="110" y="10" width="380" height="530" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="300.0" y="28" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="12" font-weight="800">Qeploy</text>
+  <ellipse cx="190" cy="100" rx="60" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="190" y="103" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">자연어 작업 요청</text>
+  <ellipse cx="365" cy="100" rx="70" ry="18" fill="#cfcfcf" stroke="#000" stroke-width="2.0"/><text x="365" y="103" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700">Docker 미리보기</text>
+  <ellipse cx="190" cy="260" rx="56" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="190" y="263" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">컨테이너 실행</text>
+  <ellipse cx="300" cy="260" rx="56" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="300" y="263" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">내부 전용 접근</text>
+  <ellipse cx="410" cy="260" rx="48" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="410" y="263" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">수명·캐시</text>
+  <ellipse cx="210" cy="420" rx="56" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="210" y="423" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">빌드 실패 분석</text>
+  <ellipse cx="390" cy="420" rx="44" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="390" y="423" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">재빌드</text>
+  <defs><marker id="a4" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#000"/></marker></defs>
+  <g stroke="#000" fill="none" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#a4)">
+    <path d="M250,100 L295,100"/>
+    <path d="M315,118 C200,170 190,220 190,242"/>
+    <path d="M340,118 L300,242"/>
+    <path d="M400,118 C410,170 410,220 410,242"/>
+    <path d="M255,276 C210,330 210,375 210,402"/>
+    <path d="M340,276 C380,330 390,375 390,402"/>
+  </g>
+  <text x="255" y="90" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="8" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+  <line x1="58" y1="260" x2="134" y2="260" stroke="#000" stroke-width="1.2"/>
+  <line x1="435" y1="100" x2="550" y2="70" stroke="#000" stroke-width="1.1"/>
+  <line x1="458" y1="260" x2="550" y2="280" stroke="#000" stroke-width="1.1"/>
+  <g transform="translate(50,220)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">사용자</text><text x="0" y="70" font-size="8" font-weight="400">(주 액터)</text></g>
+  <g transform="translate(552,30)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">Docker</text></g>
+  <g transform="translate(552,240)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">컨테이너</text></g>
+</svg>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 다이어그램</h1>
+      <p class="sub">UC-05 작업 승인</p>
+      
+<svg viewBox="0 0 600 555" width="600" height="555">
+  <rect x="110" y="10" width="380" height="530" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="300.0" y="28" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="12" font-weight="800">Qeploy</text>
+  <ellipse cx="300" cy="100" rx="62" ry="18" fill="#cfcfcf" stroke="#000" stroke-width="2.0"/><text x="300" y="103" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700">작업 승인</text>
+  <ellipse cx="190" cy="250" rx="58" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="190" y="253" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">개발/수정 승인</text>
+  <ellipse cx="300" cy="250" rx="50" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="300" y="253" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">배포 승인</text>
+  <ellipse cx="410" cy="250" rx="54" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="410" y="253" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">도메인 승인</text>
+  <ellipse cx="210" cy="410" rx="60" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="210" y="413" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">인프라 운영 승인</text>
+  <ellipse cx="390" cy="410" rx="56" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="390" y="413" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">Chat Settings</text>
+  <defs><marker id="a5" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#000"/></marker></defs>
+  <g stroke="#000" fill="none" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#a5)">
+    <path d="M255,118 C175,170 185,215 188,232"/>
+    <path d="M300,118 L300,232"/>
+    <path d="M345,118 C425,170 415,215 412,232"/>
+    <path d="M270,266 C200,325 205,365 208,392"/>
+    <path d="M330,266 C380,325 388,365 390,392"/>
+  </g>
+  <line x1="58" y1="100" x2="238" y2="100" stroke="#000" stroke-width="1.2"/>
+  <line x1="350" y1="250" x2="550" y2="70" stroke="#000" stroke-width="1.1"/>
+  <line x1="464" y1="250" x2="550" y2="260" stroke="#000" stroke-width="1.1"/>
+  <line x1="270" y1="410" x2="550" y2="430" stroke="#000" stroke-width="1.1"/>
+  <g transform="translate(50,68)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">사용자</text><text x="0" y="70" font-size="8" font-weight="400">(주 액터)</text></g>
+  <g transform="translate(552,30)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">GitHub</text></g>
+  <g transform="translate(552,220)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">DNS</text></g>
+  <g transform="translate(552,390)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">AWS/GCP</text></g>
+</svg>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 다이어그램</h1>
+      <p class="sub">UC-06 배포</p>
+      
+<svg viewBox="0 0 600 555" width="600" height="555">
+  <rect x="110" y="10" width="380" height="530" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="300.0" y="28" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="12" font-weight="800">Qeploy</text>
+  <ellipse cx="300" cy="95" rx="48" ry="18" fill="#cfcfcf" stroke="#000" stroke-width="2.0"/><text x="300" y="98" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700">배포</text>
+  <ellipse cx="190" cy="245" rx="56" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="190" y="248" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">GitHub Pages</text>
+  <ellipse cx="300" cy="245" rx="56" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="300" y="248" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">AWS/GCP 배포</text>
+  <ellipse cx="410" cy="245" rx="56" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="410" y="248" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">PR·merge·버전</text>
+  <ellipse cx="190" cy="410" rx="56" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="190" y="413" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">배포 실패 처리</text>
+  <ellipse cx="300" cy="410" rx="50" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="300" y="413" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">버전 롤백</text>
+  <ellipse cx="410" cy="410" rx="48" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="410" y="413" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">작업 승인</text>
+  <defs><marker id="a6" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#000"/></marker></defs>
+  <g stroke="#000" fill="none" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#a6)">
+    <path d="M265,113 C175,160 185,205 188,227"/>
+    <path d="M300,113 L300,227"/>
+    <path d="M335,113 C425,160 415,205 412,227"/>
+    <path d="M255,261 C175,320 185,365 188,392"/>
+    <path d="M300,261 L300,392"/>
+    <path d="M345,261 C425,320 415,365 412,392"/>
+  </g>
+  <text x="360" y="340" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="8" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+  <line x1="58" y1="95" x2="252" y2="95" stroke="#000" stroke-width="1.2"/>
+  <line x1="246" y1="245" x2="550" y2="70" stroke="#000" stroke-width="1.1"/>
+  <line x1="356" y1="245" x2="550" y2="260" stroke="#000" stroke-width="1.1"/>
+  <g transform="translate(50,63)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">사용자</text><text x="0" y="70" font-size="8" font-weight="400">(주 액터)</text></g>
+  <g transform="translate(552,30)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">GitHub</text></g>
+  <g transform="translate(552,220)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">AWS/GCP</text></g>
+</svg>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 다이어그램</h1>
+      <p class="sub">UC-07 도메인 연결</p>
+      
+<svg viewBox="0 0 600 555" width="600" height="555">
+  <rect x="110" y="10" width="380" height="530" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="300.0" y="28" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="12" font-weight="800">Qeploy</text>
+  <ellipse cx="300" cy="100" rx="62" ry="18" fill="#cfcfcf" stroke="#000" stroke-width="2.0"/><text x="300" y="103" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700">도메인 연결</text>
+  <ellipse cx="190" cy="255" rx="56" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="190" y="258" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">기본 배포 URL</text>
+  <ellipse cx="300" cy="255" rx="56" ry="20" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="300" y="251" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">qeploy.com</text><text x="300" y="263" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">서브도메인</text>
+  <ellipse cx="410" cy="255" rx="56" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="410" y="258" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">커스텀 도메인</text>
+  <ellipse cx="210" cy="415" rx="60" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="210" y="418" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">DNS·HTTPS 검증</text>
+  <ellipse cx="390" cy="415" rx="48" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="390" y="418" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">작업 승인</text>
+  <defs><marker id="a7" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#000"/></marker></defs>
+  <g stroke="#000" fill="none" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#a7)">
+    <path d="M255,118 C175,170 185,215 188,237"/>
+    <path d="M300,118 L300,233"/>
+    <path d="M345,118 C425,170 415,215 412,237"/>
+    <path d="M270,275 C200,330 205,375 208,397"/>
+    <path d="M330,275 C380,330 388,375 390,397"/>
+  </g>
+  <text x="335" y="345" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="8" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+  <line x1="58" y1="100" x2="238" y2="100" stroke="#000" stroke-width="1.2"/>
+  <line x1="270" y1="415" x2="550" y2="90" stroke="#000" stroke-width="1.1"/>
+  <line x1="438" y1="415" x2="550" y2="260" stroke="#000" stroke-width="1.1"/>
+  <g transform="translate(50,68)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">사용자</text><text x="0" y="70" font-size="8" font-weight="400">(주 액터)</text></g>
+  <g transform="translate(552,50)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">DNS</text></g>
+  <g transform="translate(552,220)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">GitHub Pages</text></g>
+</svg>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 다이어그램</h1>
+      <p class="sub">UC-08 인프라 운영</p>
+      
+<svg viewBox="0 0 600 555" width="600" height="555">
+  <rect x="110" y="10" width="380" height="530" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="300.0" y="28" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="12" font-weight="800">Qeploy</text>
+  <ellipse cx="300" cy="95" rx="62" ry="18" fill="#cfcfcf" stroke="#000" stroke-width="2.0"/><text x="300" y="98" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700">인프라 운영</text>
+  <ellipse cx="190" cy="245" rx="56" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="190" y="248" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">한 페이지 설정</text>
+  <ellipse cx="300" cy="245" rx="48" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="300" y="248" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">예상 요금</text>
+  <ellipse cx="410" cy="245" rx="52" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="410" y="248" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">자연어 운영</text>
+  <ellipse cx="190" cy="410" rx="60" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="190" y="413" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">환경변수·Secrets</text>
+  <ellipse cx="300" cy="410" rx="52" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="300" y="413" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">리소스 조정</text>
+  <ellipse cx="410" cy="410" rx="48" ry="16" fill="#f3f2f2" stroke="#000" stroke-width="1.2"/><text x="410" y="413" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="9" font-weight="700">작업 승인</text>
+  <defs><marker id="a8" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#000"/></marker></defs>
+  <g stroke="#000" fill="none" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#a8)">
+    <path d="M255,113 C175,160 185,205 188,227"/>
+    <path d="M300,113 L300,227"/>
+    <path d="M345,113 C425,160 415,205 412,227"/>
+    <path d="M255,261 C175,320 185,365 188,392"/>
+    <path d="M300,261 L300,392"/>
+    <path d="M345,261 C425,320 415,365 412,392"/>
+  </g>
+  <text x="360" y="340" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="8" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+  <line x1="58" y1="95" x2="238" y2="95" stroke="#000" stroke-width="1.2"/>
+  <line x1="462" y1="245" x2="550" y2="70" stroke="#000" stroke-width="1.1"/>
+  <line x1="352" y1="410" x2="550" y2="260" stroke="#000" stroke-width="1.1"/>
+  <line x1="458" y1="410" x2="550" y2="445" stroke="#000" stroke-width="1.1"/>
+  <g transform="translate(50,63)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">사용자</text><text x="0" y="70" font-size="8" font-weight="400">(주 액터)</text></g>
+  <g transform="translate(552,30)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">AWS</text></g>
+  <g transform="translate(552,220)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">GCP</text></g>
+  <g transform="translate(552,405)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" text-anchor="middle">
+      <circle cx="0" cy="0" r="8" fill="none" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="8" x2="0" y2="28" stroke="#000" stroke-width="1.3"/>
+      <line x1="-12" y1="16" x2="12" y2="16" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="-9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <line x1="0" y1="28" x2="9" y2="44" stroke="#000" stroke-width="1.3"/>
+      <text x="0" y="58">클라우드 API</text></g>
+</svg>
+    </section>
+</body></html>

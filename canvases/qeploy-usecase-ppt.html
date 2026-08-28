@@ -3,99 +3,82 @@
   html, body { width: 1920px; background: #fff; }
   .page {
     width: 1920px; height: 1080px;
-    padding: 24px 28px 16px;
+    padding: 32px 40px 24px;
     overflow: hidden;
     font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
     color: #111;
   }
-  .layout { display: flex; gap: 16px; height: 100%; align-items: stretch; }
-  .diag { width: 38%; height: 100%; }
-  .spec { width: 62%; height: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.4; table-layout: fixed; }
-  th, td { border: 1px solid #000; padding: 4px 8px; vertical-align: middle; }
-  th { font-weight: 700; text-align: center; background: #fff; }
-  td.cat { text-align: center; font-weight: 700; }
+  h1 { text-align: center; font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+  .sub { text-align: center; font-size: 14px; color: #555; font-weight: 700; margin-bottom: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 1.42; table-layout: fixed; }
+  th, td { border: 1px solid #000; padding: 7px 12px; vertical-align: middle; }
+  th { font-weight: 700; text-align: center; }
+  td.cat { text-align: center; font-weight: 700; width: 14%; }
   td.sub { text-align: center; font-weight: 700; }
   td.grade { text-align: center; font-weight: 700; }
   td.desc { text-align: left; }
-  .alt-h { font-weight: 700; margin: 4px 0 2px; }
+  .alt-h { font-weight: 700; margin: 6px 0 2px; }
   .alt-h:first-child { margin-top: 0; }
-  ol, ul { margin: 0; padding-left: 18px; }
-  ol li, ul li { margin: 1px 0; }
-</style></head><body><section class="page"><div class="layout"><div class="diag"><svg viewBox="0 0 740 980" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <rect x="118" y="70" width="470" height="810" fill="#fff" stroke="#000" stroke-width="1.8"/>
-      <text x="353" y="100" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="16" font-weight="800">Qeploy</text>
-      <g font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif"><ellipse cx="280" cy="175" rx="108" ry="32" fill="#d0d0d0" stroke="#000" stroke-width="2.4"/><text x="280" y="180" text-anchor="middle" font-size="13" font-weight="700">GitHub 로그인</text><ellipse cx="280" cy="260" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="265" text-anchor="middle" font-size="13" font-weight="700">프로젝트 관리</text><ellipse cx="280" cy="385" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="390" text-anchor="middle" font-size="13" font-weight="700">자연어 작업 요청</text><ellipse cx="490" cy="325" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="330" text-anchor="middle" font-size="13" font-weight="700">Docker 미리보기</text><ellipse cx="490" cy="505" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="510" text-anchor="middle" font-size="13" font-weight="700">작업 승인</text><ellipse cx="280" cy="560" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="565" text-anchor="middle" font-size="13" font-weight="700">배포</text><ellipse cx="280" cy="670" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="675" text-anchor="middle" font-size="13" font-weight="700">도메인 연결</text><ellipse cx="280" cy="780" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="785" text-anchor="middle" font-size="13" font-weight="700">인프라 운영</text></g>
-      <defs><marker id="arr0" markerWidth="7" markerHeight="7" refX="6" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#000"/></marker></defs>
-      <g stroke="#000" fill="none" stroke-width="1.15" stroke-dasharray="5 3" marker-end="url(#arr0)">
-        <path d="M388,375 C430,360 360,325 382,325"/>
-        <path d="M388,405 C430,450 360,490 382,500"/>
-        <path d="M388,560 C430,545 360,520 382,510"/>
-        <path d="M388,670 C420,620 360,540 382,522"/>
-        <path d="M388,780 C420,680 360,560 382,535"/>
-      </g>
-      <text x="430" y="348" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <text x="430" y="460" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <g stroke="#000" stroke-width="1.2">
-        <line x1="70" y1="400" x2="172" y2="175"/>
-        <line x1="70" y1="400" x2="172" y2="260"/>
-        <line x1="70" y1="400" x2="172" y2="385"/>
-        <line x1="70" y1="400" x2="172" y2="560"/>
-        <line x1="70" y1="400" x2="172" y2="670"/>
-        <line x1="70" y1="400" x2="172" y2="780"/>
-        <line x1="388" y1="175" x2="640" y2="155"/>
-        <line x1="388" y1="260" x2="640" y2="155"/>
-        <line x1="598" y1="325" x2="640" y2="330"/>
-        <line x1="388" y1="560" x2="640" y2="155"/>
-        <line x1="388" y1="560" x2="640" y2="640"/>
-        <line x1="388" y1="670" x2="640" y2="820"/>
-        <line x1="388" y1="780" x2="640" y2="640"/>
-      </g>
-      <g transform="translate(50,330)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">사용자</text><text x="0" y="112" font-size="11" font-weight="400">(주 액터)</text></g>
-      <g transform="translate(680,85)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">GitHub</text></g>
-      <g transform="translate(680,280)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">Docker</text></g>
-      <g transform="translate(680,590)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">AWS/GCP</text></g>
-      <g transform="translate(680,770)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">DNS</text></g>
-    </svg></div><div class="spec"><table>
+  ol, ul { margin: 0; padding-left: 20px; }
+  ol li, ul li { margin: 2px 0; }
+</style></head><body><section class="page">
+      <h1>Qeploy 유스케이스 정의서</h1>
+      <p class="sub">UC-00 웹서비스 운영 자동화 (전체 흐름)</p>
+      <table>
       <colgroup>
         <col style="width:13%"/>
-        <col style="width:13%"/>
         <col style="width:12%"/>
+        <col style="width:11%"/>
         <col/>
       </colgroup>
-      <thead>
-        <tr><th>항목</th><th colspan="3">설명</th></tr>
-      </thead>
+      <thead><tr><th>항목</th><th colspan="3">설명</th></tr></thead>
+      <tbody>
+        <tr><td class="cat">케이스명</td><td class="desc" colspan="3">UC-00 웹서비스 운영 자동화 (전체 흐름)</td></tr>
+        <tr><td class="cat">개요</td><td class="desc" colspan="3">비개발자와 입문 개발자가 GitHub 로그인부터 자연어 생성·Docker 미리보기·승인·버전관리·배포·도메인·인프라 운영까지 한 흐름으로 웹서비스를 실제 운영 상태까지 만든다. 사용자는 복잡한 기술 개념 대신 미리보기, 승인 요약, 배포 URL, 현재 버전, 예상 비용만 확인한다.</td></tr>
+        <tr>
+          <td class="cat" rowspan="2">관련 액터</td>
+          <td class="sub">주 액터</td>
+          <td class="desc" colspan="2">사용자 (비개발자, 입문 개발자)</td>
+        </tr>
+        <tr>
+          <td class="sub">보조 액터</td>
+          <td class="desc" colspan="2">GitHub, Docker, AWS/GCP, DNS</td>
+        </tr>
+        <tr>
+          <td class="cat" rowspan="2">우선 순위</td>
+          <td class="grade" rowspan="2">상</td>
+          <td class="sub">중요도</td>
+          <td class="desc">10</td>
+        </tr>
+        <tr>
+          <td class="sub">난이도</td>
+          <td class="desc">로그인·프로젝트·Agent 분기·미리보기·승인·배포·도메인·인프라를 하나의 자연어 파이프라인으로 연결할 수 있는 개발 능력.</td>
+        </tr>
+        <tr><td class="cat">선행 조건</td><td class="desc" colspan="3">사용자가 GitHub 계정을 보유한다. AWS/GCP 연결과 커스텀 도메인은 필수가 아니다.</td></tr>
+        <tr><td class="cat">후행 조건</td><td class="desc" colspan="3">웹서비스가 배포되어 기본 URL 또는 연결 도메인으로 접근 가능하고, Overview에 Live·현재 버전·최근 이력이 표시된다.</td></tr>
+        <tr>
+          <td class="cat" rowspan="2">시나리오</td>
+          <td class="sub">기본 시나리오</td>
+          <td class="desc" colspan="2"><ol><li>사용자가 GitHub OAuth로 로그인한다.</li><li>Projects에서 새 프로젝트 생성, ZIP 업로드, 또는 GitHub 레포 불러오기를 한다.</li><li>Overview에서 현재 URL, 배포 상태, 버전을 확인한다.</li><li>AI Workspace에서 자연어로 생성·수정·배포·도메인·인프라를 요청한다.</li><li>의사결정 Agent가 코드/배포/도메인/인프라 Agent로 라우팅한다. 분기는 사용자에게 보이지 않는다.</li><li>코드 변경은 preview 브랜치에 커밋되고, Docker 미리보기에서 실제 동작을 검증한다.</li><li>승인창에서 한 줄 요약을 확인하고 승인한다. 변경 승인 후에도 즉시 main에 반영하지 않는다.</li><li>배포 요청 시 PR 생성, main/production merge, 버전 증가 후 GitHub Pages 또는 AWS/GCP에 배포한다.</li><li>기본 URL, qeploy.com 서브도메인 또는 커스텀 도메인을 연결한다.</li><li>AWS/GCP 프로젝트는 이후에도 자연어로 서버 상태·리소스·비용을 운영한다.</li></ol></td>
+        </tr>
+        <tr>
+          <td class="sub">대안 시나리오</td>
+          <td class="desc" colspan="2"><div class="alt-h">A1: 로그인 실패 시</div><ol><li>OAuth 취소 또는 state 오류를 안내한다.</li><li>세션을 만들지 않고 재로그인을 유도한다.</li></ol><div class="alt-h">A2: 빌드 실패 시</div><ol><li>쉬운 설명, 로그 일부, 수정안 1개를 보여준다.</li><li>사용자가 승인하면 재빌드·미리보기를 진행한다.</li></ol><div class="alt-h">A3: 배포 실패 시</div><ol><li>원인과 수정안을 제시한다.</li><li>승인 후 재배포하거나 merge 이력에서 특정 버전으로 롤백한다.</li></ol><div class="alt-h">A4: 도메인 중복/사용 불가 시</div><ol><li>승인창을 열지 않고 사용 불가를 안내한다.</li><li>기본 배포 URL로 접근한다.</li></ol><div class="alt-h">A5: 클라우드 미연결 시</div><ol><li>AWS/GCP 설정을 비활성 표시한다.</li><li>GitHub Pages 경로만 사용한다.</li></ol></td>
+        </tr>
+        <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 승인창은 한 줄 요약 중심으로 제공한다.<br/>보안 : 배포·도메인·비용 증가·서비스 영향 작업은 승인 후에만 반영한다. 선택하지 않은 레포에는 접근하지 않는다.</td></tr>
+      </tbody>
+    </table>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 정의서</h1>
+      <p class="sub">UC-01 GitHub 로그인</p>
+      <table>
+      <colgroup>
+        <col style="width:13%"/>
+        <col style="width:12%"/>
+        <col style="width:11%"/>
+        <col/>
+      </colgroup>
+      <thead><tr><th>항목</th><th colspan="3">설명</th></tr></thead>
       <tbody>
         <tr><td class="cat">케이스명</td><td class="desc" colspan="3">UC-01 GitHub 로그인</td></tr>
         <tr><td class="cat">개요</td><td class="desc" colspan="3">사용자는 GitHub OAuth로만 서비스에 로그인하고 Projects에서 작업을 시작한다. GitHub 로그인은 필수이며 AWS/GCP 연결은 필수가 아니다.</td></tr>
@@ -131,80 +114,18 @@
         </tr>
         <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 로그인 시작부터 Projects 진입까지 체감 2초 이내를 목표로 한다.<br/>보안 : OAuth state를 검증한다. 사용자가 생성했거나 명시한 레포에만 권한을 사용한다.</td></tr>
       </tbody>
-    </table></div></div></section><section class="page"><div class="layout"><div class="diag"><svg viewBox="0 0 740 980" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <rect x="118" y="70" width="470" height="810" fill="#fff" stroke="#000" stroke-width="1.8"/>
-      <text x="353" y="100" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="16" font-weight="800">Qeploy</text>
-      <g font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif"><ellipse cx="280" cy="175" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="180" text-anchor="middle" font-size="13" font-weight="700">GitHub 로그인</text><ellipse cx="280" cy="260" rx="108" ry="32" fill="#d0d0d0" stroke="#000" stroke-width="2.4"/><text x="280" y="265" text-anchor="middle" font-size="13" font-weight="700">프로젝트 관리</text><ellipse cx="280" cy="385" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="390" text-anchor="middle" font-size="13" font-weight="700">자연어 작업 요청</text><ellipse cx="490" cy="325" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="330" text-anchor="middle" font-size="13" font-weight="700">Docker 미리보기</text><ellipse cx="490" cy="505" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="510" text-anchor="middle" font-size="13" font-weight="700">작업 승인</text><ellipse cx="280" cy="560" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="565" text-anchor="middle" font-size="13" font-weight="700">배포</text><ellipse cx="280" cy="670" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="675" text-anchor="middle" font-size="13" font-weight="700">도메인 연결</text><ellipse cx="280" cy="780" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="785" text-anchor="middle" font-size="13" font-weight="700">인프라 운영</text></g>
-      <defs><marker id="arr1" markerWidth="7" markerHeight="7" refX="6" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#000"/></marker></defs>
-      <g stroke="#000" fill="none" stroke-width="1.15" stroke-dasharray="5 3" marker-end="url(#arr1)">
-        <path d="M388,375 C430,360 360,325 382,325"/>
-        <path d="M388,405 C430,450 360,490 382,500"/>
-        <path d="M388,560 C430,545 360,520 382,510"/>
-        <path d="M388,670 C420,620 360,540 382,522"/>
-        <path d="M388,780 C420,680 360,560 382,535"/>
-      </g>
-      <text x="430" y="348" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <text x="430" y="460" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <g stroke="#000" stroke-width="1.2">
-        <line x1="70" y1="400" x2="172" y2="175"/>
-        <line x1="70" y1="400" x2="172" y2="260"/>
-        <line x1="70" y1="400" x2="172" y2="385"/>
-        <line x1="70" y1="400" x2="172" y2="560"/>
-        <line x1="70" y1="400" x2="172" y2="670"/>
-        <line x1="70" y1="400" x2="172" y2="780"/>
-        <line x1="388" y1="175" x2="640" y2="155"/>
-        <line x1="388" y1="260" x2="640" y2="155"/>
-        <line x1="598" y1="325" x2="640" y2="330"/>
-        <line x1="388" y1="560" x2="640" y2="155"/>
-        <line x1="388" y1="560" x2="640" y2="640"/>
-        <line x1="388" y1="670" x2="640" y2="820"/>
-        <line x1="388" y1="780" x2="640" y2="640"/>
-      </g>
-      <g transform="translate(50,330)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">사용자</text><text x="0" y="112" font-size="11" font-weight="400">(주 액터)</text></g>
-      <g transform="translate(680,85)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">GitHub</text></g>
-      <g transform="translate(680,280)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">Docker</text></g>
-      <g transform="translate(680,590)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">AWS/GCP</text></g>
-      <g transform="translate(680,770)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">DNS</text></g>
-    </svg></div><div class="spec"><table>
+    </table>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 정의서</h1>
+      <p class="sub">UC-02 프로젝트 관리</p>
+      <table>
       <colgroup>
         <col style="width:13%"/>
-        <col style="width:13%"/>
         <col style="width:12%"/>
+        <col style="width:11%"/>
         <col/>
       </colgroup>
-      <thead>
-        <tr><th>항목</th><th colspan="3">설명</th></tr>
-      </thead>
+      <thead><tr><th>항목</th><th colspan="3">설명</th></tr></thead>
       <tbody>
         <tr><td class="cat">케이스명</td><td class="desc" colspan="3">UC-02 프로젝트 관리</td></tr>
         <tr><td class="cat">개요</td><td class="desc" colspan="3">사용자는 Projects에서 목록을 확인하고, 빈 프로젝트 생성·ZIP 업로드·GitHub 레포 불러오기로 프로젝트를 추가한 뒤 Overview로 진입한다.</td></tr>
@@ -240,80 +161,18 @@
         </tr>
         <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 최근 수정일은 GitHub식 상대시간으로 표기한다.<br/>보안 : 사용자가 명시한 레포만 불러온다.</td></tr>
       </tbody>
-    </table></div></div></section><section class="page"><div class="layout"><div class="diag"><svg viewBox="0 0 740 980" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <rect x="118" y="70" width="470" height="810" fill="#fff" stroke="#000" stroke-width="1.8"/>
-      <text x="353" y="100" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="16" font-weight="800">Qeploy</text>
-      <g font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif"><ellipse cx="280" cy="175" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="180" text-anchor="middle" font-size="13" font-weight="700">GitHub 로그인</text><ellipse cx="280" cy="260" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="265" text-anchor="middle" font-size="13" font-weight="700">프로젝트 관리</text><ellipse cx="280" cy="385" rx="108" ry="32" fill="#d0d0d0" stroke="#000" stroke-width="2.4"/><text x="280" y="390" text-anchor="middle" font-size="13" font-weight="700">자연어 작업 요청</text><ellipse cx="490" cy="325" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="330" text-anchor="middle" font-size="13" font-weight="700">Docker 미리보기</text><ellipse cx="490" cy="505" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="510" text-anchor="middle" font-size="13" font-weight="700">작업 승인</text><ellipse cx="280" cy="560" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="565" text-anchor="middle" font-size="13" font-weight="700">배포</text><ellipse cx="280" cy="670" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="675" text-anchor="middle" font-size="13" font-weight="700">도메인 연결</text><ellipse cx="280" cy="780" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="785" text-anchor="middle" font-size="13" font-weight="700">인프라 운영</text></g>
-      <defs><marker id="arr2" markerWidth="7" markerHeight="7" refX="6" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#000"/></marker></defs>
-      <g stroke="#000" fill="none" stroke-width="1.15" stroke-dasharray="5 3" marker-end="url(#arr2)">
-        <path d="M388,375 C430,360 360,325 382,325"/>
-        <path d="M388,405 C430,450 360,490 382,500"/>
-        <path d="M388,560 C430,545 360,520 382,510"/>
-        <path d="M388,670 C420,620 360,540 382,522"/>
-        <path d="M388,780 C420,680 360,560 382,535"/>
-      </g>
-      <text x="430" y="348" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <text x="430" y="460" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <g stroke="#000" stroke-width="1.2">
-        <line x1="70" y1="400" x2="172" y2="175"/>
-        <line x1="70" y1="400" x2="172" y2="260"/>
-        <line x1="70" y1="400" x2="172" y2="385"/>
-        <line x1="70" y1="400" x2="172" y2="560"/>
-        <line x1="70" y1="400" x2="172" y2="670"/>
-        <line x1="70" y1="400" x2="172" y2="780"/>
-        <line x1="388" y1="175" x2="640" y2="155"/>
-        <line x1="388" y1="260" x2="640" y2="155"/>
-        <line x1="598" y1="325" x2="640" y2="330"/>
-        <line x1="388" y1="560" x2="640" y2="155"/>
-        <line x1="388" y1="560" x2="640" y2="640"/>
-        <line x1="388" y1="670" x2="640" y2="820"/>
-        <line x1="388" y1="780" x2="640" y2="640"/>
-      </g>
-      <g transform="translate(50,330)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">사용자</text><text x="0" y="112" font-size="11" font-weight="400">(주 액터)</text></g>
-      <g transform="translate(680,85)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">GitHub</text></g>
-      <g transform="translate(680,280)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">Docker</text></g>
-      <g transform="translate(680,590)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">AWS/GCP</text></g>
-      <g transform="translate(680,770)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">DNS</text></g>
-    </svg></div><div class="spec"><table>
+    </table>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 정의서</h1>
+      <p class="sub">UC-03 자연어 작업 요청</p>
+      <table>
       <colgroup>
         <col style="width:13%"/>
-        <col style="width:13%"/>
         <col style="width:12%"/>
+        <col style="width:11%"/>
         <col/>
       </colgroup>
-      <thead>
-        <tr><th>항목</th><th colspan="3">설명</th></tr>
-      </thead>
+      <thead><tr><th>항목</th><th colspan="3">설명</th></tr></thead>
       <tbody>
         <tr><td class="cat">케이스명</td><td class="desc" colspan="3">UC-03 자연어 작업 요청</td></tr>
         <tr><td class="cat">개요</td><td class="desc" colspan="3">사용자는 AI Workspace에서 자연어만으로 생성·수정·배포·도메인·인프라 작업을 요청한다. 의사결정 Agent가 전문 Agent로 라우팅하며 내부 분기는 보이지 않는다.</td></tr>
@@ -349,80 +208,18 @@
         </tr>
         <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 세션은 최근 수정순이며 제목은 자동 생성된다.<br/>사용성 : 사용자는 미리보기 결과와 승인 요약만 알면 된다.</td></tr>
       </tbody>
-    </table></div></div></section><section class="page"><div class="layout"><div class="diag"><svg viewBox="0 0 740 980" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <rect x="118" y="70" width="470" height="810" fill="#fff" stroke="#000" stroke-width="1.8"/>
-      <text x="353" y="100" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="16" font-weight="800">Qeploy</text>
-      <g font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif"><ellipse cx="280" cy="175" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="180" text-anchor="middle" font-size="13" font-weight="700">GitHub 로그인</text><ellipse cx="280" cy="260" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="265" text-anchor="middle" font-size="13" font-weight="700">프로젝트 관리</text><ellipse cx="280" cy="385" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="390" text-anchor="middle" font-size="13" font-weight="700">자연어 작업 요청</text><ellipse cx="490" cy="325" rx="108" ry="32" fill="#d0d0d0" stroke="#000" stroke-width="2.4"/><text x="490" y="330" text-anchor="middle" font-size="13" font-weight="700">Docker 미리보기</text><ellipse cx="490" cy="505" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="510" text-anchor="middle" font-size="13" font-weight="700">작업 승인</text><ellipse cx="280" cy="560" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="565" text-anchor="middle" font-size="13" font-weight="700">배포</text><ellipse cx="280" cy="670" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="675" text-anchor="middle" font-size="13" font-weight="700">도메인 연결</text><ellipse cx="280" cy="780" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="785" text-anchor="middle" font-size="13" font-weight="700">인프라 운영</text></g>
-      <defs><marker id="arr3" markerWidth="7" markerHeight="7" refX="6" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#000"/></marker></defs>
-      <g stroke="#000" fill="none" stroke-width="1.15" stroke-dasharray="5 3" marker-end="url(#arr3)">
-        <path d="M388,375 C430,360 360,325 382,325"/>
-        <path d="M388,405 C430,450 360,490 382,500"/>
-        <path d="M388,560 C430,545 360,520 382,510"/>
-        <path d="M388,670 C420,620 360,540 382,522"/>
-        <path d="M388,780 C420,680 360,560 382,535"/>
-      </g>
-      <text x="430" y="348" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <text x="430" y="460" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <g stroke="#000" stroke-width="1.2">
-        <line x1="70" y1="400" x2="172" y2="175"/>
-        <line x1="70" y1="400" x2="172" y2="260"/>
-        <line x1="70" y1="400" x2="172" y2="385"/>
-        <line x1="70" y1="400" x2="172" y2="560"/>
-        <line x1="70" y1="400" x2="172" y2="670"/>
-        <line x1="70" y1="400" x2="172" y2="780"/>
-        <line x1="388" y1="175" x2="640" y2="155"/>
-        <line x1="388" y1="260" x2="640" y2="155"/>
-        <line x1="598" y1="325" x2="640" y2="330"/>
-        <line x1="388" y1="560" x2="640" y2="155"/>
-        <line x1="388" y1="560" x2="640" y2="640"/>
-        <line x1="388" y1="670" x2="640" y2="820"/>
-        <line x1="388" y1="780" x2="640" y2="640"/>
-      </g>
-      <g transform="translate(50,330)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">사용자</text><text x="0" y="112" font-size="11" font-weight="400">(주 액터)</text></g>
-      <g transform="translate(680,85)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">GitHub</text></g>
-      <g transform="translate(680,280)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">Docker</text></g>
-      <g transform="translate(680,590)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">AWS/GCP</text></g>
-      <g transform="translate(680,770)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">DNS</text></g>
-    </svg></div><div class="spec"><table>
+    </table>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 정의서</h1>
+      <p class="sub">UC-04 Docker 미리보기</p>
+      <table>
       <colgroup>
         <col style="width:13%"/>
-        <col style="width:13%"/>
         <col style="width:12%"/>
+        <col style="width:11%"/>
         <col/>
       </colgroup>
-      <thead>
-        <tr><th>항목</th><th colspan="3">설명</th></tr>
-      </thead>
+      <thead><tr><th>항목</th><th colspan="3">설명</th></tr></thead>
       <tbody>
         <tr><td class="cat">케이스명</td><td class="desc" colspan="3">UC-04 Docker 미리보기</td></tr>
         <tr><td class="cat">개요</td><td class="desc" colspan="3">코드 변경 결과를 Docker 컨테이너에서 실제 설치·빌드·실행하고, 내부 패널에서 클릭·입력 등 실제 사용 테스트를 한다. 단순 정적 렌더링이 아니다.</td></tr>
@@ -458,80 +255,18 @@
         </tr>
         <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 반복 작업 시 캐시를 활용해 재빌드 시간을 줄인다.<br/>보안 : 미리보기는 서비스 내부에서만 접근한다.</td></tr>
       </tbody>
-    </table></div></div></section><section class="page"><div class="layout"><div class="diag"><svg viewBox="0 0 740 980" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <rect x="118" y="70" width="470" height="810" fill="#fff" stroke="#000" stroke-width="1.8"/>
-      <text x="353" y="100" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="16" font-weight="800">Qeploy</text>
-      <g font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif"><ellipse cx="280" cy="175" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="180" text-anchor="middle" font-size="13" font-weight="700">GitHub 로그인</text><ellipse cx="280" cy="260" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="265" text-anchor="middle" font-size="13" font-weight="700">프로젝트 관리</text><ellipse cx="280" cy="385" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="390" text-anchor="middle" font-size="13" font-weight="700">자연어 작업 요청</text><ellipse cx="490" cy="325" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="330" text-anchor="middle" font-size="13" font-weight="700">Docker 미리보기</text><ellipse cx="490" cy="505" rx="108" ry="32" fill="#d0d0d0" stroke="#000" stroke-width="2.4"/><text x="490" y="510" text-anchor="middle" font-size="13" font-weight="700">작업 승인</text><ellipse cx="280" cy="560" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="565" text-anchor="middle" font-size="13" font-weight="700">배포</text><ellipse cx="280" cy="670" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="675" text-anchor="middle" font-size="13" font-weight="700">도메인 연결</text><ellipse cx="280" cy="780" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="785" text-anchor="middle" font-size="13" font-weight="700">인프라 운영</text></g>
-      <defs><marker id="arr4" markerWidth="7" markerHeight="7" refX="6" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#000"/></marker></defs>
-      <g stroke="#000" fill="none" stroke-width="1.15" stroke-dasharray="5 3" marker-end="url(#arr4)">
-        <path d="M388,375 C430,360 360,325 382,325"/>
-        <path d="M388,405 C430,450 360,490 382,500"/>
-        <path d="M388,560 C430,545 360,520 382,510"/>
-        <path d="M388,670 C420,620 360,540 382,522"/>
-        <path d="M388,780 C420,680 360,560 382,535"/>
-      </g>
-      <text x="430" y="348" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <text x="430" y="460" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <g stroke="#000" stroke-width="1.2">
-        <line x1="70" y1="400" x2="172" y2="175"/>
-        <line x1="70" y1="400" x2="172" y2="260"/>
-        <line x1="70" y1="400" x2="172" y2="385"/>
-        <line x1="70" y1="400" x2="172" y2="560"/>
-        <line x1="70" y1="400" x2="172" y2="670"/>
-        <line x1="70" y1="400" x2="172" y2="780"/>
-        <line x1="388" y1="175" x2="640" y2="155"/>
-        <line x1="388" y1="260" x2="640" y2="155"/>
-        <line x1="598" y1="325" x2="640" y2="330"/>
-        <line x1="388" y1="560" x2="640" y2="155"/>
-        <line x1="388" y1="560" x2="640" y2="640"/>
-        <line x1="388" y1="670" x2="640" y2="820"/>
-        <line x1="388" y1="780" x2="640" y2="640"/>
-      </g>
-      <g transform="translate(50,330)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">사용자</text><text x="0" y="112" font-size="11" font-weight="400">(주 액터)</text></g>
-      <g transform="translate(680,85)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">GitHub</text></g>
-      <g transform="translate(680,280)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">Docker</text></g>
-      <g transform="translate(680,590)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">AWS/GCP</text></g>
-      <g transform="translate(680,770)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">DNS</text></g>
-    </svg></div><div class="spec"><table>
+    </table>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 정의서</h1>
+      <p class="sub">UC-05 작업 승인</p>
+      <table>
       <colgroup>
         <col style="width:13%"/>
-        <col style="width:13%"/>
         <col style="width:12%"/>
+        <col style="width:11%"/>
         <col/>
       </colgroup>
-      <thead>
-        <tr><th>항목</th><th colspan="3">설명</th></tr>
-      </thead>
+      <thead><tr><th>항목</th><th colspan="3">설명</th></tr></thead>
       <tbody>
         <tr><td class="cat">케이스명</td><td class="desc" colspan="3">UC-05 작업 승인</td></tr>
         <tr><td class="cat">개요</td><td class="desc" colspan="3">개발/수정, 배포, 도메인, 인프라 운영은 승인창에서 한 줄 요약을 확인한 뒤 진행한다. 의도 파악 결과는 중간에 노출하지 않는다.</td></tr>
@@ -567,80 +302,18 @@
         </tr>
         <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">사용성 : 승인창은 한 줄 요약 중심이다.<br/>보안 : 확인 없이 배포·도메인·인프라 변경이 나가지 않는다.</td></tr>
       </tbody>
-    </table></div></div></section><section class="page"><div class="layout"><div class="diag"><svg viewBox="0 0 740 980" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <rect x="118" y="70" width="470" height="810" fill="#fff" stroke="#000" stroke-width="1.8"/>
-      <text x="353" y="100" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="16" font-weight="800">Qeploy</text>
-      <g font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif"><ellipse cx="280" cy="175" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="180" text-anchor="middle" font-size="13" font-weight="700">GitHub 로그인</text><ellipse cx="280" cy="260" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="265" text-anchor="middle" font-size="13" font-weight="700">프로젝트 관리</text><ellipse cx="280" cy="385" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="390" text-anchor="middle" font-size="13" font-weight="700">자연어 작업 요청</text><ellipse cx="490" cy="325" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="330" text-anchor="middle" font-size="13" font-weight="700">Docker 미리보기</text><ellipse cx="490" cy="505" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="510" text-anchor="middle" font-size="13" font-weight="700">작업 승인</text><ellipse cx="280" cy="560" rx="108" ry="32" fill="#d0d0d0" stroke="#000" stroke-width="2.4"/><text x="280" y="565" text-anchor="middle" font-size="13" font-weight="700">배포</text><ellipse cx="280" cy="670" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="675" text-anchor="middle" font-size="13" font-weight="700">도메인 연결</text><ellipse cx="280" cy="780" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="785" text-anchor="middle" font-size="13" font-weight="700">인프라 운영</text></g>
-      <defs><marker id="arr5" markerWidth="7" markerHeight="7" refX="6" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#000"/></marker></defs>
-      <g stroke="#000" fill="none" stroke-width="1.15" stroke-dasharray="5 3" marker-end="url(#arr5)">
-        <path d="M388,375 C430,360 360,325 382,325"/>
-        <path d="M388,405 C430,450 360,490 382,500"/>
-        <path d="M388,560 C430,545 360,520 382,510"/>
-        <path d="M388,670 C420,620 360,540 382,522"/>
-        <path d="M388,780 C420,680 360,560 382,535"/>
-      </g>
-      <text x="430" y="348" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <text x="430" y="460" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <g stroke="#000" stroke-width="1.2">
-        <line x1="70" y1="400" x2="172" y2="175"/>
-        <line x1="70" y1="400" x2="172" y2="260"/>
-        <line x1="70" y1="400" x2="172" y2="385"/>
-        <line x1="70" y1="400" x2="172" y2="560"/>
-        <line x1="70" y1="400" x2="172" y2="670"/>
-        <line x1="70" y1="400" x2="172" y2="780"/>
-        <line x1="388" y1="175" x2="640" y2="155"/>
-        <line x1="388" y1="260" x2="640" y2="155"/>
-        <line x1="598" y1="325" x2="640" y2="330"/>
-        <line x1="388" y1="560" x2="640" y2="155"/>
-        <line x1="388" y1="560" x2="640" y2="640"/>
-        <line x1="388" y1="670" x2="640" y2="820"/>
-        <line x1="388" y1="780" x2="640" y2="640"/>
-      </g>
-      <g transform="translate(50,330)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">사용자</text><text x="0" y="112" font-size="11" font-weight="400">(주 액터)</text></g>
-      <g transform="translate(680,85)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">GitHub</text></g>
-      <g transform="translate(680,280)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">Docker</text></g>
-      <g transform="translate(680,590)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">AWS/GCP</text></g>
-      <g transform="translate(680,770)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">DNS</text></g>
-    </svg></div><div class="spec"><table>
+    </table>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 정의서</h1>
+      <p class="sub">UC-06 배포</p>
+      <table>
       <colgroup>
         <col style="width:13%"/>
-        <col style="width:13%"/>
         <col style="width:12%"/>
+        <col style="width:11%"/>
         <col/>
       </colgroup>
-      <thead>
-        <tr><th>항목</th><th colspan="3">설명</th></tr>
-      </thead>
+      <thead><tr><th>항목</th><th colspan="3">설명</th></tr></thead>
       <tbody>
         <tr><td class="cat">케이스명</td><td class="desc" colspan="3">UC-06 배포</td></tr>
         <tr><td class="cat">개요</td><td class="desc" colspan="3">사용자는 최신 승인 버전 또는 특정 버전을 GitHub Pages 또는 개인 AWS/GCP에 배포한다. 배포 요청 시 PR, merge, 버전 증가, workflow가 진행된다.</td></tr>
@@ -676,80 +349,18 @@
         </tr>
         <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 실패 시 원인과 수정안을 함께 제공한다.<br/>추적성 : 버전은 merge 단위로 증가한다.</td></tr>
       </tbody>
-    </table></div></div></section><section class="page"><div class="layout"><div class="diag"><svg viewBox="0 0 740 980" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <rect x="118" y="70" width="470" height="810" fill="#fff" stroke="#000" stroke-width="1.8"/>
-      <text x="353" y="100" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="16" font-weight="800">Qeploy</text>
-      <g font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif"><ellipse cx="280" cy="175" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="180" text-anchor="middle" font-size="13" font-weight="700">GitHub 로그인</text><ellipse cx="280" cy="260" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="265" text-anchor="middle" font-size="13" font-weight="700">프로젝트 관리</text><ellipse cx="280" cy="385" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="390" text-anchor="middle" font-size="13" font-weight="700">자연어 작업 요청</text><ellipse cx="490" cy="325" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="330" text-anchor="middle" font-size="13" font-weight="700">Docker 미리보기</text><ellipse cx="490" cy="505" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="510" text-anchor="middle" font-size="13" font-weight="700">작업 승인</text><ellipse cx="280" cy="560" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="565" text-anchor="middle" font-size="13" font-weight="700">배포</text><ellipse cx="280" cy="670" rx="108" ry="32" fill="#d0d0d0" stroke="#000" stroke-width="2.4"/><text x="280" y="675" text-anchor="middle" font-size="13" font-weight="700">도메인 연결</text><ellipse cx="280" cy="780" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="785" text-anchor="middle" font-size="13" font-weight="700">인프라 운영</text></g>
-      <defs><marker id="arr6" markerWidth="7" markerHeight="7" refX="6" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#000"/></marker></defs>
-      <g stroke="#000" fill="none" stroke-width="1.15" stroke-dasharray="5 3" marker-end="url(#arr6)">
-        <path d="M388,375 C430,360 360,325 382,325"/>
-        <path d="M388,405 C430,450 360,490 382,500"/>
-        <path d="M388,560 C430,545 360,520 382,510"/>
-        <path d="M388,670 C420,620 360,540 382,522"/>
-        <path d="M388,780 C420,680 360,560 382,535"/>
-      </g>
-      <text x="430" y="348" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <text x="430" y="460" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <g stroke="#000" stroke-width="1.2">
-        <line x1="70" y1="400" x2="172" y2="175"/>
-        <line x1="70" y1="400" x2="172" y2="260"/>
-        <line x1="70" y1="400" x2="172" y2="385"/>
-        <line x1="70" y1="400" x2="172" y2="560"/>
-        <line x1="70" y1="400" x2="172" y2="670"/>
-        <line x1="70" y1="400" x2="172" y2="780"/>
-        <line x1="388" y1="175" x2="640" y2="155"/>
-        <line x1="388" y1="260" x2="640" y2="155"/>
-        <line x1="598" y1="325" x2="640" y2="330"/>
-        <line x1="388" y1="560" x2="640" y2="155"/>
-        <line x1="388" y1="560" x2="640" y2="640"/>
-        <line x1="388" y1="670" x2="640" y2="820"/>
-        <line x1="388" y1="780" x2="640" y2="640"/>
-      </g>
-      <g transform="translate(50,330)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">사용자</text><text x="0" y="112" font-size="11" font-weight="400">(주 액터)</text></g>
-      <g transform="translate(680,85)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">GitHub</text></g>
-      <g transform="translate(680,280)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">Docker</text></g>
-      <g transform="translate(680,590)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">AWS/GCP</text></g>
-      <g transform="translate(680,770)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">DNS</text></g>
-    </svg></div><div class="spec"><table>
+    </table>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 정의서</h1>
+      <p class="sub">UC-07 도메인 연결</p>
+      <table>
       <colgroup>
         <col style="width:13%"/>
-        <col style="width:13%"/>
         <col style="width:12%"/>
+        <col style="width:11%"/>
         <col/>
       </colgroup>
-      <thead>
-        <tr><th>항목</th><th colspan="3">설명</th></tr>
-      </thead>
+      <thead><tr><th>항목</th><th colspan="3">설명</th></tr></thead>
       <tbody>
         <tr><td class="cat">케이스명</td><td class="desc" colspan="3">UC-07 도메인 연결</td></tr>
         <tr><td class="cat">개요</td><td class="desc" colspan="3">사용자는 기본 배포 URL 외에 qeploy.com 서브도메인 또는 보유 커스텀 도메인을 연결한다. 서브도메인은 랜덤 생성하지 않고 사용자가 이름을 입력한다.</td></tr>
@@ -785,80 +396,18 @@
         </tr>
         <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">사용성 : DNS 상세보다 연결 결과와 HTTPS 여부를 확인한다.<br/>보안 : HTTPS 처리와 연결 검증 후에만 현재 URL로 노출한다.</td></tr>
       </tbody>
-    </table></div></div></section><section class="page"><div class="layout"><div class="diag"><svg viewBox="0 0 740 980" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-      <rect x="118" y="70" width="470" height="810" fill="#fff" stroke="#000" stroke-width="1.8"/>
-      <text x="353" y="100" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="16" font-weight="800">Qeploy</text>
-      <g font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif"><ellipse cx="280" cy="175" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="180" text-anchor="middle" font-size="13" font-weight="700">GitHub 로그인</text><ellipse cx="280" cy="260" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="265" text-anchor="middle" font-size="13" font-weight="700">프로젝트 관리</text><ellipse cx="280" cy="385" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="390" text-anchor="middle" font-size="13" font-weight="700">자연어 작업 요청</text><ellipse cx="490" cy="325" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="330" text-anchor="middle" font-size="13" font-weight="700">Docker 미리보기</text><ellipse cx="490" cy="505" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="490" y="510" text-anchor="middle" font-size="13" font-weight="700">작업 승인</text><ellipse cx="280" cy="560" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="565" text-anchor="middle" font-size="13" font-weight="700">배포</text><ellipse cx="280" cy="670" rx="108" ry="32" fill="#eee" stroke="#000" stroke-width="1.5"/><text x="280" y="675" text-anchor="middle" font-size="13" font-weight="700">도메인 연결</text><ellipse cx="280" cy="780" rx="108" ry="32" fill="#d0d0d0" stroke="#000" stroke-width="2.4"/><text x="280" y="785" text-anchor="middle" font-size="13" font-weight="700">인프라 운영</text></g>
-      <defs><marker id="arr7" markerWidth="7" markerHeight="7" refX="6" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#000"/></marker></defs>
-      <g stroke="#000" fill="none" stroke-width="1.15" stroke-dasharray="5 3" marker-end="url(#arr7)">
-        <path d="M388,375 C430,360 360,325 382,325"/>
-        <path d="M388,405 C430,450 360,490 382,500"/>
-        <path d="M388,560 C430,545 360,520 382,510"/>
-        <path d="M388,670 C420,620 360,540 382,522"/>
-        <path d="M388,780 C420,680 360,560 382,535"/>
-      </g>
-      <text x="430" y="348" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <text x="430" y="460" font-size="10" font-style="italic" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">&lt;&lt;include&gt;&gt;</text>
-      <g stroke="#000" stroke-width="1.2">
-        <line x1="70" y1="400" x2="172" y2="175"/>
-        <line x1="70" y1="400" x2="172" y2="260"/>
-        <line x1="70" y1="400" x2="172" y2="385"/>
-        <line x1="70" y1="400" x2="172" y2="560"/>
-        <line x1="70" y1="400" x2="172" y2="670"/>
-        <line x1="70" y1="400" x2="172" y2="780"/>
-        <line x1="388" y1="175" x2="640" y2="155"/>
-        <line x1="388" y1="260" x2="640" y2="155"/>
-        <line x1="598" y1="325" x2="640" y2="330"/>
-        <line x1="388" y1="560" x2="640" y2="155"/>
-        <line x1="388" y1="560" x2="640" y2="640"/>
-        <line x1="388" y1="670" x2="640" y2="820"/>
-        <line x1="388" y1="780" x2="640" y2="640"/>
-      </g>
-      <g transform="translate(50,330)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">사용자</text><text x="0" y="112" font-size="11" font-weight="400">(주 액터)</text></g>
-      <g transform="translate(680,85)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">GitHub</text></g>
-      <g transform="translate(680,280)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">Docker</text></g>
-      <g transform="translate(680,590)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">AWS/GCP</text></g>
-      <g transform="translate(680,770)" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" text-anchor="middle">
-      <circle cx="0" cy="0" r="13" fill="none" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="13" x2="0" y2="44" stroke="#000" stroke-width="1.6"/>
-      <line x1="-20" y1="26" x2="20" y2="26" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="-16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
-      <text x="0" y="94">DNS</text></g>
-    </svg></div><div class="spec"><table>
+    </table>
+    </section><section class="page">
+      <h1>Qeploy 유스케이스 정의서</h1>
+      <p class="sub">UC-08 인프라 운영</p>
+      <table>
       <colgroup>
         <col style="width:13%"/>
-        <col style="width:13%"/>
         <col style="width:12%"/>
+        <col style="width:11%"/>
         <col/>
       </colgroup>
-      <thead>
-        <tr><th>항목</th><th colspan="3">설명</th></tr>
-      </thead>
+      <thead><tr><th>항목</th><th colspan="3">설명</th></tr></thead>
       <tbody>
         <tr><td class="cat">케이스명</td><td class="desc" colspan="3">UC-08 인프라 운영</td></tr>
         <tr><td class="cat">개요</td><td class="desc" colspan="3">AWS/GCP 연결 프로젝트는 한 페이지에서 인프라를 설정하고 예상 요금을 확인한 뒤, 배포 이후에도 자연어로 상태·로그·재시작·리소스·비용 최적화를 요청한다.</td></tr>
@@ -894,4 +443,5 @@
         </tr>
         <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 설정 변경 전 예상 요금과 예산 초과 경고를 제공한다.<br/>보안 : Secret은 평문으로 노출하지 않는다. 고위험 작업은 Danger Zone에서만 처리한다.</td></tr>
       </tbody>
-    </table></div></div></section></body></html>
+    </table>
+    </section></body></html>
