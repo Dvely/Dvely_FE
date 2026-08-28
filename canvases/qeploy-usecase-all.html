@@ -3,21 +3,23 @@
   html, body { width: 1920px; background: #fff; }
   .page {
     width: 1920px; height: 1080px;
-    padding: 28px 28px 20px;
+    padding: 24px 28px 16px;
     overflow: hidden;
     font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
     color: #111;
   }
-  .layout { display: flex; gap: 18px; height: 100%; align-items: stretch; }
+  .layout { display: flex; gap: 16px; height: 100%; align-items: stretch; }
   .diag { width: 38%; height: 100%; }
-  .spec { width: 62%; height: 100%; }
-  table { width: 100%; height: auto; border-collapse: collapse; font-size: 12.5px; line-height: 1.35; table-layout: fixed; }
-  th, td { border: 1px solid #000; padding: 5px 8px; vertical-align: middle; }
-  th { background: #d9d9d9; font-weight: 700; text-align: center; }
-  td.cat { text-align: center; font-weight: 700; background: #f2f2f2; }
-  td.sub { text-align: center; font-weight: 700; width: 15%; }
-  td.desc { text-align: left; vertical-align: top; }
-  .lv { display: block; margin-top: 8px; font-size: 16px; }
+  .spec { width: 62%; height: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.4; table-layout: fixed; }
+  th, td { border: 1px solid #000; padding: 4px 8px; vertical-align: middle; }
+  th { font-weight: 700; text-align: center; background: #fff; }
+  td.cat { text-align: center; font-weight: 700; }
+  td.sub { text-align: center; font-weight: 700; }
+  td.grade { text-align: center; font-weight: 700; }
+  td.desc { text-align: left; }
+  .alt-h { font-weight: 700; margin: 4px 0 2px; }
+  .alt-h:first-child { margin-top: 0; }
   ol, ul { margin: 0; padding-left: 18px; }
   ol li, ul li { margin: 1px 0; }
 </style></head><body><section class="page"><div class="layout"><div class="diag"><svg viewBox="0 0 740 980" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -85,22 +87,48 @@
       <line x1="0" y1="44" x2="16" y2="72" stroke="#000" stroke-width="1.6"/>
       <text x="0" y="94">DNS</text></g>
     </svg></div><div class="spec"><table>
-      <colgroup><col style="width:13%"/><col style="width:15%"/><col/></colgroup>
-      <thead><tr><th>항목</th><th colspan="2">설명</th></tr></thead>
+      <colgroup>
+        <col style="width:13%"/>
+        <col style="width:13%"/>
+        <col style="width:12%"/>
+        <col/>
+      </colgroup>
+      <thead>
+        <tr><th>항목</th><th colspan="3">설명</th></tr>
+      </thead>
       <tbody>
-        <tr><td class="cat">케이스명</td><td colspan="2" class="desc">UC-00 웹서비스 운영 자동화 (전체 흐름)</td></tr>
-        <tr><td class="cat">개요</td><td colspan="2" class="desc">비개발자와 입문 개발자가 GitHub 로그인부터 자연어 생성·Docker 미리보기·승인·버전관리·배포·도메인·인프라 운영까지 한 흐름으로 웹서비스를 실제 운영 상태까지 만든다. 사용자는 복잡한 기술 개념 대신 미리보기, 승인 요약, 배포 URL, 현재 버전, 예상 비용만 확인한다.</td></tr>
-        <tr><td class="cat" rowspan="2">관련 액터</td><td class="sub">주 액터</td><td class="desc">사용자 (비개발자, 입문 개발자)</td></tr>
-        <tr><td class="sub">보조 액터</td><td class="desc">GitHub, Docker, AWS/GCP, DNS</td></tr>
+        <tr><td class="cat">케이스명</td><td class="desc" colspan="3">UC-00 웹서비스 운영 자동화 (전체 흐름)</td></tr>
+        <tr><td class="cat">개요</td><td class="desc" colspan="3">비개발자와 입문 개발자가 GitHub 로그인부터 자연어 생성·Docker 미리보기·승인·버전관리·배포·도메인·인프라 운영까지 한 흐름으로 웹서비스를 실제 운영 상태까지 만든다. 사용자는 복잡한 기술 개념 대신 미리보기, 승인 요약, 배포 URL, 현재 버전, 예상 비용만 확인한다.</td></tr>
         <tr>
-          <td class="cat" rowspan="2">우선 순위<span class="lv">상</span></td>
-          <td class="sub">중요도</td><td class="desc">10/10</td>
+          <td class="cat" rowspan="2">관련 액터</td>
+          <td class="sub">주 액터</td>
+          <td class="desc" colspan="2">사용자 (비개발자, 입문 개발자)</td>
         </tr>
-        <tr><td class="sub">난이도</td><td class="desc">상 — 로그인·프로젝트·Agent 분기·미리보기·승인·배포·도메인·인프라를 하나의 자연어 파이프라인으로 연결</td></tr>
-        <tr><td class="cat">선행 조건</td><td colspan="2" class="desc">사용자가 GitHub 계정을 보유한다. AWS/GCP 연결과 커스텀 도메인은 필수가 아니다.</td></tr>
-        <tr><td class="cat">후행 조건</td><td colspan="2" class="desc">웹서비스가 배포되어 기본 URL 또는 연결 도메인으로 접근 가능하고, Overview에 Live·현재 버전·최근 이력이 표시된다. 클라우드 연결 시 예상 요금과 자연어 운영이 가능하다.</td></tr>
-        <tr><td class="cat" rowspan="2">시나리오</td><td class="sub">기본 시나리오</td><td class="desc"><ol><li>사용자가 GitHub OAuth로 로그인한다.</li><li>Projects에서 새 프로젝트 생성, ZIP 업로드, 또는 GitHub 레포 불러오기를 한다.</li><li>Overview에서 현재 URL, 배포 상태, 버전을 확인한다.</li><li>AI Workspace에서 자연어로 생성·수정·배포·도메인·인프라를 요청한다.</li><li>의사결정 Agent가 코드/배포/도메인/인프라 Agent로 라우팅한다. 분기는 사용자에게 보이지 않는다.</li><li>코드 변경은 preview 브랜치에 커밋되고, Docker 미리보기에서 실제 동작을 검증한다.</li><li>승인창에서 한 줄 요약을 확인하고 승인한다. 변경 승인 후에도 즉시 main에 반영하지 않는다.</li><li>배포 요청 시 PR 생성, main/production merge, 버전 증가 후 GitHub Pages 또는 AWS/GCP에 배포한다.</li><li>기본 URL, qeploy.com 서브도메인 또는 커스텀 도메인을 연결한다.</li><li>AWS/GCP 프로젝트는 이후에도 자연어로 서버 상태·리소스·비용을 운영한다.</li></ol></td></tr>
-        <tr><td class="sub">대안 시나리오</td><td class="desc"><ul><li><b>A1: 로그인 실패</b> — OAuth 취소 또는 state 오류 시 세션을 만들지 않고 재로그인을 유도한다.</li><li><b>A2: 빌드 실패</b> — 쉬운 설명, 로그 일부, 수정안 1개를 보여준 뒤 승인 시 재빌드한다.</li><li><b>A3: 배포 실패</b> — 원인과 수정안을 제시하고, 승인 후 재배포한다. 특정 버전 롤백이 가능하다.</li><li><b>A4: 도메인 중복/불가</b> — 승인창을 열지 않으며, 기본 배포 URL로 접근한다.</li><li><b>A5: 클라우드 미연결</b> — AWS/GCP 설정은 비활성이고 GitHub Pages 경로만 사용한다.</li></ul></td></tr>
-        <tr><td class="cat">비기능적 요구사항</td><td colspan="2" class="desc"><b>사용성</b> GitHub·Docker·DNS·클라우드 개념을 직접 이해하게 하지 않는다. 승인창은 한 줄 요약 중심이다.<br/><b>안전성</b> 배포·도메인·비용 증가·서비스 영향 작업은 승인 후에만 반영한다. 선택하지 않은 레포에는 접근하지 않는다.</td></tr>
+        <tr>
+          <td class="sub">보조 액터</td>
+          <td class="desc" colspan="2">GitHub, Docker, AWS/GCP, DNS</td>
+        </tr>
+        <tr>
+          <td class="cat" rowspan="2">우선 순위</td>
+          <td class="grade" rowspan="2">상</td>
+          <td class="sub">중요도</td>
+          <td class="desc">10</td>
+        </tr>
+        <tr>
+          <td class="sub">난이도</td>
+          <td class="desc">로그인·프로젝트·Agent 분기·미리보기·승인·배포·도메인·인프라를 하나의 자연어 파이프라인으로 연결할 수 있는 개발 능력.</td>
+        </tr>
+        <tr><td class="cat">선행 조건</td><td class="desc" colspan="3">사용자가 GitHub 계정을 보유한다. AWS/GCP 연결과 커스텀 도메인은 필수가 아니다.</td></tr>
+        <tr><td class="cat">후행 조건</td><td class="desc" colspan="3">웹서비스가 배포되어 기본 URL 또는 연결 도메인으로 접근 가능하고, Overview에 Live·현재 버전·최근 이력이 표시된다.</td></tr>
+        <tr>
+          <td class="cat" rowspan="2">시나리오</td>
+          <td class="sub">기본 시나리오</td>
+          <td class="desc" colspan="2"><ol><li>사용자가 GitHub OAuth로 로그인한다.</li><li>Projects에서 새 프로젝트 생성, ZIP 업로드, 또는 GitHub 레포 불러오기를 한다.</li><li>Overview에서 현재 URL, 배포 상태, 버전을 확인한다.</li><li>AI Workspace에서 자연어로 생성·수정·배포·도메인·인프라를 요청한다.</li><li>의사결정 Agent가 코드/배포/도메인/인프라 Agent로 라우팅한다. 분기는 사용자에게 보이지 않는다.</li><li>코드 변경은 preview 브랜치에 커밋되고, Docker 미리보기에서 실제 동작을 검증한다.</li><li>승인창에서 한 줄 요약을 확인하고 승인한다. 변경 승인 후에도 즉시 main에 반영하지 않는다.</li><li>배포 요청 시 PR 생성, main/production merge, 버전 증가 후 GitHub Pages 또는 AWS/GCP에 배포한다.</li><li>기본 URL, qeploy.com 서브도메인 또는 커스텀 도메인을 연결한다.</li><li>AWS/GCP 프로젝트는 이후에도 자연어로 서버 상태·리소스·비용을 운영한다.</li></ol></td>
+        </tr>
+        <tr>
+          <td class="sub">대안 시나리오</td>
+          <td class="desc" colspan="2"><div class="alt-h">A1: 로그인 실패 시</div><ol><li>OAuth 취소 또는 state 오류를 안내한다.</li><li>세션을 만들지 않고 재로그인을 유도한다.</li></ol><div class="alt-h">A2: 빌드 실패 시</div><ol><li>쉬운 설명, 로그 일부, 수정안 1개를 보여준다.</li><li>사용자가 승인하면 재빌드·미리보기를 진행한다.</li></ol><div class="alt-h">A3: 배포 실패 시</div><ol><li>원인과 수정안을 제시한다.</li><li>승인 후 재배포하거나 merge 이력에서 특정 버전으로 롤백한다.</li></ol><div class="alt-h">A4: 도메인 중복/사용 불가 시</div><ol><li>승인창을 열지 않고 사용 불가를 안내한다.</li><li>기본 배포 URL로 접근한다.</li></ol><div class="alt-h">A5: 클라우드 미연결 시</div><ol><li>AWS/GCP 설정을 비활성 표시한다.</li><li>GitHub Pages 경로만 사용한다.</li></ol></td>
+        </tr>
+        <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 승인창은 한 줄 요약 중심으로 제공한다.<br/>보안 : 배포·도메인·비용 증가·서비스 영향 작업은 승인 후에만 반영한다. 선택하지 않은 레포에는 접근하지 않는다.</td></tr>
       </tbody>
     </table></div></div></section></body></html>
