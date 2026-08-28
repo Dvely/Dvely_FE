@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>요구사항 분석 설문조사</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        width: 1920px; height: 1080px; overflow: hidden; background: #fff;
+        font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+        color: #222;
+      }
+      .slide {
+        width: 1920px; height: 1080px;
+        padding: 48px 52px 36px;
+        display: block;
+      }
+      .left {
+        border: 1px solid #7a9eb5;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 16px;
+      }
+      th, td {
+        border: 1px solid #8aa7b8;
+        padding: 10px 14px;
+        vertical-align: middle;
+      }
+      th {
+        width: 210px;
+        background: #c5d4df;
+        font-weight: 700;
+        text-align: center;
+        color: #1a1a1a;
+      }
+      td { line-height: 1.5; }
+      .charts {
+        padding: 14px 12px 10px 8px;
+        display: grid;
+        grid-template-columns: 0.92fr 1.08fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 6px 8px;
+        flex: 1;
+        min-height: 0;
+      }
+      .wide { grid-column: 1 / -1; }
+      .t {
+        font-size: 14px;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 2px;
+      }
+      .plot { width: 100%; height: calc(100% - 22px); }
+      .pie-box { display: flex; flex-direction: column; align-items: center; }
+      .lg { font-size: 13px; display: flex; gap: 16px; margin-top: 4px; }
+      .sq { display: inline-block; width: 11px; height: 11px; margin-right: 5px; }
+    </style>
+  </head>
+  <body>
+    <div class="slide">
+      <div class="left">
+        <table>
+          <tr><th>설문 이름</th><td>웹서비스 배포·운영 현황 및 자동화 요구 조사</td></tr>
+          <tr><th>설문 시행 기간</th><td>2026년 8월 4일 ~ 2026년 8월 18일</td></tr>
+          <tr><th>설문 응답 인원</th><td>142명</td></tr>
+          <tr><th>표본 집단</th><td>비개발자, 입문 개발자 (대학생, 취준생, 1인 창업 준비자)</td></tr>
+          <tr><th>표본 집단 선정 이유</th><td>웹 결과물 제작 경험은 있으나 배포·도메인·클라우드 운영 과정에서 어려움을 겪어, 문제점과 개선 방향을 파악하기에 적합한 집단이기 때문</td></tr>
+          <tr><th>설문 도구</th><td>Google 설문지, 카카오톡 및 커뮤니티 공유</td></tr>
+        </table>
+        <div class="charts">
+          <div class="wide">
+            <div class="t">웹 결과물 제작 경험 유형</div>
+            <svg class="plot" viewBox="0 0 920 220" preserveAspectRatio="xMidYMid meet">
+              <g stroke="#d9d9d9" stroke-width="1">
+                <line x1="190" y1="8" x2="190" y2="188"/>
+                <line x1="270" y1="8" x2="270" y2="188"/>
+                <line x1="350" y1="8" x2="350" y2="188"/>
+                <line x1="430" y1="8" x2="430" y2="188"/>
+                <line x1="510" y1="8" x2="510" y2="188"/>
+                <line x1="590" y1="8" x2="590" y2="188"/>
+                <line x1="670" y1="8" x2="670" y2="188"/>
+                <line x1="750" y1="8" x2="750" y2="188"/>
+                <line x1="830" y1="8" x2="830" y2="188"/>
+              </g>
+              <line x1="190" y1="188" x2="830" y2="188" stroke="#888" stroke-width="1.2"/>
+              <g fill="#555" font-size="13" text-anchor="middle">
+                <text x="190" y="206">0</text><text x="270" y="206">10</text><text x="350" y="206">20</text>
+                <text x="430" y="206">30</text><text x="510" y="206">40</text><text x="590" y="206">50</text>
+                <text x="670" y="206">60</text><text x="750" y="206">70</text><text x="830" y="206">80</text>
+              </g>
+              <g fill="#222" font-size="14" text-anchor="end">
+                <text x="180" y="28">AI 웹 빌더</text>
+                <text x="180" y="64">직접 코딩</text>
+                <text x="180" y="100">노코드·CMS</text>
+                <text x="180" y="136">외주 제작</text>
+                <text x="180" y="172">제작 경험 없음</text>
+              </g>
+              <rect x="190" y="14" width="536" height="18" fill="#5b9bd5"/>
+              <rect x="190" y="50" width="432" height="18" fill="#5b9bd5"/>
+              <rect x="190" y="86" width="304" height="18" fill="#5b9bd5"/>
+              <rect x="190" y="122" width="248" height="18" fill="#5b9bd5"/>
+              <rect x="190" y="158" width="152" height="18" fill="#5b9bd5"/>
+              <g fill="#222" font-size="13">
+                <text x="732" y="28">67</text>
+                <text x="628" y="64">54</text>
+                <text x="500" y="100">38</text>
+                <text x="444" y="136">31</text>
+                <text x="348" y="172">19</text>
+              </g>
+            </svg>
+          </div>
+          <div class="pie-box">
+            <div class="t">배포·운영 불편함 인식</div>
+            <svg width="200" height="188" viewBox="0 0 200 188">
+              <path d="M100,94 L100,14 A80,80 0 1,1 23.4,77.8 Z" fill="#5b9bd5"/>
+              <path d="M94,86 L17.4,69.8 A80,80 0 0,1 94,6 Z" fill="#ed7d31"/>
+            </svg>
+            <div class="lg">
+              <span><span class="sq" style="background:#5b9bd5"></span>예</span>
+              <span><span class="sq" style="background:#ed7d31"></span>아니오</span>
+            </div>
+          </div>
+          <div>
+            <div class="t">배포·운영 시 문제점</div>
+            <svg class="plot" viewBox="0 0 520 250" preserveAspectRatio="xMidYMid meet">
+              <g stroke="#d9d9d9" stroke-width="1">
+                <line x1="155" y1="6" x2="155" y2="210"/>
+                <line x1="192.5" y1="6" x2="192.5" y2="210"/>
+                <line x1="230" y1="6" x2="230" y2="210"/>
+                <line x1="267.5" y1="6" x2="267.5" y2="210"/>
+                <line x1="305" y1="6" x2="305" y2="210"/>
+                <line x1="342.5" y1="6" x2="342.5" y2="210"/>
+                <line x1="380" y1="6" x2="380" y2="210"/>
+                <line x1="417.5" y1="6" x2="417.5" y2="210"/>
+                <line x1="455" y1="6" x2="455" y2="210"/>
+              </g>
+              <line x1="155" y1="210" x2="455" y2="210" stroke="#888" stroke-width="1.2"/>
+              <g fill="#555" font-size="11" text-anchor="middle">
+                <text x="155" y="226">0</text><text x="230" y="226">20</text><text x="305" y="226">40</text>
+                <text x="380" y="226">60</text><text x="455" y="226">80</text>
+              </g>
+              <g fill="#222" font-size="12" text-anchor="end">
+                <text x="148" y="24">배포 지식 부족</text>
+                <text x="148" y="58">GitHub·버전관리</text>
+                <text x="148" y="92">도메인·DNS·HTTPS</text>
+                <text x="148" y="126">클라우드 설정 복잡</text>
+                <text x="148" y="160">예상 비용 파악 불가</text>
+                <text x="148" y="194">미리보기·빌드 실패</text>
+              </g>
+              <rect x="155" y="10" width="266" height="16" fill="#5b9bd5"/>
+              <rect x="155" y="44" width="236" height="16" fill="#5b9bd5"/>
+              <rect x="155" y="78" width="218" height="16" fill="#5b9bd5"/>
+              <rect x="155" y="112" width="195" height="16" fill="#5b9bd5"/>
+              <rect x="155" y="146" width="165" height="16" fill="#5b9bd5"/>
+              <rect x="155" y="180" width="135" height="16" fill="#5b9bd5"/>
+              <g fill="#222" font-size="12">
+                <text x="425" y="23">71</text>
+                <text x="395" y="57">63</text>
+                <text x="377" y="91">58</text>
+                <text x="354" y="125">52</text>
+                <text x="324" y="159">44</text>
+                <text x="294" y="193">36</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

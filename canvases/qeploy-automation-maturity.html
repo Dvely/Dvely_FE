@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI 웹 제작 자동화 성숙도</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        width: 1280px;
+        background: #fff;
+        color: #111;
+        font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+      }
+      .wrap {
+        width: 1280px;
+        padding: 36px 40px 32px;
+      }
+      h1 {
+        text-align: center;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.3px;
+        margin-bottom: 16px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 15.5px;
+        line-height: 1.45;
+      }
+      th,
+      td {
+        border-top: 1px solid #bfc8bf;
+        border-bottom: 1px solid #bfc8bf;
+        padding: 11px 14px;
+        text-align: left;
+        vertical-align: middle;
+      }
+      th {
+        background: #dfe8df;
+        font-weight: 700;
+        text-align: center;
+      }
+      td:first-child {
+        width: 31%;
+        white-space: nowrap;
+      }
+      td:nth-child(2) {
+        width: 27%;
+      }
+      tr.alt td {
+        background: #f7f8f7;
+      }
+      tr.emphasis td {
+        font-weight: 800;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>AI 웹 제작 자동화 성숙도</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>정의</th>
+            <th>개요</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Level 0 수동 관리 (No-Automation)</td>
+            <td>수동 기획/코딩/배포</td>
+            <td>화면·배포·도메인 설정을 전부 수기 작성·갱신</td>
+          </tr>
+          <tr class="alt">
+            <td>Level 1 기능별 자동화 (Function-specific)</td>
+            <td>템플릿/룰 기반 자동화</td>
+            <td>테마·템플릿, 반복 알림, 간단 폼·규칙 자동화</td>
+          </tr>
+          <tr>
+            <td>Level 2 복합 자동화 (Combined Function)</td>
+            <td>도구 연동+간단 생성</td>
+            <td>Git/문서/메신저 이벤트를 보드에 반영, 초안 추천</td>
+          </tr>
+          <tr class="alt emphasis">
+            <td>Level 3 제한적 자율-웹 제작 (Limited Self-Managing)</td>
+            <td>LLM 내장 자동 생성/요약</td>
+            <td>자연어→계획·코드·프리뷰 자동 생성, 승인→GitHub·배포·도메인</td>
+          </tr>
+          <tr class="emphasis">
+            <td>Level 4 완전 자율-웹 제작 (Full Self-Managing)</td>
+            <td>예측·재계획</td>
+            <td>배포 실패·일정 지연 예측, 자원 재배치, 위험 완화 자동 실행(지향 단계)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>
