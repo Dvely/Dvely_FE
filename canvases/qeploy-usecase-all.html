@@ -129,6 +129,14 @@
           <td class="sub">대안 시나리오</td>
           <td class="desc" colspan="2"><div class="alt-h">A1: 로그인 실패 시</div><ol><li>OAuth 취소 또는 state 오류를 안내한다.</li><li>세션을 만들지 않고 재로그인을 유도한다.</li></ol><div class="alt-h">A2: 빌드 실패 시</div><ol><li>쉬운 설명, 로그 일부, 수정안 1개를 보여준다.</li><li>사용자가 승인하면 재빌드·미리보기를 진행한다.</li></ol><div class="alt-h">A3: 배포 실패 시</div><ol><li>원인과 수정안을 제시한다.</li><li>승인 후 재배포하거나 merge 이력에서 특정 버전으로 롤백한다.</li></ol><div class="alt-h">A4: 도메인 중복/사용 불가 시</div><ol><li>승인창을 열지 않고 사용 불가를 안내한다.</li><li>기본 배포 URL로 접근한다.</li></ol><div class="alt-h">A5: 클라우드 미연결 시</div><ol><li>AWS/GCP 설정을 비활성 표시한다.</li><li>GitHub Pages 경로만 사용한다.</li></ol></td>
         </tr>
-        <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 승인창은 한 줄 요약 중심으로 제공한다.<br/>보안 : 배포·도메인·비용 증가·서비스 영향 작업은 승인 후에만 반영한다. 선택하지 않은 레포에는 접근하지 않는다.</td></tr>
+        <tr>
+          <td class="cat" rowspan="2">비기능적<br/>요구사항</td>
+          <td class="sub">성능</td>
+          <td class="desc" colspan="2">승인창은 한 줄 요약 중심으로 제공한다.</td>
+        </tr>
+        <tr>
+          <td class="sub">보안</td>
+          <td class="desc" colspan="2">배포·도메인·비용 증가·서비스 영향 작업은 승인 후에만 반영한다. 선택하지 않은 레포에는 접근하지 않는다.</td>
+        </tr>
       </tbody>
     </table></div></div></section></body></html>

@@ -65,7 +65,15 @@
           <td class="sub">대안 시나리오</td>
           <td class="desc" colspan="2"><div class="alt-h">A1: 로그인 실패 시</div><ol><li>OAuth 취소 또는 state 오류를 안내한다.</li><li>세션을 만들지 않고 재로그인을 유도한다.</li></ol><div class="alt-h">A2: 빌드 실패 시</div><ol><li>쉬운 설명, 로그 일부, 수정안 1개를 보여준다.</li><li>사용자가 승인하면 재빌드·미리보기를 진행한다.</li></ol><div class="alt-h">A3: 배포 실패 시</div><ol><li>원인과 수정안을 제시한다.</li><li>승인 후 재배포하거나 merge 이력에서 특정 버전으로 롤백한다.</li></ol><div class="alt-h">A4: 도메인 중복/사용 불가 시</div><ol><li>승인창을 열지 않고 사용 불가를 안내한다.</li><li>기본 배포 URL로 접근한다.</li></ol><div class="alt-h">A5: 클라우드 미연결 시</div><ol><li>AWS/GCP 설정을 비활성 표시한다.</li><li>GitHub Pages 경로만 사용한다.</li></ol></td>
         </tr>
-        <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 승인창은 한 줄 요약 중심으로 제공한다.<br/>보안 : 배포·도메인·비용 증가·서비스 영향 작업은 승인 후에만 반영한다. 선택하지 않은 레포에는 접근하지 않는다.</td></tr>
+        <tr>
+          <td class="cat" rowspan="2">비기능적<br/>요구사항</td>
+          <td class="sub">성능</td>
+          <td class="desc" colspan="2">승인창은 한 줄 요약 중심으로 제공한다.</td>
+        </tr>
+        <tr>
+          <td class="sub">보안</td>
+          <td class="desc" colspan="2">배포·도메인·비용 증가·서비스 영향 작업은 승인 후에만 반영한다. 선택하지 않은 레포에는 접근하지 않는다.</td>
+        </tr>
       </tbody>
     </table>
     </section><section class="page">
@@ -112,7 +120,15 @@
           <td class="sub">대안 시나리오</td>
           <td class="desc" colspan="2"><div class="alt-h">A1: OAuth 취소 시</div><ol><li>로그인 화면으로 돌아간다.</li><li>세션을 만들지 않는다.</li></ol><div class="alt-h">A2: state 불일치 또는 토큰 무효 시</div><ol><li>오류를 안내한다.</li><li>재로그인을 유도한다.</li></ol></td>
         </tr>
-        <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 로그인 시작부터 Projects 진입까지 체감 2초 이내를 목표로 한다.<br/>보안 : OAuth state를 검증한다. 사용자가 생성했거나 명시한 레포에만 권한을 사용한다.</td></tr>
+        <tr>
+          <td class="cat" rowspan="2">비기능적<br/>요구사항</td>
+          <td class="sub">성능</td>
+          <td class="desc" colspan="2">로그인 시작부터 Projects 진입까지 체감 2초 이내를 목표로 한다.</td>
+        </tr>
+        <tr>
+          <td class="sub">보안</td>
+          <td class="desc" colspan="2">OAuth state를 검증한다. 사용자가 생성했거나 명시한 레포에만 권한을 사용한다.</td>
+        </tr>
       </tbody>
     </table>
     </section><section class="page">
@@ -159,7 +175,15 @@
           <td class="sub">대안 시나리오</td>
           <td class="desc" colspan="2"><div class="alt-h">A1: ZIP 업로드 후</div><ol><li>GitHub 레포 연결이 필요함을 안내한다.</li></ol><div class="alt-h">A2: 동일 레포 재불러오기 시</div><ol><li>새 프로젝트로 추가한다.</li><li>휴지통 대화는 자동 복구하지 않는다.</li></ol><div class="alt-h">A3: 연결 해제 시</div><ol><li>프로젝트와 레포의 연결만 끊는다.</li><li>레포 삭제는 Danger Zone에서만 처리한다.</li></ol></td>
         </tr>
-        <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 최근 수정일은 GitHub식 상대시간으로 표기한다.<br/>보안 : 사용자가 명시한 레포만 불러온다.</td></tr>
+        <tr>
+          <td class="cat" rowspan="2">비기능적<br/>요구사항</td>
+          <td class="sub">성능</td>
+          <td class="desc" colspan="2">최근 수정일은 GitHub식 상대시간으로 표기한다.</td>
+        </tr>
+        <tr>
+          <td class="sub">보안</td>
+          <td class="desc" colspan="2">사용자가 명시한 레포만 불러온다.</td>
+        </tr>
       </tbody>
     </table>
     </section><section class="page">
@@ -206,7 +230,15 @@
           <td class="sub">대안 시나리오</td>
           <td class="desc" colspan="2"><div class="alt-h">A1: 의도가 불명확할 시</div><ol><li>내부 분기 과정은 노출하지 않는다.</li><li>한 줄로 재질문한다.</li></ol><div class="alt-h">A2: 대화 삭제 시</div><ol><li>확인 모달 없이 휴지통으로 이동한다.</li><li>7일 후 완전 삭제되며, 연결 프로젝트가 없으면 복구 불가이다.</li></ol></td>
         </tr>
-        <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 세션은 최근 수정순이며 제목은 자동 생성된다.<br/>사용성 : 사용자는 미리보기 결과와 승인 요약만 알면 된다.</td></tr>
+        <tr>
+          <td class="cat" rowspan="2">비기능적<br/>요구사항</td>
+          <td class="sub">성능</td>
+          <td class="desc" colspan="2">세션은 최근 수정순이며 제목은 자동 생성된다.</td>
+        </tr>
+        <tr>
+          <td class="sub">사용성</td>
+          <td class="desc" colspan="2">사용자는 미리보기 결과와 승인 요약만 알면 된다.</td>
+        </tr>
       </tbody>
     </table>
     </section><section class="page">
@@ -253,7 +285,15 @@
           <td class="sub">대안 시나리오</td>
           <td class="desc" colspan="2"><div class="alt-h">A1: 빌드 실패 시</div><ol><li>쉬운 설명, 로그 일부, 수정안 1개를 보여준다.</li><li>단순 실패 메시지만 보여주지 않는다.</li></ol><div class="alt-h">A2: 수정안 승인 시</div><ol><li>코드 Agent가 수정한다.</li><li>재빌드·미리보기를 진행한다.</li></ol></td>
         </tr>
-        <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 반복 작업 시 캐시를 활용해 재빌드 시간을 줄인다.<br/>보안 : 미리보기는 서비스 내부에서만 접근한다.</td></tr>
+        <tr>
+          <td class="cat" rowspan="2">비기능적<br/>요구사항</td>
+          <td class="sub">성능</td>
+          <td class="desc" colspan="2">반복 작업 시 캐시를 활용해 재빌드 시간을 줄인다.</td>
+        </tr>
+        <tr>
+          <td class="sub">보안</td>
+          <td class="desc" colspan="2">미리보기는 서비스 내부에서만 접근한다.</td>
+        </tr>
       </tbody>
     </table>
     </section><section class="page">
@@ -300,7 +340,15 @@
           <td class="sub">대안 시나리오</td>
           <td class="desc" colspan="2"><div class="alt-h">A1: 승인 Off 시</div><ol><li>해당 유형의 승인창을 생략할 수 있다.</li><li>비용 증가·서비스 영향 작업은 승인 대상이다.</li></ol><div class="alt-h">A2: 도메인 중복/사용 불가 시</div><ol><li>승인창을 열지 않는다.</li><li>사용 불가를 안내한다.</li></ol><div class="alt-h">A3: 거부 시</div><ol><li>반영·배포·DNS 변경을 수행하지 않는다.</li></ol></td>
         </tr>
-        <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">사용성 : 승인창은 한 줄 요약 중심이다.<br/>보안 : 확인 없이 배포·도메인·인프라 변경이 나가지 않는다.</td></tr>
+        <tr>
+          <td class="cat" rowspan="2">비기능적<br/>요구사항</td>
+          <td class="sub">사용성</td>
+          <td class="desc" colspan="2">승인창은 한 줄 요약 중심이다.</td>
+        </tr>
+        <tr>
+          <td class="sub">보안</td>
+          <td class="desc" colspan="2">확인 없이 배포·도메인·인프라 변경이 나가지 않는다.</td>
+        </tr>
       </tbody>
     </table>
     </section><section class="page">
@@ -347,7 +395,15 @@
           <td class="sub">대안 시나리오</td>
           <td class="desc" colspan="2"><div class="alt-h">A1: 클라우드 미연결 시</div><ol><li>AWS/GCP 설정을 비활성 표시한다.</li><li>GitHub Pages 경로만 사용한다.</li></ol><div class="alt-h">A2: 배포 실패 시</div><ol><li>쉬운 설명, 로그 일부, 수정안 1개를 보여준다.</li><li>승인 후 재배포한다.</li></ol><div class="alt-h">A3: 롤백 시</div><ol><li>merge 이력에서 특정 버전을 선택한다.</li><li>해당 버전으로 재배포한다.</li></ol></td>
         </tr>
-        <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 실패 시 원인과 수정안을 함께 제공한다.<br/>추적성 : 버전은 merge 단위로 증가한다.</td></tr>
+        <tr>
+          <td class="cat" rowspan="2">비기능적<br/>요구사항</td>
+          <td class="sub">성능</td>
+          <td class="desc" colspan="2">실패 시 원인과 수정안을 함께 제공한다.</td>
+        </tr>
+        <tr>
+          <td class="sub">추적성</td>
+          <td class="desc" colspan="2">버전은 merge 단위로 증가한다.</td>
+        </tr>
       </tbody>
     </table>
     </section><section class="page">
@@ -394,7 +450,15 @@
           <td class="sub">대안 시나리오</td>
           <td class="desc" colspan="2"><div class="alt-h">A1: 중복 또는 사용 불가 시</div><ol><li>승인창을 열지 않는다.</li><li>사용 불가를 안내한다.</li></ol><div class="alt-h">A2: 도메인 미연결 시</div><ol><li>Pages/AWS/GCP 기본 URL로 계속 접근한다.</li></ol></td>
         </tr>
-        <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">사용성 : DNS 상세보다 연결 결과와 HTTPS 여부를 확인한다.<br/>보안 : HTTPS 처리와 연결 검증 후에만 현재 URL로 노출한다.</td></tr>
+        <tr>
+          <td class="cat" rowspan="2">비기능적<br/>요구사항</td>
+          <td class="sub">사용성</td>
+          <td class="desc" colspan="2">DNS 상세보다 연결 결과와 HTTPS 여부를 확인한다.</td>
+        </tr>
+        <tr>
+          <td class="sub">보안</td>
+          <td class="desc" colspan="2">HTTPS 처리와 연결 검증 후에만 현재 URL로 노출한다.</td>
+        </tr>
       </tbody>
     </table>
     </section><section class="page">
@@ -441,7 +505,15 @@
           <td class="sub">대안 시나리오</td>
           <td class="desc" colspan="2"><div class="alt-h">A1: Pages 전용 시</div><ol><li>Cloud·Cost 섹션은 보이되 클릭 불가로 둔다.</li></ol><div class="alt-h">A2: Secret 조회 시</div><ol><li>Secret은 숨김 처리한다.</li><li>변경 이력만 보여준다.</li></ol></td>
         </tr>
-        <tr><td class="cat">비기능적 요구사항</td><td class="desc" colspan="3">성능 : 설정 변경 전 예상 요금과 예산 초과 경고를 제공한다.<br/>보안 : Secret은 평문으로 노출하지 않는다. 고위험 작업은 Danger Zone에서만 처리한다.</td></tr>
+        <tr>
+          <td class="cat" rowspan="2">비기능적<br/>요구사항</td>
+          <td class="sub">성능</td>
+          <td class="desc" colspan="2">설정 변경 전 예상 요금과 예산 초과 경고를 제공한다.</td>
+        </tr>
+        <tr>
+          <td class="sub">보안</td>
+          <td class="desc" colspan="2">Secret은 평문으로 노출하지 않는다. 고위험 작업은 Danger Zone에서만 처리한다.</td>
+        </tr>
       </tbody>
     </table>
     </section></body></html>
