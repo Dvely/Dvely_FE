@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Qeploy 시스템 아키텍처</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1920px; height: 1080px; background: #fff; overflow: hidden; }
+    body { font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; color: #1a1a1a; }
+    img { display: block; object-fit: contain; }
+    .page { width: 1920px; height: 1080px; padding: 22px 40px 20px; display: flex; flex-direction: column; }
+    h1 { text-align: center; font-size: 32px; font-weight: 800; }
+    .legend { text-align: center; font-size: 16px; font-weight: 700; color: #444; margin: 4px 0 14px; }
+    .sec-title {
+      font-size: 15px; font-weight: 800; color: #fff; background: #333;
+      display: inline-block; padding: 4px 12px; border-radius: 6px; margin-bottom: 10px;
+    }
+    .ci { margin-bottom: 18px; }
+    .ci-row {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: #f7f7f7; border: 1.5px solid #ddd; border-radius: 16px; padding: 16px 20px;
+    }
+    .card {
+      background: #fff; border: 1.5px solid #ccc; border-radius: 14px;
+      padding: 10px 14px; min-width: 168px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .card img { width: 48px; height: 48px; }
+    .card b { font-size: 17px; display: block; }
+    .card s, .card small { display: block; font-size: 13px; color: #555; font-weight: 700; text-decoration: none; }
+    .arrow {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-width: 78px; font-size: 14px; font-weight: 800; color: #111;
+    }
+    .arrow .line { width: 64px; height: 0; border-top: 3px solid #111; position: relative; }
+    .arrow .line:after {
+      content: ""; position: absolute; right: -2px; top: -7px;
+      border: 7px solid transparent; border-left: 10px solid #111;
+    }
+    .arrow.bi .line:before {
+      content: ""; position: absolute; left: -2px; top: -7px;
+      border: 7px solid transparent; border-right: 10px solid #111;
+    }
+    .arrow.down { min-width: 40px; }
+    .arrow.down .line { width: 0; height: 36px; border-top: 0; border-left: 3px solid #111; }
+    .arrow.down .line:after {
+      top: auto; bottom: -2px; right: -6px;
+      border: 7px solid transparent; border-top: 10px solid #111; border-left-color: transparent;
+    }
+    .runtime { flex: 1; display: flex; flex-direction: column; }
+    .run-row { flex: 1; display: flex; align-items: stretch; gap: 8px; }
+    .browsers { width: 72px; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+    .browsers img { width: 44px; height: 44px; }
+    .zone {
+      border-radius: 18px; border: 2.5px solid; padding: 28px 16px 16px; position: relative;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .zt {
+      position: absolute; top: -13px; left: 16px; background: #fff; padding: 0 10px;
+      font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 6px;
+    }
+    .zt img { width: 22px; height: 22px; }
+    .front { width: 280px; background: #eaf6e4; border-color: #6eaf4a; }
+    .mid { flex: 1; background: #f4ead6; border-color: #d4a85a; }
+    .db { width: 260px; background: #e6f1fb; border-color: #5b9bd5; }
+    .tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+    .tile {
+      background: #fff; border-radius: 12px; padding: 10px 12px; min-width: 118px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .tile img { width: 56px; height: 56px; }
+    .tile span { font-size: 14px; font-weight: 800; text-align: center; line-height: 1.2; }
+    .tile em { font-style: normal; font-size: 12px; color: #555; font-weight: 700; }
+    .group { width: 100%; }
+    .glabel { font-size: 13px; font-weight: 800; color: #7a5a20; text-align: center; margin: 4px 0 8px; }
+    .cf-col {
+      width: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; font-size: 13px; font-weight: 800;
+    }
+    .cf-col img { width: 78px; height: 46px; margin-bottom: 4px; }
+    .cf-col .o { color: #f38020; font-size: 15px; }
+    .note {
+      margin-top: 10px; text-align: center; font-size: 15px; font-weight: 700; color: #333;
+      border: 1.5px solid #ddd; border-radius: 10px; padding: 8px 12px; background: #fafafa;
+    }
+  </style>
+</head>
+<body>
+<section class="page">
+  <h1>Qeploy 시스템 아키텍처</h1>
+  <p class="legend">위: 코드 배포 &nbsp;·&nbsp; 아래: 사용자 요청이 실제로 흐르는 경로</p>
+
+  <div class="ci">
+    <div class="sec-title">1. 배포 (CI / CD)</div>
+    <div class="ci-row">
+      <div class="card">
+        <svg width="48" height="44" viewBox="0 0 48 44">
+          <circle cx="24" cy="10" r="7" fill="#444"/>
+          <rect x="10" y="24" width="28" height="16" rx="2" fill="#ddd" stroke="#444" stroke-width="2"/>
+          <rect x="16" y="28" width="16" height="8" fill="#8cb4d8"/>
+        </svg>
+        <div><b>개발자</b><small>git push</small></div>
+      </div>
+      <div class="arrow"><div class="line"></div><span>push</span></div>
+      <div class="card">
+        <img src="https://cdn.simpleicons.org/github/181717" alt="GitHub"/>
+        <div><b>GitHub</b><small>main 브랜치</small></div>
+      </div>
+      <div class="arrow"><div class="line"></div><span>CI</span></div>
+      <div class="card" style="min-width: 250px;">
+        <img src="https://cdn.simpleicons.org/githubactions/2088FF" alt="Actions"/>
+        <div>
+          <b>GitHub Actions</b>
+          <small>typecheck · lint · build</small>
+          <small>ci.yml · deploy-ec2.yml</small>
+        </div>
+      </div>
+      <div class="arrow"><div class="line"></div><span>build</span></div>
+      <div class="card">
+        <img src="https://cdn.simpleicons.org/react/61DAFB" alt="dist"/>
+        <div><b>dist</b><small>정적 산출물</small></div>
+      </div>
+      <div class="arrow"><div class="line"></div><span>SSH</span></div>
+      <div class="card">
+        <img src="https://cdn.simpleicons.org/amazonec2/FF9900" alt="deploy"/>
+        <div><b>SSH Deploy</b><small>릴리스 교체 → EC2</small></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="runtime">
+    <div class="sec-title">2. 런타임 (사용자 요청)</div>
+    <div class="run-row">
+      <div class="browsers">
+        <img src="https://cdn.simpleicons.org/googlechrome/4285F4" alt="Chrome"/>
+        <img src="https://cdn.simpleicons.org/microsoftedge/0078D7" alt="Edge"/>
+        <img src="https://cdn.simpleicons.org/firefoxbrowser/FF7139" alt="Firefox"/>
+        <img src="https://cdn.simpleicons.org/safari/000000" alt="Safari"/>
+      </div>
+      <div class="arrow"><div class="line"></div><span>접속</span></div>
+
+      <div class="cf-col">
+        <img src="https://cdn.simpleicons.org/cloudflare/F38020" alt="Cloudflare"/>
+        <div class="o">Cloudflare</div>
+        <div>HTTPS</div>
+        <div>qeploy.com</div>
+      </div>
+
+      <div class="arrow bi"><div class="line"></div><span>요청/응답</span></div>
+
+      <div class="zone mid">
+        <div class="zt">
+          <img src="https://cdn.simpleicons.org/amazonec2/FF9900" alt="EC2"/>
+          Amazon EC2
+        </div>
+        <div class="group">
+          <div class="glabel">1) 웹 진입점 — 정적 UI + API 분기</div>
+          <div class="tiles">
+            <div class="tile">
+              <img src="https://cdn.simpleicons.org/nginx/009639" alt="Nginx"/>
+              <span>Nginx</span>
+              <em>리버스 프록시</em>
+            </div>
+            <div class="tile" style="background:#eaf6e4; border:1.5px solid #6eaf4a;">
+              <img src="https://cdn.simpleicons.org/react/61DAFB" alt="React"/>
+              <span>React</span>
+              <em>정적 파일 (dist)</em>
+            </div>
+          </div>
+        </div>
+        <div class="group" style="margin-top: 12px;">
+          <div class="glabel">2) 애플리케이션</div>
+          <div class="tiles">
+            <div class="tile">
+              <img src="https://cdn.simpleicons.org/springboot/6DB33F" alt="Spring Boot"/>
+              <span>Spring Boot</span>
+              <em>API · 업무 로직</em>
+            </div>
+            <div class="tile">
+              <img src="https://cdn.simpleicons.org/pm2/2B037A" alt="PM2"/>
+              <span>PM2</span>
+              <em>프로세스 관리</em>
+            </div>
+          </div>
+        </div>
+        <div class="group" style="margin-top: 12px;">
+          <div class="glabel">3) Spring Boot 외부 연동</div>
+          <div class="tiles">
+            <div class="tile">
+              <img src="https://cdn.simpleicons.org/docker/2496ED" alt="Docker"/>
+              <span>Docker Preview</span>
+              <em>미리보기 런타임</em>
+            </div>
+            <div class="tile">
+              <img src="https://cdn.simpleicons.org/openai/412991" alt="LLM"/>
+              <span>LLM</span>
+              <em>코드 생성·수정</em>
+            </div>
+            <div class="tile">
+              <img src="https://cdn.simpleicons.org/github/181717" alt="GitHub API"/>
+              <span>GitHub API</span>
+              <em>레포 · Pages · CI/CD</em>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow bi"><div class="line"></div><span>SQL</span></div>
+
+      <div class="zone db">
+        <div class="zt">Database</div>
+        <div class="tiles">
+          <div class="tile">
+            <img src="https://cdn.simpleicons.org/mysql/4479A1" alt="MySQL"/>
+            <span>MySQL</span>
+            <em>데이터 저장</em>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">브라우저 → Cloudflare(HTTPS) → Nginx → React 정적파일 또는 Spring Boot API → MySQL / Docker / LLM / GitHub</p>
+</section>
+</body>
+</html>
