@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Qeploy front-end</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 400px; height: 300px; background: #fff; overflow: hidden; }
+    body { font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; color: #111; }
+    .page { width: 400px; height: 300px; padding: 12px 14px 10px; }
+    h2 { font-size: 14px; font-weight: 800; margin: 0 0 10px; }
+    ol { list-style: none; }
+    li { font-size: 11px; line-height: 1.38; margin-bottom: 8px; font-weight: 600; }
+    b { font-weight: 800; }
+  </style>
+</head>
+<body>
+<div class="page">
+  <h2>1. front-end</h2>
+  <ol>
+    <li>① 사용자가 브라우저에서 <b>qeploy.com</b>에 접속하면 요청은 <b>Cloudflare</b>(HTTPS)를 거쳐 <b>Nginx</b>로 전달된다.</li>
+    <li>② <b>Nginx</b>는 정적 파일을 <b>React dist</b>로 제공하고, Projects · Overview · AI Workspace 화면을 렌더링한다.</li>
+    <li>③ 사용자는 자연어로 생성·수정·배포를 요청하고, <b>Docker Preview</b>와 한 줄 승인 요약을 확인한 뒤 승인 / 거절한다.</li>
+    <li>④ 승인 후에도 즉시 <b>main</b>에 반영하지 않으며, 기본 URL · qeploy.com 서브도메인 · 커스텀 도메인을 화면에 표시한다.</li>
+  </ol>
+</div>
+</body>
+</html>

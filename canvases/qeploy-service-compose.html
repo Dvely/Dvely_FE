@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Qeploy 서비스 구성도</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1200px; height: 600px; background: #fff; overflow: hidden; }
+    body { font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; color: #222; }
+    img { display: block; }
+    .page { width: 1200px; height: 600px; position: relative; background: #fff; }
+    .item { position: absolute; text-align: center; }
+    .item img, .item svg { margin: 0 auto; }
+    .name { margin-top: 4px; font-size: 12px; font-weight: 800; }
+    .sub { margin-top: 1px; font-size: 10px; color: #555; font-weight: 700; }
+    .cloud {
+      position: absolute; left: 250px; top: 40px; width: 930px; height: 542px;
+      border: 2.4px solid #222; border-radius: 5px; background: #fff;
+    }
+    .cloud-h {
+      position: absolute; left: 14px; top: -12px; background: #fff; padding: 0 10px;
+      display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800;
+    }
+    .cloud-h img { width: 18px; height: 18px; }
+    .ec2 {
+      position: absolute; left: 268px; top: 168px; width: 894px; height: 396px;
+      border: 2.4px solid #e07a2f; border-radius: 5px; background: #fff;
+    }
+    .ec2-h {
+      position: absolute; left: 14px; top: -12px; background: #fff; padding: 0 8px;
+      display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: #c45a12;
+    }
+    .ec2-h img { width: 16px; height: 16px; }
+    .dock {
+      position: absolute; left: 420px; top: 198px; width: 720px; height: 346px;
+      border: 2.4px solid #2496ed; border-radius: 5px; background: #fff;
+    }
+    .dock-h {
+      position: absolute; left: 12px; top: -12px; background: #fff; padding: 0 8px;
+      display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: #1b6ea8;
+    }
+    .dock-h img { width: 18px; height: 18px; }
+    .ico { width: 38px; height: 38px; object-fit: contain; }
+    .ico-lg { width: 44px; height: 44px; object-fit: contain; }
+    svg.wires { position: absolute; left: 0; top: 0; width: 1200px; height: 600px; pointer-events: none; }
+    .lbl {
+      position: absolute; font-size: 11px; font-weight: 800; color: #111;
+      background: #fff; padding: 0 4px; white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="item" style="left:22px; top:58px; width:110px;">
+    <svg width="40" height="42" viewBox="0 0 64 64"><circle cx="32" cy="16" r="11" fill="#333"/><path d="M12 58c0-14 9-23 20-23s20 9 20 23" fill="#333"/></svg>
+    <div class="name">Developer</div>
+  </div>
+  <div class="item" style="left:22px; top:185px; width:110px;">
+    <img class="ico" src="flow-assets/icon-github.svg" alt="GitHub"/>
+    <div class="name">GitHub</div>
+  </div>
+  <div class="item" style="left:22px; top:430px; width:110px;">
+    <div style="display:flex; justify-content:center; align-items:flex-end; gap:1px;">
+      <svg width="22" height="22" viewBox="0 0 64 64"><circle cx="32" cy="16" r="11" fill="#777"/><path d="M12 58c0-14 9-23 20-23s20 9 20 23" fill="#777"/></svg>
+      <svg width="34" height="36" viewBox="0 0 64 64"><circle cx="32" cy="16" r="11" fill="#333"/><path d="M12 58c0-14 9-23 20-23s20 9 20 23" fill="#333"/></svg>
+      <svg width="22" height="22" viewBox="0 0 64 64"><circle cx="32" cy="16" r="11" fill="#777"/><path d="M12 58c0-14 9-23 20-23s20 9 20 23" fill="#777"/></svg>
+    </div>
+    <div class="name">Users</div>
+  </div>
+  <div class="item" style="left:130px; top:430px; width:100px;">
+    <img class="ico" src="flow-assets/icon-cloudflare.svg" alt="Cloudflare"/>
+    <div class="name">Cloudflare</div>
+    <div class="sub">HTTPS</div>
+  </div>
+
+  <div class="cloud">
+    <div class="cloud-h"><img src="flow-assets/icon-aws-logo.svg" alt="AWS"/> AWS Cloud</div>
+  </div>
+
+  <div class="item" style="left:290px; top:56px; width:150px;">
+    <img class="ico" src="flow-assets/icon-actions.svg" alt="Actions"/>
+    <div class="name">GitHub Actions</div>
+    <div class="sub">ci.yml · deploy-ec2.yml</div>
+  </div>
+  <div class="item" style="left:540px; top:56px; width:140px;">
+    <img class="ico" src="flow-assets/icon-ec2.svg" alt="SSH"/>
+    <div class="name">SSH Deploy</div>
+    <div class="sub">dist 릴리스 교체</div>
+  </div>
+
+  <div class="ec2">
+    <div class="ec2-h"><img src="flow-assets/icon-ec2.svg" alt="EC2"/> EC2</div>
+  </div>
+  <div class="item" style="left:280px; top:310px; width:110px;">
+    <img class="ico-lg" src="flow-assets/icon-nginx.svg" alt="Nginx"/>
+    <div class="name">Nginx</div>
+  </div>
+  <div class="dock">
+    <div class="dock-h"><img src="flow-assets/icon-docker.svg" alt="Docker"/> Docker</div>
+  </div>
+
+  <div class="item" style="left:460px; top:230px; width:120px;">
+    <img class="ico-lg" src="flow-assets/icon-react.svg" alt="React"/>
+    <div class="name">React</div>
+    <div class="sub">정적 dist</div>
+  </div>
+  <div class="item" style="left:660px; top:230px; width:130px;">
+    <img class="ico-lg" src="flow-assets/icon-spring.svg" alt="Spring"/>
+    <div class="name">Spring Boot</div>
+    <div class="sub">PM2</div>
+  </div>
+  <div class="item" style="left:460px; top:410px; width:120px;">
+    <img class="ico-lg" src="flow-assets/icon-docker.svg" alt="Preview"/>
+    <div class="name">Preview</div>
+    <div class="sub">preview 브랜치</div>
+  </div>
+  <div class="item" style="left:660px; top:410px; width:130px;">
+    <img class="ico-lg" src="flow-assets/icon-mysql.svg" alt="MySQL"/>
+    <div class="name">MySQL</div>
+  </div>
+  <div class="item" style="left:900px; top:230px; width:120px;">
+    <img class="ico" src="flow-assets/icon-openai.svg" alt="LLM"/>
+    <div class="name">LLM</div>
+  </div>
+  <div class="item" style="left:900px; top:410px; width:120px;">
+    <img class="ico" src="flow-assets/icon-github.svg" alt="GitHub API"/>
+    <div class="name">GitHub API</div>
+  </div>
+
+  <svg class="wires" viewBox="0 0 1200 600">
+    <defs>
+      <marker id="ah" markerWidth="8" markerHeight="8" refX="8" refY="3.2" orient="auto">
+        <path d="M0,0 L8,3.2 L0,6.4 Z" fill="#222"/>
+      </marker>
+    </defs>
+    <g fill="none" stroke="#222" stroke-width="2" marker-end="url(#ah)">
+      <path d="M77,110 L77,180"/>
+      <path d="M132,208 L132,78 L290,78"/>
+      <path d="M440,78 L540,78"/>
+      <path d="M610,125 L610,193"/>
+      <path d="M132,470 L130,470"/>
+      <path d="M230,470 L335,470 L335,370"/>
+      <path d="M390,335 L460,335 L460,295"/>
+      <path d="M390,350 L725,350 L725,295"/>
+      <path d="M790,255 L900,255"/>
+      <path d="M725,300 L725,405"/>
+      <path d="M520,300 L520,405"/>
+      <path d="M790,270 L850,365 L850,435 L900,435"/>
+    </g>
+  </svg>
+
+  <div class="lbl" style="left:82px; top:132px;">Main PR</div>
+  <div class="lbl" style="left:145px; top:60px;">GitHub Actions</div>
+  <div class="lbl" style="left:455px; top:60px;">SSH dist</div>
+  <div class="lbl" style="left:620px; top:142px;">배포</div>
+  <div class="lbl" style="left:255px; top:452px;">요청</div>
+  <div class="lbl" style="left:400px; top:318px;">정적</div>
+  <div class="lbl" style="left:540px; top:334px;">/api</div>
+</div>
+</body>
+</html>
