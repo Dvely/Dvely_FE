@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>화면 설계서 WRK-02-01</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1200px; height: 600px; background: #fff; overflow: hidden; }
+    body { font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; color: #111; }
+    .page { width: 1200px; height: 600px; background: #fff; position: relative; }
+
+    .body {
+      height: 600px;
+      padding: 14px 16px 12px;
+      display: grid;
+      grid-template-columns: 1.22fr 0.78fr;
+      gap: 14px;
+    }
+
+    .screen { display: flex; flex-direction: column; min-width: 0; height: 100%; }
+    .mid {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+    }
+    .spec { display: flex; flex-direction: column; min-width: 0; height: 100%; }
+    .spec-grid {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 78px 1fr;
+      grid-template-rows: 36px 36px auto 1fr auto 40px;
+      border-top: 1.2px solid #3b5ba8;
+      border-left: 1.2px solid #3b5ba8;
+    }
+    .spec-grid > * {
+      border-right: 1.2px solid #3b5ba8;
+      border-bottom: 1.2px solid #3b5ba8;
+    }
+    .label {
+      font-size: 11px; font-weight: 800; color: #3b5ba8;
+      letter-spacing: 0.3px; margin-bottom: 6px;
+    }
+    .frame { position: relative; background: #fff; overflow: hidden; }
+    .shot { position: relative; width: 100%; }
+    .frame img {
+      display: block; width: 100%; height: auto;
+      image-rendering: high-quality;
+    }
+    .n {
+      position: absolute; z-index: 2;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #3b5ba8; color: #fff;
+      font: 800 11px/20px "Malgun Gothic", sans-serif;
+      text-align: center;
+      border: 2px solid #fff;
+    }
+    .cap { margin-top: 6px; font-size: 11px; font-weight: 700; color: #555; }
+
+    .k {
+      background: #3b5ba8; color: #fff;
+      font-size: 11px; font-weight: 800; text-align: left;
+      padding: 6px 8px; word-break: keep-all;
+      display: flex; align-items: center; justify-content: flex-start;
+    }
+    .v {
+      font-size: 11px; font-weight: 600; line-height: 1.35;
+      padding: 6px 8px; text-align: left;
+    }
+    .v p { margin: 0; }
+    .v.va {
+      display: flex; align-items: center; justify-content: flex-start;
+      flex-direction: row; text-align: left;
+    }
+    .h { color: #3b5ba8; font-weight: 800; margin: 3px 0 0; }
+    .h:first-child { margin-top: 0; }
+    .row { display: flex; gap: 5px; align-items: flex-start; margin: 2px 0; }
+    .b {
+      flex: 0 0 16px; height: 16px; border-radius: 50%;
+      background: #3b5ba8; color: #fff;
+      font: 800 10px/16px "Malgun Gothic", sans-serif;
+      text-align: center; margin-top: 1px;
+    }
+    .row p { flex: 1; }
+  </style>
+</head>
+<body>
+<section class="page">
+  <div class="body">
+    <div class="screen">
+      <div class="mid">
+        <div class="label">화면</div>
+        <div class="frame">
+          <div class="shot">
+            <img src="flow-assets/devely-pipeline-screen.png" alt="배포 파이프라인"/>
+            <span class="n" style="left:18%;top:48%">1</span>
+            <span class="n" style="left:88%;top:6%">2</span>
+            <span class="n" style="left:62%;top:28%">3</span>
+            <span class="n" style="left:58%;top:72%">4</span>
+          </div>
+        </div>
+        <p class="cap">Devely 1.0 Lite · 배포 파이프라인</p>
+      </div>
+    </div>
+
+    <div class="spec">
+      <div class="label">기능 정의</div>
+      <div class="spec-grid">
+        <div class="k">기능 번호</div>
+        <div class="v va">WRK-02-01</div>
+        <div class="k">기능 명</div>
+        <div class="v va">배포 파이프라인</div>
+        <div class="k">기능설명</div>
+        <div class="v">채팅에서 배포를 수락하면 설치·빌드·프리뷰·프로덕션 게시를 순서대로 실행한다. 단계별 로그를 같은 화면에서 본다.</div>
+        <div class="k">처리내용</div>
+        <div class="v">
+          <div class="row">
+            <span class="b">1</span>
+            <p><span class="h" style="margin:0">배포 수락</span><br/>대화의 배포 제안을 수락하면 파이프라인이 시작된다. 변경 승인이 끝나기 전에는 대기한다.</p>
+          </div>
+          <div class="row">
+            <span class="b">2</span>
+            <p><span class="h" style="margin:0">게시</span><br/>오른쪽 패널을 미리보기에서 배포 파이프라인으로 전환한다. 다시 누르면 미리보기로 돌아간다.</p>
+          </div>
+          <div class="row">
+            <span class="b">3</span>
+            <p><span class="h" style="margin:0">파이프라인 단계</span><br/>의존성 설치 → 빌드 → 프리뷰 배포(GitHub Pages 준비) → 프로덕션 게시. 대기/진행/완료/실패를 표시한다.</p>
+          </div>
+          <div class="row">
+            <span class="b">4</span>
+            <p><span class="h" style="margin:0">실행 로그</span><br/>수락 후 단계별 로그가 쌓인다. 대기 중에는 안내 문구만 둔다.</p>
+          </div>
+        </div>
+        <div class="k">비고</div>
+        <div class="v">
+          <p class="h">■ 연결되는 기능</p>
+          <p>: AI Workspace</p>
+          <p>: 승인 / 거절</p>
+          <p>: 프로젝트 Overview</p>
+          <p>: 도메인 · 인프라</p>
+        </div>
+        <div class="k">요구사항 명</div>
+        <div class="v va">GitHub Pages 배포</div>
+      </div>
+    </div>
+  </div>
+</section>
+</body>
+</html>

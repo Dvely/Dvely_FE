@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Qeploy 서비스 구성도</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1920px; height: 1080px; background: #fff; overflow: hidden; }
+    body { font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; color: #111; }
+    .page { width: 1920px; height: 1080px; padding: 28px 40px 24px; display: flex; flex-direction: column; }
+    .title {
+      display: inline-block; background: #2f6db5; color: #fff;
+      font-size: 28px; font-weight: 800; padding: 8px 22px 8px 16px; margin-bottom: 18px;
+    }
+    .cols {
+      display: grid;
+      grid-template-columns: 1fr 200px 1fr;
+      gap: 0 0;
+      margin-bottom: 8px;
+    }
+    .col-h {
+      text-align: center; font-size: 20px; font-weight: 800;
+      padding: 8px 0 12px;
+    }
+    .col-h.mid { color: #2f6db5; }
+    .layers { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+    .row {
+      flex: 1; display: grid;
+      grid-template-columns: 1fr 200px 1fr;
+      min-height: 0;
+    }
+    .side {
+      border: 1.8px solid #333;
+      display: flex; align-items: center; flex-wrap: wrap;
+      gap: 10px; padding: 12px 16px;
+      background: #fff;
+    }
+    .row .side:first-child { border-radius: 8px 0 0 8px; border-right: 0; }
+    .row .side:last-child { border-radius: 0 8px 8px 0; border-left: 0; }
+    .layer {
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 20px; font-weight: 800; text-align: center;
+      line-height: 1.25;
+    }
+    .p { background: #4a8fd4; }
+    .a { background: #c9a227; }
+    .d { background: #6b5cb8; }
+    .i { background: #3d9a5a; }
+    .c { background: #5f6b7a; }
+    .chip {
+      background: #fff; border: 1.4px solid #333; border-radius: 999px;
+      padding: 7px 14px; font-size: 17px; font-weight: 700; white-space: nowrap;
+    }
+    .foot {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 16px;
+    }
+    .box { border: 1.8px solid #333; }
+    .box h3 {
+      background: #8eb8e0; font-size: 18px; font-weight: 800;
+      padding: 8px 16px; border-bottom: 1.8px solid #333;
+    }
+    .box ul { padding: 12px 22px 14px 36px; }
+    .box li { font-size: 17px; font-weight: 700; line-height: 1.55; margin: 2px 0; }
+    .tag { display: inline-block; min-width: 72px; }
+    .ok { color: #1a7a38; }
+    .wip { color: #b45309; }
+    .plan { color: #1d4ed8; }
+  </style>
+</head>
+<body>
+<section class="page">
+  <div><div class="title">| 서비스 구성도</div></div>
+
+  <div class="cols">
+    <div class="col-h">클라이언트</div>
+    <div class="col-h mid">계층</div>
+    <div class="col-h">서버</div>
+  </div>
+
+  <div class="layers">
+    <div class="row">
+      <div class="side">
+        <span class="chip">Projects</span>
+        <span class="chip">Overview</span>
+        <span class="chip">AI Workspace</span>
+        <span class="chip">Settings</span>
+      </div>
+      <div class="layer p">Presentation</div>
+      <div class="side">
+        <span class="chip">Controller</span>
+        <span class="chip">Request DTO</span>
+        <span class="chip">Response DTO</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="side">
+        <span class="chip">Auth</span>
+        <span class="chip">Project</span>
+        <span class="chip">Chat</span>
+        <span class="chip">Preview 상태 관리</span>
+      </div>
+      <div class="layer a">Application</div>
+      <div class="side">
+        <span class="chip">Use Case</span>
+        <span class="chip">Orchestration</span>
+        <span class="chip">Transaction</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="side">
+        <span class="chip">Route Guard</span>
+        <span class="chip">View Policy</span>
+        <span class="chip">UI 상태 규칙</span>
+      </div>
+      <div class="layer d">Domain</div>
+      <div class="side">
+        <span class="chip">Project</span>
+        <span class="chip">AgentRun</span>
+        <span class="chip">Deployment</span>
+        <span class="chip">Domain</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="side">
+        <span class="chip">API Client</span>
+        <span class="chip">Query Cache</span>
+        <span class="chip">Error Boundary</span>
+      </div>
+      <div class="layer i">Infrastructure</div>
+      <div class="side">
+        <span class="chip">JPA</span>
+        <span class="chip">GitHub</span>
+        <span class="chip">Cloudflare</span>
+        <span class="chip">LLM</span>
+        <span class="chip">Docker</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="side">
+        <span class="chip">Sidebar</span>
+        <span class="chip">Modal</span>
+        <span class="chip">Toast</span>
+        <span class="chip">Loading / Error</span>
+      </div>
+      <div class="layer c">Common</div>
+      <div class="side">
+        <span class="chip">AuditLog</span>
+        <span class="chip">Secret Masking</span>
+        <span class="chip">Exception Mapping</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="box">
+      <h3>설계 원칙</h3>
+      <ul>
+        <li>외부 API 세부 구현은 <b>Infrastructure</b> 계층에 격리</li>
+        <li>트랜잭션·승인 흐름은 <b>Application</b> 계층에서 조율</li>
+        <li>Project · AgentRun · Deployment 상태는 <b>Domain</b> 규칙으로 관리</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>현재 범위 구분</h3>
+      <ul>
+        <li><span class="tag ok">시연 가능</span> 프로젝트 선택 · AI Workspace · 승인 / 거절</li>
+        <li><span class="tag wip">개발 중</span> Docker Preview · 도메인 검증 · 환경값 관리</li>
+        <li><span class="tag plan">예정</span> Infra Agent 기반 운영 자동화</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</body>
+</html>

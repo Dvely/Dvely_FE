@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>화면 설계서 HOM-01-01</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1200px; height: 600px; background: #fff; overflow: hidden; }
+    body { font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; color: #111; }
+    .page { width: 1200px; height: 600px; background: #fff; position: relative; }
+
+    .body {
+      height: 600px;
+      padding: 14px 16px 12px;
+      display: grid;
+      grid-template-columns: 1.22fr 0.78fr;
+      gap: 14px;
+    }
+
+    .screen { display: flex; flex-direction: column; min-width: 0; height: 100%; }
+    .mid {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+    }
+    .spec { display: flex; flex-direction: column; min-width: 0; height: 100%; }
+    .spec-grid {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 78px 1fr;
+      grid-template-rows: 36px 36px auto 1fr auto 40px;
+      border-top: 1.2px solid #3b5ba8;
+      border-left: 1.2px solid #3b5ba8;
+    }
+    .spec-grid > * {
+      border-right: 1.2px solid #3b5ba8;
+      border-bottom: 1.2px solid #3b5ba8;
+    }
+    .label {
+      font-size: 11px; font-weight: 800; color: #3b5ba8;
+      letter-spacing: 0.3px; margin-bottom: 6px;
+    }
+    .frame {
+      position: relative;
+      background: #fff;
+      overflow: hidden;
+    }
+    .shot { position: relative; width: 100%; }
+    .frame img {
+      display: block; width: 100%; height: auto;
+    }
+    .n {
+      position: absolute; z-index: 2;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #3b5ba8; color: #fff;
+      font: 800 11px/20px "Malgun Gothic", sans-serif;
+      text-align: center;
+      border: 2px solid #fff;
+    }
+    .cap { margin-top: 6px; font-size: 11px; font-weight: 700; color: #555; }
+
+    .k {
+      background: #3b5ba8; color: #fff;
+      font-size: 11px; font-weight: 800; text-align: left;
+      padding: 6px 8px; word-break: keep-all;
+      display: flex; align-items: center; justify-content: flex-start;
+    }
+    .v {
+      font-size: 11px; font-weight: 600; line-height: 1.35;
+      padding: 6px 8px; text-align: left;
+    }
+    .v p { margin: 0; }
+    .v.va {
+      display: flex; align-items: center; justify-content: flex-start;
+      flex-direction: row; text-align: left;
+    }
+    .h { color: #3b5ba8; font-weight: 800; margin: 3px 0 0; }
+    .h:first-child { margin-top: 0; }
+    .row { display: flex; gap: 5px; align-items: flex-start; margin: 2px 0; }
+    .b {
+      flex: 0 0 16px; height: 16px; border-radius: 50%;
+      background: #3b5ba8; color: #fff;
+      font: 800 10px/16px "Malgun Gothic", sans-serif;
+      text-align: center; margin-top: 1px;
+    }
+    .row p { flex: 1; }
+  </style>
+</head>
+<body>
+<section class="page">
+  <div class="body">
+    <div class="screen">
+      <div class="mid">
+        <div class="label">화면</div>
+        <div class="frame">
+          <div class="shot">
+            <img src="flow-assets/devely-home-screen.png" alt="Devely 홈"/>
+            <span class="n" style="left:49%;top:27%">1</span>
+            <span class="n" style="left:36%;top:36%">2</span>
+            <span class="n" style="left:20%;top:43%">3</span>
+            <span class="n" style="left:15%;top:66%">4</span>
+          </div>
+        </div>
+        <p class="cap">Devely 1.0 Lite · 로그인 후 첫 화면</p>
+      </div>
+    </div>
+
+    <div class="spec">
+      <div class="label">기능 정의</div>
+      <div class="spec-grid">
+        <div class="k">기능 번호</div>
+        <div class="v va">HOM-01-01</div>
+        <div class="k">기능 명</div>
+        <div class="v va">홈 (작업 시작)</div>
+        <div class="k">기능설명</div>
+        <div class="v">로그인 후 첫 화면. 자연어로 작업을 입력하고 프로젝트를 고른 뒤 AI Workspace로 이동한다. 하단 템플릿으로도 시작할 수 있다.</div>
+        <div class="k">처리내용</div>
+        <div class="v">
+          <div class="row">
+            <span class="b">1</span>
+            <p><span class="h" style="margin:0">자연어 작업 요청</span><br/>전송 또는 Enter → 선택 프로젝트의 AI Workspace로 이동. 프로젝트가 없으면 “먼저 프로젝트를 생성해 주세요.” 빠른 작업 칩은 입력창에 초안을 채운다.</p>
+          </div>
+          <div class="row">
+            <span class="b">2</span>
+            <p><span class="h" style="margin:0">프로젝트 선택</span><br/>목록에서 고른다. 고르지 않으면 최근 수정 프로젝트를 쓴다.</p>
+          </div>
+          <div class="row">
+            <span class="b">3</span>
+            <p><span class="h" style="margin:0">빠른 작업</span><br/>슬라이드 · 웹사이트 · 데스크톱 앱 · 디자인.</p>
+          </div>
+          <div class="row">
+            <span class="b">4</span>
+            <p><span class="h" style="margin:0">템플릿 탐색</span><br/>탐색 / 내 템플릿. 스타일·테마·정렬. 카드 선택 시 프롬프트에 첨부, 미리보기는 프로젝트 생성.</p>
+          </div>
+        </div>
+        <div class="k">비고</div>
+        <div class="v">
+          <p class="h">■ 연결되는 기능</p>
+          <p>: AI Workspace (자연어 요청)</p>
+          <p>: 프로젝트 목록</p>
+          <p>: 템플릿 · 프로젝트 생성</p>
+          <p>: 알림 · 프로필 설정</p>
+        </div>
+        <div class="k">요구사항 명</div>
+        <div class="v va">자연어 작업 요청</div>
+      </div>
+    </div>
+  </div>
+</section>
+</body>
+</html>
