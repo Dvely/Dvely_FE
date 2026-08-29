@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"/><title>Qeploy 알고리즘 상세 설명서 01</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, .page { width: 1200px; height: 600px; background: #fff; overflow: hidden; }
+.page {
+  padding: 10px 20px 10px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 6px;
+}
+.box { border: 1.6px solid #7eb6d4; padding: 8px 16px 8px; min-height: 0; }
+.bot { display: grid; grid-template-rows: 1fr; }
+h2 {
+  font-family: "Batang", "Apple Myungjo", "Nanum Myeongjo", serif;
+  font-size: 15.5px; font-weight: 700; margin-bottom: 4px; color: #111;
+}
+p.desc {
+  font-family: "Batang", "Apple Myungjo", "Nanum Myeongjo", serif;
+  font-size: 13px; line-height: 1.55; color: #222; text-align: justify;
+  word-break: keep-all;
+}
+.photos {
+  min-height: 0; height: 100%;
+  display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; gap: 16px;
+}
+.col { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
+.cap {
+  font-family: "Batang", "Apple Myungjo", "Nanum Myeongjo", serif;
+  font-size: 13.5px; margin-bottom: 4px; color: #111;
+}
+.shot {
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #bbb;
+  background: #fff;
+}
+.shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+</style></head>
+<body>
+<section class="page">
+  <div class="box top">
+    <h2>ㅇ Decision Agent 작업 처리 알고리즘</h2>
+    <p class="desc">
+      Decision Agent 작업 처리 알고리즘은 사용자가 입력한 자연어 한 줄을 받아 프로젝트 연결 여부를 먼저 확인한다.
+      프로젝트가 없으면 False를 반환하고 “먼저 프로젝트를 생성해 주세요.”를 띄운 뒤 처리를 중단한다.
+      프로젝트가 연결되어 있으면 요청을 세션에 저장하고 제목을 자동으로 만든 다음, Decision Agent가 코드·배포·도메인·인프라로 나눈다.
+      이 과정은 화면에 보이지 않으며, 나중에 승인창에 한 줄로만 요약된다.
+      코드 변경이면 preview 브랜치에 커밋하고 Docker 컨테이너에서 설치·빌드·실행까지 한 뒤 내부 패널로 미리보기를 보여 True를 반환한다.
+      바깥으로 여는 preview URL은 기본적으로 만들지 않으며, 승인해 도 이 시점에 main에는 반영하지 않는다.
+    </p>
+  </div>
+  <div class="box bot">
+    <div class="photos">
+      <div class="col">
+        <p class="cap">Decision Agent 작업 처리 알고리즘에서 True 값을 반환할 때,</p>
+        <div class="shot"><img src="flow-assets/qeploy-flow-approve.png" alt="True: 승인창"/></div>
+      </div>
+      <div class="col">
+        <p class="cap">Decision Agent 작업 처리 알고리즘에서 False 값을 반환할 때,</p>
+        <div class="shot"><img src="flow-assets/algo-photo-home-crop.png" alt="False: 프로젝트 미선택"/></div>
+      </div>
+    </div>
+  </div>
+</section>
+</body></html>
