@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"/><title>Qeploy 프로그램 목록 02</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, .page { width: 1200px; height: 600px; background: #fff; overflow: hidden; }
+body { font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #111; }
+.page { padding: 28px 28px 22px; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+th, td {
+  border: 1px solid #b4b4b4;
+  font-size: 13.5px;
+  height: 36px;
+}
+th {
+  background: #c5d8ea;
+  font-weight: 700;
+  text-align: center;
+}
+td.cat, td.num { text-align: center; font-weight: 700; vertical-align: middle; }
+td.name { padding: 0 14px; text-align: left; font-weight: 600; }
+td.omit { text-align: center; color: #555; font-weight: 700; }
+</style></head>
+<body>
+<section class="page">
+  <table>
+    <colgroup>
+      <col style="width:18%"/><col style="width:22%"/><col/>
+    </colgroup>
+    <thead>
+      <tr>
+        <th>기능 분류</th>
+        <th>기능번호</th>
+        <th>기능 명</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="cat" rowspan="5">WRK</td>
+        <td class="num">WRK-01</td>
+        <td class="name">AI Workspace</td>
+      </tr>
+      <tr>
+        <td class="num">WRK-01-01</td>
+        <td class="name">AI Workspace-자연어 요청</td>
+      </tr>
+      <tr>
+        <td class="num">WRK-01-02</td>
+        <td class="name">AI Workspace-의사결정 Agent</td>
+      </tr>
+      <tr>
+        <td class="num">WRK-01-03</td>
+        <td class="name">AI Workspace-대화 세션</td>
+      </tr>
+      <tr>
+        <td class="num">WRK-01-04</td>
+        <td class="name">AI Workspace-오버레이 튜토리얼</td>
+      </tr>
+      <tr>
+        <td class="cat" rowspan="4">PRE</td>
+        <td class="num">PRE-02</td>
+        <td class="name">Docker 미리보기</td>
+      </tr>
+      <tr>
+        <td class="num">PRE-02-01</td>
+        <td class="name">Docker 미리보기-컨테이너 실행</td>
+      </tr>
+      <tr>
+        <td class="num">PRE-02-02</td>
+        <td class="name">Docker 미리보기-내부 전용 접근</td>
+      </tr>
+      <tr>
+        <td class="num">PRE-02-03</td>
+        <td class="name">Docker 미리보기-수명·캐시</td>
+      </tr>
+      <tr>
+        <td class="cat" rowspan="4">VER</td>
+        <td class="num">VER-01</td>
+        <td class="name">버전 관리</td>
+      </tr>
+      <tr>
+        <td class="num">VER-01-01</td>
+        <td class="name">버전 관리-preview 브랜치 커밋</td>
+      </tr>
+      <tr>
+        <td class="num">VER-01-02</td>
+        <td class="name">버전 관리-PR·merge·버전</td>
+      </tr>
+      <tr>
+        <td class="num">VER-01-03</td>
+        <td class="name">버전 관리-버전 배포·롤백</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+</body></html>
