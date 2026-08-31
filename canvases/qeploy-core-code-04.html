@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>Qeploy 핵심코드 — AgentOrchestrator</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1200px; background: #fff; color: #111; }
+.page {
+  padding: 24px 28px 28px;
+  display: grid;
+  grid-template-columns: 1.12fr 0.88fr;
+  gap: 28px;
+  align-items: start;
+}
+.left, .right { min-width: 0; }
+pre.code {
+  font-family: "Consolas", "Menlo", "Courier New", monospace;
+  font-size: 12.5px; line-height: 1.48; margin: 0; white-space: pre;
+}
+.an { color: #808000; }
+.k { color: #af00db; }
+.fn { color: #795e26; }
+.str { color: #a31515; }
+.t { color: #267f99; }
+.n { color: #098658; }
+
+.tree {
+  font-family: "Roboto", "Helvetica Neue", "Apple SD Gothic Neo", sans-serif;
+  font-size: 13px; color: #3c4043;
+}
+.node { margin: 0; }
+.node + .node { margin-top: 2px; }
+.head, .leaf { display: flex; align-items: center; min-height: 22px; }
+.minus {
+  width: 14px; height: 14px; border-radius: 50%; background: #5f6368;
+  color: #fff; font-size: 12px; line-height: 12px; text-align: center;
+  font-weight: 700; margin-right: 6px; flex: 0 0 14px;
+}
+.kids { margin-left: 7px; border-left: 1px solid #dadce0; padding-left: 13px; }
+.leaf { position: relative; overflow: hidden; }
+.leaf .val-s { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.leaf::before {
+  content: ""; position: absolute; left: -13px; top: 11px;
+  width: 11px; height: 1px; background: #dadce0;
+}
+.key { color: #5f6368; }
+.val-s { color: #0d904f; }
+.val-n { color: #f57c00; }
+.node-id { color: #5f6368; }
+</style>
+</head>
+<body>
+<section class="page">
+  <div class="left">
+<pre class="code"><span class="an">@Transactional</span>
+<span class="k">public</span> <span class="t">AgentRunResult</span> <span class="fn">handle</span>(<span class="t">AgentCommand</span> command) {
+    <span class="t">Project</span> project = projectRepository.<span class="fn">getById</span>(command.<span class="fn">projectId</span>());
+    <span class="t">Intent</span> intent = decisionAgent.<span class="fn">classify</span>(command.<span class="fn">message</span>());
+
+    <span class="t">AgentRun</span> run = agentRunRepository.<span class="fn">save</span>(
+        AgentRun.<span class="fn">started</span>(project.<span class="fn">getId</span>(), command.<span class="fn">actorId</span>(),
+            intent.<span class="fn">type</span>()));
+
+    <span class="t">AgentPlan</span> plan = agentRouter.<span class="fn">route</span>(project, intent);
+    <span class="k">if</span> (plan.<span class="fn">requiresApproval</span>()) {
+        approvalService.<span class="fn">request</span>(run.<span class="fn">getId</span>(), plan.<span class="fn">toApprovalPayload</span>());
+        run.<span class="fn">markWaitingApproval</span>();
+    } <span class="k">else</span> {
+        agentExecutor.<span class="fn">execute</span>(run.<span class="fn">getId</span>(), plan);
+    }
+
+    auditLogService.<span class="fn">record</span>(command.<span class="fn">actorId</span>(), project.<span class="fn">getId</span>(),
+        AuditAction.AGENT_PLAN, <span class="str">"AgentRun"</span>, run.<span class="fn">getId</span>());
+    <span class="k">return</span> AgentRunResult.<span class="fn">from</span>(run, plan);
+}</pre>
+  </div>
+  <div class="right">
+    <div class="tree">
+      <div class="node">
+        <div class="head"><span class="minus">−</span><span class="node-id">arn_01k8x2m9q4c7w</span></div>
+        <div class="kids">
+          <div class="leaf"><span class="key">status:&nbsp;</span><span class="val-s">"WAITING_APPROVAL"</span></div>
+          <div class="leaf"><span class="key">intent_type:&nbsp;</span><span class="val-s">"CHANGE"</span></div>
+          <div class="node">
+            <div class="head"><span class="minus">−</span><span class="key">approval</span></div>
+            <div class="kids">
+              <div class="leaf"><span class="key">approval_id:&nbsp;</span><span class="val-n">12</span></div>
+              <div class="leaf"><span class="key">approval_type:&nbsp;</span><span class="val-s">"CHANGE"</span></div>
+              <div class="leaf"><span class="key">status:&nbsp;</span><span class="val-s">"PENDING"</span></div>
+            </div>
+          </div>
+          <div class="node">
+            <div class="head"><span class="minus">−</span><span class="key">audit_log</span></div>
+            <div class="kids">
+              <div class="leaf"><span class="key">action:&nbsp;</span><span class="val-s">"AGENT_PLAN"</span></div>
+              <div class="leaf"><span class="key">outcome:&nbsp;</span><span class="val-s">"SUCCEEDED"</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="node">
+        <div class="head"><span class="minus">−</span><span class="node-id">arn_01k8x2n1b8d3f</span></div>
+        <div class="kids">
+          <div class="leaf"><span class="key">status:&nbsp;</span><span class="val-s">"RUNNING"</span></div>
+          <div class="leaf"><span class="key">intent_type:&nbsp;</span><span class="val-s">"DEPLOY"</span></div>
+          <div class="leaf"><span class="key">requires_approval:&nbsp;</span><span class="val-n">false</span></div>
+        </div>
+      </div>
+      <div class="node">
+        <div class="head"><span class="minus">−</span><span class="node-id">arn_01k8x2p6h2k9s</span></div>
+        <div class="kids">
+          <div class="leaf"><span class="key">status:&nbsp;</span><span class="val-s">"WAITING_INPUT"</span></div>
+          <div class="leaf"><span class="key">question:&nbsp;</span><span class="val-s">"배포할 환경을 알려 주세요"</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</body>
+</html>
