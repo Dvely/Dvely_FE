@@ -13,6 +13,7 @@ import {
   putProjectInfrastructureConfiguration,
   putProjectInfrastructureSettings,
 } from '@/api/projects';
+import ProjectDatabaseSection from '@/components/layout/project/ProjectDatabaseSection';
 import type {
   ComputeTier,
   DeploymentArchitecture,
@@ -160,6 +161,9 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
           </button>
         ) : null}
       </section>
+
+      {/* RDS·DOCKER 가 위 클라우드 연결에 의존하므로 그 바로 아래에 둔다 */}
+      <ProjectDatabaseSection projectId={projectId} />
 
       <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
         <h2 className="text-[16px] font-bold text-[#0f172a]">인프라 구성</h2>
