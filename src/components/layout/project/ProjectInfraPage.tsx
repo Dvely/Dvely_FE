@@ -21,6 +21,20 @@ import type {
   StorageType,
 } from '@/types/common.enum';
 
+/**
+ * 에이전트가 어느 단계에서 사용자를 멈춰 세울지. 서버 스키마에 다섯 개가 다 있는데
+ * 화면에는 둘만 나와 있어서, 나머지 셋은 켜고 끌 방법이 없었다.
+ */
+const CHAT_APPROVAL_GATES = [
+  { field: 'changeApprovalRequired', label: '코드 변경 승인' },
+  { field: 'deploymentApprovalRequired', label: '배포 승인' },
+  { field: 'domainApprovalRequired', label: '도메인 승인' },
+  { field: 'infraApprovalRequired', label: '인프라 승인' },
+  { field: 'resultApprovalRequired', label: '결과 승인' },
+] as const;
+
+type ChatApprovalField = (typeof CHAT_APPROVAL_GATES)[number]['field'];
+
 type ProjectInfraPageProps = {
   projectId: number;
 };
@@ -92,9 +106,7 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
     onSuccess: invalidate,
   });
 
-  const handleToggleChat = async (
-    field: 'changeApprovalRequired' | 'deploymentApprovalRequired',
-  ) => {
+  const handleToggleChat = async (field: ChatApprovalField) => {
     if (!chatSettings) return;
     try {
       await patchProjectChatSettings(projectId, {
@@ -221,20 +233,25 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
         <h2 className="text-[16px] font-bold text-[#0f172a]">Chat 승인 정책</h2>
         {chatSettings ? (
           <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => void handleToggleChat('changeApprovalRequired')}
-              className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
-            >
-              코드 변경 승인 {chatSettings.changeApprovalRequired ? 'ON' : 'OFF'}
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleToggleChat('deploymentApprovalRequired')}
-              className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
-            >
-              배포 승인 {chatSettings.deploymentApprovalRequired ? 'ON' : 'OFF'}
-            </button>
+            {CHAT_APPROVAL_GATES.map((gate) => {
+              const isOn = chatSettings[gate.field];
+
+              return (
+                <button
+                  key={gate.field}
+                  type="button"
+                  aria-pressed={isOn}
+                  onClick={() => void handleToggleChat(gate.field)}
+                  className={`h-8 cursor-pointer rounded-lg border px-3 text-[12px] font-semibold ${
+                    isOn
+                      ? 'border-[#c4b5fd] bg-[#faf5ff] text-[#4c1d95]'
+                      : 'border-[#e2e8f0] text-[#64748b]'
+                  }`}
+                >
+                  {gate.label} {isOn ? 'ON' : 'OFF'}
+                </button>
+              );
+            })}
           </div>
         ) : (
           <div className="mt-3 h-8 w-48 animate-pulse rounded bg-[#f8fafc]" />
