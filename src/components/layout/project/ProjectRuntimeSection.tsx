@@ -66,6 +66,12 @@ function ProjectRuntimeSection({ projectId }: { projectId: number }) {
         // 비우면 서버가 기본값(NODE_SERVER 는 npm start)을 쓴다
         startCommand: startCommand.trim() || null,
         dbEngine,
+        // PUT 은 전체 교체다. 화면에 입력 자리가 없는 값도 읽은 그대로 실어 보내지 않으면
+        // 서버가 기본값으로 되돌린다(apiPathPrefix → "/api", healthPath → null).
+        // 지금은 둘 다 기본값이라 티가 안 나지만, JAVA 라우팅 설정에 UI 가 붙으면
+        // 런타임을 저장할 때마다 그 값이 조용히 날아간다
+        apiPathPrefix: runtime?.apiPathPrefix ?? null,
+        healthPath: runtime?.healthPath ?? null,
       }),
     onSuccess: () => {
       setSaveError(null);
