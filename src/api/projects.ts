@@ -285,7 +285,11 @@ async function getProjectInfrastructureSettings(projectId: number) {
     )
     .then((response) => {
       const body = succesResponse<GetProjectInfrastructureSettingsResType>(response);
-      return getProjectInfrastructureSettingsResSchema.parse(unwrapApiData(body));
+      const payload = unwrapApiData(body);
+      // 선택된 클라우드 연결이 없으면 서버가 data: null 을 준다. 오류가 아니라 정상 상태라
+      // 파싱하지 않고 그대로 비운다 — 호출부는 이미 optional chaining 으로 읽는다
+      if (payload == null) return null;
+      return getProjectInfrastructureSettingsResSchema.parse(payload);
     })
     .catch(errorResponse());
 }
