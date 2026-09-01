@@ -14,6 +14,7 @@ import {
   putProjectInfrastructureSettings,
 } from '@/api/projects';
 import ProjectDatabaseSection from '@/components/layout/project/ProjectDatabaseSection';
+import ProjectRuntimeSection from '@/components/layout/project/ProjectRuntimeSection';
 import type {
   ComputeTier,
   DeploymentArchitecture,
@@ -174,7 +175,10 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
         ) : null}
       </section>
 
-      {/* RDS·DOCKER 가 위 클라우드 연결에 의존하므로 그 바로 아래에 둔다 */}
+      {/* 런타임이 DB 소유 주체를 정하므로(서버형이면 자동 마련) DB 섹션보다 먼저 둔다 */}
+      <ProjectRuntimeSection projectId={projectId} />
+
+      {/* RDS·DOCKER 가 위 클라우드 연결에 의존하므로 그 아래에 둔다 */}
       <ProjectDatabaseSection projectId={projectId} />
 
       <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">

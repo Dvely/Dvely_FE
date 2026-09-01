@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { postProjectDatabase, useProjectDatabaseListQuery } from '@/api/databases';
 import { useProjectPreviewQuery } from '@/api/preview';
+import { usePreviewRuntimeConfigQuery } from '@/api/previewRuntime';
 import { extractApiErrorMessage } from '@/utils/response';
 import type {
   CreatedDatabase,
@@ -75,6 +76,13 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
   const queryClient = useQueryClient();
   const { data: databases = [], isLoading } = useProjectDatabaseListQuery(QUERY_KEY, projectId);
   const { data: preview } = useProjectPreviewQuery(QUERY_KEY, projectId);
+  // 런타임 설정과 같은 키라 react-query 가 요청을 합친다
+  const { data: runtime } = usePreviewRuntimeConfigQuery(QUERY_KEY, projectId);
+
+  // 서버형은 프리뷰가 뜰 때 DB 를 자동으로 마련한다. 그 구간에 수동 생성을 열어두면
+  // 사용자가 만든 것과 자동으로 생긴 것이 겹친다. 현재 떠 있는 프리뷰가 아니라
+  // 설정값으로 판단한다 — 설정을 바꾼 시점부터 "이제 자동으로 마련된다"가 참이다
+  const isServerRuntime = runtime?.runtimeType === 'NODE_SERVER';
 
   // LOCAL DB 는 프리뷰 세션 컨테이너의 형제로 뜬다. 프리뷰가 없으면 서버가 404 로 막는데,
   // 누르고 나서 알게 하는 것보다 미리 비활성으로 알리는 편이 낫다
@@ -97,56 +105,61 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
     <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
       <h2 className="text-[16px] font-bold text-[#0f172a]">데이터베이스</h2>
       <p className="mt-1 text-[13px] text-[#64748b]">
-        백엔드가 있는 앱을 위한 DB를 마련합니다. 테스트용 DB는 현재 프리뷰 세션과 함께
-        사라지므로, 프리뷰를 다시 띄우면 DB도 다시 만들어야 합니다.
+        {isServerRuntime
+          ? '런타임이 Node 서버라 프리뷰가 뜰 때 DB가 자동으로 마련됩니다. 직접 만들 필요가 없습니다.'
+          : '백엔드가 있는 앱을 위한 DB를 마련합니다. 테스트용 DB는 현재 프리뷰 세션과 함께 사라지므로, 프리뷰를 다시 띄우면 DB도 다시 만들어야 합니다.'}
       </p>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <label className="flex flex-col gap-1">
-          <span className="text-[12px] font-medium text-[#475569]">방식</span>
-          <select
-            value={method}
-            onChange={(event) => setMethod(event.target.value as DatabaseMethod)}
-            className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
-          >
-            {METHOD_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value} disabled={!option.enabled}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-[12px] font-medium text-[#475569]">엔진</span>
-          <select
-            value={engine}
-            onChange={(event) => setEngine(event.target.value as DatabaseEngine)}
-            className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
-          >
-            {ENGINE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      {isServerRuntime ? null : (
+        <>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1">
+            <span className="text-[12px] font-medium text-[#475569]">방식</span>
+            <select
+              value={method}
+              onChange={(event) => setMethod(event.target.value as DatabaseMethod)}
+              className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
+            >
+              {METHOD_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value} disabled={!option.enabled}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[12px] font-medium text-[#475569]">엔진</span>
+            <select
+              value={engine}
+              onChange={(event) => setEngine(event.target.value as DatabaseEngine)}
+              className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
+            >
+              {ENGINE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
-      {needsPreview ? (
-        <p className="mt-3 text-[12px] text-[#b45309]">
-          테스트용 DB는 실행 중인 프리뷰가 있어야 만들 수 있습니다. 먼저 프리뷰를 띄워주세요.
-        </p>
-      ) : null}
-      {createError ? <p className="mt-3 text-[12px] text-[#dc2626]">{createError}</p> : null}
+        {needsPreview ? (
+          <p className="mt-3 text-[12px] text-[#b45309]">
+            테스트용 DB는 실행 중인 프리뷰가 있어야 만들 수 있습니다. 먼저 프리뷰를 띄워주세요.
+          </p>
+        ) : null}
+        {createError ? <p className="mt-3 text-[12px] text-[#dc2626]">{createError}</p> : null}
 
-      <button
-        type="button"
-        disabled={needsPreview || createMutation.isPending}
-        onClick={() => createMutation.mutate()}
-        className="mt-3 h-9 cursor-pointer rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {createMutation.isPending ? '만드는 중...' : 'DB 추가'}
-      </button>
+        <button
+          type="button"
+          disabled={needsPreview || createMutation.isPending}
+          onClick={() => createMutation.mutate()}
+          className="mt-3 h-9 cursor-pointer rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {createMutation.isPending ? '만드는 중...' : 'DB 추가'}
+        </button>
+        </>
+      )}
 
       {createdDatabase?.password ? (
         <div className="mt-4 rounded-xl border border-[#c4b5fd] bg-[#faf5ff] px-4 py-3">
@@ -187,6 +200,11 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[13px] font-semibold text-[#0f172a]">
                     {database.engine} · {database.method}
+                    {database.origin === 'PREVIEW_AUTO' ? (
+                      <span className="ml-2 rounded-full bg-[#eff6ff] px-2 py-0.5 text-[11px] font-medium text-[#1d4ed8]">
+                        프리뷰가 자동 마련
+                      </span>
+                    ) : null}
                   </p>
                   <span className="shrink-0 rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
                     {STATUS_LABEL[database.status] ?? database.status}
@@ -212,7 +230,15 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
                     </div>
                     <div className="flex gap-1.5">
                       <dt className="text-[#94a3b8]">password</dt>
-                      <dd className="font-mono">•••••• (생성 시에만 표시)</dd>
+                      {/*
+                        자동 DB 는 사용자가 생성 요청을 하지 않아 비밀번호를 볼 기회가 없다.
+                        앱에는 env 로 주입되므로 동작에는 문제가 없다 — 찾다 헤매지 않게 적어둔다.
+                      */}
+                      <dd className="font-mono">
+                        {database.origin === 'PREVIEW_AUTO'
+                          ? '환경변수로 자동 주입됨'
+                          : '•••••• (생성 시에만 표시)'}
+                      </dd>
                     </div>
                   </dl>
                 ) : null}

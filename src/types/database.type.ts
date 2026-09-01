@@ -42,6 +42,11 @@ const provisionedDatabaseSchema = z.object({
   engine: databaseEngineSchema,
   /** 프로비저닝 상태 */
   status: databaseStatusSchema,
+  /**
+   * 누가 만들었는지. MANUAL 은 사용자가 이 화면에서, PREVIEW_AUTO 는 서버형 프리뷰가
+   * 뜨면서 자동으로 마련한 것이다. 열린 문자열로 받는다 — 화면은 아는 값만 라벨로 바꾼다.
+   */
+  origin: z.string().nullable().prefault(null),
   /** 접속 호스트. 준비 전이면 null */
   host: z.string().nullable().prefault(null),
   /** 접속 포트. 준비 전이면 null */
