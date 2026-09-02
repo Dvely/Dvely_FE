@@ -27,7 +27,7 @@ import {
   useProjectPreviewQuery,
 } from '@/api/preview';
 import { refreshUserInfoInBackground } from '@/api/user';
-import { extractApiErrorMessage } from '@/utils/response';
+import { composeApiErrorMessage, dispatchApiErrorAction } from '@/lib/apiErrorGuide';
 import {
   postProjectRepositoryReqSchema,
   type GetProjectDetailResType,
@@ -108,10 +108,13 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
       await queryClient.invalidateQueries({ queryKey: ['project-repository-settings'] });
       await queryClient.invalidateQueries({ queryKey: ['github-repository-list'] });
     },
-    // GitHub 연동이 끊겨서 실패했을 수 있다. 사용자 정보를 다시 읽으면
-    // 재인증이 필요한 경우 모달이 뜬다 — 서버 오류 문구만 보고 막히지 않게 한다
-    onError: () => {
-      void refreshUserInfoInBackground();
+    // GitHub 연동이 끊겼거나 App 이 이 저장소에 권한이 없어 실패했을 수 있다.
+    // 서버가 코드를 붙였으면 바로 진입점을 띄우고, 없으면 사용자 정보를 다시 읽어
+    // 재인증이 필요한지 확인한다 — 서버 오류 문구만 보고 막히지 않게 한다
+    onError: (error) => {
+      if (!dispatchApiErrorAction(error)) {
+        void refreshUserInfoInBackground();
+      }
     },
   });
   const disconnectRepositoryMutation = useMutation({
@@ -560,8 +563,11 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             onLoadPreview={handleLoadPreview}
             failureReason={
               projectPreview?.failureReason?.trim() ||
-              extractApiErrorMessage(provisionPreviewMutation.error) ||
-              extractApiErrorMessage(previewAccessError) ||
+              // 실행 환경(Docker) 문제면 "잠시 뒤 다시" 같은 안내가 함께 붙는다
+              (provisionPreviewMutation.error
+                ? composeApiErrorMessage(provisionPreviewMutation.error)
+                : '') ||
+              (previewAccessError ? composeApiErrorMessage(previewAccessError) : '') ||
               ''
             }
             isProvisioning={

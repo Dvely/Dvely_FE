@@ -13,6 +13,7 @@ import {
   postApprovalReject,
   useApprovalDetailQuery,
 } from '@/api/approvals';
+import { composeApiErrorMessage, dispatchApiErrorAction } from '@/lib/apiErrorGuide';
 import { refreshUserInfoInBackground } from '@/api/user';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
@@ -86,24 +87,13 @@ async function resolvePendingApprovalId(
   return pending?.approvalId ?? null;
 }
 
+/**
+ * 오류 문구. 서버가 코드를 붙여 보냈으면 다음 행동을 한 줄 덧붙인다 —
+ * "다른 AI 제공자를 골라 다시 보내보세요" 같은 것. 코드가 없거나 모르는
+ * 코드면 서버 문장만 그대로 나간다.
+ */
 function formatApiErrorMessage(error: unknown) {
-  if (!(error instanceof Error) || !error.message) {
-    return '요청 처리 중 오류가 발생했습니다.';
-  }
-
-  try {
-    const parsed: unknown = JSON.parse(error.message);
-    if (parsed && typeof parsed === 'object' && 'message' in parsed) {
-      const message = (parsed as { message?: unknown }).message;
-      if (typeof message === 'string' && message.trim()) {
-        return message.trim();
-      }
-    }
-  } catch {
-    // 일반 문자열 오류 메시지는 그대로 사용한다.
-  }
-
-  return error.message;
+  return composeApiErrorMessage(error);
 }
 
 function AgentConversationPanel({
@@ -291,6 +281,9 @@ function AgentConversationPanel({
       console.error('[agent] send/poll failed', error);
 
       setAlertMessage(formatApiErrorMessage(error));
+      // GitHub App 권한이 원인이면 여기서 설정 진입점을 띄운다. 문구만 보여주면
+      // 사용자가 GitHub 설정까지 스스로 찾아가야 한다
+      dispatchApiErrorAction(error);
 
       if (!(conversationId != null && context?.userMessage)) {
         setInput(content);
@@ -389,9 +382,12 @@ function AgentConversationPanel({
 
       setAlertMessage(formatApiErrorMessage(error));
       setIsAssistantReplying(false);
-      // 저장소 연결 승인은 서버가 GitHub 을 호출한다. 연동이 끊겨 실패했다면
-      // 사용자 정보를 다시 읽어 재인증 진입점을 띄운다
-      void refreshUserInfoInBackground();
+      // 서버가 코드로 원인을 알려줬으면 그것으로 바로 진입점을 띄운다
+      if (!dispatchApiErrorAction(error)) {
+        // 코드가 없으면 예전 방식으로 — 저장소 연결 승인은 서버가 GitHub 을 호출하므로
+        // 사용자 정보를 다시 읽어 재인증이 필요한지 확인한다
+        void refreshUserInfoInBackground();
+      }
     },
   });
 

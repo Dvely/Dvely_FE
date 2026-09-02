@@ -4,9 +4,49 @@ export function succesResponse<T>(res: AxiosResponse<T>) {
   return res.data;
 }
 
+/**
+ * 서버가 분류해 준 오류.
+ *
+ * 봉투(`{status, code, message, data}`)의 `code` 를 들고 다닌다. 예전에는 평범한
+ * Error 로 던져서 message 만 남고 code 가 버려졌는데, 그러면 화면이 "왜 실패했는지"를
+ * 알 수 없어 서버 문장을 그대로 띄우는 것 말고는 할 수 있는 게 없다. 코드가 있으면
+ * "다른 AI 제공자를 고르세요" 처럼 다음 행동을 붙일 수 있다.
+ *
+ * message 는 그대로라 기존 호출부(`error.message`)는 아무것도 바뀌지 않는다.
+ */
+export class ApiError extends Error {
+  readonly code: string | null;
+
+  constructor(message: string, code: string | null) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+  }
+}
+
 /** API envelope의 message 필드만 꺼낸다. JSON 전체는 노출하지 않는다. */
 export function extractApiErrorMessage(error: unknown) {
   return readMessageField(asErrorPayload(error));
+}
+
+/**
+ * 서버가 붙인 오류 코드를 꺼낸다. 없으면 null — 네트워크 오류나 스키마 실패처럼
+ * 서버가 분류하지 않은 실패가 그렇다.
+ */
+export function extractApiErrorCode(error: unknown): string | null {
+  if (error instanceof ApiError) return error.code;
+  if (error instanceof AxiosError) return readCodeField(error.response?.data);
+  return null;
+}
+
+function readCodeField(value: unknown): string | null {
+  if (!value || typeof value !== 'object' || !('code' in value)) return null;
+
+  const code = (value as { code: unknown }).code;
+  if (typeof code !== 'string') return null;
+
+  const trimmed = code.trim();
+  return trimmed ? trimmed : null;
 }
 
 function asErrorPayload(error: unknown): unknown {
@@ -64,6 +104,9 @@ export function errorResponse() {
     if (import.meta.env.DEV && !(err instanceof AxiosError)) {
       console.warn('[api] 응답 처리 실패 — 스키마 불일치일 수 있습니다', err);
     }
-    throw new Error(extractApiErrorMessage(err) ?? '요청 처리 중 오류가 발생했습니다.');
+    throw new ApiError(
+      extractApiErrorMessage(err) ?? '요청 처리 중 오류가 발생했습니다.',
+      extractApiErrorCode(err),
+    );
   };
 }
