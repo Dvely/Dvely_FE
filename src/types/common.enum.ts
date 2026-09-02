@@ -203,21 +203,23 @@ const aiProviderSchema = z.enum(['ANTHROPIC', 'OPENAI']);
 const agentTypeSchema = z.string().prefault('');
 
 /**
- * 에이전트 태스크 상태
- * @example "RUNNING"
+ * 에이전트 태스크 상태.
+ * 알려진 값: PENDING · WAITING_APPROVAL · QUEUED · RETRY_WAIT · RUNNING ·
+ * WAITING_INPUT · WAITING_RESULT_APPROVAL · DONE · FAILED · CANCELLED.
+ *
+ * 열린 문자열로 받는다. 닫아두면 서버가 상태를 하나 늘릴 때
+ * `GET /agent/tasks/{taskId}` 응답 전체가 파싱에 실패하고, 그 조회가 채팅의
+ * 진행 판단 전부를 떠받치고 있어서 **대화가 통째로 멈춘 것처럼 보인다.**
+ * 이벤트 목록도 같은 스키마를 쓰므로 이벤트 하나에 섞이면 목록 전체가 죽는다.
+ *
+ * 모르는 값이 와도 화면은 버틴다 — 종결 판단은 Set 조회라 "아직 안 끝남"으로
+ * 떨어질 뿐이고, 폴링이 상한(5분)에 닿으면 시간 초과로 사용자에게 알린다.
+ * 파싱이 죽어 아무 일도 안 일어나는 것보다 낫다.
+ *
+ * 백엔드는 현재 10종을 늘릴 계획이 없고, 늘릴 때는 먼저 알리기로 했다.
+ * 그래도 열어두는 이유는 그 약속이 깨졌을 때의 대가가 크기 때문이다.
  */
-const agentTaskStatusSchema = z.enum([
-  'PENDING',
-  'WAITING_APPROVAL',
-  'QUEUED',
-  'RETRY_WAIT',
-  'RUNNING',
-  'WAITING_INPUT',
-  'WAITING_RESULT_APPROVAL',
-  'DONE',
-  'FAILED',
-  'CANCELLED',
-]);
+const agentTaskStatusSchema = z.string().prefault('');
 
 /**
  * 승인 유형
