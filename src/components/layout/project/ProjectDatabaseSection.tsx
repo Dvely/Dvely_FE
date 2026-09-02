@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { postProjectDatabase, useProjectDatabaseListQuery } from '@/api/databases';
+import {
+  deleteProjectDatabase,
+  postProjectDatabase,
+  useProjectDatabaseListQuery,
+} from '@/api/databases';
 import { useProjectPreviewQuery } from '@/api/preview';
 import { usePreviewRuntimeConfigQuery } from '@/api/previewRuntime';
 import { getProjectInfrastructureSettings } from '@/api/projects';
@@ -63,6 +67,10 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
   const [createdDatabase, setCreatedDatabase] = useState<CreatedDatabase | null>(null);
   // RDS 는 승인을 거치므로 생성 응답에 database 가 없다. 그 사실을 알려줄 자리
   const [awaitingApproval, setAwaitingApproval] = useState(false);
+  // 삭제 확인을 받는 중인 DB. window.confirm 을 쓰지 않는 이유는 무엇을 잃는지
+  // 여러 줄로 보여줘야 하고, 방식(RDS·LOCAL)마다 문구가 달라서다
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
   const { data: databases = [], isLoading } = useProjectDatabaseListQuery(QUERY_KEY, projectId);
@@ -106,6 +114,18 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
     onError: (error) => {
       setAwaitingApproval(false);
       setCreateError(extractApiErrorMessage(error) ?? '데이터베이스를 만들지 못했습니다.');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (databaseId: number) => deleteProjectDatabase(databaseId),
+    onSuccess: () => {
+      setDeleteError(null);
+      setDeletingId(null);
+      void queryClient.invalidateQueries({ queryKey: ['project-database-list'] });
+    },
+    onError: (error) => {
+      setDeleteError(extractApiErrorMessage(error) ?? '데이터베이스를 삭제하지 못했습니다.');
     },
   });
 
@@ -234,6 +254,12 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
           {databases.map((database) => {
             const remaining = formatRemaining(database.expiresAt);
             const errorLabel = describeProvisionFailure(database);
+            const isConfirmingDelete = deletingId === database.databaseId;
+            // 이미 만료된 것은 지울 게 없다. 실패한 것은 자원이 일부 남아 있을 수 있어
+            // 열어둔다 — 서버가 멱등이라 눌러서 손해 볼 일은 없다
+            const canDelete = database.status !== 'EXPIRED';
+            // RDS 만 실제로 과금된다. LOCAL 은 무료라 "과금이 멈춘다"고 하면 틀린 안내다
+            const isBilled = database.method === 'RDS';
 
             return (
               <li
@@ -293,6 +319,66 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
                   <p className="mt-1 text-[11px] leading-relaxed text-[#94a3b8]">
                     {database.errorMessage}
                   </p>
+                ) : null}
+
+                {canDelete ? (
+                  isConfirmingDelete ? (
+                    <div className="mt-3 rounded-xl border border-[#fecaca] bg-[#fef2f2] px-3.5 py-3">
+                      <p className="text-[13px] font-semibold text-[#991b1b]">
+                        이 데이터베이스를 삭제할까요?
+                      </p>
+                      <ul className="mt-1.5 flex list-disc flex-col gap-0.5 pl-4 text-[12px] leading-relaxed text-[#b91c1c]">
+                        <li>되돌릴 수 없습니다.</li>
+                        <li>저장된 데이터는 사라집니다.</li>
+                        {isBilled ? (
+                          <li>이 인스턴스 청구는 삭제하는 순간 멈춥니다.</li>
+                        ) : (
+                          <li>테스트용 DB라 과금은 원래 없습니다.</li>
+                        )}
+                        {database.origin === 'PREVIEW_AUTO' ? (
+                          <li>
+                            프리뷰가 자동으로 마련한 DB입니다. 지우면 실행 중인 앱이 DB에 붙지
+                            못합니다.
+                          </li>
+                        ) : null}
+                      </ul>
+                      {deleteError ? (
+                        <p className="mt-2 text-[12px] text-[#dc2626]">{deleteError}</p>
+                      ) : null}
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          type="button"
+                          disabled={deleteMutation.isPending}
+                          onClick={() => {
+                            setDeletingId(null);
+                            setDeleteError(null);
+                          }}
+                          className="h-8 cursor-pointer rounded-lg border border-[#fecaca] bg-white px-3 text-[12px] font-semibold text-[#64748b] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          취소
+                        </button>
+                        <button
+                          type="button"
+                          disabled={deleteMutation.isPending}
+                          onClick={() => deleteMutation.mutate(database.databaseId)}
+                          className="h-8 cursor-pointer rounded-lg bg-[#b91c1c] px-3 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {deleteMutation.isPending ? '삭제하는 중...' : '삭제합니다'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeletingId(database.databaseId);
+                        setDeleteError(null);
+                      }}
+                      className="mt-3 cursor-pointer text-[12px] font-semibold text-[#dc2626] hover:underline"
+                    >
+                      DB 삭제
+                    </button>
+                  )
                 ) : null}
               </li>
             );

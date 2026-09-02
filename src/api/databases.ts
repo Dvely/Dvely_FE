@@ -52,6 +52,19 @@ async function postProjectDatabase(projectId: number, params: PostProjectDatabas
 }
 
 /**
+ * DB 삭제 API DELETE.
+ *
+ * 경로에 projectId 가 없다 — 서버가 databaseId 로 소유권을 확인한다(서버 종료와 같은 모양).
+ * 204 라 응답 본문이 없으므로 파싱하지 않는다. 멱등이라 이미 지워진 DB 에도 안전하다.
+ */
+async function deleteProjectDatabase(databaseId: number) {
+  return Http.instance
+    .delete<ApiResponse<null>>(`/databases/${databaseId}`)
+    .then(() => undefined)
+    .catch(errorResponse());
+}
+
+/**
  * 프로젝트 DB 목록 조회 Query Hook.
  *
  * 프로비저닝 중인 자원이 있으면 폴링한다 — LOCAL 은 몇 초, RDS 는 5~10분 걸리고 그동안
@@ -82,4 +95,9 @@ function useProjectDatabaseListQuery(queryKey: unknown, projectId: number) {
   });
 }
 
-export { getProjectDatabaseList, postProjectDatabase, useProjectDatabaseListQuery };
+export {
+  getProjectDatabaseList,
+  postProjectDatabase,
+  deleteProjectDatabase,
+  useProjectDatabaseListQuery,
+};
