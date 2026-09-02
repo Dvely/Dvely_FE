@@ -10,17 +10,17 @@ const databaseMethodSchema = z.enum(['LOCAL', 'RDS', 'DOCKER']);
 const databaseEngineSchema = z.enum(['POSTGRESQL', 'MYSQL']);
 
 /**
- * 프로비저닝 상태.
+ * 프로비저닝 상태. 알려진 값: PENDING · PROVISIONING · READY · FAILED · EXPIRED.
  * PENDING·PROVISIONING 은 서버가 다음 상태로 옮기는 중이라 폴링을 이어간다.
- * READY·FAILED·EXPIRED 는 종료 상태다.
+ *
+ * 열린 문자열로 받는다 — 화면은 아는 값만 라벨로 바꾸고 모르는 값은 그대로 보여주며,
+ * 폴링 판단도 Set 조회라 모르는 값이 와도 종료 상태로 떨어질 뿐 목록이 죽지 않는다.
+ * 방식이 늘면(RDS·DOCKER) 상태가 늘 여지도 함께 커진다.
  */
-const databaseStatusSchema = z.enum([
-  'PENDING',
-  'PROVISIONING',
-  'READY',
-  'FAILED',
-  'EXPIRED',
-]);
+const databaseStatusSchema = z
+  .string()
+  .min(1, '프로비저닝 상태가 없습니다.')
+  .prefault('');
 
 /**
  * 프로비저닝된 DB.
