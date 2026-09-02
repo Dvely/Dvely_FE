@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>⑤ 도입 로드맵</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #fff; }
+  body {
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    color: #1a1a1a;
+    position: relative;
+  }
+  .tl {
+    position: absolute; top: 0; left: 0;
+    width: 240px; height: 240px;
+    background: #1e4a7a;
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+  }
+  .br {
+    position: absolute; right: 0; bottom: 0;
+    width: 420px; height: 160px;
+    background: repeating-linear-gradient(
+      -32deg, #dbeafe 0 18px, #e2e8f0 18px 36px
+    );
+    clip-path: polygon(30% 100%, 100% 0, 100% 100%);
+    opacity: 0.7;
+  }
+  .kicker {
+    text-align: center; padding-top: 42px;
+    color: #2563eb; font-size: 20px; font-weight: 800; letter-spacing: 0.06em;
+  }
+  h1 {
+    text-align: center; margin-top: 10px;
+    font-size: 36px; font-weight: 800; letter-spacing: -0.5px;
+  }
+  h1 em { font-style: normal; color: #1d4ed8; }
+  .sub {
+    text-align: center; margin-top: 8px; color: #64748b; font-size: 16px;
+  }
+  table {
+    position: absolute; left: 72px; top: 200px;
+    width: 1776px; border-collapse: collapse;
+    table-layout: fixed;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    height: 108px;
+    vertical-align: middle;
+  }
+  thead th {
+    height: 92px;
+    background: #f8fafc;
+    font-size: 16px; font-weight: 800;
+    text-align: center;
+    color: #1e3a5f;
+  }
+  thead th small {
+    display: block; margin-top: 6px;
+    font-size: 13px; font-weight: 600; color: #64748b;
+  }
+  .lab {
+    width: 200px; background: #fff;
+    font-size: 20px; font-weight: 800; padding-left: 22px;
+  }
+  .cell { position: relative; background: #fff; }
+  .bar {
+    position: absolute; top: 28px; height: 52px;
+    background: #93c5fd;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 800; color: #1e3a5f;
+    white-space: nowrap;
+  }
+  .foot {
+    position: absolute; left: 72px; bottom: 36px; width: 1776px;
+    font-size: 16px; color: #475569;
+  }
+  .foot b { color: #1e40af; }
+</style>
+</head>
+<body>
+  <div class="tl"></div>
+  <div class="br"></div>
+  <div class="kicker">도입 로드맵</div>
+  <h1>체계적 프로세스로 완성하는 <em>Digital Twin 자율 점검 일정</em></h1>
+  <p class="sub">필수 205h + 보너스 60h · 예비 6h &nbsp;|&nbsp; 달은 캘린더가 아니라 마일스톤입니다</p>
+
+  <table>
+    <colgroup>
+      <col style="width:200px"/>
+      <col/><col/><col/><col/><col/><col/>
+    </colgroup>
+    <thead>
+      <tr>
+        <th></th>
+        <th>1 · 킥오프<small>P0 · RTF ≥ 0.8</small></th>
+        <th>2 · 설계 확정<small>P1 · 전 센서 수신</small></th>
+        <th>3 · 1차 시연<small>P2 · 험지 통과</small></th>
+        <th>4 · 2차 시연<small>P3·P4 병렬 데모</small></th>
+        <th>5 · 시범 운영<small>P5 · 통합 launch</small></th>
+        <th>6 · 제출<small>P6 보너스 · P7 문서</small></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="lab">환경 구축</td>
+        <td class="cell" colspan="2" style="padding:0; position:relative;">
+          <div class="bar" style="left:16px; right:16px;">P0 Docker arm64 · P1 월드·브리지 15h+25h</div>
+        </td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+      </tr>
+      <tr>
+        <td class="lab">설계</td>
+        <td class="cell"></td>
+        <td class="cell" colspan="2" style="padding:0; position:relative;">
+          <div class="bar" style="left:16px; right:40%;">1-A/1-B 판정 · 통신 규격 초안</div>
+        </td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td>
+      </tr>
+      <tr>
+        <td class="lab">구축</td>
+        <td class="cell"></td><td class="cell"></td>
+        <td class="cell" colspan="3" style="padding:0; position:relative;">
+          <div class="bar" style="left:16px; right:16px;">P2 보행 55h → P3 점검 29h ∥ P4 가스 30h</div>
+        </td>
+        <td class="cell"></td>
+      </tr>
+      <tr>
+        <td class="lab">검증</td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell" colspan="2" style="padding:0; position:relative;">
+          <div class="bar" style="left:16px; right:16px;">P5 통합 시나리오 · 정량 지표 30h</div>
+        </td>
+      </tr>
+      <tr>
+        <td class="lab">제출</td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell" style="padding:0; position:relative;">
+          <div class="bar" style="left:16px; right:16px;">P6 60h · P7 15h</div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="foot">
+    <b>1차 시연</b> 험지·계단 통과 · Fall Recovery &nbsp;·&nbsp;
+    <b>2차 시연</b> 게이지 ≤5% · 누출원 추적 · RTH &nbsp;·&nbsp;
+    <b>제출</b> 통합 launch 1개 + REPORT.md · 보너스 ①은 P5에 흡수
+  </p>
+</body>
+</html>
