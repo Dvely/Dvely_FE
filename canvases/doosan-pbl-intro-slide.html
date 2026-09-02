@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>프로젝트 소개 — Digital Twin</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #fff; }
+  body {
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    color: #1a1a1a; position: relative;
+  }
+  .deco-tl {
+    position: absolute; top: 0; left: 0; width: 280px; height: 200px;
+    background: #e2e8f0;
+    clip-path: polygon(0 0, 100% 0, 0 70%);
+  }
+  .deco-br {
+    position: absolute; right: 0; bottom: 0; width: 380px; height: 180px;
+    background: #1e4a7a;
+    clip-path: polygon(40% 100%, 100% 0, 100% 100%);
+  }
+  .kicker {
+    text-align: center; padding-top: 36px;
+    color: #2563eb; font-size: 20px; font-weight: 800; letter-spacing: 0.08em;
+  }
+  h1 {
+    text-align: center; margin-top: 8px;
+    font-size: 38px; font-weight: 800; letter-spacing: -0.6px;
+  }
+  h1 em { font-style: normal; color: #1d4ed8; }
+  .sub {
+    text-align: center; margin-top: 10px; font-size: 18px; color: #4b5563;
+  }
+  .hub {
+    position: absolute; left: 690px; top: 268px;
+    width: 540px; height: 540px;
+    border-radius: 50%;
+    background: conic-gradient(from 200deg, #3b82f6, #1d4ed8, #60a5fa, #3b82f6);
+    padding: 22px;
+  }
+  .hub::after {
+    content: "";
+    position: absolute; right: 36px; top: 18px;
+    width: 72px; height: 72px;
+    border: 14px solid #2563eb;
+    border-left-color: transparent; border-bottom-color: transparent;
+    border-radius: 50%;
+    transform: rotate(40deg);
+  }
+  .inner {
+    width: 100%; height: 100%; border-radius: 50%;
+    background:
+      linear-gradient(180deg, rgba(15,50,100,0.45), rgba(15,40,80,0.72)),
+      url("doosan-ppt-images/06-anymal-substation-inspection.jpg") center/cover;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-align: center; font-size: 28px; font-weight: 800;
+    line-height: 1.35; letter-spacing: -0.4px;
+  }
+  .node {
+    position: absolute; width: 340px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .node.right { flex-direction: row-reverse; text-align: right; }
+  .ico {
+    width: 72px; height: 72px; min-width: 72px;
+    border-radius: 50%; background: #2563eb;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ico svg { width: 32px; height: 32px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .node h3 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .node p { font-size: 16px; color: #64748b; }
+  .n1 { left: 72px; top: 280px; }
+  .n2 { left: 48px; top: 500px; }
+  .n3 { left: 72px; top: 720px; }
+  .n4 { right: 72px; top: 280px; }
+  .n5 { right: 48px; top: 500px; }
+  .n6 { right: 72px; top: 720px; }
+</style>
+</head>
+<body>
+  <div class="deco-tl"></div>
+  <div class="deco-br"></div>
+  <div class="kicker">프로젝트 소개</div>
+  <h1>가상 플랜트, <em>점검이 하나로 연결됩니다</em></h1>
+  <p class="sub">사람 대신 4족 로봇이 걷고 읽고, Digital Twin 관제에서 실시간으로 확인합니다</p>
+
+  <div class="hub"><div class="inner">Digital Twin<br/>플랫폼</div></div>
+
+  <div class="node n1">
+    <div class="ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/><path d="M8 11h6M11 8v6"/></svg></div>
+    <div><h3>데이터 자동 수집</h3><p>LiDAR · RGB · 열화상 · 가스</p></div>
+  </div>
+  <div class="node n2">
+    <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+    <div><h3>실시간 현황</h3><p>로봇 위치 · 배터리 · 임무</p></div>
+  </div>
+  <div class="node n3">
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7l8-4z"/><path d="M9 12l2 2 4-4"/></svg></div>
+    <div><h3>이상 즉시 감지</h3><p>과열 · 누출 · 게이지 이상</p></div>
+  </div>
+  <div class="node n4">
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M10 21h4"/></svg></div>
+    <div><h3>즉시 알림·확인</h3><p>정비팀 관제 · ThermalAlert</p></div>
+  </div>
+  <div class="node n5">
+    <div class="ico"><svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="3"/><circle cx="16" cy="12" r="3"/><path d="M10.5 10.5l3 3M13.5 10.5l-3 3"/></svg></div>
+    <div><h3>순찰 경로 최적화</h3><p>Viewpoint · 인식이 잘 되는 위치</p></div>
+  </div>
+  <div class="node n6">
+    <div class="ico"><svg viewBox="0 0 24 24"><path d="M8 8h3v3H8zM13 8h3v3h-3zM8 13h3v3H8zM13 13h3v3h-3z"/></svg></div>
+    <div><h3>데이터 통합</h3><p>ROS 2 · ros_gz_bridge · 3모듈</p></div>
+  </div>
+</body>
+</html>

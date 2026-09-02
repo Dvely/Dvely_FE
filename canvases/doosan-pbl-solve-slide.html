@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>② 무엇을 해야 하는가</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #f4f7fb; }
+  body {
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    color: #1a1a1a;
+    position: relative;
+  }
+  .corner-tr {
+    position: absolute; top: 0; right: 0;
+    width: 280px; height: 280px;
+    background: #1e4a7a;
+    clip-path: polygon(40% 0, 100% 0, 100% 100%);
+  }
+  .corner-bl {
+    position: absolute; bottom: 0; left: 0;
+    width: 220px; height: 220px;
+    background: #93c5fd;
+    clip-path: polygon(0 30%, 0 100%, 100% 100%);
+    opacity: 0.55;
+  }
+  .kicker {
+    position: absolute; left: 72px; top: 56px;
+    color: #2563eb; font-size: 20px; font-weight: 800; letter-spacing: 0.04em;
+  }
+  h1 {
+    position: absolute; left: 72px; top: 92px; width: 560px;
+    font-size: 36px; font-weight: 800; line-height: 1.32; letter-spacing: -0.5px;
+  }
+  h1 em { font-style: normal; color: #1d4ed8; }
+  .lede {
+    position: absolute; left: 72px; top: 268px; width: 500px;
+    font-size: 18px; line-height: 1.55; color: #4b5563;
+  }
+  .note {
+    position: absolute; left: 72px; top: 980px; width: 520px;
+    font-size: 15px; color: #64748b;
+  }
+  .stack { position: absolute; left: 620px; top: 200px; width: 560px; }
+  .layer {
+    height: 108px;
+    margin-bottom: 14px;
+    transform: skewX(-28deg);
+    display: flex; align-items: center;
+    padding-left: 48px;
+    color: #fff;
+    box-shadow: 8px 10px 0 rgba(15, 40, 80, 0.12);
+  }
+  .layer span {
+    transform: skewX(28deg);
+    font-size: 24px; font-weight: 800; letter-spacing: -0.3px;
+    white-space: nowrap;
+  }
+  .layer .num { opacity: 0.85; margin-right: 10px; font-size: 20px; }
+  .l01 { background: #93c5fd; color: #1e3a5f; }
+  .l02 { background: #60a5fa; }
+  .l03 { background: #3b82f6; }
+  .l04 { background: #2563eb; }
+  .l05 { background: #1e40af; }
+  .details { position: absolute; left: 1240px; top: 198px; width: 620px; }
+  .row {
+    height: 122px;
+    display: flex; align-items: center;
+    gap: 16px;
+  }
+  .dots {
+    width: 56px; height: 0;
+    border-top: 2px dotted #93c5fd;
+    margin-top: 2px;
+  }
+  .txt h3 { font-size: 18px; font-weight: 800; color: #1e40af; margin-bottom: 6px; }
+  .txt p { font-size: 16px; color: #4b5563; line-height: 1.45; }
+</style>
+</head>
+<body>
+  <div class="corner-tr"></div>
+  <div class="corner-bl"></div>
+  <div class="kicker">② 문제 분해</div>
+  <h1>이 문제를 해결하려면<br/>무엇을 해야 하는가?<br/><em>현장 점검 → Digital Twin</em><br/>5계층</h1>
+  <p class="lede">가상 플랜트에서 걷고, 읽고, 관제한다.<br/>P1이 없으면 시작 불가 · P2가 병목 · P3·P4만 병렬</p>
+  <p class="note">원본 5계층(현장→수집→센터→앱→경영)을 우리 작업 단위 P1~P5로 치환했습니다.</p>
+
+  <div class="stack">
+    <div class="layer l05"><span><span class="num">05 |</span> Digital Twin 관제</span></div>
+    <div class="layer l04"><span><span class="num">04 |</span> Gas / Safety</span></div>
+    <div class="layer l03"><span><span class="num">03 |</span> Inspection AI</span></div>
+    <div class="layer l02"><span><span class="num">02 |</span> Locomotion</span></div>
+    <div class="layer l01"><span><span class="num">01 |</span> Virtual Plant</span></div>
+  </div>
+
+  <div class="details">
+    <div class="row">
+      <div class="dots"></div>
+      <div class="txt">
+        <h3>05 · Monitoring System</h3>
+        <p>rosbridge 웹 대시보드 · 로봇 위치·점검 이력·가스 농도맵 · E2E 지연 ≤500ms</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="dots"></div>
+      <div class="txt">
+        <h3>04 · 누출원 추적 · 자율 복귀</h3>
+        <p>가우시안 플룸 · Source Seeking · 배터리 20% Return to Home</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="dots"></div>
+      <div class="txt">
+        <h3>03 · 게이지 · 열화상 퓨전</h3>
+        <p>바늘 독해 오차 ≤5% · thermal-RGB Extrinsic 정합 · Viewpoint 순찰</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="dots"></div>
+      <div class="txt">
+        <h3>02 · 이동 인프라 (55h 병목)</h3>
+        <p>Elevation Map · stage1 보행(1-A/1-B) · Fall Recovery. 걷지 못하면 03·04 불가</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="dots"></div>
+      <div class="txt">
+        <h3>01 · 가상 발전소 + Robot Twin</h3>
+        <p>복도·공장 SDF · heat signature · Go2 센서 · ros_gz_bridge</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
