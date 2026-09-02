@@ -223,14 +223,16 @@ const agentTaskStatusSchema = z.enum([
  * 승인 유형
  * @example "CHANGE"
  */
-const approvalTypeSchema = z.enum([
-  'CHANGE',
-  'DEPLOYMENT',
-  'DOMAIN_BINDING',
-  'INFRA_OPERATION',
-  'REPOSITORY_BINDING',
-  'RESULT',
-]);
+/**
+ * 승인 유형. 알려진 값: CHANGE · DEPLOYMENT · DOMAIN_BINDING · INFRA_OPERATION ·
+ * REPOSITORY_BINDING · RESULT · SERVER_PROVISION.
+ *
+ * 열린 문자열로 받는다. 화면은 이 값으로 문구를 고르지만 모르는 값이면 기본 문구로
+ * 떨어지면 그만이다. 반면 닫아두면 서버가 유형을 하나 늘릴 때 승인 조회가 통째로
+ * 파싱에 실패하고, 그러면 승인 카드가 아예 안 떠서 사용자가 결정할 방법이 사라진다 —
+ * REPOSITORY_BINDING 이 추가됐을 때 실제로 그렇게 막혔다.
+ */
+const approvalTypeSchema = z.string().min(1, '승인 유형이 없습니다.').prefault('');
 
 /**
  * 승인 상태
