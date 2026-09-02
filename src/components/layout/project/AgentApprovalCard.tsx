@@ -39,6 +39,10 @@ const APPROVAL_COPY: Record<string, { title: string; description: string }> = {
     title: '백엔드 서버 생성',
     description: '당신의 AWS 계정에 서버를 만듭니다. 켜져 있는 동안 과금됩니다.',
   },
+  DATABASE_PROVISION: {
+    title: '데이터베이스 생성',
+    description: '당신의 AWS 계정에 데이터베이스를 만듭니다. 켜져 있는 동안 과금됩니다.',
+  },
 };
 
 /** 모르는 유형이 와도 카드는 떠야 한다. 결정할 방법이 사라지는 것보다 낫다 */
