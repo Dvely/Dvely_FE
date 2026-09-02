@@ -83,6 +83,14 @@ type PollAgentTaskOptions = {
   signal?: AbortSignal;
   /** true면 폴링을 종료한다. 없으면 종료·입력/승인 대기 상태에서 멈춘다. */
   until?: (task: GetAgentTaskResType) => boolean;
+  /**
+   * 폴링이 태스크를 읽을 때마다 부른다.
+   *
+   * 이 함수는 끝날 때까지 await 되므로, 그동안 화면은 태스크가 어디까지 갔는지 알 수
+   * 없었다 — 빌드가 몇 분 걸리는 동안 사용자는 글자 없는 스켈레톤만 봤다. 이미 2초마다
+   * 받아오고 있는 상태를 버리지 않고 호출부에 넘긴다.
+   */
+  onProgress?: (task: GetAgentTaskResType) => void;
 };
 
 /** 에이전트 태스크가 종료·입력/승인 대기 상태가 될 때까지 폴링한다. */
@@ -98,6 +106,7 @@ async function pollAgentTask(taskId: string, options: PollAgentTaskOptions = {})
     }
 
     const task = await getAgentTask(taskId);
+    options.onProgress?.(task);
     if (isComplete(task)) {
       return task;
     }

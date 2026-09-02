@@ -65,6 +65,41 @@ type AgentConversationPanelProps = {
 
 const APPROVAL_WAIT_STATUSES = new Set(['WAITING_APPROVAL', 'WAITING_RESULT_APPROVAL']);
 
+/**
+ * 진행 중 상태 문구.
+ *
+ * 빌드는 몇 분 걸리는데 그동안 화면에는 글자 없는 스켈레톤만 있었다. 사용자는 멈춘
+ * 줄 알고 새로고침하거나 같은 요청을 다시 보낸다. 이미 2초마다 받고 있는 status 를
+ * 한 줄로 보여주면 그 오해가 사라진다.
+ *
+ * 종료 상태(DONE·FAILED·CANCELLED)는 여기 없다 — 그때는 스켈레톤 자체가 사라지고
+ * 서버가 적은 결과 메시지가 자리를 대신한다.
+ */
+const TASK_PROGRESS_LABEL: Record<string, string> = {
+  PENDING: '요청을 접수했습니다',
+  QUEUED: '작업을 기다리는 중',
+  RUNNING: '작업 중',
+  RETRY_WAIT: '재시도를 기다리는 중',
+  WAITING_APPROVAL: '승인을 기다리는 중',
+  WAITING_RESULT_APPROVAL: '결과 확인을 기다리는 중',
+  WAITING_INPUT: '질문에 답해 주세요',
+};
+
+/**
+ * 스켈레톤 옆에 붙일 한 줄. 모르는 상태가 와도 "작업 중"으로 떨어진다 —
+ * status 는 열린 문자열이라 서버가 단계를 늘리면 여기 없는 값이 온다.
+ */
+function describeTaskProgress(task: GetAgentTaskResType | null): string {
+  if (!task) return '작업 중';
+
+  const label = TASK_PROGRESS_LABEL[task.status] ?? '작업 중';
+  // 재시도는 몇 번째인지가 정보다. "재시도를 기다리는 중"만 있으면 언제 끝날지 모른다
+  if (task.status === 'RETRY_WAIT' && task.attempt != null && task.maxAttempts != null) {
+    return `${label} (${task.attempt}/${task.maxAttempts})`;
+  }
+  return label;
+}
+
 async function resolvePendingApprovalId(
   task: GetAgentTaskResType,
   projectId: number,
@@ -110,6 +145,8 @@ function AgentConversationPanel({
   const [input, setInput] = useState('');
   const [overlayMessages, setOverlayMessages] = useState<ConversationMessage[]>([]);
   const [isAssistantReplying, setIsAssistantReplying] = useState(false);
+  // 폴링이 읽어오는 태스크. 진행 문구를 만드는 데만 쓴다
+  const [progressTask, setProgressTask] = useState<GetAgentTaskResType | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   // 승인 대기 여부는 서버만 안다 — 채팅 본문에서 유추하지 않는다
   const [pendingApprovalId, setPendingApprovalId] = useState<number | null>(null);
@@ -200,7 +237,10 @@ function AgentConversationPanel({
       pollAbortRef.current?.abort();
       const controller = new AbortController();
       pollAbortRef.current = controller;
-      const task = await pollAgentTask(taskId, { signal: controller.signal });
+      const task = await pollAgentTask(taskId, {
+        signal: controller.signal,
+        onProgress: setProgressTask,
+      });
 
       const pendingApprovalId = await resolvePendingApprovalId(
         task,
@@ -225,6 +265,8 @@ function AgentConversationPanel({
       });
       setInput('');
       setIsAssistantReplying(true);
+      // 앞선 실행의 문구가 남아 있으면 새 요청이 그 상태인 것처럼 보인다
+      setProgressTask(null);
       return { content, userMessage, draftConversationId };
     },
     onSuccess: (result, _content, context) => {
@@ -270,11 +312,13 @@ function AgentConversationPanel({
       }
 
       setIsAssistantReplying(false);
+      setProgressTask(null);
       onConversationActivity?.(targetConversationId);
     },
     onError: (error, content, context) => {
       if (error instanceof DOMException && error.name === 'AbortError') {
         setIsAssistantReplying(false);
+        setProgressTask(null);
         return;
       }
 
@@ -294,6 +338,7 @@ function AgentConversationPanel({
         }
       }
       setIsAssistantReplying(false);
+      setProgressTask(null);
     },
   });
 
@@ -321,6 +366,7 @@ function AgentConversationPanel({
       rememberConversationTaskId(conversationId ?? 0, taskId);
       const task = await pollAgentTask(taskId, {
         signal: controller.signal,
+        onProgress: setProgressTask,
         until: (nextTask) => {
           const stillSameApproval =
             nextTask.pendingApprovalId === approvalId &&
@@ -336,6 +382,8 @@ function AgentConversationPanel({
     },
     onMutate: () => {
       setIsAssistantReplying(true);
+      // 앞선 실행의 문구가 남아 있으면 새 요청이 그 상태인 것처럼 보인다
+      setProgressTask(null);
       setPendingApprovalId(null);
     },
     onSuccess: ({ task, pendingApprovalId }) => {
@@ -366,6 +414,7 @@ function AgentConversationPanel({
       // 보고 폴링이 켜지고, 그래야 웹훅이 나중에 붙이는 완료 안내를 받는다
       void queryClient.invalidateQueries({ queryKey: ['project-overview'] });
       setIsAssistantReplying(false);
+      setProgressTask(null);
       onConversationActivity?.(targetConversationId);
     },
     onError: (error, variables) => {
@@ -377,11 +426,13 @@ function AgentConversationPanel({
 
       if (error instanceof DOMException && error.name === 'AbortError') {
         setIsAssistantReplying(false);
+        setProgressTask(null);
         return;
       }
 
       setAlertMessage(formatApiErrorMessage(error));
       setIsAssistantReplying(false);
+      setProgressTask(null);
       // 서버가 코드로 원인을 알려줬으면 그것으로 바로 진입점을 띄운다
       if (!dispatchApiErrorAction(error)) {
         // 코드가 없으면 예전 방식으로 — 저장소 연결 승인은 서버가 GitHub 을 호출하므로
@@ -495,7 +546,9 @@ function AgentConversationPanel({
               onReject={() => handleDecideApproval('reject')}
             />
           ) : null}
-          {isSending || isAssistantReplying ? <AssistantReplySkeleton /> : null}
+          {isSending || isAssistantReplying ? (
+            <AssistantReplySkeleton progressLabel={describeTaskProgress(progressTask)} />
+          ) : null}
           <div
             key={`${displayMessages.length}-${isAssistantReplying ? 'replying' : 'idle'}`}
             ref={(node) => {
@@ -584,10 +637,21 @@ function linkifyMessageContent(content: string, linkClassName: string) {
   });
 }
 
-function AssistantReplySkeleton() {
+/**
+ * 두 곳에서 쓴다 — 메시지 목록을 처음 읽는 동안과, 에이전트가 도는 동안.
+ * 앞쪽은 곧 끝나므로 문구가 없고, 뒤쪽은 몇 분 걸릴 수 있어 지금 무슨 단계인지 적는다.
+ */
+function AssistantReplySkeleton({ progressLabel }: { progressLabel?: string }) {
   return (
-    <div aria-hidden="true" className="px-3.5 py-3">
-      <div className="flex flex-col gap-2">
+    <div className="px-3.5 py-3">
+      {progressLabel ? (
+        // aria-live 로 읽어준다. 몇 분 걸리는 작업이라 화면을 계속 보고 있지 않은
+        // 사용자에게도 단계가 바뀌는 것이 전달돼야 한다
+        <p aria-live="polite" className="mb-2 text-[12px] font-medium text-[#7c3aed]">
+          {progressLabel}
+        </p>
+      ) : null}
+      <div aria-hidden="true" className="flex flex-col gap-2">
         <div className="h-3 w-[78%] animate-pulse rounded bg-[#e2e8f0]" />
         <div className="h-3 w-[92%] animate-pulse rounded bg-[#e2e8f0]" />
         <div className="h-3 w-[64%] animate-pulse rounded bg-[#f1f5f9]" />
