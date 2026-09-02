@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { useCloudConnectionListQuery } from '@/api/cloudConnections';
 import {
   deleteProjectCostBudget,
@@ -15,6 +16,7 @@ import {
 } from '@/api/projects';
 import ProjectDatabaseSection from '@/components/layout/project/ProjectDatabaseSection';
 import ProjectRuntimeSection from '@/components/layout/project/ProjectRuntimeSection';
+import ProjectServerSection from '@/components/layout/project/ProjectServerSection';
 import type {
   ComputeTier,
   DeploymentArchitecture,
@@ -131,6 +133,31 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
         </p>
         {isInfraLoading || isConnectionsLoading ? (
           <div className="mt-4 h-16 animate-pulse rounded-xl bg-[#f8fafc]" />
+        ) : connections.length === 0 ? (
+          /*
+            연결이 없으면 이 카드가 통째로 비어 있었다. RDS·백엔드 서버가 여기서 막히는데
+            어디서 연결을 만드는지는 다른 화면(설정)이라, 빈 카드만 보면 길이 끊긴다.
+          */
+          <div className="mt-4 rounded-xl border border-dashed border-[#e2e8f0] px-4 py-5 text-center">
+            <p className="text-[13px] text-[#64748b]">등록된 클라우드 연결이 없습니다.</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-[#94a3b8]">
+              설정 &gt; 클라우드 연결에서 AWS 계정을 등록하면 여기에서 고를 수 있습니다.
+            </p>
+            <div className="mt-3 flex justify-center gap-3">
+              <Link
+                to="/settings"
+                className="text-[12px] font-semibold text-[#0f172a] underline underline-offset-2"
+              >
+                연결 등록하러 가기
+              </Link>
+              <Link
+                to="/onboarding/cloud"
+                className="text-[12px] font-semibold text-[#7c3aed] underline underline-offset-2"
+              >
+                AWS가 처음이신가요?
+              </Link>
+            </div>
+          </div>
         ) : (
           <ul className="mt-4 flex flex-col gap-2">
             {connections.map((connection) => {
@@ -180,6 +207,9 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
 
       {/* RDS·DOCKER 가 위 클라우드 연결에 의존하므로 그 아래에 둔다 */}
       <ProjectDatabaseSection projectId={projectId} />
+
+      {/* 백엔드 서버는 DB 를 물고 뜨므로(DATABASE_URL 주입) DB 섹션 다음에 둔다 */}
+      <ProjectServerSection projectId={projectId} />
 
       <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
         <h2 className="text-[16px] font-bold text-[#0f172a]">인프라 구성</h2>

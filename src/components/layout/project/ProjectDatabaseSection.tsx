@@ -5,12 +5,12 @@ import { postProjectDatabase, useProjectDatabaseListQuery } from '@/api/database
 import { useProjectPreviewQuery } from '@/api/preview';
 import { usePreviewRuntimeConfigQuery } from '@/api/previewRuntime';
 import { getProjectInfrastructureSettings } from '@/api/projects';
+import { describeProvisionFailure } from '@/lib/provisionFailure';
 import { extractApiErrorMessage } from '@/utils/response';
 import type {
   CreatedDatabase,
   DatabaseEngine,
   DatabaseMethod,
-  ProvisionedDatabase,
 } from '@/types/database.type';
 
 const QUERY_KEY = 'project-infra-page';
@@ -37,28 +37,6 @@ const STATUS_LABEL: Record<string, string> = {
   FAILED: '실패',
   EXPIRED: '만료됨',
 };
-
-/** 모르는 분류는 PROVIDER_ERROR 로 취급한다 — 서버가 오류 종류를 늘려도 화면이 버틴다 */
-const ERROR_LABEL: Record<string, string> = {
-  IAM_PERMISSION: '클라우드 권한이 부족합니다',
-  QUOTA_EXCEEDED: '클라우드 할당량을 초과했습니다',
-  ENGINE_UNSUPPORTED: '지원하지 않는 엔진입니다',
-  PROVIDER_ERROR: '클라우드 오류가 발생했습니다',
-};
-
-/**
- * 실패 사유 라벨.
- *
- * 실패인데 errorCode 가 없으면 사용자가 거부한 것이다(RDS 승인 거절). 클라우드 오류가
- * 아니므로 그렇게 말하면 안 된다 — 사용자가 스스로 거부해놓고 "클라우드 오류가
- * 발생했습니다"를 보면 원인을 잘못 짚게 된다.
- */
-function describeError(database: ProvisionedDatabase): string | null {
-  if (!database.errorCode) {
-    return database.status === 'FAILED' ? '요청이 거부되었습니다' : null;
-  }
-  return ERROR_LABEL[database.errorCode] ?? ERROR_LABEL.PROVIDER_ERROR;
-}
 
 /**
  * 남은 시간. 서버 status 가 정본이므로 이 값으로 만료를 판정하지 않는다.
@@ -255,7 +233,7 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
         <ul className="mt-4 flex flex-col gap-2">
           {databases.map((database) => {
             const remaining = formatRemaining(database.expiresAt);
-            const errorLabel = describeError(database);
+            const errorLabel = describeProvisionFailure(database);
 
             return (
               <li
