@@ -17,6 +17,8 @@ function MeCloudConnectionsPanel() {
   const [region, setRegion] = useState('');
   const [accessKeyId, setAccessKeyId] = useState('');
   const [secretAccessKey, setSecretAccessKey] = useState('');
+  const [accountId, setAccountId] = useState('');
+  const [sessionToken, setSessionToken] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
@@ -32,12 +34,12 @@ function MeCloudConnectionsPanel() {
         provider,
         displayName,
         region,
-        accountId: '',
+        accountId: provider === 'AWS' ? accountId.trim() : '',
         roleArn: '',
         awsCredentialType: provider === 'AWS' ? 'ACCESS_KEY' : null,
         accessKeyId,
         secretAccessKey,
-        sessionToken: '',
+        sessionToken: provider === 'AWS' ? sessionToken.trim() : '',
         gcpCredentialType: provider === 'GCP' ? 'SERVICE_ACCOUNT_KEY' : null,
         serviceAccountKeyJson: provider === 'GCP' ? secretAccessKey : '',
         projectId: '',
@@ -48,6 +50,8 @@ function MeCloudConnectionsPanel() {
       setRegion('');
       setAccessKeyId('');
       setSecretAccessKey('');
+      setAccountId('');
+      setSessionToken('');
       invalidate();
     },
   });
@@ -115,7 +119,42 @@ function MeCloudConnectionsPanel() {
             placeholder={provider === 'AWS' ? 'Secret Access Key' : 'Service Account JSON'}
             className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px] sm:col-span-2"
           />
+          {/*
+            AWS 전용 두 칸. GCP 는 계정 ID 를 키 JSON 에서 뽑고 세션 토큰 개념도 없다.
+
+            accountId 는 서버가 아티팩트 버킷 이름을 qeploy-artifacts-{accountId}-{region}
+            으로 짓는 데 쓴다. 비워 보내면 이름에 계정 부분이 통째로 빠져서, 서로 다른
+            계정이 같은 버킷 이름을 노리게 된다(S3 이름은 전역이라 그 순간 충돌한다).
+
+            sessionToken 은 ASIA 로 시작하는 임시 자격(SSO)에만 필요하다. AKIA 장기 키는
+            비워 두면 되므로 필수로 걸지 않는다 — 대신 언제 필요한지 아래에 적어둔다.
+          */}
+          {provider === 'AWS' ? (
+            <>
+              <input
+                value={accountId}
+                onChange={(event) => setAccountId(event.target.value)}
+                inputMode="numeric"
+                placeholder="AWS 계정 ID (12자리)"
+                className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
+              />
+              <input
+                type="password"
+                value={sessionToken}
+                onChange={(event) => setSessionToken(event.target.value)}
+                placeholder="Session Token (임시 자격만)"
+                className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
+              />
+            </>
+          ) : null}
         </div>
+        {provider === 'AWS' ? (
+          <p className="mt-2 text-[12px] leading-relaxed text-[#94a3b8]">
+            Access Key가 <span className="font-mono">ASIA</span>로 시작하면 임시 자격(SSO)이라
+            Session Token까지 넣어야 합니다. <span className="font-mono">AKIA</span>로 시작하는 장기
+            키는 비워 두세요.
+          </p>
+        ) : null}
         <button
           type="button"
           disabled={createMutation.isPending}
