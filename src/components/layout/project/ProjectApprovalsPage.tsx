@@ -8,6 +8,8 @@ import {
 } from '@/api/approvals';
 import { getChangeDiff, useProjectChangeListQuery } from '@/api/changes';
 import { getPreviewSessionStatus } from '@/api/preview';
+import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
+import { APPROVAL_STATUS_LABEL, describeApprovalType } from '@/lib/approvalCopy';
 
 type ProjectApprovalsPageProps = {
   projectId: number;
@@ -43,14 +45,21 @@ function ProjectApprovalsPage({ projectId }: ProjectApprovalsPageProps) {
     gcTime: 0,
   });
 
+  // 대기와 이력을 갈라 놓는다. 한 목록에 섞여 있으면 "승인 대기"라는 제목 아래
+  // 이미 끝난 것들이 함께 놓여, 지금 결정할 게 뭔지 한눈에 안 들어온다
+  const pendingApprovals = approvals.filter((approval) => approval.status === 'PENDING');
+  const decidedApprovals = approvals.filter((approval) => approval.status !== 'PENDING');
+
   const invalidateApprovals = () => {
     void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
     void queryClient.invalidateQueries({ queryKey: ['project-change-list'] });
   };
 
   const approveMutation = useMutation({
-    // 승인 탭은 입력 없이 기본값으로 승인한다 — react-query가 넘기는 두 번째 인자를 본문으로 보내지 않도록 감싼다
-    mutationFn: (approvalId: number) => postApprovalApprove(approvalId),
+    // 입력 명세가 있는 승인(REPOSITORY_BINDING)은 값을 실어 보낸다. 비워 보내면
+    // 서버가 defaultValue 를 쓴다 — 그래서 payload 는 선택이다
+    mutationFn: ({ approvalId, payload }: { approvalId: number; payload?: Record<string, string> }) =>
+      postApprovalApprove(approvalId, payload),
     onSuccess: invalidateApprovals,
   });
   const rejectMutation = useMutation({
@@ -58,14 +67,18 @@ function ProjectApprovalsPage({ projectId }: ProjectApprovalsPageProps) {
     onSuccess: invalidateApprovals,
   });
 
-  const handleDecide = async (approvalId: number, action: 'approve' | 'reject') => {
+  const handleDecide = async (
+    approvalId: number,
+    action: 'approve' | 'reject',
+    payload?: Record<string, string>,
+  ) => {
     if (busyApprovalId !== null) return;
     setBusyApprovalId(approvalId);
     setActionError(null);
     try {
       await getApprovalDetail(approvalId);
       if (action === 'approve') {
-        await approveMutation.mutateAsync(approvalId);
+        await approveMutation.mutateAsync({ approvalId, payload });
       } else {
         await rejectMutation.mutateAsync(approvalId);
       }
@@ -85,62 +98,73 @@ function ProjectApprovalsPage({ projectId }: ProjectApprovalsPageProps) {
         </p>
         {actionError ? <p className="mt-3 text-[12px] text-[#dc2626]">{actionError}</p> : null}
 
-        <ul className="mt-4 flex flex-col gap-2">
-          {isApprovalsLoading ? (
-            skeletonItems.map((key) => (
+        {isApprovalsLoading ? (
+          <ul className="mt-4 flex flex-col gap-2">
+            {skeletonItems.map((key) => (
               <li key={key} className="rounded-xl border border-[#f1f5f9] p-4">
                 <div className="h-4 w-40 animate-pulse rounded bg-[#e2e8f0]" />
                 <div className="mt-2 h-3 w-full animate-pulse rounded bg-[#f1f5f9]" />
               </li>
-            ))
-          ) : approvals.length === 0 ? (
-            <li className="rounded-xl border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-[13px] text-[#94a3b8]">
-              대기 중인 승인이 없습니다.
-            </li>
-          ) : (
-            approvals.map((approval) => {
-              const isBusy = busyApprovalId === approval.approvalId;
-              const isPending = approval.status === 'PENDING';
-
-              return (
-                <li
-                  key={approval.approvalId}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#f1f5f9] px-4 py-3"
-                >
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-semibold text-[#0f172a]">
-                      {approval.summary || approval.type}
-                    </p>
-                    <p className="mt-1 text-[11px] text-[#94a3b8]">
-                      {approval.type} · {approval.status} · {approval.createdAt}
-                    </p>
-                  </div>
-                  {isPending ? (
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        disabled={isBusy}
-                        onClick={() => void handleDecide(approval.approvalId, 'reject')}
-                        className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold text-[#64748b] disabled:opacity-50"
-                      >
-                        거절
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isBusy}
-                        onClick={() => void handleDecide(approval.approvalId, 'approve')}
-                        className="h-8 rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white disabled:opacity-50"
-                      >
-                        {isBusy ? '처리 중' : '승인'}
-                      </button>
-                    </div>
-                  ) : null}
-                </li>
-              );
-            })
-          )}
-        </ul>
+            ))}
+          </ul>
+        ) : pendingApprovals.length === 0 ? (
+          <p className="mt-4 rounded-xl border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-[13px] text-[#94a3b8]">
+            대기 중인 승인이 없습니다.
+          </p>
+        ) : (
+          /*
+            채팅과 같은 카드를 쓴다. 여기 오는 DATABASE_PROVISION·SERVER_PROVISION 은
+            채팅을 거치지 않고 인프라 탭에서 만들어지는데, 예전에는 이 화면이 원시 유형만
+            보여줘서 "당신의 AWS 계정에 서버를 만듭니다. 켜져 있는 동안 과금됩니다"를
+            읽을 자리가 아예 없었다. 과금 승인을 글자만 보고 누르게 두면 안 된다.
+          */
+          <ul className="mt-4 flex flex-col gap-3">
+            {pendingApprovals.map((approval) => (
+              <li key={approval.approvalId}>
+                <AgentApprovalCard
+                  approval={approval}
+                  isBusy={busyApprovalId === approval.approvalId}
+                  onApprove={(payload) =>
+                    void handleDecide(approval.approvalId, 'approve', payload)
+                  }
+                  onReject={() => void handleDecide(approval.approvalId, 'reject')}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
+
+      {decidedApprovals.length > 0 ? (
+        <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
+          <h2 className="text-[16px] font-bold text-[#0f172a]">처리된 승인</h2>
+          <ul className="mt-4 flex flex-col gap-2">
+            {decidedApprovals.map((approval) => (
+              <li
+                key={approval.approvalId}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#f1f5f9] px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold text-[#0f172a]">
+                    {describeApprovalType(approval.type)}
+                  </p>
+                  {approval.summary ? (
+                    <p className="mt-0.5 break-all text-[12px] text-[#64748b]">
+                      {approval.summary}
+                    </p>
+                  ) : null}
+                  <p className="mt-1 text-[11px] text-[#94a3b8]">
+                    {approval.decidedAt || approval.createdAt}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
+                  {APPROVAL_STATUS_LABEL[approval.status] ?? approval.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
         <h2 className="text-[16px] font-bold text-[#0f172a]">Change</h2>
