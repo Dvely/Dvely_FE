@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { postProjectDatabase, useProjectDatabaseListQuery } from '@/api/databases';
 import { useProjectPreviewQuery } from '@/api/preview';
 import { usePreviewRuntimeConfigQuery } from '@/api/previewRuntime';
+import { getProjectInfrastructureSettings } from '@/api/projects';
 import { extractApiErrorMessage } from '@/utils/response';
 import type {
   CreatedDatabase,
@@ -14,12 +15,12 @@ import type {
 const QUERY_KEY = 'project-infra-page';
 
 /**
- * RDS·DOCKER 는 서버가 아직 막아둔다. 고를 수 있게 두면 눌러도 오류만 나므로
+ * DOCKER 는 서버가 아직 막아둔다. 고를 수 있게 두면 눌러도 오류만 나므로
  * 비활성으로 보여주되 목록에는 남긴다 — 곧 온다는 것 자체가 정보다.
  */
 const METHOD_OPTIONS: { value: DatabaseMethod; label: string; enabled: boolean }[] = [
   { value: 'LOCAL', label: '테스트용 (프리뷰와 함께, 무료)', enabled: true },
-  { value: 'RDS', label: 'AWS RDS (곧 지원)', enabled: false },
+  { value: 'RDS', label: 'AWS RDS (과금, 승인 필요)', enabled: true },
   { value: 'DOCKER', label: 'EC2 컨테이너 (곧 지원)', enabled: false },
 ];
 
@@ -81,6 +82,8 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
   const [createError, setCreateError] = useState<string | null>(null);
   // 생성 응답에만 실려 오는 비밀번호. 목록 조회에는 없으므로 이 자리에서만 보여줄 수 있다
   const [createdDatabase, setCreatedDatabase] = useState<CreatedDatabase | null>(null);
+  // RDS 는 승인을 거치므로 생성 응답에 database 가 없다. 그 사실을 알려줄 자리
+  const [awaitingApproval, setAwaitingApproval] = useState(false);
 
   const queryClient = useQueryClient();
   const { data: databases = [], isLoading } = useProjectDatabaseListQuery(QUERY_KEY, projectId);
@@ -98,14 +101,31 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
   const isPreviewActive = preview?.status === 'ACTIVE';
   const needsPreview = method === 'LOCAL' && !isPreviewActive;
 
+  // RDS 는 사용자 AWS 에 실제 인스턴스를 만든다. 프로젝트에 CONNECTED 연결이 없으면
+  // 서버가 404·409 로 막는데, 인프라 탭 맨 위에 그 선택이 있으니 미리 알린다
+  const { data: infraSettings } = useQuery({
+    queryKey: ['project-infra-settings', projectId],
+    queryFn: () => getProjectInfrastructureSettings(projectId),
+    enabled: !!projectId,
+    gcTime: 0,
+  });
+  const isCloudConnected =
+    infraSettings?.cloudConnectionId != null && infraSettings.status === 'CONNECTED';
+  const needsCloudConnection = method === 'RDS' && !isCloudConnected;
+
   const createMutation = useMutation({
     mutationFn: () => postProjectDatabase(projectId, { method, engine }),
     onSuccess: (result) => {
       setCreateError(null);
+      // requiresApproval 로 가른다. 요청한 method 로 추측하지 않는다 — 서버가 승인 여부를
+      // 바꾸면 그 추측이 조용히 틀리고, 그때 화면은 비밀번호를 기다리며 멈춰 있게 된다
+      setAwaitingApproval(result.requiresApproval);
       setCreatedDatabase(result.database);
       void queryClient.invalidateQueries({ queryKey: ['project-database-list'] });
+      void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
     },
     onError: (error) => {
+      setAwaitingApproval(false);
       setCreateError(extractApiErrorMessage(error) ?? '데이터베이스를 만들지 못했습니다.');
     },
   });
@@ -157,11 +177,23 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
             테스트용 DB는 실행 중인 프리뷰가 있어야 만들 수 있습니다. 먼저 프리뷰를 띄워주세요.
           </p>
         ) : null}
+        {needsCloudConnection ? (
+          <p className="mt-3 text-[12px] text-[#b45309]">
+            RDS는 연결된 클라우드 계정이 있어야 만들 수 있습니다. 위 클라우드 연결 선택에서 먼저
+            연결해 주세요.
+          </p>
+        ) : null}
+        {method === 'RDS' ? (
+          <p className="mt-3 text-[12px] leading-relaxed text-[#64748b]">
+            RDS는 실제 AWS 자원이라 과금됩니다. 요청하면 승인 절차를 거치고, 승인 후 생성에 5~10분이
+            걸립니다.
+          </p>
+        ) : null}
         {createError ? <p className="mt-3 text-[12px] text-[#dc2626]">{createError}</p> : null}
 
         <button
           type="button"
-          disabled={needsPreview || createMutation.isPending}
+          disabled={needsPreview || needsCloudConnection || createMutation.isPending}
           onClick={() => createMutation.mutate()}
           className="mt-3 h-9 cursor-pointer rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -169,6 +201,23 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
         </button>
         </>
       )}
+
+      {awaitingApproval ? (
+        <div className="mt-4 rounded-xl border border-[#fcd34d] bg-[#fffbeb] px-4 py-3">
+          <p className="text-[13px] font-semibold text-[#92400e]">승인을 기다리고 있습니다</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-[#b45309]">
+            과금되는 자원이라 승인 절차를 거칩니다. 승인 탭에서 결정하면 생성이 시작되고, 5~10분
+            뒤 접속정보가 아래 목록에 나타납니다.
+          </p>
+          <button
+            type="button"
+            onClick={() => setAwaitingApproval(false)}
+            className="mt-2 cursor-pointer text-[12px] font-medium text-[#b45309] hover:underline"
+          >
+            확인했습니다
+          </button>
+        </div>
+      ) : null}
 
       {createdDatabase?.password ? (
         <div className="mt-4 rounded-xl border border-[#c4b5fd] bg-[#faf5ff] px-4 py-3">
