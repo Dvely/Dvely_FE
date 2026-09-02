@@ -44,9 +44,18 @@ const ERROR_LABEL: Record<string, string> = {
   PROVIDER_ERROR: '클라우드 오류가 발생했습니다',
 };
 
+/**
+ * 실패 사유 라벨.
+ *
+ * 실패인데 errorCode 가 없으면 사용자가 거부한 것이다(RDS 승인 거절). 클라우드 오류가
+ * 아니므로 그렇게 말하면 안 된다 — 사용자가 스스로 거부해놓고 "클라우드 오류가
+ * 발생했습니다"를 보면 원인을 잘못 짚게 된다.
+ */
 function describeError(database: ProvisionedDatabase): string | null {
-  if (!database.errorCode && !database.errorMessage) return null;
-  return ERROR_LABEL[database.errorCode ?? ''] ?? ERROR_LABEL.PROVIDER_ERROR;
+  if (!database.errorCode) {
+    return database.status === 'FAILED' ? '요청이 거부되었습니다' : null;
+  }
+  return ERROR_LABEL[database.errorCode] ?? ERROR_LABEL.PROVIDER_ERROR;
 }
 
 /**
