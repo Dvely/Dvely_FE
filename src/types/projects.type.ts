@@ -282,12 +282,16 @@ const getProjectOverviewResSchema = z.object({
   currentUrl: z.string().nullable().prefault(''),
   /** 현재 배포 상태 */
   deployStatus: deployStatusSchema,
-  /** 현재 배포 버전 */
-  currentVersion: z.string().min(1, '배포 버전이 없습니다.').prefault(''),
+  /**
+   * 현재 배포 버전. 배포 전이면 비어 있다.
+   *
+   * min(1) 을 걸지 않는다 — 응답 필드에 `.min(1).prefault('')` 를 쓰면 서버가 값을
+   * 안 줬을 때 prefault 가 채운 `''` 를 곧바로 min(1) 이 거절해서, 폴백을 마련해둔
+   * 것처럼 보이지만 실제로는 파싱이 통째로 실패한다.
+   */
+  currentVersion: z.string().nullable().prefault(null),
   /** 연결 저장소의 최신 커밋. 저장소가 없으면 null */
   latestCommit: projectLatestCommitSchema.nullable().prefault(null),
-  /** 트래픽 요약. 현재는 외부 지표 미연동 안내 문구 */
-  trafficSummary: z.string().min(1, '트래픽 요약이 없습니다.').prefault(''),
   /** 연결 저장소 health 요약 */
   repositoryHealth: projectRepositoryHealthSummarySchema,
   /** 연결된 도메인 요약. 연결된 도메인이 없으면 null */

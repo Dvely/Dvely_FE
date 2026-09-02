@@ -265,7 +265,7 @@ function ProjectDetailPage({
                   </>
                 ) : (
                   <div className="mt-3 space-y-2 text-[13px] leading-relaxed text-[#94a3b8]">
-                    <p>{overview?.trafficSummary ?? '트래픽 요약 정보가 없습니다.'}</p>
+                    <p>트래픽 요약 정보가 없습니다.</p>
                     {/*
                       url 은 status 가 CONNECTED 일 때만 채워진다 — 값이 있으면 지금 열어도 되는
                       주소라는 뜻이라 그대로 링크 노출 조건으로 쓴다.
