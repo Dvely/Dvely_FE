@@ -26,7 +26,7 @@ import {
   usePreviewAccessQuery,
   useProjectPreviewQuery,
 } from '@/api/preview';
-import { fetchAndPersistUserInfo } from '@/api/user';
+import { refreshUserInfoInBackground } from '@/api/user';
 import { extractApiErrorMessage } from '@/utils/response';
 import {
   postProjectRepositoryReqSchema,
@@ -111,7 +111,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     // GitHub 연동이 끊겨서 실패했을 수 있다. 사용자 정보를 다시 읽으면
     // 재인증이 필요한 경우 모달이 뜬다 — 서버 오류 문구만 보고 막히지 않게 한다
     onError: () => {
-      void fetchAndPersistUserInfo();
+      void refreshUserInfoInBackground();
     },
   });
   const disconnectRepositoryMutation = useMutation({

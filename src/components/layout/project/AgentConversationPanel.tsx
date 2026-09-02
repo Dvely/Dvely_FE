@@ -13,7 +13,7 @@ import {
   postApprovalReject,
   useApprovalDetailQuery,
 } from '@/api/approvals';
-import { fetchAndPersistUserInfo } from '@/api/user';
+import { refreshUserInfoInBackground } from '@/api/user';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
 import type { GetAgentTaskResType } from '@/types/agent.type';
@@ -391,7 +391,7 @@ function AgentConversationPanel({
       setIsAssistantReplying(false);
       // 저장소 연결 승인은 서버가 GitHub 을 호출한다. 연동이 끊겨 실패했다면
       // 사용자 정보를 다시 읽어 재인증 진입점을 띄운다
-      void fetchAndPersistUserInfo();
+      void refreshUserInfoInBackground();
     },
   });
 

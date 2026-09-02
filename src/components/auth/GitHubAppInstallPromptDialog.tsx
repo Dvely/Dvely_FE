@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouterState } from '@tanstack/react-router';
 import { GitBranch } from 'lucide-react';
-import { fetchAndPersistUserInfo } from '@/api/user';
+import { refreshUserInfoInBackground } from '@/api/user';
 import { fetchGitHubAppInstallUrl, fetchGitHubAppReauthorizeUrl } from '@/api/auth';
 import {
   GITHUB_APP_INSTALL_REQUIRED_EVENT,
@@ -52,8 +52,8 @@ function GitHubAppInstallPromptDialog() {
   useEffect(() => {
     if (!localStorage.getItem('accessToken')) return;
 
-    void fetchAndPersistUserInfo().then((response) => {
-      if (!response.data) return;
+    void refreshUserInfoInBackground().then((response) => {
+      if (!response?.data) return;
       if (!response.data.githubAppInstalled) {
         setPromptMode('install');
         setOpen(true);
@@ -96,7 +96,7 @@ function GitHubAppInstallPromptDialog() {
     if (event.data?.type !== GITHUB_APP_INSTALL_SUCCESS_MESSAGE) return;
     setOpen(false);
     // 저장된 사용자 정보에 옛 만료 플래그가 남지 않도록 다시 읽는다
-    void fetchAndPersistUserInfo();
+    void refreshUserInfoInBackground();
   }, []);
 
   useEffect(() => {
