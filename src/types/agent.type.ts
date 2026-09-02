@@ -33,9 +33,9 @@ const postAgentDecisionResSchema = z.object({
   /** AI 제공자 */
   aiProvider: aiProviderSchema,
   /** 태스크 ID */
-  taskId: z.string().min(1, '태스크 ID가 없습니다.').prefault(''),
+  taskId: z.string().prefault(''),
   /** 태스크 상태 */
-  status: z.string().min(1, '태스크 상태가 없습니다.').prefault(''),
+  status: z.string().prefault(''),
   /** 생성된 승인 ID 목록 */
   approvalIds: z.array(z.number().int()),
 });
@@ -53,7 +53,7 @@ const getAgentTaskParamsSchema = z.object({
  */
 const getAgentTaskResSchema = z.object({
   /** 태스크 ID */
-  taskId: z.string().min(1, '태스크 ID가 없습니다.').prefault(''),
+  taskId: z.string().prefault(''),
   /** 태스크 상태 */
   status: agentTaskStatusSchema,
   /** 토큰 기반 프리뷰 gateway URL. CODE 스텝 완료 시에만 설정됨 */
@@ -97,15 +97,15 @@ const agentTaskEventSchema = z.object({
   /** 이벤트 ID */
   eventId: z.number().int(),
   /** 태스크 ID */
-  taskId: z.string().min(1, '태스크 ID가 없습니다.').prefault(''),
+  taskId: z.string().prefault(''),
   /** 이벤트 타입 (CREATED, STARTED, COMPLETED 등) */
-  type: z.string().min(1, '이벤트 타입이 없습니다.').prefault(''),
+  type: z.string().prefault(''),
   /** 이벤트 시점의 태스크 상태 */
   status: agentTaskStatusSchema,
   /** 진행 메시지 */
   message: z.string().nullable().prefault(''),
   /** 이벤트 생성 시각 (ISO 8601 date-time) */
-  createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  createdAt: z.string().prefault(''),
 });
 
 /**

@@ -14,9 +14,9 @@ const conversationResponseSchema = z.object({
   /** 휴지통 이동 시각. 삭제되지 않은 대화는 null */
   deletedAt: z.string().nullable().prefault(''),
   /** 대화 생성 시각 (ISO 8601 date-time) */
-  createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  createdAt: z.string().prefault(''),
   /** 대화 마지막 수정 시각 (ISO 8601 date-time) */
-  updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
+  updatedAt: z.string().prefault(''),
 });
 
 /**
@@ -103,11 +103,11 @@ const conversationMessageSchema = z.object({
   /** 메시지 역할 */
   role: chatRoleSchema,
   /** 메시지 본문 */
-  content: z.string().min(1, '메시지 본문이 없습니다.').prefault(''),
+  content: z.string().prefault(''),
   /** 메시지 토큰 수. 현재 사용자 메시지는 0으로 저장됩니다. */
   tokenCount: z.number().int(),
   /** 메시지 생성 시각 (ISO 8601 date-time) */
-  createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  createdAt: z.string().prefault(''),
   /** 큐잉된 Agent 작업 ID. 없거나 과거 메시지 조회 시 null */
   taskId: z.string().nullable().prefault(''),
 });

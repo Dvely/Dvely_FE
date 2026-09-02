@@ -25,9 +25,9 @@ const changeSchema = z.object({
   /** 머지 시각. 없으면 null */
   mergedAt: z.string().nullable().prefault(''),
   /** 생성 시각 */
-  createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  createdAt: z.string().prefault(''),
   /** 수정 시각 */
-  updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
+  updatedAt: z.string().prefault(''),
 });
 
 const getProjectChangeListResSchema = z.array(changeSchema);

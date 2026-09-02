@@ -200,7 +200,7 @@ const aiProviderSchema = z.enum(['ANTHROPIC', 'OPENAI']);
  * 실패해 사용자가 요청을 보내도 아무 일도 안 일어난 것처럼 보인다.
  * 알려진 값: CHAT · CODE · DEPLOY · DOMAIN_BIND · INFRA_OPERATE · RUNTIME_SETUP
  */
-const agentTypeSchema = z.string().min(1, '에이전트 유형이 없습니다.').prefault('');
+const agentTypeSchema = z.string().prefault('');
 
 /**
  * 에이전트 태스크 상태
@@ -232,7 +232,7 @@ const agentTaskStatusSchema = z.enum([
  * 파싱에 실패하고, 그러면 승인 카드가 아예 안 떠서 사용자가 결정할 방법이 사라진다 —
  * REPOSITORY_BINDING 이 추가됐을 때 실제로 그렇게 막혔다.
  */
-const approvalTypeSchema = z.string().min(1, '승인 유형이 없습니다.').prefault('');
+const approvalTypeSchema = z.string().prefault('');
 
 /**
  * 승인 상태

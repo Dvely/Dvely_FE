@@ -25,9 +25,9 @@ const postProjectDomainBindReqSchema = z.object({
 
 const domainBindingSubmissionSchema = z.object({
   /** 태스크 ID */
-  taskId: z.string().min(1, '태스크 ID가 없습니다.').prefault(''),
+  taskId: z.string().prefault(''),
   /** 태스크 상태 */
-  status: z.string().min(1, '상태가 없습니다.').prefault(''),
+  status: z.string().prefault(''),
   /** 승인 ID 목록 */
   approvalIds: z.array(z.number().int()),
 });
@@ -42,7 +42,7 @@ const domainSchema = z.object({
   /** 호스팅 대상 */
   hostingTarget: hostingTargetSchema,
   /** 호스트명 */
-  hostname: z.string().min(1, '호스트명이 없습니다.').prefault(''),
+  hostname: z.string().prefault(''),
   /** 도메인 상태 */
   status: domainStatusSchema,
   /** DNS 검증 방식. 없으면 null */
@@ -58,25 +58,25 @@ const domainSchema = z.object({
   /** 마지막 확인 시각. 없으면 null */
   lastCheckedAt: z.string().nullable().prefault(''),
   /** 생성 시각 */
-  createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  createdAt: z.string().prefault(''),
   /** 수정 시각 */
-  updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
+  updatedAt: z.string().prefault(''),
 });
 
 const getProjectDomainListResSchema = z.array(domainSchema);
 
 const dnsRecordSchema = z.object({
   /** 레코드 유형 */
-  type: z.string().min(1, '레코드 유형이 없습니다.').prefault(''),
+  type: z.string().prefault(''),
   /** 호스트 */
-  host: z.string().min(1, '호스트가 없습니다.').prefault(''),
+  host: z.string().prefault(''),
   /** 값 */
-  value: z.string().min(1, '값이 없습니다.').prefault(''),
+  value: z.string().prefault(''),
 });
 
 const getDomainVerificationGuideResSchema = z.object({
   /** 호스트명 */
-  hostname: z.string().min(1, '호스트명이 없습니다.').prefault(''),
+  hostname: z.string().prefault(''),
   /** DNS 검증 방식 */
   verificationMethod: verificationMethodSchema,
   /** DNS 레코드 목록 */
@@ -87,7 +87,7 @@ const domainSearchResultSchema = z.object({
   /** 도메인 유형 */
   type: domainTypeSchema,
   /** 호스트명 */
-  hostname: z.string().min(1, '호스트명이 없습니다.').prefault(''),
+  hostname: z.string().prefault(''),
   /** 사용 가능 여부 */
   available: z.boolean(),
   /** 가격. 없으면 null */
@@ -98,7 +98,7 @@ const domainSearchResultSchema = z.object({
 
 const getDomainSearchResSchema = z.object({
   /** 검색 키워드 */
-  keyword: z.string().min(1, '검색 키워드가 없습니다.').prefault(''),
+  keyword: z.string().prefault(''),
   /** 검색 결과 */
   results: z.array(domainSearchResultSchema),
 });

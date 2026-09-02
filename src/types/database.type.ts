@@ -18,9 +18,7 @@ const databaseEngineSchema = z.enum(['POSTGRESQL', 'MYSQL']);
  * 방식이 늘면(RDS·DOCKER) 상태가 늘 여지도 함께 커진다.
  */
 const databaseStatusSchema = z
-  .string()
-  .min(1, '프로비저닝 상태가 없습니다.')
-  .prefault('');
+  .string().prefault('');
 
 /**
  * 프로비저닝된 DB.

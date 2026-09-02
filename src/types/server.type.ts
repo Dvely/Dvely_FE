@@ -9,7 +9,7 @@ import { z } from 'zod';
  * 쪼개지거나 롤백 단계가 붙는 식), 닫아두면 값이 하나 늘 때마다 목록 전체가 파싱에
  * 실패해 화면이 통째로 빈다. 화면은 아는 값만 라벨로 바꾸고 모르는 값은 그대로 보여준다.
  */
-const serverStatusSchema = z.string().min(1, '서버 상태가 없습니다.').prefault('');
+const serverStatusSchema = z.string().prefault('');
 
 /**
  * 프로비저닝된 EC2 백엔드 서버. 서버가 비밀값(키페어·SSM 파라미터)은 싣지 않는다.

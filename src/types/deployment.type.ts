@@ -17,15 +17,15 @@ const deployResponseSchema = z.object({
   /** 프로젝트 ID */
   projectId: z.number().int(),
   /** 배포 대상 유형 */
-  deployTargetType: z.string().min(1, '배포 대상 유형이 없습니다.').prefault(''),
+  deployTargetType: z.string().prefault(''),
   /** 버전 이름. 없으면 null */
   versionName: z.string().nullable().prefault(''),
   /** 배포 상태 */
-  status: z.string().min(1, '배포 상태가 없습니다.').prefault(''),
+  status: z.string().prefault(''),
   /** GitHub Pages URL. 없으면 null */
   pagesUrl: z.string().nullable().prefault(''),
   /** 생성 시각 */
-  createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  createdAt: z.string().prefault(''),
 });
 
 const deploymentHistorySchema = z.object({
@@ -34,17 +34,17 @@ const deploymentHistorySchema = z.object({
   /** 프로젝트 ID */
   projectId: z.number().int(),
   /** 배포 대상 유형 */
-  deployTargetType: z.string().min(1, '배포 대상 유형이 없습니다.').prefault(''),
+  deployTargetType: z.string().prefault(''),
   /** 버전 라벨. 없으면 null */
   versionLabel: z.string().nullable().prefault(''),
   /** 배포 URL. 없으면 null */
   deployedUrl: z.string().nullable().prefault(''),
   /** 배포 상태 */
-  status: z.string().min(1, '배포 상태가 없습니다.').prefault(''),
+  status: z.string().prefault(''),
   /** 트리거 시각 */
-  triggeredAt: z.string().min(1, '트리거 시각이 없습니다.').prefault(''),
+  triggeredAt: z.string().prefault(''),
   /** 수정 시각 */
-  updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
+  updatedAt: z.string().prefault(''),
   /** 재시도 원본 이력 ID. 없으면 null */
   retriedFromHistoryId: z.number().int().nullable().prefault(null),
   /**
@@ -78,7 +78,7 @@ const versionDetailSchema = z.object({
   /** 버전 ID */
   versionId: z.number().int(),
   /** 버전 이름 */
-  versionName: z.string().min(1, '버전 이름이 없습니다.').prefault(''),
+  versionName: z.string().prefault(''),
   /** 커밋 SHA. 없으면 null */
   commitSha: z.string().nullable().prefault(''),
   /** 제목. 없으면 null */
@@ -103,7 +103,7 @@ const versionSummarySchema = z.object({
   /** 버전 ID */
   versionId: z.number().int(),
   /** 버전 이름 */
-  versionName: z.string().min(1, '버전 이름이 없습니다.').prefault(''),
+  versionName: z.string().prefault(''),
   /** 커밋 SHA. 없으면 null */
   commitSha: z.string().nullable().prefault(''),
   /** 제목. 없으면 null */
@@ -120,7 +120,7 @@ const deploymentCandidateSchema = z.object({
   /** 버전 ID */
   versionId: z.number().int(),
   /** 버전 이름 */
-  versionName: z.string().min(1, '버전 이름이 없습니다.').prefault(''),
+  versionName: z.string().prefault(''),
   /** 커밋 SHA. 없으면 null */
   commitSha: z.string().nullable().prefault(''),
   /** 제목. 없으면 null */
@@ -141,28 +141,28 @@ const deploymentStatusSchema = z.object({
   /** 프로젝트 ID */
   projectId: z.number().int(),
   /** 배포 대상 유형 */
-  deployTargetType: z.string().min(1, '배포 대상 유형이 없습니다.').prefault(''),
+  deployTargetType: z.string().prefault(''),
   /** 버전 라벨. 없으면 null */
   versionLabel: z.string().nullable().prefault(''),
   /** 배포 URL. 없으면 null */
   deployedUrl: z.string().nullable().prefault(''),
   /** 배포 상태 */
-  status: z.string().min(1, '배포 상태가 없습니다.').prefault(''),
+  status: z.string().prefault(''),
   /** 빌드 상태. 없으면 null */
   buildStatus: z.string().nullable().prefault(''),
   /** 빌드 결과. 없으면 null */
   buildConclusion: z.string().nullable().prefault(''),
   /** 트리거 시각 */
-  triggeredAt: z.string().min(1, '트리거 시각이 없습니다.').prefault(''),
+  triggeredAt: z.string().prefault(''),
   /** 수정 시각 */
-  updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
+  updatedAt: z.string().prefault(''),
 });
 
 const deploymentStepSchema = z.object({
   /** 스텝 번호 */
   number: z.number().int(),
   /** 스텝 이름 */
-  name: z.string().min(1, '스텝 이름이 없습니다.').prefault(''),
+  name: z.string().prefault(''),
   /** 상태. 없으면 null */
   status: z.string().nullable().prefault(''),
   /** 결과. 없으면 null */
@@ -173,7 +173,7 @@ const deploymentJobSchema = z.object({
   /** Job ID */
   jobId: z.number().int(),
   /** Job 이름 */
-  name: z.string().min(1, 'Job 이름이 없습니다.').prefault(''),
+  name: z.string().prefault(''),
   /** 상태. 없으면 null */
   status: z.string().nullable().prefault(''),
   /** 결과. 없으면 null */

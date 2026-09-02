@@ -114,7 +114,7 @@ const pendingInfrastructureChangeSchema = z.object({
   /** 네트워크 접근 */
   networkAccess: networkAccessSchema,
   /** 생성 시각 */
-  createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  createdAt: z.string().prefault(''),
 });
 
 const getProjectInfrastructureConfigurationResSchema = z.object({
@@ -148,7 +148,7 @@ const projectInfrastructureChangeSchema = z.object({
   /** 변경한 사용자 ID. 없으면 null */
   actorUserId: z.number().int().nullable().prefault(null),
   /** 생성 시각 */
-  createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  createdAt: z.string().prefault(''),
   /** 결정 시각. 없으면 null */
   decidedAt: z.string().nullable().prefault(''),
 });
@@ -168,7 +168,7 @@ const budgetSchema = z.object({
   /** 월 예산 금액 */
   monthlyBudgetAmount: z.number(),
   /** 통화 */
-  currency: z.string().min(1, '통화가 없습니다.').prefault(''),
+  currency: z.string().prefault(''),
   /** 수정 시각. 없으면 null */
   updatedAt: z.string().nullable().prefault(''),
 });

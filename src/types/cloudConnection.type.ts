@@ -47,9 +47,9 @@ const postCloudConnectionCreateResSchema = z.object({
   /** 클라우드 제공자 */
   provider: cloudProviderSchema,
   /** 연결 상태 */
-  status: z.string().min(1, '연결 상태가 없습니다.').prefault(''),
+  status: z.string().prefault(''),
   /** 검증 Job ID */
-  jobId: z.string().min(1, 'Job ID가 없습니다.').prefault(''),
+  jobId: z.string().prefault(''),
 });
 
 const cloudConnectionSchema = z.object({
@@ -58,11 +58,11 @@ const cloudConnectionSchema = z.object({
   /** 클라우드 제공자 */
   provider: cloudProviderSchema,
   /** 연결 표시 이름 */
-  displayName: z.string().min(1, '표시 이름이 없습니다.').prefault(''),
+  displayName: z.string().prefault(''),
   /** 계정 ID. 없으면 null */
   accountId: z.string().nullable().prefault(''),
   /** 리전 */
-  region: z.string().min(1, '리전이 없습니다.').prefault(''),
+  region: z.string().prefault(''),
   /** AWS Role ARN. 없으면 null */
   roleArn: z.string().nullable().prefault(''),
   /** AWS 자격 증명 유형. 없으면 null */
@@ -82,13 +82,13 @@ const cloudConnectionSchema = z.object({
   /** GCP 서비스 계정 이메일. 없으면 null */
   serviceAccountEmail: z.string().nullable().prefault(''),
   /** 연결 상태 */
-  status: z.string().min(1, '연결 상태가 없습니다.').prefault(''),
+  status: z.string().prefault(''),
   /** 마지막 확인 시각. 없으면 null */
   lastCheckedAt: z.string().nullable().prefault(''),
   /** 생성 시각 */
-  createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  createdAt: z.string().prefault(''),
   /** 수정 시각 */
-  updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
+  updatedAt: z.string().prefault(''),
 });
 
 const getCloudConnectionListResSchema = z.array(cloudConnectionSchema);
@@ -103,7 +103,7 @@ const getCloudConnectionHealthResSchema = z.object({
   /** 클라우드 제공자 */
   provider: cloudProviderSchema,
   /** 연결 상태 */
-  status: z.string().min(1, '연결 상태가 없습니다.').prefault(''),
+  status: z.string().prefault(''),
   /** 상태 메시지. 없으면 null */
   message: z.string().nullable().prefault(''),
   /** 확인 시각. 없으면 null */
@@ -115,7 +115,7 @@ const getCloudConnectionHealthResSchema = z.object({
  */
 const getCloudConnectionVerificationJobResSchema = z.object({
   /** Job ID */
-  jobId: z.string().min(1, 'Job ID가 없습니다.').prefault(''),
+  jobId: z.string().prefault(''),
   /** 클라우드 연결 ID */
   cloudConnectionId: z.number().int(),
   /** Job 상태 */
@@ -127,7 +127,7 @@ const getCloudConnectionVerificationJobResSchema = z.object({
   /** 시도 횟수 */
   attempt: z.number().int(),
   /** 생성 시각 */
-  createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  createdAt: z.string().prefault(''),
   /** 시작 시각. 없으면 null */
   startedAt: z.string().nullable().prefault(''),
   /** 완료 시각. 없으면 null */

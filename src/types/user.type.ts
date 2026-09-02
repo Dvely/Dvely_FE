@@ -7,7 +7,7 @@ const userSchema = z.object({
   /** 사용자 ID */
   id: z.number().int(),
   /** GitHub 사용자명 */
-  username: z.string().min(1, '사용자명이 없습니다.').prefault(''),
+  username: z.string().prefault(''),
   /** 프로필 이미지 URL */
   avatarUrl: z.string().nullable().prefault(''),
   /** GitHub App 설치 여부 */

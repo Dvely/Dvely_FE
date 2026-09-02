@@ -5,7 +5,7 @@ import { z } from 'zod';
  */
 const githubUrlDataSchema = z.object({
   /** GitHub 인증 URL */
-  url: z.string().min(1, '인증 URL이 없습니다.').prefault(''),
+  url: z.string().prefault(''),
   /** OAuth state. 없으면 null */
   state: z.string().nullable().prefault(''),
 });
@@ -19,7 +19,7 @@ const getGitHubAuthUrlResSchema = z.object({
 
 const authTokenDataSchema = z.object({
   /** Access Token */
-  accessToken: z.string().min(1, 'Access Token이 없습니다.').prefault(''),
+  accessToken: z.string().prefault(''),
   /** Refresh Token. 없으면 null */
   refreshToken: z.string().nullable().prefault(''),
   /** GitHub App 설치 여부 */

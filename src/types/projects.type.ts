@@ -16,15 +16,15 @@ const projectListItemSchema = z.object({
   /** 프로젝트 ID */
   projectId: z.number().int(),
   /** 프로젝트 이름 */
-  name: z.string().min(1, '프로젝트 이름이 없습니다.').prefault(''),
+  name: z.string().prefault(''),
   /** 현재 배포 상태 */
   deployStatus: deployStatusSchema,
   /** 현재 배포 URL. 배포 전이면 null */
   currentUrl: z.string().nullable().prefault(''),
   /** 프로젝트 마지막 수정 시각 (ISO 8601 date-time) */
-  updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
+  updatedAt: z.string().prefault(''),
   /** 마지막 수정 시각의 상대 표현 (예: "2시간 전") */
-  updatedAtRelativeText: z.string().min(1, '상대 시각 표현이 없습니다.').prefault(''),
+  updatedAtRelativeText: z.string().prefault(''),
   /** 템플릿 유형. 미설정 시 null */
   templateType: z.string().nullable().prefault(null),
   /** 프로젝트 시작 방식. 미설정 시 null */
@@ -51,7 +51,7 @@ const getProjectDetailResSchema = z.object({
   /** 프로젝트 ID */
   projectId: z.number().int(),
   /** 프로젝트 이름 */
-  name: z.string().min(1, '프로젝트 이름이 없습니다.').prefault(''),
+  name: z.string().prefault(''),
   /** 프로젝트 상태 */
   status: projectStatusSchema,
   /** 프로젝트 시작 방식 */
@@ -59,11 +59,11 @@ const getProjectDetailResSchema = z.object({
   /** 템플릿 유형 */
   templateType: z.string().nullable().prefault(''),
   /** 초안 생성 방식 */
-  draftMode: z.string().min(1, '초안 생성 방식이 없습니다.').prefault(''),
+  draftMode: z.string().prefault(''),
   /** 프로젝트 생성 시각 (ISO 8601 date-time) */
-  createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  createdAt: z.string().prefault(''),
   /** 프로젝트 마지막 수정 시각 (ISO 8601 date-time) */
-  updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
+  updatedAt: z.string().prefault(''),
 });
 
 /**
@@ -111,7 +111,7 @@ const postProjectCreateResSchema = z.object({
   /** 생성된 프로젝트 ID */
   projectId: z.number().int(),
   /** 프로젝트 이름 */
-  name: z.string().min(1, '프로젝트 이름이 없습니다.').prefault(''),
+  name: z.string().prefault(''),
   /** 프로젝트 상태 */
   status: projectStatusSchema,
 });
@@ -187,13 +187,13 @@ const getProjectRepositoryHealthResSchema = z.object({
  */
 const projectLatestCommitSchema = z.object({
   /** 커밋 SHA */
-  sha: z.string().min(1, '커밋 SHA가 없습니다.').prefault(''),
+  sha: z.string().prefault(''),
   /** 커밋 메시지 */
-  message: z.string().min(1, '커밋 메시지가 없습니다.').prefault(''),
+  message: z.string().prefault(''),
   /** 커밋 작성자 */
-  author: z.string().min(1, '커밋 작성자가 없습니다.').prefault(''),
+  author: z.string().prefault(''),
   /** 커밋 시각 (ISO 8601 date-time) */
-  committedAt: z.string().min(1, '커밋 시각이 없습니다.').prefault(''),
+  committedAt: z.string().prefault(''),
 });
 
 /**
@@ -213,7 +213,7 @@ const getProjectCommitListResSchema = z.array(projectLatestCommitSchema);
  * 네 enum 중 어디에 값이 하나 늘어도 새 유형이 저절로 생기므로 닫힌 enum으로 두면
  * 목록 전체가 파싱에 실패해 표가 통째로 빈다. 실제로 그렇게 비어 있었다.
  */
-const projectActivityTypeSchema = z.string().min(1, '활동 유형이 없습니다.').prefault('');
+const projectActivityTypeSchema = z.string().prefault('');
 
 /**
  * 프로젝트 활동 로그
@@ -222,9 +222,9 @@ const projectActivityLogSchema = z.object({
   /** 활동 유형 */
   type: projectActivityTypeSchema,
   /** 활동 메시지 */
-  message: z.string().min(1, '활동 메시지가 없습니다.').prefault(''),
+  message: z.string().prefault(''),
   /** 활동 발생 시각 (ISO 8601 date-time) */
-  occurredAt: z.string().min(1, '활동 발생 시각이 없습니다.').prefault(''),
+  occurredAt: z.string().prefault(''),
 });
 
 /**
@@ -255,7 +255,7 @@ const projectDomainSummarySchema = z.object({
   /** 도메인 ID */
   domainId: z.number().int(),
   /** 호스트명 */
-  hostname: z.string().min(1, '호스트명이 없습니다.').prefault(''),
+  hostname: z.string().prefault(''),
   /** 접속 주소. status가 CONNECTED일 때만 채워진다 — 값이 있으면 지금 열어도 되는 주소다 */
   url: z.string().nullable().prefault(null),
   /** 도메인 유형 */
@@ -282,13 +282,7 @@ const getProjectOverviewResSchema = z.object({
   currentUrl: z.string().nullable().prefault(''),
   /** 현재 배포 상태 */
   deployStatus: deployStatusSchema,
-  /**
-   * 현재 배포 버전. 배포 전이면 비어 있다.
-   *
-   * min(1) 을 걸지 않는다 — 응답 필드에 `.min(1).prefault('')` 를 쓰면 서버가 값을
-   * 안 줬을 때 prefault 가 채운 `''` 를 곧바로 min(1) 이 거절해서, 폴백을 마련해둔
-   * 것처럼 보이지만 실제로는 파싱이 통째로 실패한다.
-   */
+  /** 현재 배포 버전. 배포 전이면 null */
   currentVersion: z.string().nullable().prefault(null),
   /** 연결 저장소의 최신 커밋. 저장소가 없으면 null */
   latestCommit: projectLatestCommitSchema.nullable().prefault(null),
@@ -305,7 +299,7 @@ const postProjectRepositoryResSchema = z.object({
   /** 프로젝트 ID */
   projectId: z.number().int(),
   /** 연결된 GitHub 저장소 전체 이름 */
-  repositoryFullName: z.string().min(1, '저장소 전체 이름이 없습니다.').prefault(''),
+  repositoryFullName: z.string().prefault(''),
   /** 저장소 공개 범위 */
   repositoryVisibility: repositoryVisibilitySchema,
   /** 저장소 연결 상태 */
@@ -319,19 +313,19 @@ const postProjectRepositoryResSchema = z.object({
  */
 const githubRepositorySchema = z.object({
   /** owner/repo 형식의 저장소 전체 이름 */
-  fullName: z.string().min(1, '저장소 전체 이름이 없습니다.').prefault(''),
+  fullName: z.string().prefault(''),
   /** 저장소 이름 */
-  name: z.string().min(1, '저장소 이름이 없습니다.').prefault(''),
+  name: z.string().prefault(''),
   /** 저장소 소유자 GitHub 로그인명 */
-  owner: z.string().min(1, '저장소 소유자가 없습니다.').prefault(''),
+  owner: z.string().prefault(''),
   /** GitHub 저장소 설명 */
   description: z.string().nullable().prefault(''),
   /** 저장소 공개 범위 */
   visibility: repositoryVisibilitySchema,
   /** 기본 브랜치명 */
-  defaultBranch: z.string().min(1, '기본 브랜치명이 없습니다.').prefault(''),
+  defaultBranch: z.string().prefault(''),
   /** GitHub 저장소 마지막 수정 시각 (ISO 8601 date-time) */
-  updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
+  updatedAt: z.string().prefault(''),
 });
 
 /**
