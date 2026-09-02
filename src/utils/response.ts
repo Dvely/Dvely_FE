@@ -41,10 +41,15 @@ function readMessageField(value: unknown): string | null {
 /**
  * API 봉투(`{status, code, message, data}`)에서 data 를 꺼낸다.
  * 봉투 없이 본문만 오는 응답도 있어 그 경우는 그대로 돌려준다.
+ *
+ * `data` 키가 있으면 값이 null 이어도 벗긴다. 예전에는 `data != null` 을 함께 봤는데,
+ * 그러면 "선택된 연결 없음" 처럼 서버가 `data: null` 을 주는 정상 응답에서 봉투가 그대로
+ * 스키마로 넘어갔다. 봉투의 status 는 HTTP 코드(200)라 enum 자리에 숫자가 들어가고,
+ * 원인과 무관한 곳에서 파싱이 터진다.
  */
 export function unwrapApiData<T>(body: T | { data?: T }): T {
-  if (body && typeof body === 'object' && 'data' in body && body.data != null) {
-    return body.data as T;
+  if (body && typeof body === 'object' && 'data' in body) {
+    return (body as { data?: T }).data as T;
   }
   return body as T;
 }

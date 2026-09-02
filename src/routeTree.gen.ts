@@ -24,6 +24,7 @@ import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedProjectIndexRouteImport } from './routes/_authenticated/project.index'
 import { Route as AuthenticatedProjectNewRouteImport } from './routes/_authenticated/project.new'
 import { Route as AuthenticatedProjectSlugRouteImport } from './routes/_authenticated/project.$slug'
+import { Route as AuthenticatedOnboardingCloudRouteImport } from './routes/_authenticated/onboarding.cloud'
 import { Route as AuthenticatedProjectSlugIndexRouteImport } from './routes/_authenticated/project.$slug.index'
 import { Route as AuthenticatedProjectSlugPipelineRouteImport } from './routes/_authenticated/project.$slug.pipeline'
 import { Route as AuthenticatedProjectSlugInfraRouteImport } from './routes/_authenticated/project.$slug.infra'
@@ -110,6 +111,12 @@ const AuthenticatedProjectSlugRoute =
     path: '/$slug',
     getParentRoute: () => AuthenticatedProjectRoute,
   } as any)
+const AuthenticatedOnboardingCloudRoute =
+  AuthenticatedOnboardingCloudRouteImport.update({
+    id: '/onboarding/cloud',
+    path: '/onboarding/cloud',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedProjectSlugIndexRoute =
   AuthenticatedProjectSlugIndexRouteImport.update({
     id: '/',
@@ -177,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/trash': typeof AuthenticatedTrashRoute
   '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/onboarding/cloud': typeof AuthenticatedOnboardingCloudRoute
   '/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
   '/project/new': typeof AuthenticatedProjectNewRoute
   '/project/': typeof AuthenticatedProjectIndexRoute
@@ -201,6 +209,7 @@ export interface FileRoutesByTo {
   '/trash': typeof AuthenticatedTrashRoute
   '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/onboarding/cloud': typeof AuthenticatedOnboardingCloudRoute
   '/project/new': typeof AuthenticatedProjectNewRoute
   '/project': typeof AuthenticatedProjectIndexRoute
   '/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute
@@ -227,6 +236,7 @@ export interface FileRoutesById {
   '/_authenticated/trash': typeof AuthenticatedTrashRoute
   '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/_authenticated/onboarding/cloud': typeof AuthenticatedOnboardingCloudRoute
   '/_authenticated/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
   '/_authenticated/project/new': typeof AuthenticatedProjectNewRoute
   '/_authenticated/project/': typeof AuthenticatedProjectIndexRoute
@@ -254,6 +264,7 @@ export interface FileRouteTypes {
     | '/trash'
     | '/auth/app-callback'
     | '/auth/callback'
+    | '/onboarding/cloud'
     | '/project/$slug'
     | '/project/new'
     | '/project/'
@@ -278,6 +289,7 @@ export interface FileRouteTypes {
     | '/trash'
     | '/auth/app-callback'
     | '/auth/callback'
+    | '/onboarding/cloud'
     | '/project/new'
     | '/project'
     | '/project/$slug/agent'
@@ -303,6 +315,7 @@ export interface FileRouteTypes {
     | '/_authenticated/trash'
     | '/auth/app-callback'
     | '/auth/callback'
+    | '/_authenticated/onboarding/cloud'
     | '/_authenticated/project/$slug'
     | '/_authenticated/project/new'
     | '/_authenticated/project/'
@@ -432,6 +445,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectSlugRouteImport
       parentRoute: typeof AuthenticatedProjectRoute
     }
+    '/_authenticated/onboarding/cloud': {
+      id: '/_authenticated/onboarding/cloud'
+      path: '/onboarding/cloud'
+      fullPath: '/onboarding/cloud'
+      preLoaderRoute: typeof AuthenticatedOnboardingCloudRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/project/$slug/': {
       id: '/_authenticated/project/$slug/'
       path: '/'
@@ -555,6 +575,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
   AuthenticatedTrashRoute: typeof AuthenticatedTrashRoute
+  AuthenticatedOnboardingCloudRoute: typeof AuthenticatedOnboardingCloudRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -565,6 +586,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
   AuthenticatedTrashRoute: AuthenticatedTrashRoute,
+  AuthenticatedOnboardingCloudRoute: AuthenticatedOnboardingCloudRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

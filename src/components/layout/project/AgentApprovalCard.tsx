@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { Approval, ApprovalInput } from '@/types/approval.type';
-import type { ApprovalType } from '@/types/common.enum';
 
 type AgentApprovalCardProps = {
   approval: Approval;
@@ -10,7 +9,7 @@ type AgentApprovalCardProps = {
 };
 
 /** 승인 유형별 제목과 설명. 무엇을 승인하는지 버튼 바로 옆에서 읽히게 한다 */
-const APPROVAL_COPY: Record<ApprovalType, { title: string; description: string }> = {
+const APPROVAL_COPY: Record<string, { title: string; description: string }> = {
   CHANGE: {
     title: '변경 사항 승인',
     description: '에이전트가 만든 코드 변경을 적용할지 결정합니다.',
@@ -36,6 +35,20 @@ const APPROVAL_COPY: Record<ApprovalType, { title: string; description: string }
     title: '작업 결과 승인',
     description: '에이전트가 낸 결과를 확정할지 결정합니다.',
   },
+  SERVER_PROVISION: {
+    title: '백엔드 서버 생성',
+    description: '당신의 AWS 계정에 서버를 만듭니다. 켜져 있는 동안 과금됩니다.',
+  },
+  DATABASE_PROVISION: {
+    title: '데이터베이스 생성',
+    description: '당신의 AWS 계정에 데이터베이스를 만듭니다. 켜져 있는 동안 과금됩니다.',
+  },
+};
+
+/** 모르는 유형이 와도 카드는 떠야 한다. 결정할 방법이 사라지는 것보다 낫다 */
+const FALLBACK_COPY = {
+  title: '승인이 필요합니다',
+  description: '아래 내용을 확인하고 결정해 주세요.',
 };
 
 const INPUT_LABEL: Record<string, string> = {
@@ -69,7 +82,7 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
   const [value, setValue] = useState(input?.defaultValue ?? '');
   const [touched, setTouched] = useState(false);
 
-  const copy = APPROVAL_COPY[approval.type];
+  const copy = APPROVAL_COPY[approval.type] ?? FALLBACK_COPY;
   const summary = approval.summary?.trim() ?? '';
   // summary가 입력 기본값을 되풀이할 뿐이면(예: "[저장소 연결] my-repo") 아래 입력 필드와
   // 같은 값이 두 번 보인다. 그럴 때는 입력 필드만 남긴다

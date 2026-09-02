@@ -194,10 +194,13 @@ const environmentVariableScopeSchema = z.enum(['PREVIEW', 'PRODUCTION']);
 const aiProviderSchema = z.enum(['ANTHROPIC', 'OPENAI']);
 
 /**
- * 에이전트 작업 유형
- * @example "CHAT"
+ * 에이전트 단계 유형.
+ * 열린 문자열로 받는다 — 계획에 새 단계가 생길 때마다 값이 늘고(RUNTIME_SETUP 이 그 예),
+ * 화면은 이 값으로 분기하지 않는다. 닫아두면 값 하나 때문에 계획 응답 전체가 파싱에
+ * 실패해 사용자가 요청을 보내도 아무 일도 안 일어난 것처럼 보인다.
+ * 알려진 값: CHAT · CODE · DEPLOY · DOMAIN_BIND · INFRA_OPERATE · RUNTIME_SETUP
  */
-const agentTypeSchema = z.enum(['CHAT', 'CODE', 'DEPLOY', 'DOMAIN_BIND', 'INFRA_OPERATE']);
+const agentTypeSchema = z.string().min(1, '에이전트 유형이 없습니다.').prefault('');
 
 /**
  * 에이전트 태스크 상태
@@ -220,14 +223,16 @@ const agentTaskStatusSchema = z.enum([
  * 승인 유형
  * @example "CHANGE"
  */
-const approvalTypeSchema = z.enum([
-  'CHANGE',
-  'DEPLOYMENT',
-  'DOMAIN_BINDING',
-  'INFRA_OPERATION',
-  'REPOSITORY_BINDING',
-  'RESULT',
-]);
+/**
+ * 승인 유형. 알려진 값: CHANGE · DEPLOYMENT · DOMAIN_BINDING · INFRA_OPERATION ·
+ * REPOSITORY_BINDING · RESULT · SERVER_PROVISION.
+ *
+ * 열린 문자열로 받는다. 화면은 이 값으로 문구를 고르지만 모르는 값이면 기본 문구로
+ * 떨어지면 그만이다. 반면 닫아두면 서버가 유형을 하나 늘릴 때 승인 조회가 통째로
+ * 파싱에 실패하고, 그러면 승인 카드가 아예 안 떠서 사용자가 결정할 방법이 사라진다 —
+ * REPOSITORY_BINDING 이 추가됐을 때 실제로 그렇게 막혔다.
+ */
+const approvalTypeSchema = z.string().min(1, '승인 유형이 없습니다.').prefault('');
 
 /**
  * 승인 상태

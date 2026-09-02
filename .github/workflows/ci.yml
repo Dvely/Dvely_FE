@@ -4,13 +4,19 @@ name: CI
 # 이 워크플로가 PR에서 실패하면 병합을 막는 것이 전제다 — GitHub 저장소 설정에서
 # main 보호 규칙에 "Typecheck and build"를 required status check로 걸어야 실제로 막힌다.
 # 워크플로 파일만으로는 강제되지 않는다.
+#
+# develop 도 함께 본다. 작업은 develop 에 모았다가 준비되면 main 으로 올리는데,
+# develop 에서 검사가 안 돌면 "모아두고 확인한다"가 이름뿐이 된다.
+# develop 병합은 배포로 이어지지 않는다(deploy-ec2.yml 은 main push 에만 반응).
 on:
   pull_request:
     branches:
       - main
+      - develop
   push:
     branches:
       - main
+      - develop
 
 # PR에 커밋을 연달아 밀면 앞선 실행은 취소한다. 배포와 달리 중간 상태가 남지 않는다.
 concurrency:

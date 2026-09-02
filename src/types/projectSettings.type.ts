@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import {
   budgetStatusSchema,
-  cloudConnectionStatusSchema,
   cloudProviderSchema,
   computeTierSchema,
   deploymentArchitectureSchema,
@@ -62,8 +61,13 @@ const getProjectInfrastructureSettingsResSchema = z.object({
   displayName: z.string().nullable().prefault(''),
   /** 리전. 없으면 null */
   region: z.string().nullable().prefault(''),
-  /** 연결 상태. 없으면 null */
-  status: cloudConnectionStatusSchema.nullable().prefault(null),
+  /**
+   * 인프라 설정 상태. 연결이 선택돼 있으면 그 연결의 상태를, 없으면 NOT_CONFIGURED 를 준다.
+   * 즉 클라우드 연결 상태의 상위집합이라 cloudConnectionStatusSchema 로 받으면 안 된다.
+   * 화면은 이 값으로 분기하지 않고 cloudConnectionId 만 읽으므로 열린 문자열로 둔다 —
+   * 닫아둔 탓에 NOT_CONFIGURED 하나 때문에 응답 전체가 파싱에 실패하고 있었다.
+   */
+  status: z.string().nullable().prefault(null),
   /** 마지막 확인 시각. 없으면 null */
   lastCheckedAt: z.string().nullable().prefault(''),
   /** 수정 시각. 없으면 null */

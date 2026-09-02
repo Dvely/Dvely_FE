@@ -1,6 +1,6 @@
 import Http from '@/utils/httpClients';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { errorResponse, succesResponse } from '@/utils/response';
+import { errorResponse, succesResponse, unwrapApiData } from '@/utils/response';
 import type { ApiResponse } from '@/types/response.type';
 import type { DeployStatus } from '@/types/common.enum';
 import {
@@ -144,9 +144,7 @@ async function postProjectCreate(params: PostProjectCreateReqType) {
     .post<ApiResponse<PostProjectCreateResType>>(endpoint, payload)
     .then((response) => {
       const body = succesResponse<ApiResponse<PostProjectCreateResType>>(response);
-      const data =
-        body && typeof body === 'object' && 'data' in body && body.data != null ? body.data : body;
-      return postProjectCreateResSchema.parse(data);
+      return postProjectCreateResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -257,8 +255,8 @@ async function getProjectChatSettings(projectId: number) {
   return Http.instance
     .get<ProjectChatSettings>(`${endpoint}/${projectId}/settings/chat`)
     .then((response) => {
-      const data = succesResponse<ProjectChatSettings>(response);
-      return projectChatSettingsSchema.parse(data);
+      const body = succesResponse<ProjectChatSettings>(response);
+      return projectChatSettingsSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -273,8 +271,8 @@ async function patchProjectChatSettings(
   return Http.instance
     .patch<ProjectChatSettings>(`${endpoint}/${projectId}/settings/chat`, payload)
     .then((response) => {
-      const data = succesResponse<ProjectChatSettings>(response);
-      return projectChatSettingsSchema.parse(data);
+      const body = succesResponse<ProjectChatSettings>(response);
+      return projectChatSettingsSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -286,8 +284,12 @@ async function getProjectInfrastructureSettings(projectId: number) {
       `${endpoint}/${projectId}/settings/infrastructure`,
     )
     .then((response) => {
-      const data = succesResponse<GetProjectInfrastructureSettingsResType>(response);
-      return getProjectInfrastructureSettingsResSchema.parse(data);
+      const body = succesResponse<GetProjectInfrastructureSettingsResType>(response);
+      const payload = unwrapApiData(body);
+      // 선택된 클라우드 연결이 없으면 서버가 data: null 을 준다. 오류가 아니라 정상 상태라
+      // 파싱하지 않고 그대로 비운다 — 호출부는 이미 optional chaining 으로 읽는다
+      if (payload == null) return null;
+      return getProjectInfrastructureSettingsResSchema.parse(payload);
     })
     .catch(errorResponse());
 }
@@ -305,8 +307,8 @@ async function putProjectInfrastructureSettings(
       payload,
     )
     .then((response) => {
-      const data = succesResponse<GetProjectInfrastructureSettingsResType>(response);
-      return getProjectInfrastructureSettingsResSchema.parse(data);
+      const body = succesResponse<GetProjectInfrastructureSettingsResType>(response);
+      return getProjectInfrastructureSettingsResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -326,8 +328,8 @@ async function getProjectInfrastructureConfiguration(projectId: number) {
       `${endpoint}/${projectId}/settings/infrastructure/configuration`,
     )
     .then((response) => {
-      const data = succesResponse<GetProjectInfrastructureConfigurationResType>(response);
-      return getProjectInfrastructureConfigurationResSchema.parse(data);
+      const body = succesResponse<GetProjectInfrastructureConfigurationResType>(response);
+      return getProjectInfrastructureConfigurationResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -345,8 +347,8 @@ async function putProjectInfrastructureConfiguration(
       payload,
     )
     .then((response) => {
-      const data = succesResponse<GetProjectInfrastructureConfigurationResType>(response);
-      return getProjectInfrastructureConfigurationResSchema.parse(data);
+      const body = succesResponse<GetProjectInfrastructureConfigurationResType>(response);
+      return getProjectInfrastructureConfigurationResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -359,8 +361,8 @@ async function getProjectInfrastructureConfigurationHistory(projectId: number, l
       { params: limit != null ? { limit } : undefined },
     )
     .then((response) => {
-      const data = succesResponse<GetProjectInfrastructureConfigurationHistoryResType>(response);
-      return getProjectInfrastructureConfigurationHistoryResSchema.parse(data);
+      const body = succesResponse<GetProjectInfrastructureConfigurationHistoryResType>(response);
+      return getProjectInfrastructureConfigurationHistoryResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -370,8 +372,8 @@ async function getProjectCostBudget(projectId: number) {
   return Http.instance
     .get<GetProjectCostBudgetResType>(`${endpoint}/${projectId}/settings/cost-budget`)
     .then((response) => {
-      const data = succesResponse<GetProjectCostBudgetResType>(response);
-      return getProjectCostBudgetResSchema.parse(data);
+      const body = succesResponse<GetProjectCostBudgetResType>(response);
+      return getProjectCostBudgetResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -383,8 +385,8 @@ async function putProjectCostBudget(projectId: number, params: PutProjectCostBud
   return Http.instance
     .put<GetProjectCostBudgetResType>(`${endpoint}/${projectId}/settings/cost-budget`, payload)
     .then((response) => {
-      const data = succesResponse<GetProjectCostBudgetResType>(response);
-      return getProjectCostBudgetResSchema.parse(data);
+      const body = succesResponse<GetProjectCostBudgetResType>(response);
+      return getProjectCostBudgetResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
