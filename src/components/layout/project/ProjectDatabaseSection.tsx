@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { postProjectDatabase, useProjectDatabaseListQuery } from '@/api/databases';
 import { useProjectPreviewQuery } from '@/api/preview';
 import { usePreviewRuntimeConfigQuery } from '@/api/previewRuntime';
@@ -178,9 +179,15 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
           </p>
         ) : null}
         {needsCloudConnection ? (
-          <p className="mt-3 text-[12px] text-[#b45309]">
+          <p className="mt-3 text-[12px] leading-relaxed text-[#b45309]">
             RDS는 연결된 클라우드 계정이 있어야 만들 수 있습니다. 위 클라우드 연결 선택에서 먼저
-            연결해 주세요.
+            연결해 주세요.{' '}
+            <Link
+              to="/onboarding/cloud"
+              className="font-semibold underline underline-offset-2 hover:text-[#92400e]"
+            >
+              AWS가 처음이신가요?
+            </Link>
           </p>
         ) : null}
         {method === 'RDS' ? (
