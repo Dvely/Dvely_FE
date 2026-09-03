@@ -16,6 +16,13 @@ type ProjectDomainsPageProps = {
 
 const skeletonItems = Array.from({ length: 3 }, (_, index) => `domain-skeleton-${index}`);
 
+/** 지금 실제로 연결되는 것은 GitHub Pages 뿐이다 */
+const HOSTING_TARGET_OPTIONS: { value: HostingTarget; label: string; enabled: boolean }[] = [
+  { value: 'GITHUB_PAGES', label: 'GitHub Pages', enabled: true },
+  { value: 'AWS', label: 'AWS (곧 지원)', enabled: false },
+  { value: 'GCP', label: 'GCP (곧 지원)', enabled: false },
+];
+
 function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
   const [keyword, setKeyword] = useState('');
   const [bindType, setBindType] = useState<DomainType>('custom_domain');
@@ -112,14 +119,22 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
             placeholder="서브도메인 라벨"
             className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
           />
+          {/*
+            AWS·GCP 는 서버에 어댑터가 없다. DomainHostingAdapterRegistry 가 지원 어댑터를
+            못 찾으면 예외를 던져서, 고르면 저장조차 안 되고 실패한다. 고를 수 있게 두면
+            누른 사람만 헛돈다 — 비활성으로 보여주되 목록에는 남긴다. 곧 온다는 것 자체가
+            정보다(DB 방식의 DOCKER 와 같은 처리).
+          */}
           <select
             value={hostingTarget}
             onChange={(event) => setHostingTarget(event.target.value as HostingTarget)}
             className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
           >
-            <option value="GITHUB_PAGES">GitHub Pages</option>
-            <option value="AWS">AWS</option>
-            <option value="GCP">GCP</option>
+            {HOSTING_TARGET_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value} disabled={!option.enabled}>
+                {option.label}
+              </option>
+            ))}
           </select>
           <select
             value={verificationMethod}
