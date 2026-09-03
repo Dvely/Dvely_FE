@@ -6,7 +6,7 @@ import {
   postProjectConversationCreate,
   useConversationMessageListQuery,
 } from '@/api/chat';
-import { pollAgentTask, SETTLED_AGENT_TASK_STATUSES } from '@/api/agent';
+import { pollAgentTask, postAgentTaskInput, SETTLED_AGENT_TASK_STATUSES } from '@/api/agent';
 import {
   getProjectApprovalList,
   postApprovalApprove,
@@ -147,6 +147,15 @@ function AgentConversationPanel({
   const [isAssistantReplying, setIsAssistantReplying] = useState(false);
   // 폴링이 읽어오는 태스크. 진행 문구를 만드는 데만 쓴다
   const [progressTask, setProgressTask] = useState<GetAgentTaskResType | null>(null);
+  /*
+    에이전트가 되물어서 멈춰 선 태스크.
+    "배포해줘"에 저장소 이름을, "도메인 연결해줘"에 도메인을 묻는 자리다.
+
+    이때 사용자가 입력창에 적는 것은 **새 요청이 아니라 그 질문의 답**이다. 새 메시지로
+    보내면 서버는 새 태스크를 만들고, 원래 태스크는 WAITING_INPUT 인 채 영원히 남는다
+    — 배포가 되묻는 순간부터 빠져나올 길이 없어진다.
+  */
+  const [awaitingInputTaskId, setAwaitingInputTaskId] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   // 승인 대기 여부는 서버만 안다 — 채팅 본문에서 유추하지 않는다
   const [pendingApprovalId, setPendingApprovalId] = useState<number | null>(null);
@@ -172,6 +181,9 @@ function AgentConversationPanel({
   // 새로고침하면 사라진다. 그러면 승인은 PENDING인데 카드가 없어 결정할 방법이 없어진다.
   // 승인 목록에는 conversationId·taskId·input이 다 들어 있으므로 이쪽으로 찾는다.
   useEffect(() => {
+    // 대화가 바뀌면 초기화한다. 남겨두면 다른 대화의 질문에 답을 보내게 된다
+    setAwaitingInputTaskId(null);
+
     if (conversationId == null) {
       setPendingApprovalId(null);
       return;
@@ -278,6 +290,10 @@ function AgentConversationPanel({
 
       const pendingApprovalId = result.task?.pendingApprovalId ?? result.pendingApprovalId ?? null;
       setPendingApprovalId(pendingApprovalId);
+      // 에이전트가 되물었으면 다음 입력은 새 요청이 아니라 그 답이다
+      setAwaitingInputTaskId(
+        result.task?.status === 'WAITING_INPUT' ? (result.taskId || null) : null,
+      );
 
       // 어시스턴트 답변을 task.summary 로 직접 만들지 않는다. 서버가 같은 사건을
       // chat_messages 에 이미 적어두는데 문구가 달라서(요약 전문 vs 짧은 안내) 병합에
@@ -394,6 +410,8 @@ function AgentConversationPanel({
 
       const needsApproval = APPROVAL_WAIT_STATUSES.has(task.status) && pendingApprovalId != null;
       setPendingApprovalId(needsApproval ? pendingApprovalId : null);
+      // 승인 뒤 이어 달리다 되물을 수도 있다
+      setAwaitingInputTaskId(task.status === 'WAITING_INPUT' ? (task.taskId || null) : null);
 
       // 태스크가 끝났으면 게이트 안내와 결과가 서버에 기록돼 있다.
       // 로컬 임시 메시지를 덧붙이면 곧 도착할 서버 메시지와 겹치므로 오버레이를 비우고
@@ -442,8 +460,91 @@ function AgentConversationPanel({
     },
   });
 
+  /**
+   * 에이전트 질문에 대한 답을 제출한다.
+   *
+   * 새 메시지가 아니라 `POST /agent/tasks/{taskId}/input` 으로 보낸다 — 서버는 이 값을
+   * 받아 멈춰 있던 태스크를 그 자리에서 이어 달리게 한다(WAITING_INPUT → QUEUED).
+   * 새 메시지로 보내면 새 태스크가 생기고 원래 태스크는 영영 멈춰 있는다.
+   *
+   * 서버는 이 답을 채팅에 남기지 않는다(이벤트만 남긴다). 그래서 여기서 화면에 얹어
+   * 준다 — 안 그러면 대화가 "질문 → (공백) → 결과" 로 읽힌다.
+   */
+  const submitInputMutation = useMutation({
+    mutationFn: async ({ taskId, value }: { taskId: string; value: string }) => {
+      await postAgentTaskInput(taskId, { value });
+
+      pollAbortRef.current?.abort();
+      const controller = new AbortController();
+      pollAbortRef.current = controller;
+      const task = await pollAgentTask(taskId, {
+        signal: controller.signal,
+        onProgress: setProgressTask,
+      });
+
+      const pendingApprovalId = await resolvePendingApprovalId(task, projectId, conversationId);
+      return { task, taskId, pendingApprovalId };
+    },
+    onMutate: ({ value }) => {
+      const targetConversationId = conversationId ?? 0;
+      const userMessage = createLocalMessage(targetConversationId, 'user', value);
+      setOverlayMessages((prev) => {
+        const next = [...mergeConversationMessages(serverMessages ?? [], prev), userMessage];
+        writeSessionMessages(targetConversationId, next);
+        return next;
+      });
+      setInput('');
+      setIsAssistantReplying(true);
+      setProgressTask(null);
+      // 답을 보냈으니 대기 상태를 푼다. 이어 달리다 또 물으면 onSuccess 가 다시 세운다
+      setAwaitingInputTaskId(null);
+      return { userMessage, targetConversationId };
+    },
+    onSuccess: ({ task, taskId, pendingApprovalId }) => {
+      if (conversationId == null) return;
+
+      rememberConversationTaskId(conversationId, taskId);
+      setPendingApprovalId(
+        APPROVAL_WAIT_STATUSES.has(task.status) && pendingApprovalId != null
+          ? pendingApprovalId
+          : null,
+      );
+      setAwaitingInputTaskId(task.status === 'WAITING_INPUT' ? (task.taskId || null) : null);
+
+      void queryClient.invalidateQueries({
+        queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, conversationId],
+      });
+      void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
+      void queryClient.invalidateQueries({ queryKey: ['project-detail'] });
+      setIsAssistantReplying(false);
+      setProgressTask(null);
+      onConversationActivity?.(conversationId);
+    },
+    onError: (error, variables, context) => {
+      setIsAssistantReplying(false);
+      setProgressTask(null);
+
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+
+      /*
+        태스크가 더 이상 입력을 기다리지 않으면(취소됐거나 만료) 서버가 400·404 를 준다.
+        그때는 사용자가 적은 말을 잃지 않도록 평범한 메시지로 다시 보낸다 — 답이 갈 곳이
+        없어졌다고 사용자에게 되돌려주면 같은 말을 두 번 적게 된다.
+      */
+      setAwaitingInputTaskId(null);
+      if (context?.userMessage) {
+        setOverlayMessages((prev) => {
+          const next = prev.filter((message) => message.messageId !== context.userMessage.messageId);
+          writeSessionMessages(context.targetConversationId, next);
+          return next;
+        });
+      }
+      sendMessageMutation.mutate(variables.value);
+    },
+  });
+
   const isSending = sendMessageMutation.isPending;
-  const isInputLocked = isSending || isAssistantReplying;
+  const isInputLocked = isSending || isAssistantReplying || submitInputMutation.isPending;
 
   // 세 경로 모두 mutationFn 안에서 태스크가 끝날 때까지 폴링하므로, 이 값이 참인 동안이 곧 작업 구간이다
   const isAgentTaskActive = isInputLocked || decideApprovalMutation.isPending;
@@ -466,6 +567,12 @@ function AgentConversationPanel({
   const handleSend = () => {
     const content = input.trim();
     if (!content || isInputLocked) return;
+
+    // 에이전트가 되물어 놓은 상태면 이건 새 요청이 아니라 그 질문의 답이다
+    if (awaitingInputTaskId) {
+      submitInputMutation.mutate({ taskId: awaitingInputTaskId, value: content });
+      return;
+    }
 
     sendMessageMutation.mutate(content);
   };
@@ -561,6 +668,15 @@ function AgentConversationPanel({
       </div>
 
       <footer className="border-t border-[#f1f5f9] p-3">
+        {/*
+          지금 적는 말이 새 요청이 아니라 위 질문의 답이라는 것을 알린다. 이 표시가 없으면
+          사용자는 평소처럼 말을 걸었다고 생각하는데, 실제로는 멈춰 선 작업이 이어 달린다
+        */}
+        {awaitingInputTaskId ? (
+          <p className="mb-2 rounded-lg bg-[#faf5ff] px-2.5 py-1.5 text-[12px] font-medium text-[#6d28d9]">
+            에이전트가 답을 기다리고 있습니다. 여기에 적으면 하던 작업을 이어서 진행합니다.
+          </p>
+        ) : null}
         <div className="mb-2 flex flex-wrap gap-2">
           {suggestedPrompts.map(({ label, prompt }) => (
             <button
@@ -581,7 +697,7 @@ function AgentConversationPanel({
             disabled={isInputLocked}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="메시지를 입력하세요"
+            placeholder={awaitingInputTaskId ? '위 질문에 답해 주세요' : '메시지를 입력하세요'}
             className="min-h-[40px] flex-1 resize-none bg-transparent text-[13px] text-[#0f172a] outline-none placeholder:text-[#94a3b8] disabled:opacity-60"
           />
           <button
