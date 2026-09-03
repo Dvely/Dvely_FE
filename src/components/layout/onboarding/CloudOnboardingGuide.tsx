@@ -42,6 +42,12 @@ const COST_ROWS = [
  * RDS 두 문장(Rds*)도 함께 넣는다. 지금 DB 를 안 쓰더라도 나중에 쓰게 되면 키를 다시
  * 만들어야 하는데, 처음 한 번에 넣어두면 그 일이 없다.
  *
+ * `RdsServiceLinkedRole` 은 **RDS 를 처음 쓰는 계정에만** 필요하다. 첫 CreateDBInstance 가
+ * 서비스 연결 역할(AWSServiceRoleForRDS)을 자동 생성하는데, 그 권한이 없으면 400 으로
+ * 막힌다. 이미 RDS 를 써본 계정은 역할이 있어 이 액션이 호출되지 않는다 — 그래서
+ * **테스트 계정에서는 구조적으로 안 걸리고, 온보딩을 보고 처음 키를 만든 사람만 막힌다.**
+ * 이 안내가 대상으로 하는 게 바로 그 사람이라 빠뜨리면 안 된다.
+ *
  * `ec2:DescribeAddresses` 는 고아 EIP 자동청소 워커가 쓴다. 종료가 실패하거나 배포가
  * 중간에 깨져 연결되지 않은 EIP 가 남으면, 워커가 주기적으로 찾아 회수한다 — 그게 없으면
  * 사용자가 AWS 콘솔을 직접 열어 지워야 하고, 애초에 남았다는 것조차 알 수 없다.
@@ -57,8 +63,8 @@ const COST_ROWS = [
  * - **EIP 세 액션도 검증 완료.** allocate → associate → 그 주소로 서빙 → 종료 시 release
  *   까지 실계정에서 돌렸다. release 는 로그뿐 아니라 주소가 실제로 응답하지 않는 것까지
  *   확인했다 — 로그에 released 가 찍혀도 남아 있을 수 있어서다.
- * - **RDS 두 문장은 아직 실제로 돌려본 적이 없다.** 액션·리소스는 호출부와 대조했지만,
- *   IAM 외의 이유(기본 서브넷그룹 부재·엔진 버전 등)로 막힐 여지는 남아 있다.
+ * - **RDS 도 실계정에서 검증했다.** 검증 과정에서 두 가지가 모자랐고 둘 다 채웠다 —
+ *   서비스 연결 역할 생성 권한(위 참고), 그리고 BE 쪽 RDS 전용 보안그룹.
  */
 const IAM_POLICY_JSON = `{
   "Version": "2012-10-17",
@@ -138,6 +144,13 @@ const IAM_POLICY_JSON = `{
       "Effect": "Allow",
       "Action": "rds:DescribeDBInstances",
       "Resource": "*"
+    },
+    {
+      "Sid": "RdsServiceLinkedRole",
+      "Effect": "Allow",
+      "Action": "iam:CreateServiceLinkedRole",
+      "Resource": "arn:aws:iam::*:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS",
+      "Condition": { "StringEquals": { "iam:AWSServiceName": "rds.amazonaws.com" } }
     }
   ]
 }`;
