@@ -86,7 +86,7 @@ const IAM_POLICY_JSON = `{
       "Effect": "Allow",
       "Action": [
         "ssm:PutParameter", "ssm:GetParameter", "ssm:GetParameters",
-        "ssm:DeleteParameter", "ssm:DeleteParameters"
+        "ssm:GetParametersByPath", "ssm:DeleteParameter", "ssm:DeleteParameters"
       ],
       "Resource": "arn:aws:ssm:*:*:parameter/qeploy/*"
     },
