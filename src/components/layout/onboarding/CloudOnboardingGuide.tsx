@@ -42,10 +42,16 @@ const COST_ROWS = [
  * RDS 두 문장(Rds*)도 함께 넣는다. 지금 DB 를 안 쓰더라도 나중에 쓰게 되면 키를 다시
  * 만들어야 하는데, 처음 한 번에 넣어두면 그 일이 없다.
  *
+ * `ec2:ReleaseAddress` 는 종료 경로에서만 쓰이지만 빠뜨리면 안 된다. 없으면 서버를 꺼도
+ * **고정 IP(EIP)가 유휴 상태로 남아 계속 과금된다** — 인스턴스를 껐으니 청구가 멈췄으리라
+ * 여기게 되는데 실제로는 안 멈춘다.
+ *
  * 검증 상태(2026-09-03):
  * - **EC2·IAM·SSM·S3 경로는 개인 실계정에서 전 주기 검증 완료.** 역할 자동생성부터
  *   launch·헬스체크·종료 정리(getParametersByPath 로 파라미터 훑어 삭제)까지 이 정책
  *   그대로 돌았다. 그 과정에서 세 개가 모자라 하나씩 채웠다 — 위 두 주석이 그 흔적이다.
+ * - **EIP 세 액션(Allocate·Associate·Release)은 아직 미검증이다.** 특히 Release 는 종료
+ *   경로라 만들기만 해서는 안 걸린다 — 끝까지 종료해 봐야 확인된다.
  * - **RDS 두 문장은 아직 실제로 돌려본 적이 없다.** 액션·리소스는 호출부와 대조했지만,
  *   IAM 외의 이유(기본 서브넷그룹 부재·엔진 버전 등)로 막힐 여지는 남아 있다.
  */
@@ -66,7 +72,8 @@ const IAM_POLICY_JSON = `{
       "Effect": "Allow",
       "Action": [
         "ec2:RunInstances", "ec2:TerminateInstances", "ec2:CreateTags",
-        "ec2:CreateSecurityGroup", "ec2:AuthorizeSecurityGroupIngress"
+        "ec2:CreateSecurityGroup", "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:AllocateAddress", "ec2:AssociateAddress", "ec2:ReleaseAddress"
       ],
       "Resource": "*"
     },
