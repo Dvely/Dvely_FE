@@ -27,8 +27,15 @@ const provisionedServerSchema = z.object({
   host: z.string().nullable().prefault(null),
   /** 앱 포트. 백엔드 규약상 8080 고정이지만 서버가 주는 값을 쓴다 */
   port: z.number().int().nullable().prefault(null),
-  /** RUNNING 일 때만 접속 URL, 아니면 null */
+  /** RUNNING 일 때만 접속 URL, 아니면 null. EIP 직접 접속이라 http · 8080 이다 */
   url: z.string().nullable().prefault(null),
+  /**
+   * 백엔드에 도메인이 연결돼 있을 때의 주소. 없으면 null.
+   *
+   * 인스턴스의 Caddy 가 443 에서 HTTPS 를 끝내므로 `https://{host}` 형태이고 포트가 없다.
+   * 즉 `url`(http · EIP · :8080)보다 이쪽이 사람에게 보여줄 주소다 — 둘 다 있으면 이걸 쓴다.
+   */
+  domainUrl: z.string().nullable().prefault(null),
   /** EC2 인스턴스 ID. 생성 전이면 null */
   instanceId: z.string().nullable().prefault(null),
   /** 실패 분류. 성공·진행 중이면 null. 사용자 거부도 null(=거부됨) */

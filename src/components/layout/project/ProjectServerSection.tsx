@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
+import { useProjectDomainListQuery } from '@/api/domains';
 import { postProjectServer, postServerTerminate, useProjectServerListQuery } from '@/api/servers';
 import { getProjectInfrastructureSettings } from '@/api/projects';
 import { describeProvisionFailure } from '@/lib/provisionFailure';
@@ -63,6 +64,15 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
   });
   const isCloudConnected =
     infraSettings?.cloudConnectionId != null && infraSettings.status === 'CONNECTED';
+
+  /*
+    이 프로젝트의 백엔드에 붙은 도메인. 서버를 끄면 이 주소가 끊긴다.
+
+    종료는 EIP 를 반납하는데, 그 주소를 가리키던 DNS 레코드도 함께 정리된다. 그걸 모르고
+    끄면 "어제까지 되던 도메인이 왜 죽었지" 가 된다 — 종료 확인에서 미리 알린다.
+  */
+  const { data: domains = [] } = useProjectDomainListQuery(QUERY_KEY, projectId);
+  const backendDomains = domains.filter((domain) => domain.hostingTarget === 'AWS');
 
   const createMutation = useMutation({
     mutationFn: () => postProjectServer(projectId, { instanceType }),
@@ -167,7 +177,13 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
           {servers.map((server) => {
             const errorLabel = describeProvisionFailure(server);
             const hint = STATUS_HINT[server.status];
-            const safeUrl = toSafeHttpUrl(server.url);
+            /*
+              도메인이 붙어 있으면 그쪽을 보여준다. 인스턴스의 Caddy 가 HTTPS 를 끝내므로
+              https 에 포트도 없다 — 원시 EIP 주소(http · :8080)보다 사람이 쓰기 좋고,
+              EIP 는 재배포 때 바뀔 수 있지만 도메인은 그대로다.
+            */
+            const safeUrl = toSafeHttpUrl(server.domainUrl) ?? toSafeHttpUrl(server.url);
+            const hasDomain = toSafeHttpUrl(server.domainUrl) != null;
             const isConfirming = terminatingId === server.serverId;
             // 이미 종료된 서버는 지울 것이 없다. 실패한 서버는 자원이 일부 남아 있을 수
             // 있어 종료를 열어둔다 — 서버 쪽이 멱등이라 눌러서 손해 볼 일은 없다
@@ -187,14 +203,21 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
                 {hint ? <p className="mt-1 text-[12px] text-[#64748b]">{hint}</p> : null}
 
                 {safeUrl ? (
-                  <a
-                    href={safeUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-block break-all font-mono text-[12px] text-[#1d4ed8] underline underline-offset-2"
-                  >
-                    {safeUrl}
-                  </a>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <a
+                      href={safeUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="break-all font-mono text-[12px] text-[#1d4ed8] underline underline-offset-2"
+                    >
+                      {safeUrl}
+                    </a>
+                    {hasDomain ? (
+                      <span className="shrink-0 rounded-full bg-[#eff6ff] px-2 py-0.5 text-[11px] font-medium text-[#1d4ed8]">
+                        연결된 도메인
+                      </span>
+                    ) : null}
+                  </div>
                 ) : null}
 
                 {server.instanceId ? (
@@ -226,6 +249,15 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
                         <li>서버에 쌓인 데이터는 사라집니다.</li>
                         <li>이 인스턴스 청구는 종료하는 순간 멈춥니다.</li>
                         <li>데이터베이스는 별개 자원이라 남습니다 — 필요하면 따로 정리하세요.</li>
+                        {backendDomains.length > 0 ? (
+                          <li>
+                            연결된 도메인이 끊깁니다
+                            {backendDomains.length === 1 && backendDomains[0].hostname
+                              ? ` — ${backendDomains[0].hostname}`
+                              : ''}
+                            . 서버를 다시 만들면 도메인도 다시 연결해야 합니다.
+                          </li>
+                        ) : null}
                       </ul>
                       {terminateError ? (
                         <p className="mt-2 text-[12px] text-[#dc2626]">{terminateError}</p>

@@ -190,8 +190,19 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-[13px] font-semibold text-[#0f172a]">{domain.hostname}</p>
-                    <p className="mt-1 text-[11px] text-[#94a3b8]">
-                      {domain.status} · {domain.hostingTarget}
+                    <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-[#94a3b8]">
+                      {/*
+                        프로젝트에 도메인이 둘 붙을 수 있다 — 프론트(GitHub Pages)와 백엔드(AWS).
+                        원시 enum 만 찍으면 둘이 구분되지 않아서, 무엇을 가리키는 주소인지 적는다.
+                      */}
+                      {domain.hostingTarget === 'AWS' ? (
+                        <span className="rounded-full bg-[#eff6ff] px-2 py-0.5 font-medium text-[#1d4ed8]">
+                          백엔드 주소
+                        </span>
+                      ) : null}
+                      <span>
+                        {domain.status} · {domain.hostingTarget}
+                      </span>
                     </p>
                   </div>
                   <div className="flex gap-2">
