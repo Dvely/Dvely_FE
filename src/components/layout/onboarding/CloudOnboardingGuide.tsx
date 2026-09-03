@@ -28,6 +28,12 @@ const COST_ROWS = [
  * 문서 원본은 jsonc 라 주석이 달려 있는데 여기서는 걷어냈다 — AWS 정책 편집기가 주석이
  * 있는 JSON 을 거부해서, 그대로 복사하면 붙여넣기가 실패한다.
  *
+ * IAM 리소스가 경로(`role/qeploy/*`)가 아니라 **이름 접두사**(`role/qeploy-instance-*`)인
+ * 것은 실수가 아니다. 프로비저너가 생성 전에 존재확인용 `getRole(name)` 을 먼저 부르는데,
+ * **아직 없는 역할을 AWS 는 경로 없는 평면 ARN 으로 권한평가한다.** 경로로 좁히면 그
+ * 호출이 거부되어 배포가 IAM 단계에서 멈춘다 — 실계정 검증에서 실제로 그렇게 막혔다.
+ * 되돌리지 말 것.
+ *
  * RDS 두 문장(Rds*)도 함께 넣는다. 지금 DB 를 안 쓰더라도 나중에 쓰게 되면 키를 다시
  * 만들어야 하는데, 처음 한 번에 넣어두면 그 일이 없다.
  */
@@ -56,7 +62,7 @@ const IAM_POLICY_JSON = `{
       "Sid": "PassOnlyQeployInstanceRole",
       "Effect": "Allow",
       "Action": "iam:PassRole",
-      "Resource": "arn:aws:iam::*:role/qeploy/*"
+      "Resource": "arn:aws:iam::*:role/qeploy-instance-*"
     },
     {
       "Sid": "CreateQeployInstanceRoleScoped",
@@ -66,8 +72,8 @@ const IAM_POLICY_JSON = `{
         "iam:AddRoleToInstanceProfile", "iam:GetRole", "iam:GetInstanceProfile"
       ],
       "Resource": [
-        "arn:aws:iam::*:role/qeploy/*",
-        "arn:aws:iam::*:instance-profile/qeploy/*"
+        "arn:aws:iam::*:role/qeploy-instance-*",
+        "arn:aws:iam::*:instance-profile/qeploy-instance-*"
       ]
     },
     {
