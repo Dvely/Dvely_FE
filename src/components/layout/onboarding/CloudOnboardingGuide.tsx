@@ -42,6 +42,10 @@ const COST_ROWS = [
  * RDS 두 문장(Rds*)도 함께 넣는다. 지금 DB 를 안 쓰더라도 나중에 쓰게 되면 키를 다시
  * 만들어야 하는데, 처음 한 번에 넣어두면 그 일이 없다.
  *
+ * `ec2:DescribeAddresses` 는 고아 EIP 자동청소 워커가 쓴다. 종료가 실패하거나 배포가
+ * 중간에 깨져 연결되지 않은 EIP 가 남으면, 워커가 주기적으로 찾아 회수한다 — 그게 없으면
+ * 사용자가 AWS 콘솔을 직접 열어 지워야 하고, 애초에 남았다는 것조차 알 수 없다.
+ *
  * `ec2:ReleaseAddress` 는 종료 경로에서만 쓰이지만 빠뜨리면 안 된다. 없으면 서버를 꺼도
  * **고정 IP(EIP)가 유휴 상태로 남아 계속 과금된다** — 인스턴스를 껐으니 청구가 멈췄으리라
  * 여기게 되는데 실제로는 안 멈춘다.
@@ -64,7 +68,7 @@ const IAM_POLICY_JSON = `{
       "Effect": "Allow",
       "Action": [
         "ec2:DescribeInstances", "ec2:DescribeImages", "ec2:DescribeSubnets",
-        "ec2:DescribeVpcs", "ec2:DescribeSecurityGroups"
+        "ec2:DescribeVpcs", "ec2:DescribeSecurityGroups", "ec2:DescribeAddresses"
       ],
       "Resource": "*"
     },
