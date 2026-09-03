@@ -10,11 +10,101 @@
  * 고쳐야 한다.
  */
 
+import { useState } from 'react';
+
 const COST_ROWS = [
   { label: '서버(EC2)', sub: '가장 작은 기본형 · 24시간 가동', amount: '월 ~$8–19' },
   { label: '공인 IP 주소', sub: '인터넷에서 접속되게', amount: '월 ~$3.6' },
   { label: '저장소·비밀보관', sub: '빌드 결과물·환경변수', amount: '거의 $0' },
 ];
+
+/**
+ * Qeploy 가 사용자 AWS 계정에서 필요로 하는 최소 권한.
+ *
+ * 출처는 백엔드 `docs/aws-byoc-permissions.md` 다 — 실제 호출부(Ec2Provisioner ·
+ * S3ArtifactStore · SsmParameterStore · Ec2InstanceRoleProvisioner · RdsProvisioner)와
+ * 1:1 대조해 확정한 값이다. **구현이 바뀌면 여기도 함께 고쳐야 한다.**
+ *
+ * 문서 원본은 jsonc 라 주석이 달려 있는데 여기서는 걷어냈다 — AWS 정책 편집기가 주석이
+ * 있는 JSON 을 거부해서, 그대로 복사하면 붙여넣기가 실패한다.
+ *
+ * RDS 두 문장(Rds*)도 함께 넣는다. 지금 DB 를 안 쓰더라도 나중에 쓰게 되면 키를 다시
+ * 만들어야 하는데, 처음 한 번에 넣어두면 그 일이 없다.
+ */
+const IAM_POLICY_JSON = `{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Ec2LifecycleReadOnlyDescribe",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances", "ec2:DescribeImages", "ec2:DescribeSubnets",
+        "ec2:DescribeVpcs", "ec2:DescribeSecurityGroups"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Ec2RunTerminateTagged",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:RunInstances", "ec2:TerminateInstances", "ec2:CreateTags",
+        "ec2:CreateSecurityGroup", "ec2:AuthorizeSecurityGroupIngress"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "PassOnlyQeployInstanceRole",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::*:role/qeploy/*"
+    },
+    {
+      "Sid": "CreateQeployInstanceRoleScoped",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole", "iam:PutRolePolicy", "iam:CreateInstanceProfile",
+        "iam:AddRoleToInstanceProfile", "iam:GetRole", "iam:GetInstanceProfile"
+      ],
+      "Resource": [
+        "arn:aws:iam::*:role/qeploy/*",
+        "arn:aws:iam::*:instance-profile/qeploy/*"
+      ]
+    },
+    {
+      "Sid": "SsmProjectParamsOnly",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:PutParameter", "ssm:GetParameter", "ssm:GetParameters",
+        "ssm:DeleteParameter", "ssm:DeleteParameters"
+      ],
+      "Resource": "arn:aws:ssm:*:*:parameter/qeploy/*"
+    },
+    {
+      "Sid": "S3ArtifactsOnly",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket", "s3:PutObject", "s3:GetObject",
+        "s3:DeleteObject", "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::qeploy-artifacts-*",
+        "arn:aws:s3:::qeploy-artifacts-*/*"
+      ]
+    },
+    {
+      "Sid": "RdsCreateDeleteQeployScoped",
+      "Effect": "Allow",
+      "Action": ["rds:CreateDBInstance", "rds:DeleteDBInstance"],
+      "Resource": "arn:aws:rds:*:*:db:qeploy-*"
+    },
+    {
+      "Sid": "RdsDescribe",
+      "Effect": "Allow",
+      "Action": "rds:DescribeDBInstances",
+      "Resource": "*"
+    }
+  ]
+}`;
 
 const STEPS = [
   {
@@ -30,16 +120,29 @@ const STEPS = [
   },
   {
     num: '2',
-    title: 'Qeploy에 계정 연결하기',
-    body: '설정 → 클라우드 연결에서 AWS 액세스 키를 입력하면 연결이 끝납니다. AWS 콘솔에서 키를 발급받아 Access Key ID와 Secret Access Key 두 값을 붙여넣으면 됩니다.',
+    title: '전용 사용자와 키 만들기',
+    body: 'AWS 콘솔의 IAM에서 Qeploy 전용 사용자를 하나 만들고, 아래 권한을 붙인 뒤 액세스 키를 발급받습니다. 계정의 주 로그인 정보를 쓰지 않고 이 키만 넘기기 때문에, 언제든 이 키만 지우면 접근이 끊깁니다.',
     points: [
+      'IAM → 사용자 → 사용자 생성 → 정책을 직접 연결 → JSON으로 아래 내용을 붙여넣기',
+      '만든 사용자에서 "액세스 키 만들기" → 용도는 "AWS 외부에서 실행되는 애플리케이션"을 고릅니다',
+      'Secret Access Key는 그 화면을 벗어나면 다시 볼 수 없습니다 — 그 자리에서 복사하세요',
+    ],
+    tags: ['약 10분', '한 번만', 'IAM 사용'],
+    showPolicy: true,
+  },
+  {
+    num: '3',
+    title: 'Qeploy에 계정 연결하기',
+    body: '설정 → 클라우드 연결에서 방금 만든 값을 입력하면 연결이 끝납니다.',
+    points: [
+      '표시 이름, 리전, Access Key ID, Secret Access Key를 넣습니다',
+      'AWS 계정 ID(12자리)도 함께 넣어야 합니다 — 빌드 결과물을 담을 저장소 이름에 쓰입니다. 콘솔 오른쪽 위 계정 메뉴에서 확인할 수 있습니다',
       '입력하면 Qeploy가 자격을 확인합니다 — 상태가 "연결됨"이 되면 준비 완료입니다',
-      '서버에 부여되는 권한은 Qeploy가 최소한으로만, 자동으로 준비합니다',
     ],
     tags: ['약 5분', '한 번만'],
   },
   {
-    num: '3',
+    num: '4',
     title: '배포 요청하고 승인하기',
     body: '이제 준비 끝. 채팅으로 "백엔드 서버로 띄워줘"라고 요청하면, Qeploy가 예상 비용과 함께 확인을 요청합니다. 승인을 누르면 몇 분 뒤 접속 주소가 나옵니다.',
     points: [
@@ -51,11 +154,54 @@ const STEPS = [
 ];
 
 const SAFETY_POINTS = [
-  'Qeploy가 띄운 서버는 그 프로젝트에 필요한 자원만 읽도록 최소 권한으로 만들어집니다. 연결에 쓰는 액세스 키는 당신이 정하는 것이므로, 필요한 만큼만 권한을 준 키를 쓰시길 권합니다.',
+  '위 2단계 권한이 Qeploy가 요구하는 전부입니다 — 관리자 권한은 필요 없습니다. 서버를 만들고 끄는 일, 그리고 이름이 qeploy로 시작하는 자원만 다룰 수 있습니다. 당신 계정의 다른 자원에는 닿지 않습니다.',
   '데이터베이스 비밀번호 같은 비밀값은 암호화되어 보관되고, 화면·기록 어디에도 그대로 드러나지 않습니다.',
   '서버에 접속하는 열쇠(SSH)는 아예 만들지 않습니다 — 그만큼 위험도 사라집니다.',
   '언제든 연결을 해제하거나 서버를 종료할 수 있고, 그 순간 우리 접근도 함께 끝납니다.',
 ];
+
+/**
+ * 정책 JSON 을 통째로 보여주고 복사시킨다.
+ *
+ * 손으로 옮겨 적게 하면 반드시 틀린다 — 그리고 IAM 정책은 한 글자만 틀려도 배포가
+ * `IAM_PERMISSION` 으로 막히는데, 사용자는 그게 오타 때문인지 알 방법이 없다.
+ */
+function PolicyBlock() {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(IAM_POLICY_JSON);
+      setIsCopied(true);
+      window.setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      // 클립보드를 막아둔 브라우저도 있다. 그때는 아래 본문을 직접 긁어 가면 된다
+      setIsCopied(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 overflow-hidden rounded-xl border border-[#e2e8f0]">
+      <div className="flex items-center justify-between gap-2 border-b border-[#e2e8f0] bg-[#f8fafc] px-3 py-2">
+        <p className="text-[12px] font-semibold text-[#334155]">붙여넣을 권한(JSON)</p>
+        <button
+          type="button"
+          onClick={() => void handleCopy()}
+          className="h-7 cursor-pointer rounded-lg border border-[#e2e8f0] bg-white px-2.5 text-[12px] font-semibold text-[#334155] hover:bg-[#f1f5f9]"
+        >
+          {isCopied ? '복사했습니다' : '복사'}
+        </button>
+      </div>
+      <pre className="max-h-72 overflow-auto bg-white px-3 py-2.5 font-mono text-[11px] leading-relaxed text-[#334155]">
+        {IAM_POLICY_JSON}
+      </pre>
+      <p className="border-t border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 text-[12px] leading-relaxed text-[#64748b]">
+        데이터베이스(RDS)까지 미리 포함했습니다. 지금 안 쓰더라도 나중에 쓰게 되면 키를 다시
+        만들어야 하는데, 한 번에 넣어두면 그 일이 없습니다.
+      </p>
+    </div>
+  );
+}
 
 function Eyebrow({ children }: { children: string }) {
   return (
@@ -151,7 +297,7 @@ function CloudOnboardingGuide() {
         <section className="mt-10">
           <Eyebrow>순서대로</Eyebrow>
           <h2 className="mt-2 text-[22px] font-bold tracking-tight text-[#0f172a]">
-            세 단계면 끝납니다
+            네 단계면 끝납니다
           </h2>
 
           <ol className="mt-5 flex flex-col gap-4">
@@ -177,6 +323,7 @@ function CloudOnboardingGuide() {
                     </li>
                   ))}
                 </ul>
+                {'showPolicy' in step && step.showPolicy ? <PolicyBlock /> : null}
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {step.tags.map((tag, index) => (
                     <span
