@@ -10,6 +10,7 @@ import {
   AgentPollTimeoutError,
   pollAgentTask,
   postAgentTaskInput,
+  postAgentTaskRetry,
   SETTLED_AGENT_TASK_STATUSES,
 } from '@/api/agent';
 import {
@@ -22,6 +23,7 @@ import { composeApiErrorMessage, dispatchApiErrorAction } from '@/lib/apiErrorGu
 import { refreshUserInfoInBackground } from '@/api/user';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
+import AgentRetryCard from '@/components/layout/project/AgentRetryCard';
 import type { GetAgentTaskResType } from '@/types/agent.type';
 import type { ConversationMessage } from '@/types/chat.type';
 import {
@@ -94,6 +96,18 @@ const TASK_PROGRESS_LABEL: Record<string, string> = {
  * 스켈레톤 옆에 붙일 한 줄. 모르는 상태가 와도 "작업 중"으로 떨어진다 —
  * status 는 열린 문자열이라 서버가 단계를 늘리면 여기 없는 값이 온다.
  */
+/**
+ * 이어서 다시 돌릴 수 있는 실패인가.
+ *
+ * `retryable` 은 서버가 승인 대기 여부까지 반영해 계산해 준다. 다만 그 값은 읽는 시점에
+ * 따라 잠깐 낡을 수 있다고 서버가 밝혀 두었다 — 진짜 관문은 `/retry` 호출이고, 거기서
+ * 막히면 409 가 온다. 그래서 여기서는 화면에 버튼을 내보낼지만 정하고, 실패는 호출부가
+ * 정상 경로로 받는다.
+ */
+function isRetryableFailure(task: GetAgentTaskResType | null): boolean {
+  return task?.status === 'FAILED' && task.retryable === true && task.pendingApprovalId == null;
+}
+
 function describeTaskProgress(task: GetAgentTaskResType | null): string {
   if (!task) return '작업 중';
 
@@ -170,6 +184,14 @@ function AgentConversationPanel({
     올라온 뒤에도 그 말이 남아 있으면 아직 안 끝난 것처럼 읽힌다.
   */
   const [longRunningBaseline, setLongRunningBaseline] = useState<number | null>(null);
+  /*
+    실패했지만 이어서 다시 돌릴 수 있는 작업.
+
+    서버가 plan 과 실패한 스텝을 들고 있어 그 지점부터 재개한다. 이 카드가 없으면
+    사용자는 요청 전체를 처음부터 다시 적어야 했다 — 몇 분짜리 빌드를 통째로 다시 도는
+    셈이다. postAgentTaskRetry 는 만들어져 있었지만 부르는 곳이 없었다.
+  */
+  const [retryableTask, setRetryableTask] = useState<GetAgentTaskResType | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   // 승인 대기 여부는 서버만 안다 — 채팅 본문에서 유추하지 않는다
   const [pendingApprovalId, setPendingApprovalId] = useState<number | null>(null);
@@ -204,6 +226,7 @@ function AgentConversationPanel({
     // 대화가 바뀌면 초기화한다. 남겨두면 다른 대화의 질문에 답을 보내게 된다
     setAwaitingInputTaskId(null);
     setLongRunningBaseline(null);
+    setRetryableTask(null);
 
     if (conversationId == null) {
       setPendingApprovalId(null);
@@ -299,6 +322,7 @@ function AgentConversationPanel({
       setInput('');
       setIsAssistantReplying(true);
       setLongRunningBaseline(null);
+      setRetryableTask(null);
       // 앞선 실행의 문구가 남아 있으면 새 요청이 그 상태인 것처럼 보인다
       setProgressTask(null);
       return { content, userMessage, draftConversationId };
@@ -312,6 +336,7 @@ function AgentConversationPanel({
 
       const pendingApprovalId = result.task?.pendingApprovalId ?? result.pendingApprovalId ?? null;
       setPendingApprovalId(pendingApprovalId);
+      setRetryableTask(isRetryableFailure(result.task) ? result.task : null);
       // 에이전트가 되물었으면 다음 입력은 새 요청이 아니라 그 답이다
       setAwaitingInputTaskId(
         result.task?.status === 'WAITING_INPUT' ? (result.taskId || null) : null,
@@ -433,6 +458,7 @@ function AgentConversationPanel({
     onMutate: () => {
       setIsAssistantReplying(true);
       setLongRunningBaseline(null);
+      setRetryableTask(null);
       // 앞선 실행의 문구가 남아 있으면 새 요청이 그 상태인 것처럼 보인다
       setProgressTask(null);
       setPendingApprovalId(null);
@@ -445,6 +471,7 @@ function AgentConversationPanel({
 
       const needsApproval = APPROVAL_WAIT_STATUSES.has(task.status) && pendingApprovalId != null;
       setPendingApprovalId(needsApproval ? pendingApprovalId : null);
+      setRetryableTask(isRetryableFailure(task) ? task : null);
       // 승인 뒤 이어 달리다 되물을 수도 있다
       setAwaitingInputTaskId(task.status === 'WAITING_INPUT' ? (task.taskId || null) : null);
 
@@ -543,6 +570,7 @@ function AgentConversationPanel({
       setInput('');
       setIsAssistantReplying(true);
       setLongRunningBaseline(null);
+      setRetryableTask(null);
       setProgressTask(null);
       // 답을 보냈으니 대기 상태를 푼다. 이어 달리다 또 물으면 onSuccess 가 다시 세운다
       setAwaitingInputTaskId(null);
@@ -558,6 +586,7 @@ function AgentConversationPanel({
           : null,
       );
       setAwaitingInputTaskId(task.status === 'WAITING_INPUT' ? (task.taskId || null) : null);
+      setRetryableTask(isRetryableFailure(task) ? task : null);
 
       void queryClient.invalidateQueries({
         queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, conversationId],
@@ -597,8 +626,96 @@ function AgentConversationPanel({
     },
   });
 
+  /**
+   * 실패한 작업을 이어서 다시 돌린다.
+   *
+   * 서버는 저장된 plan 의 실패한 스텝부터 재개한다 — 요청을 처음부터 다시 보내는 것과
+   * 다르다. 재시도가 등록되면(202) 태스크가 다시 큐에 들어가므로 같은 taskId 를 계속
+   * 폴링하면 된다.
+   */
+  const retryMutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      await postAgentTaskRetry(taskId);
+
+      pollAbortRef.current?.abort();
+      const controller = new AbortController();
+      pollAbortRef.current = controller;
+      const task = await pollAgentTask(taskId, {
+        signal: controller.signal,
+        onProgress: setProgressTask,
+      });
+
+      const pendingApprovalId = await resolvePendingApprovalId(task, projectId, conversationId);
+      return { task, taskId, pendingApprovalId };
+    },
+    onMutate: () => {
+      setRetryableTask(null);
+      setIsAssistantReplying(true);
+      setLongRunningBaseline(null);
+      setProgressTask(null);
+    },
+    onSuccess: ({ task, taskId, pendingApprovalId }) => {
+      if (conversationId == null) return;
+
+      rememberConversationTaskId(conversationId, taskId);
+      setPendingApprovalId(
+        APPROVAL_WAIT_STATUSES.has(task.status) && pendingApprovalId != null
+          ? pendingApprovalId
+          : null,
+      );
+      setAwaitingInputTaskId(task.status === 'WAITING_INPUT' ? (task.taskId || null) : null);
+      // 또 실패하면 카드를 다시 띄운다. 남은 시도 횟수가 줄어든 채로 온다
+      setRetryableTask(isRetryableFailure(task) ? task : null);
+
+      void queryClient.invalidateQueries({
+        queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, conversationId],
+      });
+      void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
+      void queryClient.invalidateQueries({ queryKey: ['project-detail'] });
+      setIsAssistantReplying(false);
+      setProgressTask(null);
+      onConversationActivity?.(conversationId);
+    },
+    onError: (error, taskId) => {
+      setIsAssistantReplying(false);
+      setProgressTask(null);
+
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+
+      if (error instanceof AgentPollTimeoutError) {
+        setLongRunningBaseline(serverMessages?.length ?? 0);
+        return;
+      }
+
+      /*
+        409 는 정상 경로다. `retryable` 은 읽는 시점에 따라 잠깐 낡을 수 있어서(서버가
+        그렇게 밝혀 두었다), 버튼을 눌렀을 때 이미 재시도가 막혀 있을 수 있다 — 승인이
+        새로 생겼거나 시도 횟수를 다 썼거나. 그때는 서버 문구를 그대로 보여주고 카드를
+        되살리지 않는다. 다시 눌러도 같은 결과라 버튼을 남기면 사용자만 헛돈다.
+      */
+      setAlertMessage(formatApiErrorMessage(error));
+      void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
+      // 승인이 생겨서 막혔을 수 있다 — 그 카드를 띄워 주면 사용자가 나아갈 길이 생긴다
+      void (async () => {
+        try {
+          const approvals = await getProjectApprovalList(projectId);
+          const pending = approvals.find(
+            (approval) =>
+              approval.status === 'PENDING' &&
+              (approval.taskId === taskId ||
+                (conversationId != null && approval.conversationId === conversationId)),
+          );
+          if (pending) setPendingApprovalId(pending.approvalId);
+        } catch {
+          // 못 찾으면 그냥 둔다 — 없는 승인을 띄우는 것보다 낫다
+        }
+      })();
+    },
+  });
+
   const isSending = sendMessageMutation.isPending;
-  const isInputLocked = isSending || isAssistantReplying || submitInputMutation.isPending;
+  const isInputLocked =
+    isSending || isAssistantReplying || submitInputMutation.isPending || retryMutation.isPending;
 
   // 세 경로 모두 mutationFn 안에서 태스크가 끝날 때까지 폴링하므로, 이 값이 참인 동안이 곧 작업 구간이다
   const isAgentTaskActive = isInputLocked || decideApprovalMutation.isPending;
@@ -705,6 +822,19 @@ function AgentConversationPanel({
               isBusy={decideApprovalMutation.isPending}
               onApprove={(payload) => handleDecideApproval('approve', payload)}
               onReject={() => handleDecideApproval('reject')}
+            />
+          ) : null}
+          {/*
+            승인 카드와 같은 자리에 둔다 — 둘 다 "지금 사용자가 결정할 일"이고, 대화의
+            마지막에 있어야 실패 메시지 바로 아래에서 읽힌다.
+          */}
+          {retryableTask ? (
+            <AgentRetryCard
+              key={retryableTask.taskId}
+              task={retryableTask}
+              isBusy={retryMutation.isPending}
+              onRetry={() => retryMutation.mutate(retryableTask.taskId)}
+              onDismiss={() => setRetryableTask(null)}
             />
           ) : null}
           {isSending || isAssistantReplying ? (
