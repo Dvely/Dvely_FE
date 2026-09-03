@@ -6,7 +6,12 @@ import {
   postProjectConversationCreate,
   useConversationMessageListQuery,
 } from '@/api/chat';
-import { pollAgentTask, postAgentTaskInput, SETTLED_AGENT_TASK_STATUSES } from '@/api/agent';
+import {
+  AgentPollTimeoutError,
+  pollAgentTask,
+  postAgentTaskInput,
+  SETTLED_AGENT_TASK_STATUSES,
+} from '@/api/agent';
 import {
   getProjectApprovalList,
   postApprovalApprove,
@@ -156,6 +161,15 @@ function AgentConversationPanel({
     — 배포가 되묻는 순간부터 빠져나올 길이 없어진다.
   */
   const [awaitingInputTaskId, setAwaitingInputTaskId] = useState<string | null>(null);
+  /*
+    상한까지 기다렸는데 아직 도는 중. 실패가 아니라서 오류 알림을 띄우면 안 된다 —
+    서버는 계속 돌고 결과는 채팅에 올라온다. 조용한 안내로 남긴다.
+
+    불리언이 아니라 **그때의 메시지 수**를 담는다. 새 메시지가 붙으면 그게 곧 결과가
+    도착했다는 뜻이라 안내가 저절로 사라진다 — "끝나면 올라옵니다"라고 해놓고 정작
+    올라온 뒤에도 그 말이 남아 있으면 아직 안 끝난 것처럼 읽힌다.
+  */
+  const [longRunningBaseline, setLongRunningBaseline] = useState<number | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   // 승인 대기 여부는 서버만 안다 — 채팅 본문에서 유추하지 않는다
   const [pendingApprovalId, setPendingApprovalId] = useState<number | null>(null);
@@ -164,8 +178,14 @@ function AgentConversationPanel({
   const { data: serverMessages, isLoading: isMessagesLoading } = useConversationMessageListQuery(
     AGENT_CHAT_QUERY_KEY,
     conversationId ?? 0,
-    isDeployInFlight,
+    // 오래 걸려 폴링을 놓은 동안에는 결과 메시지를 더 자주 확인한다. "끝나면 여기에
+    // 올라옵니다"라고 안내해 놓고 15초씩 늦게 올리면 그 말이 무색해진다
+    isDeployInFlight || longRunningBaseline != null,
   );
+  // 기준보다 메시지가 늘었으면 결과가 도착한 것이다
+  const isLongRunning =
+    longRunningBaseline != null && (serverMessages?.length ?? 0) <= longRunningBaseline;
+
   const displayMessages = useMemo(
     () => mergeConversationMessages(serverMessages ?? [], overlayMessages),
     [serverMessages, overlayMessages],
@@ -183,6 +203,7 @@ function AgentConversationPanel({
   useEffect(() => {
     // 대화가 바뀌면 초기화한다. 남겨두면 다른 대화의 질문에 답을 보내게 된다
     setAwaitingInputTaskId(null);
+    setLongRunningBaseline(null);
 
     if (conversationId == null) {
       setPendingApprovalId(null);
@@ -277,6 +298,7 @@ function AgentConversationPanel({
       });
       setInput('');
       setIsAssistantReplying(true);
+      setLongRunningBaseline(null);
       // 앞선 실행의 문구가 남아 있으면 새 요청이 그 상태인 것처럼 보인다
       setProgressTask(null);
       return { content, userMessage, draftConversationId };
@@ -332,6 +354,18 @@ function AgentConversationPanel({
       onConversationActivity?.(targetConversationId);
     },
     onError: (error, content, context) => {
+      /*
+        상한까지 기다렸지만 작업은 아직 돈다 — 실패가 아니다. 오류 알림을 띄우면
+        성공할 작업을 실패로 오해하게 된다. 조용히 알리고 물러난다. 결과는 서버가
+        채팅에 적고 메시지 목록 폴링이 가져온다.
+      */
+      if (error instanceof AgentPollTimeoutError) {
+        setIsAssistantReplying(false);
+        setProgressTask(null);
+        setLongRunningBaseline(serverMessages?.length ?? 0);
+        return;
+      }
+
       if (error instanceof DOMException && error.name === 'AbortError') {
         setIsAssistantReplying(false);
         setProgressTask(null);
@@ -398,6 +432,7 @@ function AgentConversationPanel({
     },
     onMutate: () => {
       setIsAssistantReplying(true);
+      setLongRunningBaseline(null);
       // 앞선 실행의 문구가 남아 있으면 새 요청이 그 상태인 것처럼 보인다
       setProgressTask(null);
       setPendingApprovalId(null);
@@ -441,6 +476,18 @@ function AgentConversationPanel({
       // PENDING이면 카드가 돌아오고, 이미 닫혔으면 사라진다
       setPendingApprovalId(variables.approvalId);
       void queryClient.invalidateQueries({ queryKey: ['approval-detail'] });
+
+      /*
+        상한까지 기다렸지만 작업은 아직 돈다 — 실패가 아니다. 오류 알림을 띄우면
+        성공할 작업을 실패로 오해하게 된다. 조용히 알리고 물러난다. 결과는 서버가
+        채팅에 적고 메시지 목록 폴링이 가져온다.
+      */
+      if (error instanceof AgentPollTimeoutError) {
+        setIsAssistantReplying(false);
+        setProgressTask(null);
+        setLongRunningBaseline(serverMessages?.length ?? 0);
+        return;
+      }
 
       if (error instanceof DOMException && error.name === 'AbortError') {
         setIsAssistantReplying(false);
@@ -495,6 +542,7 @@ function AgentConversationPanel({
       });
       setInput('');
       setIsAssistantReplying(true);
+      setLongRunningBaseline(null);
       setProgressTask(null);
       // 답을 보냈으니 대기 상태를 푼다. 이어 달리다 또 물으면 onSuccess 가 다시 세운다
       setAwaitingInputTaskId(null);
@@ -525,6 +573,12 @@ function AgentConversationPanel({
       setProgressTask(null);
 
       if (error instanceof DOMException && error.name === 'AbortError') return;
+
+      // 상한까지 기다렸지만 아직 도는 중 — 실패가 아니다. 답은 이미 서버가 받았다
+      if (error instanceof AgentPollTimeoutError) {
+        setLongRunningBaseline(serverMessages?.length ?? 0);
+        return;
+      }
 
       /*
         태스크가 더 이상 입력을 기다리지 않으면(취소됐거나 만료) 서버가 400·404 를 준다.
@@ -672,6 +726,24 @@ function AgentConversationPanel({
           지금 적는 말이 새 요청이 아니라 위 질문의 답이라는 것을 알린다. 이 표시가 없으면
           사용자는 평소처럼 말을 걸었다고 생각하는데, 실제로는 멈춰 선 작업이 이어 달린다
         */}
+        {isLongRunning ? (
+          /*
+            실패 알림(모달)이 아니라 조용한 줄로 둔다. 작업은 돌고 있고 사용자가 할 일도
+            없다 — 모달로 막아 세우면 실패한 것처럼 읽힌다.
+          */
+          <div className="mb-2 flex items-start justify-between gap-2 rounded-lg bg-[#f8fafc] px-2.5 py-1.5">
+            <p className="text-[12px] leading-relaxed text-[#64748b]">
+              작업이 오래 걸리고 있습니다. 계속 진행 중이며, 끝나면 결과가 여기에 올라옵니다.
+            </p>
+            <button
+              type="button"
+              onClick={() => setLongRunningBaseline(null)}
+              className="shrink-0 cursor-pointer text-[12px] font-medium text-[#94a3b8] hover:text-[#64748b]"
+            >
+              닫기
+            </button>
+          </div>
+        ) : null}
         {awaitingInputTaskId ? (
           <p className="mb-2 rounded-lg bg-[#faf5ff] px-2.5 py-1.5 text-[12px] font-medium text-[#6d28d9]">
             에이전트가 답을 기다리고 있습니다. 여기에 적으면 하던 작업을 이어서 진행합니다.

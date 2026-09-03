@@ -42,7 +42,24 @@ const SETTLED_AGENT_TASK_STATUSES = new Set<AgentTaskStatus>([
 ]);
 
 const DEFAULT_POLL_INTERVAL_MS = 2000;
-const DEFAULT_MAX_POLL_ATTEMPTS = 150;
+/**
+ * 1분이 지나면 느리게 본다.
+ *
+ * 빌드는 분 단위로 움직인다 — 의존성 내려받고 컴파일하는 동안 상태가 바뀌지 않는데
+ * 2초마다 두드릴 이유가 없다. 사용자가 체감하는 차이도 없다.
+ */
+const SLOW_POLL_INTERVAL_MS = 5000;
+const SLOW_POLL_AFTER_MS = 60_000;
+/**
+ * 폴링을 이어갈 최대 시간.
+ *
+ * 예전에는 150회(=5분) 상한이었는데, 실제 Spring Boot 빌드가 그 언저리다. 의존성이
+ * 많으면 넘어간다 — 그러면 **작업은 멀쩡히 도는데 화면에는 실패가 뜬다.**
+ *
+ * 그래서 두 가지를 바꿨다. 상한을 넉넉히 잡고, 넘어가도 실패로 만들지 않는다
+ * (AgentPollTimeoutError 참고).
+ */
+const DEFAULT_MAX_POLL_MS = 20 * 60 * 1000;
 
 /** 에이전트 요청 제출 API POST */
 async function postAgentDecision(params: PostAgentDecisionReqType) {
@@ -77,9 +94,29 @@ async function getAgentTask(taskId: string) {
 
 const getAgentTaskStatus = getAgentTask;
 
+/**
+ * 상한까지 기다렸는데 태스크가 아직 안 끝났다.
+ *
+ * **실패가 아니다.** 서버는 계속 돌고 있고, 끝나면 결과를 chat_messages 에 적는다.
+ * 메시지 목록이 주기적으로 다시 읽으므로 사용자는 결국 결과를 받는다. 그래서 호출부는
+ * 이걸 오류 알림이 아니라 "오래 걸리는 중" 안내로 다뤄야 한다.
+ *
+ * 예전에는 평범한 Error 를 던져서 성공할 작업이 실패로 보였다.
+ */
+class AgentPollTimeoutError extends Error {
+  readonly lastTask: GetAgentTaskResType | null;
+
+  constructor(lastTask: GetAgentTaskResType | null) {
+    super('작업이 아직 진행 중입니다.');
+    this.name = 'AgentPollTimeoutError';
+    this.lastTask = lastTask;
+  }
+}
+
 type PollAgentTaskOptions = {
   intervalMs?: number;
-  maxAttempts?: number;
+  /** 이 시간을 넘기면 폴링을 멈추고 AgentPollTimeoutError 를 던진다. 실패가 아니다 */
+  maxWaitMs?: number;
   signal?: AbortSignal;
   /** true면 폴링을 종료한다. 없으면 종료·입력/승인 대기 상태에서 멈춘다. */
   until?: (task: GetAgentTaskResType) => boolean;
@@ -95,21 +132,37 @@ type PollAgentTaskOptions = {
 
 /** 에이전트 태스크가 종료·입력/승인 대기 상태가 될 때까지 폴링한다. */
 async function pollAgentTask(taskId: string, options: PollAgentTaskOptions = {}) {
-  const intervalMs = options.intervalMs ?? DEFAULT_POLL_INTERVAL_MS;
-  const maxAttempts = options.maxAttempts ?? DEFAULT_MAX_POLL_ATTEMPTS;
+  const baseIntervalMs = options.intervalMs ?? DEFAULT_POLL_INTERVAL_MS;
+  const maxWaitMs = options.maxWaitMs ?? DEFAULT_MAX_POLL_MS;
   const isComplete =
     options.until ?? ((task: GetAgentTaskResType) => SETTLED_AGENT_TASK_STATUSES.has(task.status));
 
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+  const startedAt = Date.now();
+  let lastTask: GetAgentTaskResType | null = null;
+
+  // 횟수가 아니라 경과 시간으로 센다. 간격이 도중에 바뀌므로 횟수로는 얼마나 기다렸는지
+  // 알 수 없다 — "5분 상한"이라고 적어둔 값이 실제로는 다른 시간을 뜻하게 된다
+  while (true) {
     if (options.signal?.aborted) {
       throw new DOMException('Polling aborted', 'AbortError');
     }
 
     const task = await getAgentTask(taskId);
+    lastTask = task;
     options.onProgress?.(task);
     if (isComplete(task)) {
       return task;
     }
+
+    const elapsedMs = Date.now() - startedAt;
+    if (elapsedMs >= maxWaitMs) {
+      throw new AgentPollTimeoutError(lastTask);
+    }
+
+    const intervalMs =
+      options.intervalMs != null || elapsedMs < SLOW_POLL_AFTER_MS
+        ? baseIntervalMs
+        : SLOW_POLL_INTERVAL_MS;
 
     await new Promise<void>((resolve, reject) => {
       const onAbort = () => {
@@ -125,8 +178,6 @@ async function pollAgentTask(taskId: string, options: PollAgentTaskOptions = {})
       options.signal?.addEventListener('abort', onAbort, { once: true });
     });
   }
-
-  throw new Error('에이전트 작업 상태 확인이 시간 초과되었습니다.');
 }
 
 /** 에이전트 태스크 취소 API DELETE */
@@ -300,6 +351,7 @@ function useAgentTaskEventListQuery(
 }
 
 export {
+  AgentPollTimeoutError,
   postAgentDecision,
   deleteAgentSession,
   getAgentTask,
