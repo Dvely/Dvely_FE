@@ -8,6 +8,7 @@ import {
 } from '@/api/chat';
 import {
   AgentPollTimeoutError,
+  deleteAgentTask,
   pollAgentTask,
   postAgentTaskInput,
   postAgentTaskRetry,
@@ -192,6 +193,14 @@ function AgentConversationPanel({
     셈이다. postAgentTaskRetry 는 만들어져 있었지만 부르는 곳이 없었다.
   */
   const [retryableTask, setRetryableTask] = useState<GetAgentTaskResType | null>(null);
+  /*
+    지금 도는 태스크. 취소 대상이다.
+
+    progressTask 로도 알 수 있지만 그건 첫 폴링이 돌아온 뒤에야 채워진다. 요청을 보내고
+    첫 응답이 오기까지도 몇 초 걸리는데, 그동안 멈출 방법이 없으면 잘못 보낸 걸 알아챈
+    사용자가 할 수 있는 게 없다.
+  */
+  const [runningTaskId, setRunningTaskId] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   // 승인 대기 여부는 서버만 안다 — 채팅 본문에서 유추하지 않는다
   const [pendingApprovalId, setPendingApprovalId] = useState<number | null>(null);
@@ -227,6 +236,7 @@ function AgentConversationPanel({
     setAwaitingInputTaskId(null);
     setLongRunningBaseline(null);
     setRetryableTask(null);
+    setRunningTaskId(null);
 
     if (conversationId == null) {
       setPendingApprovalId(null);
@@ -276,6 +286,7 @@ function AgentConversationPanel({
       }
 
       rememberConversationTaskId(targetConversationId, taskId);
+      setRunningTaskId(taskId);
       onConversationActivity?.(targetConversationId);
 
       const sessionMessages = readSessionMessages(targetConversationId);
@@ -376,6 +387,7 @@ function AgentConversationPanel({
 
       setIsAssistantReplying(false);
       setProgressTask(null);
+      setRunningTaskId(null);
       onConversationActivity?.(targetConversationId);
     },
     onError: (error, content, context) => {
@@ -387,6 +399,7 @@ function AgentConversationPanel({
       if (error instanceof AgentPollTimeoutError) {
         setIsAssistantReplying(false);
         setProgressTask(null);
+        setRunningTaskId(null);
         setLongRunningBaseline(serverMessages?.length ?? 0);
         return;
       }
@@ -394,6 +407,7 @@ function AgentConversationPanel({
       if (error instanceof DOMException && error.name === 'AbortError') {
         setIsAssistantReplying(false);
         setProgressTask(null);
+        setRunningTaskId(null);
         return;
       }
 
@@ -414,6 +428,7 @@ function AgentConversationPanel({
       }
       setIsAssistantReplying(false);
       setProgressTask(null);
+      setRunningTaskId(null);
     },
   });
 
@@ -439,6 +454,7 @@ function AgentConversationPanel({
       const controller = new AbortController();
       pollAbortRef.current = controller;
       rememberConversationTaskId(conversationId ?? 0, taskId);
+      setRunningTaskId(taskId);
       const task = await pollAgentTask(taskId, {
         signal: controller.signal,
         onProgress: setProgressTask,
@@ -495,6 +511,7 @@ function AgentConversationPanel({
       void queryClient.invalidateQueries({ queryKey: ['project-overview'] });
       setIsAssistantReplying(false);
       setProgressTask(null);
+      setRunningTaskId(null);
       onConversationActivity?.(targetConversationId);
     },
     onError: (error, variables) => {
@@ -512,6 +529,7 @@ function AgentConversationPanel({
       if (error instanceof AgentPollTimeoutError) {
         setIsAssistantReplying(false);
         setProgressTask(null);
+        setRunningTaskId(null);
         setLongRunningBaseline(serverMessages?.length ?? 0);
         return;
       }
@@ -519,12 +537,14 @@ function AgentConversationPanel({
       if (error instanceof DOMException && error.name === 'AbortError') {
         setIsAssistantReplying(false);
         setProgressTask(null);
+        setRunningTaskId(null);
         return;
       }
 
       setAlertMessage(formatApiErrorMessage(error));
       setIsAssistantReplying(false);
       setProgressTask(null);
+      setRunningTaskId(null);
       // 서버가 코드로 원인을 알려줬으면 그것으로 바로 진입점을 띄운다
       if (!dispatchApiErrorAction(error)) {
         // 코드가 없으면 예전 방식으로 — 저장소 연결 승인은 서버가 GitHub 을 호출하므로
@@ -547,6 +567,7 @@ function AgentConversationPanel({
   const submitInputMutation = useMutation({
     mutationFn: async ({ taskId, value }: { taskId: string; value: string }) => {
       await postAgentTaskInput(taskId, { value });
+      setRunningTaskId(taskId);
 
       pollAbortRef.current?.abort();
       const controller = new AbortController();
@@ -595,11 +616,13 @@ function AgentConversationPanel({
       void queryClient.invalidateQueries({ queryKey: ['project-detail'] });
       setIsAssistantReplying(false);
       setProgressTask(null);
+      setRunningTaskId(null);
       onConversationActivity?.(conversationId);
     },
     onError: (error, variables, context) => {
       setIsAssistantReplying(false);
       setProgressTask(null);
+      setRunningTaskId(null);
 
       if (error instanceof DOMException && error.name === 'AbortError') return;
 
@@ -636,6 +659,7 @@ function AgentConversationPanel({
   const retryMutation = useMutation({
     mutationFn: async (taskId: string) => {
       await postAgentTaskRetry(taskId);
+      setRunningTaskId(taskId);
 
       pollAbortRef.current?.abort();
       const controller = new AbortController();
@@ -674,11 +698,13 @@ function AgentConversationPanel({
       void queryClient.invalidateQueries({ queryKey: ['project-detail'] });
       setIsAssistantReplying(false);
       setProgressTask(null);
+      setRunningTaskId(null);
       onConversationActivity?.(conversationId);
     },
     onError: (error, taskId) => {
       setIsAssistantReplying(false);
       setProgressTask(null);
+      setRunningTaskId(null);
 
       if (error instanceof DOMException && error.name === 'AbortError') return;
 
@@ -710,6 +736,50 @@ function AgentConversationPanel({
           // 못 찾으면 그냥 둔다 — 없는 승인을 띄우는 것보다 낫다
         }
       })();
+    },
+  });
+
+  /**
+   * 도는 작업을 멈춘다.
+   *
+   * 서버는 태스크를 CANCELLED 로 닫고 **딸린 PENDING 승인도 함께 취소한다** — 그래서
+   * 승인 카드가 남아 있으면 안 된다. 그리고 "작업을 취소했습니다."를 채팅에 남기므로
+   * 여기서 따로 메시지를 만들지 않는다.
+   *
+   * 확인 대화상자는 두지 않았다. 되돌릴 수 없는 것도, 돈이 드는 것도 아니고 — 다시
+   * 보내면 그만이다. 잘못 보낸 걸 알아챈 사용자를 한 번 더 붙잡을 이유가 없다.
+   */
+  const cancelTaskMutation = useMutation({
+    mutationFn: (taskId: string) => deleteAgentTask(taskId),
+    onSuccess: () => {
+      // 로컬 폴링을 끊는다. mutationFn 이 아니라 여기서 끊는 이유는, 서버가 실제로
+      // 받아들인 뒤에 멈춰야 "화면만 멈추고 작업은 계속 도는" 상태가 안 생기기 때문이다
+      pollAbortRef.current?.abort();
+      setIsAssistantReplying(false);
+      setProgressTask(null);
+      setRunningTaskId(null);
+      setLongRunningBaseline(null);
+      setRetryableTask(null);
+      setAwaitingInputTaskId(null);
+      // 서버가 딸린 승인도 함께 취소했다 — 카드를 남기면 이미 닫힌 승인을 누르게 된다
+      setPendingApprovalId(null);
+
+      if (conversationId != null) {
+        void queryClient.invalidateQueries({
+          queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, conversationId],
+        });
+      }
+      void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
+    },
+    onError: (error) => {
+      // 404 는 이미 끝났거나 취소된 것이다 — 사용자가 원한 결과와 같으니 조용히 정리한다
+      pollAbortRef.current?.abort();
+      setIsAssistantReplying(false);
+      setProgressTask(null);
+      setRunningTaskId(null);
+      if (import.meta.env.DEV) {
+        console.debug('[agent] 취소 실패 — 이미 끝난 작업일 수 있습니다', error);
+      }
     },
   });
 
@@ -838,7 +908,14 @@ function AgentConversationPanel({
             />
           ) : null}
           {isSending || isAssistantReplying ? (
-            <AssistantReplySkeleton progressLabel={describeTaskProgress(progressTask)} />
+            <AssistantReplySkeleton
+              progressLabel={describeTaskProgress(progressTask)}
+              onCancel={
+                runningTaskId && !cancelTaskMutation.isPending
+                  ? () => cancelTaskMutation.mutate(runningTaskId)
+                  : undefined
+              }
+            />
           ) : null}
           <div
             key={`${displayMessages.length}-${isAssistantReplying ? 'replying' : 'idle'}`}
@@ -959,15 +1036,35 @@ function linkifyMessageContent(content: string, linkClassName: string) {
  * 두 곳에서 쓴다 — 메시지 목록을 처음 읽는 동안과, 에이전트가 도는 동안.
  * 앞쪽은 곧 끝나므로 문구가 없고, 뒤쪽은 몇 분 걸릴 수 있어 지금 무슨 단계인지 적는다.
  */
-function AssistantReplySkeleton({ progressLabel }: { progressLabel?: string }) {
+function AssistantReplySkeleton({
+  progressLabel,
+  onCancel,
+}: {
+  progressLabel?: string;
+  onCancel?: () => void;
+}) {
   return (
     <div className="px-3.5 py-3">
       {progressLabel ? (
-        // aria-live 로 읽어준다. 몇 분 걸리는 작업이라 화면을 계속 보고 있지 않은
-        // 사용자에게도 단계가 바뀌는 것이 전달돼야 한다
-        <p aria-live="polite" className="mb-2 text-[12px] font-medium text-[#7c3aed]">
-          {progressLabel}
-        </p>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          {/*
+            aria-live 로 읽어준다. 몇 분 걸리는 작업이라 화면을 계속 보고 있지 않은
+            사용자에게도 단계가 바뀌는 것이 전달돼야 한다
+          */}
+          <p aria-live="polite" className="text-[12px] font-medium text-[#7c3aed]">
+            {progressLabel}
+          </p>
+          {/* 멈출 방법은 기다리는 자리에 있어야 한다 — 다른 화면을 찾아다니게 하지 않는다 */}
+          {onCancel ? (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="shrink-0 cursor-pointer text-[12px] font-medium text-[#94a3b8] underline underline-offset-2 hover:text-[#64748b]"
+            >
+              작업 중단
+            </button>
+          ) : null}
+        </div>
       ) : null}
       <div aria-hidden="true" className="flex flex-col gap-2">
         <div className="h-3 w-[78%] animate-pulse rounded bg-[#e2e8f0]" />
