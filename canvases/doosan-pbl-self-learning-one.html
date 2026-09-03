@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>팀원별 LI 조사 — 핵심과 출처</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #fff; }
+  body {
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    color: #1a1a1a;
+  }
+  .hd {
+    height: 88px; background: #1e4a7a; position: relative;
+  }
+  .hd::before {
+    content: ""; position: absolute; left: 0; top: 0; width: 14px; height: 88px; background: #b45309;
+  }
+  .kicker { position: absolute; left: 40px; top: 10px; color: #fcd34d; font-size: 15px; font-weight: 800; }
+  h1 { position: absolute; left: 40px; top: 34px; color: #fff; font-size: 26px; font-weight: 800; letter-spacing: -0.4px; }
+  h1 em { font-style: normal; color: #93c5fd; }
+  .sub { position: absolute; right: 40px; top: 28px; color: #bfdbfe; font-size: 14px; text-align: right; line-height: 1.4; }
+  table {
+    width: 1840px; margin: 16px 40px 0;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 7px 10px;
+    vertical-align: middle;
+  }
+  th {
+    background: #1e4a7a; color: #fff; font-size: 14px; font-weight: 800;
+  }
+  td { font-size: 13.5px; line-height: 1.35; }
+  .name {
+    text-align: center; font-weight: 800; font-size: 15px; color: #1e4a7a;
+    background: #e8f0f8;
+  }
+  .role { display: block; font-size: 11.5px; font-weight: 600; color: #64748b; margin-top: 3px; }
+  .li { font-weight: 800; color: #1e4a7a; white-space: nowrap; }
+  .src { color: #334155; }
+  tr:nth-child(even) td:not(.name) { background: #f8fafc; }
+  .ft {
+    position: absolute; left: 0; bottom: 0; right: 0; height: 52px;
+    background: #f1f5f9; color: #475569; font-size: 13.5px;
+    display: flex; align-items: center; padding: 0 40px;
+  }
+</style>
+</head>
+<body>
+  <div class="hd">
+    <div class="kicker">④ 자기주도 학습</div>
+    <h1>팀원별 LI 조사 · <em>핵심 내용과 출처</em></h1>
+    <div class="sub">사람당 3개 · 파일·토픽은 각 LI 핵심에 포함<br/>접근일 2026-09-03</div>
+  </div>
+
+  <table>
+    <colgroup>
+      <col style="width:11%"/>
+      <col style="width:16%"/>
+      <col style="width:42%"/>
+      <col style="width:31%"/>
+    </colgroup>
+    <thead>
+      <tr>
+        <th>이름</th>
+        <th>Learning Issue</th>
+        <th>핵심 내용</th>
+        <th>출처</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="name" rowspan="3">도훈<span class="role">Locomotion<br/>module1_locomotion/</span></td>
+        <td class="li">LI-09 Elevation Map</td>
+        <td>라이다·Depth를 2.5D 높이맵으로 누적. 분산이 큰 칸은 디딤에서 제외. 입력 <code>/lidar/points</code> → 출력 <code>/elevation_map</code> <code>/footholds</code></td>
+        <td class="src">Fankhauser et al., Robot-Centric Elevation Mapping, ICAR 2014 · ANYbotics/grid_map · elevation_mapping CPU</td>
+      </tr>
+      <tr>
+        <td class="li">LI-10 Trot / Crawl</td>
+        <td>Trot는 빠르고 험지에서 넘어짐. Crawl는 세 발 접지. 높이맵 거칠기·IMU로 전환. 출력 <code>/gait_mode</code></td>
+        <td class="src">Raibert, Legged Robots That Balance · ANYmal 보행 모드 · Unitree Go2 gait 문서</td>
+      </tr>
+      <tr>
+        <td class="li">LI-12 게이트 생성기</td>
+        <td>발끝 궤적(Bezier)+IK. CHAMP가 Jazzy·arm64에서 실패하면 stage1-B. 출력 <code>/joint_trajectory</code></td>
+        <td class="src">chvmp/champ · gz_ros2_control · Unitree Go2 URDF · Di Carlo, MIT Cheetah 3 MPC, ICRA 2018</td>
+      </tr>
+
+      <tr>
+        <td class="name" rowspan="3">운학<span class="role">Inspection AI<br/>module2_inspection/</span></td>
+        <td class="li">LI-16 게이지 독해</td>
+        <td>Hough 원+바늘 각도 → 눈금 환산, 오차 ≤5%. CNN 키포인트는 2차. <code>/camera/rgb/image</code> → <code>/gauge/reading</code></td>
+        <td class="src">OpenCV HoughCircles · HoughLinesP (docs.opencv.org) · 과제 #5 Module 2-1</td>
+      </tr>
+      <tr>
+        <td class="li">LI-17 저조도 전처리</td>
+        <td>CLAHE로 대비, 보행 진동은 deblur·프레임 스태킹. LI-16은 <code>/camera/rgb/image_pp</code>만 구독</td>
+        <td class="src">Pizer et al., CLAHE · OpenCV CLAHE · 과제 #5 흔들림·저조도</td>
+      </tr>
+      <tr>
+        <td class="li">LI-18 열화상-RGB</td>
+        <td>Zhang Intrinsic + Extrinsic. 평면 배관만 Homography. Harmonic thermal은 별도 링크라 오차가 시뮬에도 있음</td>
+        <td class="src">Zhang, Camera Calibration, TPAMI 2000 · gz-sensors ThermalCamera · tf2</td>
+      </tr>
+
+      <tr>
+        <td class="name" rowspan="3">태우<span class="role">순찰 경로<br/>/patrol_mission</span></td>
+        <td class="li">LI-19 Viewpoint</td>
+        <td>게이지 앞 원호에서 법선각·거리·가림·블러 비용으로 포즈 선택. 출력 <code>/viewpoints</code>. P3 전 운학과 인터페이스 합의</td>
+        <td class="src">Next-Best-View / inspection viewpoint 서베이 · OpenCV projectPoints · 과제 #5 Module 2-3</td>
+      </tr>
+      <tr>
+        <td class="li">LI-19 TSP</td>
+        <td>방문 순서는 2-opt. 거리 행렬은 유클리드가 아니라 A* 충돌 회피 경로 길이. 출력 <code>/patrol_order</code></td>
+        <td class="src">Croes, 2-opt, 1958 · 심층 인터뷰 Module 2 순찰 경로 알고리즘</td>
+      </tr>
+      <tr>
+        <td class="li">LI-19 A*</td>
+        <td>Viewpoint 사이를 정적 장애물 피해 연결. 동적 장애물·RTH는 채현 Nav2. 출력 <code>/patrol_path</code></td>
+        <td class="src">Hart, Nilsson, Raphael, A*, 1968 · Nav2 Jazzy planner (docs.nav2.org)</td>
+      </tr>
+
+      <tr>
+        <td class="name" rowspan="3">수현<span class="role">Virtual Plant·관제<br/>simulation/ dashboard/</span></td>
+        <td class="li">LI-05 SDF 월드</td>
+        <td>복도 45×3.5×4 m, 공장 25×18×7 m, 방해물 복도 3·공장 5. 제공 DAE/STL은 Blender에서 스케일·충돌 수정. 본 시뮬은 Harmonic</td>
+        <td class="src">gazebosim.org/docs/harmonic · PBL_AssetPackge.zip · 과제 #2-7 최소 모델링</td>
+      </tr>
+      <tr>
+        <td class="li">LI-06 URDF·control</td>
+        <td>optical frame을 여기서 고정. RGB·thermal·LiDAR·가스 부착. 관절 명령은 도훈. spawn은 ros_gz_sim</td>
+        <td class="src">ros-controls/gz_ros2_control · gazebosim/ros_gz 메시지 대응표 · Go2 description</td>
+      </tr>
+      <tr>
+        <td class="li">LI-24 대시보드</td>
+        <td>rosbridge WebSocket. 원본 이미지는 로컬, 관제는 CompressedImage+결과. E2E ≤500 ms. 포트 9090</td>
+        <td class="src">RobotWebTools/rosbridge_suite · Foxglove · 과제 #1-2 · #6 관제 화면</td>
+      </tr>
+
+      <tr>
+        <td class="name" rowspan="3">채현<span class="role">Gas / Safety<br/>module3_gas_safety/</span></td>
+        <td class="li">LI-20 Gaussian Plume</td>
+        <td>풍하 가우시안 확산. σ는 Pasquill-Gifford. 난류 구멍이 국소 최적. 자체 노드가 <code>/gas/concentration</code> 샘플. CFD 안 함</td>
+        <td class="src">표준 Gaussian Plume (EPA ISC / Sutton) · Pasquill-Gifford · 과제 #5 Module 3-1</td>
+      </tr>
+      <tr>
+        <td class="li">LI-21 Source Seeking</td>
+        <td>농도 최대화 → 경사 상승. 구멍에 갇히면 나선. Infotaxis는 2차. 원문 ‘하강’은 보고서에서 바로잡음</td>
+        <td class="src">Vergassola et al., Infotaxis, Nature 2007 · Olfactory navigation 서베이 · 과제 #5 Module 3-2</td>
+      </tr>
+      <tr>
+        <td class="li">LI-22 Return to Home</td>
+        <td>배터리 &lt;20%·통신 음영이면 Return이 Seek·순찰보다 우선. Nav2 NavigateToPose. 정적 경로는 태우</td>
+        <td class="src">Nav2 Behavior Tree · NavigateToPose (docs.nav2.org) · 과제 #5 Module 3-3</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="ft">공통 북마크: ROS 2 Jazzy · Gazebo Harmonic · gz-sensors · Nav2 · OpenCV · ros_gz · champ · grid_map · gz_ros2_control · Foxglove(GUI 우회). Isaac Lab은 보너스만.</div>
+</body>
+</html>

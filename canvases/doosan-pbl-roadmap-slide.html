@@ -13,7 +13,7 @@
   }
   .tl {
     position: absolute; top: 0; left: 0;
-    width: 240px; height: 240px;
+    width: 240px; height: 210px;
     background: #1e4a7a;
     clip-path: polygon(0 0, 100% 0, 0 100%);
   }
@@ -21,60 +21,77 @@
     position: absolute; right: 0; bottom: 0;
     width: 420px; height: 160px;
     background: repeating-linear-gradient(
-      -32deg, #dbeafe 0 18px, #e2e8f0 18px 36px
+      -32deg, #cfe3fc 0 16px, #dbe3ee 16px 32px
     );
-    clip-path: polygon(30% 100%, 100% 0, 100% 100%);
-    opacity: 0.7;
+    clip-path: polygon(32% 100%, 100% 0, 100% 100%);
+    opacity: 0.85;
   }
   .kicker {
-    text-align: center; padding-top: 42px;
-    color: #2563eb; font-size: 20px; font-weight: 800; letter-spacing: 0.06em;
+    text-align: center; padding-top: 28px;
+    color: #2563eb; font-size: 20px; font-weight: 800; letter-spacing: 0.08em;
   }
   h1 {
-    text-align: center; margin-top: 10px;
-    font-size: 36px; font-weight: 800; letter-spacing: -0.5px;
+    text-align: center; margin-top: 8px;
+    font-size: 32px; font-weight: 800; letter-spacing: -0.6px;
   }
   h1 em { font-style: normal; color: #1d4ed8; }
-  .sub {
-    text-align: center; margin-top: 8px; color: #64748b; font-size: 16px;
+  .hours {
+    text-align: center; margin-top: 8px;
+    font-size: 16px; font-weight: 700; color: #1e40af;
   }
   table {
-    position: absolute; left: 72px; top: 200px;
-    width: 1776px; border-collapse: collapse;
+    position: absolute; left: 56px; top: 168px;
+    width: 1808px; border-collapse: collapse;
     table-layout: fixed;
   }
   th, td {
-    border: 1px solid #cbd5e1;
+    border: 1px solid #c5d0de;
     height: 108px;
     vertical-align: middle;
   }
   thead th {
-    height: 92px;
-    background: #f8fafc;
-    font-size: 16px; font-weight: 800;
+    height: 86px;
+    background: #1e4a7a;
+    font-size: 20px; font-weight: 800;
     text-align: center;
-    color: #1e3a5f;
+    color: #fff;
+    letter-spacing: -0.3px;
   }
   thead th small {
-    display: block; margin-top: 6px;
-    font-size: 13px; font-weight: 600; color: #64748b;
+    display: block; margin-top: 5px;
+    font-size: 13px; font-weight: 600; color: #bfdbfe;
   }
   .lab {
-    width: 200px; background: #fff;
-    font-size: 20px; font-weight: 800; padding-left: 22px;
+    width: 210px;
+    background: #eef2f6;
+    font-size: 18px; font-weight: 800;
+    text-align: center;
+    color: #1e3a5f;
+    line-height: 1.25;
+  }
+  .lab small {
+    display: block;
+    margin-top: 4px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #1A46CD;
   }
   .cell { position: relative; background: #fff; }
   .bar {
-    position: absolute; top: 28px; height: 52px;
+    position: absolute; top: 22px; height: 62px;
     background: #93c5fd;
     border-radius: 4px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 800; color: #1e3a5f;
-    white-space: nowrap;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #1e3a5f;
+    padding: 0 12px;
+    gap: 2px;
   }
+  .bar .t { font-size: 15px; font-weight: 800; white-space: nowrap; }
+  .bar .h { font-size: 13px; font-weight: 800; color: #1e3a8a; }
   .foot {
-    position: absolute; left: 72px; bottom: 36px; width: 1776px;
-    font-size: 16px; color: #475569;
+    position: absolute; left: 56px; bottom: 22px; width: 1808px;
+    font-size: 15px; color: #475569;
+    display: flex; justify-content: space-between;
   }
   .foot b { color: #1e40af; }
 </style>
@@ -82,71 +99,100 @@
 <body>
   <div class="tl"></div>
   <div class="br"></div>
-  <div class="kicker">도입 로드맵</div>
-  <h1>체계적 프로세스로 완성하는 <em>Digital Twin 자율 점검 일정</em></h1>
-  <p class="sub">필수 205h + 보너스 60h · 예비 6h &nbsp;|&nbsp; 달은 캘린더가 아니라 마일스톤입니다</p>
+  <div class="kicker">실행 로드맵</div>
+  <h1>가상 플랜트에서 걷고 읽고 관제하는 <em>200시간 실행 일정</em></h1>
+  <p class="hours">필수 200시간 &nbsp;·&nbsp; 환경·플랜트 40h · 보행 55h · 점검 29h · 가스 30h · 관제 30h · 심화 16h</p>
 
   <table>
     <colgroup>
-      <col style="width:200px"/>
+      <col style="width:210px"/>
       <col/><col/><col/><col/><col/><col/>
     </colgroup>
     <thead>
       <tr>
-        <th></th>
-        <th>1 · 킥오프<small>P0 · RTF ≥ 0.8</small></th>
-        <th>2 · 설계 확정<small>P1 · 전 센서 수신</small></th>
-        <th>3 · 1차 시연<small>P2 · 험지 통과</small></th>
-        <th>4 · 2차 시연<small>P3·P4 병렬 데모</small></th>
-        <th>5 · 시범 운영<small>P5 · 통합 launch</small></th>
-        <th>6 · 제출<small>P6 보너스 · P7 문서</small></th>
+        <th>모듈</th>
+        <th>1M : 환경 가동<small>실시간 시뮬레이션 가동</small></th>
+        <th>2M : 플랜트 확정<small>가상 공장 센서 연동 완료</small></th>
+        <th>3M : 1차 시연<small>험지·계단 주행</small></th>
+        <th>4M : 2차 시연<small>점검 · 누출원 추적</small></th>
+        <th>5M : 관제 통합<small>한 화면에서 전 과정 확인</small></th>
+        <th>6M : 제출<small>최종 산출물</small></th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td class="lab">환경 구축</td>
+        <td class="lab">환경 · 플랜트<small>40h</small></td>
         <td class="cell" colspan="2" style="padding:0; position:relative;">
-          <div class="bar" style="left:16px; right:16px;">P0 Docker arm64 · P1 월드·브리지 15h+25h</div>
+          <div class="bar" style="left:12px; right:12px;">
+            <div class="t">개발환경 구축 및 가상 플랜트 모델링</div>
+            <div class="h">개발환경 15h · 가상 플랜트 25h</div>
+          </div>
         </td>
         <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
       </tr>
       <tr>
-        <td class="lab">설계</td>
+        <td class="lab">보행 제어<small>55h</small></td>
         <td class="cell"></td>
-        <td class="cell" colspan="2" style="padding:0; position:relative;">
-          <div class="bar" style="left:16px; right:40%;">1-A/1-B 판정 · 통신 규격 초안</div>
-        </td>
-        <td class="cell"></td><td class="cell"></td><td class="cell"></td>
-      </tr>
-      <tr>
-        <td class="lab">구축</td>
-        <td class="cell"></td><td class="cell"></td>
         <td class="cell" colspan="3" style="padding:0; position:relative;">
-          <div class="bar" style="left:16px; right:16px;">P2 보행 55h → P3 점검 29h ∥ P4 가스 30h</div>
+          <div class="bar" style="left:12px; right:12px;">
+            <div class="t">험지 보행 · 전도 후 자동 기립</div>
+            <div class="h">지형 인지 12h · 보행 제어 37h · 기립 6h</div>
+          </div>
+        </td>
+        <td class="cell"></td><td class="cell"></td>
+      </tr>
+      <tr>
+        <td class="lab">설비 점검<small>29h</small></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell" colspan="2" style="padding:0; position:relative;">
+          <div class="bar" style="left:12px; right:28%;">
+            <div class="t">게이지 판독 · 열화상 정합</div>
+            <div class="h">게이지 15h · 열화상 7h · 순찰 5h · 센서 2h</div>
+          </div>
         </td>
         <td class="cell"></td>
       </tr>
       <tr>
-        <td class="lab">검증</td>
+        <td class="lab">가스 · 안전<small>30h</small></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell" colspan="2" style="padding:0; position:relative;">
+          <div class="bar" style="left:12px; right:28%;">
+            <div class="t">누출원 추적 및 비상 복귀</div>
+            <div class="h">플룸 시각화 10h · 추적 12h · 복귀 8h</div>
+          </div>
+        </td>
+        <td class="cell"></td>
+      </tr>
+      <tr>
+        <td class="lab">관제 통합<small>30h</small></td>
         <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
         <td class="cell" colspan="2" style="padding:0; position:relative;">
-          <div class="bar" style="left:16px; right:16px;">P5 통합 시나리오 · 정량 지표 30h</div>
+          <div class="bar" style="left:12px; right:12px;">
+            <div class="t">3모듈 통합 및 관제 화면 검증</div>
+            <div class="h">통신 규격 · 통합 launch · 대시보드 30h</div>
+          </div>
         </td>
       </tr>
       <tr>
-        <td class="lab">제출</td>
+        <td class="lab">심화 · 문서<small>16h</small></td>
         <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
         <td class="cell" style="padding:0; position:relative;">
-          <div class="bar" style="left:16px; right:16px;">P6 60h · P7 15h</div>
+          <div class="bar" style="left:10px; right:10px;">
+            <div class="t" style="font-size:14px;">심화 검증 · 문서화</div>
+            <div class="h">16h</div>
+          </div>
         </td>
       </tr>
     </tbody>
   </table>
 
   <p class="foot">
-    <b>1차 시연</b> 험지·계단 통과 · Fall Recovery &nbsp;·&nbsp;
-    <b>2차 시연</b> 게이지 ≤5% · 누출원 추적 · RTH &nbsp;·&nbsp;
-    <b>제출</b> 통합 launch 1개 + REPORT.md · 보너스 ①은 P5에 흡수
+    <span>필수 200시간 (40+55+29+30+30+16) &nbsp;·&nbsp; 보너스 60시간은 별도 &nbsp;·&nbsp; 1~6은 일정 마일스톤입니다</span>
+    <span>
+      <b>1차 시연</b> 험지·계단 주행, 전도 후 자동 기립 &nbsp;·&nbsp;
+      <b>2차 시연</b> 계기 판독 오차 5% 이내 · 누출원 추적 · 비상 복귀 &nbsp;·&nbsp;
+      <b>제출</b> 통합 시나리오 및 최종 보고서
+    </span>
   </p>
 </body>
 </html>

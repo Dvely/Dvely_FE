@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>선후관계 그래프</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1600px; height: 400px; overflow: hidden; background: #fff; }
+  body {
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
+  }
+  .graph {
+    position: absolute;
+    left: 20px; top: 8px;
+    width: 1560px; height: 384px;
+  }
+  .node {
+    position: absolute;
+    border-radius: 8px;
+    padding: 10px 14px 10px;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .node .id { font-size: 11px; font-weight: 800; opacity: 0.8; letter-spacing: 0.04em; }
+  .node .nm { font-size: 18px; font-weight: 800; margin-top: 2px; }
+  .node .ds { font-size: 12px; font-weight: 600; margin-top: 6px; line-height: 1.3; opacity: 0.92; }
+  .p0 { left: 0; top: 132px; width: 222px; height: 92px; background: #64748b; }
+  .p1 { left: 292px; top: 132px; width: 248px; height: 92px; background: #1A46CD; }
+  .p2 { left: 620px; top: 252px; width: 266px; height: 118px; background: #0f2f8a; }
+  .p3 { left: 620px; top: 8px; width: 248px; height: 88px; background: #2563eb; }
+  .p4 { left: 957px; top: 132px; width: 248px; height: 92px; background: #3b82f6; }
+  .p5 { left: 1276px; top: 132px; width: 266px; height: 92px; background: #1e3a5f; }
+  .badge {
+    display: inline-block;
+    margin-top: 6px;
+    background: #fff;
+    color: #0f2f8a;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+  }
+  svg.arr {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+  <div class="graph">
+    <svg class="arr" viewBox="0 0 1760 480" preserveAspectRatio="none" fill="none">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+          <path d="M0 0 L10 5 L0 10 Z" fill="#94a3b8"/>
+        </marker>
+      </defs>
+      <path d="M250 222 H321" stroke="#94a3b8" stroke-width="3" marker-end="url(#ah)"/>
+      <path d="M469 280 V382 H692" stroke="#94a3b8" stroke-width="3" marker-end="url(#ah)"/>
+      <path d="M469 165 V65 H692" stroke="#94a3b8" stroke-width="3" marker-end="url(#ah)"/>
+      <path d="M609 222 H1064" stroke="#94a3b8" stroke-width="3" marker-end="url(#ah)"/>
+      <path d="M999 340 H1220 V288" stroke="#94a3b8" stroke-width="3" marker-end="url(#ah)"/>
+      <path d="M999 382 H1590 V292" stroke="#94a3b8" stroke-width="3" marker-end="url(#ah)"/>
+      <path d="M980 65 H1590 V157" stroke="#94a3b8" stroke-width="3" marker-end="url(#ah)"/>
+      <path d="M1360 222 H1431" stroke="#94a3b8" stroke-width="3" marker-end="url(#ah)"/>
+    </svg>
+
+    <div class="node p0">
+      <div class="id">P0 · 절대 선행</div>
+      <div class="nm">개발환경</div>
+      <div class="ds">Docker arm64 · Jazzy · Harmonic · Foxglove</div>
+    </div>
+    <div class="node p1">
+      <div class="id">P1 · 절대 선행</div>
+      <div class="nm">Virtual Plant</div>
+      <div class="ds">월드 · Go2 · 센서 · ros_gz_bridge</div>
+    </div>
+    <div class="node p2">
+      <div class="id">P2 · 병목 · 55h</div>
+      <div class="nm">Locomotion</div>
+      <div class="ds">높이맵 → 보행 확보 → 기립</div>
+      <span class="badge">Module 2·3의 전제</span>
+    </div>
+    <div class="node p3">
+      <div class="id">P3 · 병렬</div>
+      <div class="nm">Inspection AI</div>
+      <div class="ds">게이지 · 열화상 · 순찰</div>
+    </div>
+    <div class="node p4">
+      <div class="id">P4 · P2에 의존</div>
+      <div class="nm">Gas / Safety</div>
+      <div class="ds">플룸 · 추적 · 비상 복귀</div>
+    </div>
+    <div class="node p5">
+      <div class="id">P5 · 최종 통합</div>
+      <div class="nm">Digital Twin</div>
+      <div class="ds">통신 규격 · 관제 · 통합 launch</div>
+    </div>
+  </div>
+</body>
+</html>

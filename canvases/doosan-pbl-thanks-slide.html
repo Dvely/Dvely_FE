@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>감사합니다 — Digital Twin 자율 점검</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    position: relative;
+    background: #1A46CD;
+  }
+  .photo {
+    position: absolute;
+    right: 0; top: 0; bottom: 0; width: 52%;
+    background:
+      linear-gradient(90deg, #1A46CD 0%, rgba(26,70,205,0.15) 18%, transparent 36%),
+      url("doosan-ppt-images/07-anymalx-offshore-inspection.jpg") 58% 40% / cover no-repeat;
+  }
+  .diag {
+    position: absolute;
+    left: 46%; top: -8%;
+    width: 180px; height: 120%;
+    background: #1A46CD;
+    transform: rotate(-18deg);
+    z-index: 1;
+  }
+  .left {
+    position: relative; z-index: 2;
+    width: 58%;
+    height: 100%;
+    padding: 72px 72px 56px 80px;
+    display: flex;
+    flex-direction: column;
+  }
+  .kicker {
+    font-size: 22px;
+    font-weight: 700;
+    color: #c7d4ff;
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-size: 56px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.28;
+    letter-spacing: -1.4px;
+    margin-bottom: 40px;
+  }
+  .tag {
+    align-self: flex-start;
+    background: #fff;
+    color: #1A46CD;
+    font-size: 18px;
+    font-weight: 800;
+    padding: 8px 16px;
+    margin-bottom: 22px;
+  }
+  .list { color: #fff; }
+  .row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .ck {
+    width: 28px; height: 28px; min-width: 28px;
+    border-radius: 50%;
+    background: #fff;
+    color: #1A46CD;
+    font-size: 16px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 2px;
+  }
+  .foot {
+    margin-top: auto;
+    color: #dbe4ff;
+  }
+  .foot .lab {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+    color: #c7d4ff;
+  }
+  .foot .team {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .foot .meta {
+    font-size: 16px;
+    font-weight: 600;
+    color: #c7d4ff;
+  }
+  .brand {
+    margin-top: 28px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+</style>
+</head>
+<body>
+  <div class="photo"></div>
+  <div class="diag"></div>
+  <div class="left">
+    <div class="kicker">발표를 마칩니다</div>
+    <h1>경청해 주셔서<br/>감사합니다</h1>
+    <div class="tag">오늘 말씀드린 것</div>
+    <div class="list">
+      <div class="row"><div class="ck">✓</div><div>위험 구역 점검을 가상 발전소에서 검증합니다</div></div>
+      <div class="row"><div class="ck">✓</div><div>걷고, 읽고, 찾아, 한 화면에서 관제합니다</div></div>
+      <div class="row"><div class="ck">✓</div><div>200시간 실행 계획으로 제출까지 갑니다</div></div>
+    </div>
+    <div class="foot">
+      <div class="lab">팀</div>
+      <div class="team">수현 · 도훈 · 운학 · 태우 · 채현</div>
+      <div class="meta">32_DT 두산에너빌리티 · Digital Twin 자율 점검</div>
+      <div class="brand">가상 플랜트에서 걷고 읽고 관제합니다</div>
+    </div>
+  </div>
+</body>
+</html>

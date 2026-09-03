@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>과제 분석 — 핵심 문제 · 사용자 · 결과물</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #fff; }
+  body {
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    color: #1f2937;
+    position: relative;
+  }
+  .bl {
+    position: absolute; left: 0; bottom: 0; width: 280px; height: 140px;
+    background: #1A46CD;
+    clip-path: polygon(0 40%, 0 100%, 100% 100%);
+  }
+  .br {
+    position: absolute; right: 0; bottom: 0; width: 360px; height: 130px;
+    background: #e2e8f0;
+    clip-path: polygon(30% 100%, 100% 0, 100% 100%);
+  }
+  .tag {
+    position: absolute; left: 64px; top: 32px;
+    background: #1A46CD;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+    padding: 8px 18px;
+    border-radius: 4px;
+  }
+  h1 {
+    text-align: center;
+    padding: 32px 80px 0;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    color: #1e3a5f;
+    line-height: 1.35;
+  }
+  h1 em { font-style: normal; color: #1A46CD; }
+  .sub {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 18px;
+    color: #64748b;
+  }
+  .cols {
+    position: absolute;
+    left: 120px; right: 120px; top: 168px; bottom: 28px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    z-index: 1;
+  }
+  .col { display: flex; flex-direction: column; }
+  .photo {
+    height: 340px;
+    border-radius: 6px 6px 0 0;
+    background-size: cover;
+    background-position: center;
+  }
+  .p2 { background-image: url("doosan-ppt-images/02-go2-three-quarter.jpg"); }
+  .p3 { background-image: url("doosan-ppt-images/07-anymalx-offshore-inspection.jpg"); }
+  .bar {
+    background: #1A46CD;
+    color: #fff;
+    padding: 14px 20px;
+    font-size: 20px;
+    font-weight: 800;
+  }
+  .bar small {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #c7d4ff;
+    margin-top: 3px;
+  }
+  .body {
+    flex: 1;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-top: 0;
+    border-radius: 0 0 6px 6px;
+    padding: 18px 20px 16px;
+  }
+  .row { margin-bottom: 14px; }
+  .row:last-child { margin-bottom: 0; }
+  .k {
+    font-size: 13px;
+    font-weight: 800;
+    color: #1A46CD;
+    margin-bottom: 5px;
+  }
+  .v {
+    font-size: 18px;
+    line-height: 1.45;
+    color: #334155;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+  <div class="tag">과제 분석</div>
+  <h1>사람 대신 4족 로봇이 걷고 읽고, <em>관제에서 확인한다</em></h1>
+  <p class="sub">가상 발전소(Virtual Plant)에서 전 과정을 검증합니다. 실제 로봇 하드웨어는 쓰지 않습니다.</p>
+
+  <div class="cols">
+    <div class="col">
+      <div class="photo p2"></div>
+      <div class="bar">사용자<small>누가 쓰는가</small></div>
+      <div class="body">
+        <div class="row"><div class="k">1차 · 발전소 정비팀</div><div class="v">위험 구역 무인 점검, 계기 수치 자동 기록</div></div>
+        <div class="row"><div class="k">2차 · 로봇솔루션팀</div><div class="v">실기 투입 전 보행·인식 알고리즘을 검증할 환경</div></div>
+        <div class="row"><div class="k">3차 · DX추진팀</div><div class="v">설비 상태 데이터의 디지털화 및 관제 통합</div></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="photo p3"></div>
+      <div class="bar">최종 결과물<small>GitHub Repository 1식</small></div>
+      <div class="body">
+        <div class="row"><div class="k">세 모듈</div><div class="v">module1_locomotion · module2_inspection · module3_gas_safety</div></div>
+        <div class="row"><div class="k">환경 · 관제 · 문서</div><div class="v">simulation · dashboard · REPORT.md · README.md</div></div>
+        <div class="row"><div class="k">최소 모델링</div><div class="v">복도 45×3.5×4 m · 공장 25×18×7 m · 방해물 복도 3·공장 5 · 로봇 1</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="bl"></div>
+  <div class="br"></div>
+</body>
+</html>
