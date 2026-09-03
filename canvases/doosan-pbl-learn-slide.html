@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>학습 주제 도출 — 우리가 모르는 것은 무엇인가?</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    display: flex;
+    background: #1A46CD;
+  }
+  .left {
+    width: 620px;
+    padding: 56px 52px 56px 56px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .tag {
+    align-self: flex-start;
+    background: #fff;
+    color: #1A46CD;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+    padding: 10px 22px;
+    border-radius: 0;
+    margin-bottom: 48px;
+    transform: skewX(-18deg);
+  }
+  .tag span { display: inline-block; transform: skewX(18deg); }
+  h1 {
+    color: #fff;
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.28;
+    letter-spacing: -1.2px;
+    margin-bottom: auto;
+  }
+  .fields { margin-top: 28px; }
+  .field { margin-bottom: 22px; }
+  .field:last-child { margin-bottom: 0; }
+  .lab {
+    font-size: 15px;
+    font-weight: 800;
+    color: #c7d4ff;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+  }
+  .lede {
+    color: #e8eeff;
+    font-size: 18px;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+  .right {
+    flex: 1;
+    padding: 36px 40px 36px 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(5, 1fr);
+    gap: 16px 16px;
+  }
+  .card {
+    border-radius: 10px;
+    padding: 18px 22px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .card.outline {
+    background: #1A46CD;
+    border: 2px solid #fff;
+    color: #fff;
+  }
+  .card.solid {
+    background: #fff;
+    color: #1A46CD;
+  }
+  .card h3 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    margin-bottom: 8px;
+  }
+  .card p {
+    font-size: 15.5px;
+    line-height: 1.42;
+    font-weight: 500;
+  }
+  .card.outline p { color: #e8eeff; }
+  .card.solid p { color: #3b5cb8; }
+  .card .ids {
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .card.outline .ids { color: #c7d4ff; }
+  .card.solid .ids { color: #5b7ae0; }
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="tag"><span>학습 주제 도출</span></div>
+    <h1>우리가 모르는 것은<br/>무엇인가?</h1>
+    <div class="fields">
+      <div class="field">
+        <div class="lab">중요도</div>
+        <p class="lede">P0 없으면 프로젝트가 멈춤<br/>P1 정량 목표(오차·지연)를 가름<br/>P2 보너스·심화</p>
+      </div>
+      <div class="field">
+        <div class="lab">학습 우선순위</div>
+        <p class="lede">선행조건인가 → 오차·지연에 직결되는가 → 대체 수단이 있는가. P0를 Phase 0~1에 몰아서 배웁니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="card outline">
+      <h3>실행 환경</h3>
+      <p>Apple Silicon(arm64)에서 ROS 2 Jazzy가 실제로 뜨는지, Humble 패키지가 Jazzy에서 깨지는지 모른다. Docker 안에서 GUI를 어떻게 볼지도 모른다.</p>
+      <div class="ids">LI-01 · LI-03</div>
+    </div>
+    <div class="card solid">
+      <h3>ROS 통신</h3>
+      <p>Topic·Service·Action·QoS를 언제 써야 하는지 기준이 없고, Gazebo Harmonic 메시지를 ROS 2 토픽으로 어떻게 넘기는지 모른다.</p>
+      <div class="ids">LI-02 · LI-04</div>
+    </div>
+    <div class="card solid">
+      <h3>가상 플랜트</h3>
+      <p>복도·공장 SDF 월드와 제공 에셋을 어떻게 만드는지, Go2 URDF를 gz_ros2_control에 붙일 때 센서 프레임을 어떻게 맞출지 모른다.</p>
+      <div class="ids">LI-05 · LI-06</div>
+    </div>
+    <div class="card outline">
+      <h3>열화상</h3>
+      <p>Harmonic thermal 센서로 배관 온도를 어떻게 태깅하는지, 열화상과 RGB 좌표가 어긋나는 이유를 어떻게 보정하는지 모른다.</p>
+      <div class="ids">LI-07 · LI-18</div>
+    </div>
+    <div class="card outline">
+      <h3>보행</h3>
+      <p>포인트클라우드에서 Elevation Map과 발 디딤점을 어떻게 만드는지, CHAMP가 안 될 때 보행을 무엇으로 대체하는지 모른다.</p>
+      <div class="ids">LI-09 · LI-12</div>
+    </div>
+    <div class="card solid">
+      <h3>점검·가스</h3>
+      <p>아날로그 바늘을 숫자로 어떻게 읽는지, 가스가 퍼지는 방식과 누출원을 찾는 방법을 모른다.</p>
+      <div class="ids">LI-16 · LI-20 · LI-21</div>
+    </div>
+    <div class="card solid">
+      <h3>지형 필터</h3>
+      <p>포인트클라우드 이상치·노이즈를 어떻게 걸러야 Elevation Map이 믿을 수 있는지 모른다.</p>
+      <div class="ids">LI-08</div>
+    </div>
+    <div class="card outline">
+      <h3>보행 모드</h3>
+      <p>Trot와 Crawl이 언제 넘어지고 언제 버틸지, 험지에서 어떤 보행 모드로 바꿔야 하는지 모른다.</p>
+      <div class="ids">LI-10</div>
+    </div>
+    <div class="card outline">
+      <h3>자율 이동</h3>
+      <p>점검이 끝난 뒤 장애물과 배터리를 보고 복귀 경로를 어떻게 짜는지, Nav2 플래너·Behavior Tree를 모른다.</p>
+      <div class="ids">LI-15</div>
+    </div>
+    <div class="card solid">
+      <h3>시간 동기화</h3>
+      <p>시뮬 시간과 실제 센서 시간이 어긋나면 퓨전이 깨지는데, TF2와 다중 센서 시각을 어떻게 맞출지 모른다.</p>
+      <div class="ids">LI-23</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>자기주도 학습 — 어떻게 남기는가</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    display: flex;
+    background: #1A46CD;
+  }
+  .left {
+    width: 620px;
+    padding: 56px 52px 56px 56px;
+    display: flex;
+    flex-direction: column;
+  }
+  .tag {
+    align-self: flex-start;
+    background: #fff;
+    color: #1A46CD;
+    font-size: 20px;
+    font-weight: 800;
+    padding: 10px 22px;
+    border-radius: 6px;
+    margin-bottom: 48px;
+  }
+  h1 {
+    color: #fff;
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.28;
+    letter-spacing: -1.1px;
+  }
+  .path {
+    margin-top: 28px;
+    color: #c7d4ff;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+  }
+  .lede {
+    margin-top: auto;
+    color: #e8eeff;
+    font-size: 20px;
+    line-height: 1.55;
+    font-weight: 500;
+  }
+  .lede b { color: #fff; }
+  .right {
+    flex: 1;
+    padding: 36px 40px 36px 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .card {
+    border-radius: 10px;
+    padding: 28px 28px 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .card.outline {
+    background: #1A46CD;
+    border: 2px solid #fff;
+    color: #fff;
+  }
+  .card.solid {
+    background: #fff;
+    color: #1A46CD;
+  }
+  .num {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+  .card.outline .num { color: #c7d4ff; }
+  .card.solid .num { color: #5b7ae0; }
+  .card h3 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    margin-bottom: 10px;
+  }
+  .card p {
+    font-size: 17px;
+    line-height: 1.45;
+    font-weight: 500;
+  }
+  .card.outline p { color: #e8eeff; }
+  .card.solid p { color: #3b5cb8; }
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="tag">자기주도 학습</div>
+    <h1>배운 것은<br/>코드 옆에<br/>남긴다</h1>
+    <p class="path">docs/learning/LI-XX.md</p>
+    <p class="lede"><b>개념만 쓰지 않는다.</b> 파일·입력 토픽·출력 토픽을 한 줄 이상 적습니다. <b>6번을 채운다.</b> 이 노트가 심층 인터뷰 답변 초안입니다.</p>
+  </div>
+  <div class="right">
+    <div class="card outline">
+      <div class="num">01</div>
+      <h3>핵심 개념 5줄</h3>
+      <p>정의만 적습니다. 위키를 옮기지 않고, 우리 과제에서 이 개념이 하는 일만 남깁니다.</p>
+    </div>
+    <div class="card solid">
+      <div class="num">02 · 필수</div>
+      <h3>우리 코드의 어디인가</h3>
+      <p>파일 경로, 입력 토픽, 출력 토픽. 이 줄이 없으면 학습하지 않은 것으로 칩니다.</p>
+    </div>
+    <div class="card solid">
+      <div class="num">03</div>
+      <h3>왜 이 방법인가</h3>
+      <p>대안과 비교해 고른 이유를 씁니다. CHAMP가 안 되면 게이트 생성기로 바꾸는 식입니다.</p>
+    </div>
+    <div class="card outline">
+      <div class="num">04</div>
+      <h3>아직 모르는 것</h3>
+      <p>예상 어려움과 미해결 질문을 남깁니다. 다음 주에 뭘 더 배워야 하는지 보이게 합니다.</p>
+    </div>
+    <div class="card outline">
+      <div class="num">05</div>
+      <h3>출처</h3>
+      <p>공식 문서 URL, 논문 제목, 접근일을 적습니다. Jazzy·Harmonic·CHAMP·Cheetah MPC.</p>
+    </div>
+    <div class="card solid">
+      <div class="num">06 · 인터뷰</div>
+      <h3>동료평가 몇 번인가</h3>
+      <p>이 LI가 답하는 평가 질문 번호를 채웁니다. 노트가 곧 심층 인터뷰 초안입니다.</p>
+    </div>
+  </div>
+</body>
+</html>

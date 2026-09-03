@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>④ 자기주도 학습 — 팀원별 LI 조사·학습 정리</title>
+<style>
+  @page { size: A4; margin: 14mm 14mm 16mm; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: #fff; color: #111;
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    font-size: 10.8px; line-height: 1.5;
+  }
+  h1 { font-size: 17px; font-weight: 800; margin: 0 0 4px; letter-spacing: -0.3px; }
+  .lede { font-size: 11px; color: #333; margin: 0 0 10px; }
+  h2 {
+    font-size: 13px; font-weight: 800; margin: 16px 0 8px; padding: 6px 10px;
+    background: #1e4a7a; color: #fff; page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12px; font-weight: 800; margin: 12px 0 6px; color: #1e4a7a;
+    page-break-after: avoid;
+  }
+  h4 { font-size: 11.2px; font-weight: 800; margin: 8px 0 4px; page-break-after: avoid; }
+  p { margin: 0 0 7px; }
+  ul, ol { margin: 0 0 8px; padding-left: 18px; }
+  li { margin: 1.5px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 10px; font-size: 10.4px; }
+  th, td { border: 1px solid #333; padding: 4px 6px; vertical-align: top; }
+  th { background: #d6e3f0; font-weight: 800; text-align: center; }
+  td.ctr { text-align: center; }
+  .box {
+    border: 1px solid #1e4a7a; background: #f4f7fb; padding: 8px 10px;
+    margin: 0 0 10px; page-break-inside: avoid;
+  }
+  .k { font-weight: 800; }
+  .note { font-size: 10px; color: #333; }
+  .keep { page-break-inside: avoid; }
+  code { font-family: "Menlo", "Consolas", monospace; font-size: 10px; }
+  .src { font-size: 10px; }
+  .src li { margin: 2px 0; }
+  .meta { color: #444; font-size: 10px; }
+</style>
+</head>
+<body>
+
+<h1>④ 자기주도 학습 — 팀원별 Learning Issue 조사·학습 정리</h1>
+<p class="lede">
+  <span class="k">32_DT 두산에너빌리티 · 보행 로봇 제어</span> · 기준일 2026-09-03<br/>
+  스택: macOS + Docker(Ubuntu 24.04 arm64) / ROS 2 Jazzy / Gazebo Harmonic / Unitree Go2<br/>
+  규칙: 개념만 쓰지 않는다. <span class="k">파일·입력 토픽·출력 토픽</span>을 한 줄 이상 적고, 동료평가·심층 인터뷰 질문 번호를 채운다.
+</p>
+
+<div class="box">
+  <p class="k">이 문서의 목적</p>
+  <p>과제 원문 #1~#9와 팀 역할(도훈 locomotion / 운학 inspection / 태우 순찰경로 / 수현 Virtual Plant·관제 / 채현 gas)을 기준으로, 사람마다 <span class="k">P0 학습 주제 3개</span>를 고른 조사 노트다. 각 노트는 <code>docs/learning/LI-XX.md</code>의 초안이며, 심층 인터뷰 답변으로 그대로 쓴다.</p>
+</div>
+
+<h2>0. 배분 한눈에</h2>
+<table>
+  <thead>
+    <tr><th>이름</th><th>역할</th><th>선택한 LI (3)</th><th>산출물 폴더</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="ctr">도훈</td><td>Locomotion</td><td>LI-09 · LI-10 · LI-12</td><td><code>module1_locomotion/</code></td></tr>
+    <tr><td class="ctr">운학</td><td>Inspection AI</td><td>LI-16 · LI-17 · LI-18</td><td><code>module2_inspection/</code></td></tr>
+    <tr><td class="ctr">태우</td><td>순찰 경로 · Critical Path</td><td>LI-19 (Viewpoint) · LI-19 (TSP) · LI-19 (A*)</td><td><code>module2_inspection/</code> · <code>/patrol_mission</code></td></tr>
+    <tr><td class="ctr">수현</td><td>Virtual Plant + 관제</td><td>LI-05 · LI-06 · LI-24</td><td><code>docker/</code> · <code>simulation/</code> · <code>dashboard/</code></td></tr>
+    <tr><td class="ctr">채현</td><td>Gas / Safety</td><td>LI-20 · LI-21 · LI-22</td><td><code>module3_gas_safety/</code></td></tr>
+  </tbody>
+</table>
+<p class="note">태우는 표의 LI 번호가 하나(LI-19)다. 동료평가·심층 인터뷰가 Viewpoint 비용 / TSP / A*를 따로 묻기 때문에 <span class="k">같은 LI를 조사 노트 3장</span>으로 쪼갠다. P3 착수 전에 운학과 <code>/patrol_mission</code> Action 인터페이스를 맞춘다.</p>
+
+<h2>1. 도훈 — Locomotion (LI-09 · LI-10 · LI-12)</h2>
+<p>걷지 못하면 Module 2·3이 시작되지 않는다. CHAMP Jazzy 이식은 불확실하므로, 학습은 “맵을 만들고 → 보행 모드를 고르고 → CHAMP가 안 되면 게이트 생성기로 대체” 순이다. MPC(LI-13)와 Fall Recovery(LI-14)는 P1이라 Phase 2 착수 직전에 붙인다.</p>
+
+<div class="keep">
+<h3>LI-09. Elevation Map과 발 디딤점</h3>
+<p><span class="k">1. 핵심 개념</span> 라이다·Depth 포인트클라우드를 로봇 발밑의 2.5D 격자(높이맵)로 누적한다. 각 칸은 높이 평균·분산을 들고, 분산이 큰 칸은 발 디딤 후보에서 뺀다. 디딤점은 다리 워크스페이스 안에서 지지다각형이 넓고 모서리·구멍과 떨어진 칸이다.</p>
+<p><span class="k">2. 우리 코드</span> <code>module1_locomotion/elevation/</code> · 입력 <code>/lidar/points</code> (PointCloud2), <code>/tf</code> · 출력 <code>/elevation_map</code> (grid_map_msgs), <code>/footholds</code> (PoseArray).</p>
+<p><span class="k">3. 방법</span> arm64에서 GPU elevation_mapping은 부담이므로 <span class="k">ANYbotics grid_map + elevation_mapping CPU</span>를 1순위. 자체 복셀 높이 히스토그램은 대체 경로. 발 디딤은 높이 기울기 임계 + 발 반지름 팽창으로 단순화한다. 전 칸 A*는 쓰지 않는다.</p>
+<p><span class="k">4. 어려움</span> 시뮬 라이다 이상치가 맵에 남으면 허공에 발을 찍는다. LI-08 필터가 선행이다.</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>P. Fankhauser et al., “Robot-Centric Elevation Mapping with Uncertainty Estimates,” ICAR 2014. — 로봇 중심 높이맵과 분산. 접근일 2026-09-03</li>
+  <li>ANYbotics/grid_map, github.com/ANYbotics/grid_map — 2.5D 격자 메시지. Jazzy 포크 여부 확인</li>
+  <li>ANYbotics/elevation_mapping, github.com/ANYbotics/elevation_mapping — CPU 모드 파라미터</li>
+  <li>docs.ros.org (Jazzy) sensor_msgs/PointCloud2, tf2 — 입력 규약</li>
+</ul>
+<p class="meta">6. 동료평가 Module 1-① 험지 노이즈를 걸러 Elevation Map을 만들고 발 디딤을 정하는가 / 심층: 지형 인지 센서 노이즈 처리</p>
+</div>
+
+<div class="keep">
+<h3>LI-10. Trot / Crawl 안정성 차이와 전환</h3>
+<p><span class="k">1. 핵심 개념</span> Trot는 대각선 두 발이 동시에 든다. 빠르지만 지지다각형이 순간적으로 선이 되어 험지·계단에서 넘어진다. Crawl(creep)는 세 발이 항상 땅에 있어 느리고 안정적이다. 전환 기준은 높이맵 거칠기(기울기·분산)와 IMU 피치/롤이다.</p>
+<p><span class="k">2. 우리 코드</span> <code>module1_locomotion/gait/</code> · 입력 <code>/elevation_map</code>, <code>/imu</code> · 출력 <code>/gait_mode</code> (String: trot|crawl), 게이트 생성기가 이 모드를 구독.</p>
+<p><span class="k">3. 방법</span> 평지·완만한 복도는 Trot, 계단·잔해는 Crawl. 임계는 시뮬에서 넘어짐 횟수로 맞춘다. Pace는 이번 학기 범위 밖.</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>M. Hutter et al., ANYmal 계열 보행 모드 설명 — Trot vs crawling 안정성</li>
+  <li>Raibert, <em>Legged Robots That Balance</em> — 지지다각형과 투영 CoM</li>
+  <li>Unitree Go2 사용자 문서 gait 전환 (Trot/climb) — 실기 용어 대응. 접근일 2026-09-03</li>
+</ul>
+<p class="meta">6. 심층 Module 1: Trot·Crawl 전환 기준 및 방식</p>
+</div>
+
+<div class="keep">
+<h3>LI-12. 자체 게이트 생성기 (stage1-B)</h3>
+<p><span class="k">1. 핵심 개념</span> 게이트는 “지금 발 위치 → 다음 디딤점”의 발끝 곡선이다. 사이클로이드·Bezier로 궤적을 만들고, 다리 역기구학(IK)으로 관절각을 푼 뒤 <code>gz_ros2_control</code>에 보낸다. CHAMP(LI-11)가 Jazzy·arm64에서 안 돌 때의 대체 경로가 이 노드다.</p>
+<p><span class="k">2. 우리 코드</span> <code>module1_locomotion/gait_generator/</code> · 입력 <code>/footholds</code>, <code>/gait_mode</code>, <code>/joint_states</code> · 출력 <code>/joint_trajectory</code> 또는 position command.</p>
+<p><span class="k">3. 방법</span> 1순위는 CHAMP 포팅(LI-03·LI-11). 실패 판정 기준(빌드 실패, RTF&lt;0.8, 발 미접지)이 나오면 즉시 이 노드로 전환한다. MPC(LI-13)는 품질용 P1이라 게이트 위에 얹는다.</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>chvmp/champ 및 Jazzy 포크 — 튜닝 지점 vs 교체 지점. github.com/chvmp/champ</li>
+  <li>ros-controls/gz_ros2_control — Harmonic 관절 명령. github.com/ros-controls/gz_ros2_control</li>
+  <li>Unitree Go2 description (URDF/Xacro) — 다리 IK 링크 길이</li>
+  <li>Di Carlo et al., “Dynamic Locomotion in the MIT Cheetah 3,” ICRA 2018 — 나중에 얹을 Convex MPC의 위치</li>
+</ul>
+<p class="meta">6. 동료평가 Module 1-②③은 MPC·기립이므로 이 노트는 “CHAMP 실패 시 무엇으로 걷히는가”의 선행 답. 심층: 가장 어려웠던 기술적 문제(보행 이식)</p>
+</div>
+
+<h2>2. 운학 — Inspection AI (LI-16 · LI-17 · LI-18)</h2>
+<p>원문 목표는 바늘 오차 ≤5%, 흔들림·저조도, 열화상-RGB 위치 오차 보정이다. 학습 순서는 전처리 → 바늘 각도 → Extrinsic 정합이다. Viewpoint(LI-19)는 태우가 만들고, 운학은 인식 성공/실패를 비용 입력으로 넘긴다.</p>
+
+<div class="keep">
+<h3>LI-16. 아날로그 게이지 독해</h3>
+<p><span class="k">1. 핵심 개념</span> 원형 압력계는 원 검출 → 바늘 직선 → 영점 눈금 대비 각도 → 눈금 범위로 물리량 환산. OCR은 눈금 숫자 확인용이지 바늘의 주 경로가 아니다. 경량 CNN 키포인트는 오차가 줄 수 있으나 인터뷰에서 “왜 이 방법인가”를 수식으로 답하기 어렵다.</p>
+<p><span class="k">2. 우리 코드</span> <code>module2_inspection/gauge/</code> · 입력 <code>/camera/rgb/image</code> · 출력 <code>/gauge/reading</code> (Float32, 단위 bar), <code>/gauge/overlay</code> (Image).</p>
+<p><span class="k">3. 방법</span> 1차 HoughCircles + HoughLinesP (OpenCV). 5%를 못 지키면 바늘 끝 키포인트 네트워크를 보너스로 붙인다. 태우 Viewpoint가 정면·적정거리를 주면 Hough만으로 목표를 맞추는 것이 설계다.</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>OpenCV docs: HoughCircles, HoughLinesP, minAreaRect — docs.opencv.org. 접근일 2026-09-03</li>
+  <li>게이지 독해 실무: “Analog Gauge Reading” 계열 (원 검출+바늘 각도) 블로그/논문 서베이. 인터뷰용으로 수식(각도→값)을 노트에 고정</li>
+  <li>과제 원문 #5 Module 2-1: 오차 5% 이내, 흔들림·저조도</li>
+</ul>
+<p class="meta">6. 동료평가 Module 2-① 전처리 후 바늘·숫자 구분 / 심층: Edge·Hough vs DL 선택 이유</p>
+</div>
+
+<div class="keep">
+<h3>LI-17. 저조도·모션블러 전처리</h3>
+<p><span class="k">1. 핵심 개념</span> 발전소 조명은 불균일하다. CLAHE는 타일별 히스토그램으로 국소 대비를 올린다. 보행 진동은 바늘을 호로 번지게 하므로, 짧은 노출 시뮬 + 프레임 스태킹 또는 Wiener/deblur로 바늘 에지를 살린다.</p>
+<p><span class="k">2. 우리 코드</span> <code>module2_inspection/preprocess/</code> · 입력 <code>/camera/rgb/image</code> · 출력 <code>/camera/rgb/image_pp</code>. LI-16이 이 토픽만 구독.</p>
+<p><span class="k">3. 방법</span> CLAHE 필수, deblur는 비용 대비 효과를 P3 초반에 재본다. 조명 엔티티를 Harmonic에서 어둡게 켜 재현한다(수현 월드).</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>Pizer et al., CLAHE (Adaptive Histogram Equalization) — 저조도 대비</li>
+  <li>OpenCV CLAHE, fastNlMeansDenoising — 구현 API</li>
+  <li>과제 원문 #5 “카메라 흔들림 및 저조도”</li>
+</ul>
+<p class="meta">6. 동료평가 Module 2-①의 전처리 절 / 심층: 조명 변화 대응</p>
+</div>
+
+<div class="keep">
+<h3>LI-18. 열화상-RGB 정합 (Intrinsic / Extrinsic)</h3>
+<p><span class="k">1. 핵심 개념</span> 두 카메라는 위치·화각이 다르다. Intrinsic은 렌즈 왜곡, Extrinsic은 카메라 사이 회전·이동. 평면 가정(배관 벽)이면 Homography로 근사할 수 있으나, 3D 배관은 TF + 투영이 맞다. Harmonic <code>thermal</code>을 별도 링크에 붙이므로 오차가 “시뮬에도 실재”한다. 합성 플러그인 자작은 하지 않는다.</p>
+<p><span class="k">2. 우리 코드</span> <code>module2_inspection/fusion/</code> · 입력 <code>/camera/rgb/image_pp</code>, <code>/camera/thermal/image</code>, <code>/tf</code> · 출력 <code>/inspection/thermal_overlay</code>, <code>/thermal_alert</code>.</p>
+<p><span class="k">3. 방법</span> 체커보드로 Intrinsic, 두 카메라 공통 관측점으로 Extrinsic. 운영은 TF2(<code>camera_rgb_optical</code> ← <code>camera_thermal_optical</code>). Homography는 평면 배관 ROI에만.</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>Z. Zhang, “A Flexible New Technique for Camera Calibration,” TPAMI 2000</li>
+  <li>OpenCV calibrateCamera, stereoCalibrate, findHomography</li>
+  <li>Gazebo Harmonic gz-sensors ThermalCameraSensor — gazebosim.org/docs/harmonic, min_temp/max_temp</li>
+  <li>ROS 2 tf2, image_geometry — 광선 투영</li>
+</ul>
+<p class="meta">6. 동료평가 Module 2-② 위치 오차의 수학적 보정 / 심층: 정합 오차 최소화</p>
+</div>
+
+<h2>3. 태우 — 순찰 경로 · Critical Path (LI-19 × 3)</h2>
+<p>원문 Module 2-3: “인식이 가장 용이한 위치(Viewpoint)를 경유하는 순찰 경로”. 이것이 P3의 병목이다. 게이지 모델은 운학, 경로 실행은 Nav2(채현 RTH와 토픽만 분리). 태우 산출은 <span class="k">Viewpoint 집합 + 방문 순서 + 충돌 없는 연결</span>이다.</p>
+
+<div class="keep">
+<h3>LI-19-A. Viewpoint와 인식 비용함수</h3>
+<p><span class="k">1. 핵심 개념</span> Viewpoint는 게이지·배관을 바라보는 SE(2)/SE(3) 포즈다. 비용은 “그 포즈에서 바늘이 얼마나 잘 읽히는가”의 역수. 항 예시는 ① 게이지 법선과 시선 각 ② 거리(너무 가까우면 잘림, 멀면 해상도 부족) ③ 장애물 가림 ④ 예상 블러(보행 속도). 최소 비용 포즈가 그 설비의 Viewpoint다.</p>
+<p><span class="k">2. 우리 코드</span> <code>module2_inspection/viewpoint/</code> · 입력 설비 포즈(<code>/inspect_targets</code>), 맵, 카메라 파라미터 · 출력 <code>/viewpoints</code> (PoseArray). 운학 인식 성공률을 오프라인으로 비용에 넣을 수 있다.</p>
+<p><span class="k">3. 방법</span> 각 게이지 앞 원호 위에 후보를 샘플링하고 비용을 평가. 전공간 최적화는 하지 않는다.</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>Scott, Roth, Rivest 계열 Next-Best-View / inspection viewpoint planning 서베이</li>
+  <li>과제 원문 #5 Module 2-3, 동료평가 Module 2-③ “인식이 가장 잘 되는 각도와 거리의 가중치”</li>
+  <li>OpenCV projectPoints — 게이지가 이미지에 들어오는 조건</li>
+</ul>
+<p class="meta">6. 동료평가 Module 2-③ / 심층: Viewpoint 제약 반영</p>
+</div>
+
+<div class="keep">
+<h3>LI-19-B. 방문 순서 — TSP</h3>
+<p><span class="k">1. 핵심 개념</span> Viewpoint가 N개면 방문 순서는 외판원 문제(TSP)다. N이 점검 게이지 수(십여 개)면 완전탐색 또는 2-opt로 충분하다. 거리 행렬은 유클리드가 아니라 <span class="k">A*로 구한 충돌 회피 경로 길이</span>여야 한다. 그렇지 않으면 벽 너머로 직선 연결한다.</p>
+<p><span class="k">2. 우리 코드</span> <code>module2_inspection/planner/tsp.py</code> · 입력 <code>/viewpoints</code>, 거리 행렬 · 출력 <code>/patrol_order</code> (int[]).</p>
+<p><span class="k">3. 방법</span> 2-opt. OR-Tools는 의존성 대비 N이 작아 이득이 적다. Action <code>/patrol_mission</code>의 goal에 순서 리스트를 넣는다.</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>TSP 2-opt (Croes 1958) — 소규모 점검 포인트</li>
+  <li>심층 인터뷰 Module 2: TSP, A*를 무엇으로 썼는가</li>
+</ul>
+<p class="meta">6. 심층 Module 2 순찰 경로 최적화 알고리즘</p>
+</div>
+
+<div class="keep">
+<h3>LI-19-C. Viewpoint 사이 연결 — A*</h3>
+<p><span class="k">1. 핵심 개념</span> 격자(또는 Nav2 costmap)에서 A*는 장애물 비용을 넣은 최단 경로를 준다. TSP의 거리 행렬과, 실행 시 경로 추종에 같은 맵을 쓴다. 동적 장애물은 채현 RTH의 Nav2 컨트롤러 몫이고, 태우는 정적 공장·복도 맵을 전제한다.</p>
+<p><span class="k">2. 우리 코드</span> <code>module2_inspection/planner/astar.py</code> 또는 Nav2 planner 플러그인 · 입력 costmap · 출력 <code>/patrol_path</code> (nav_msgs/Path). 실행 노드는 <code>/patrol_mission</code> Action 서버.</p>
+<p><span class="k">3. 방법</span> 격자 A*를 먼저 구현해 거리 행렬을 채우고, 추후 Nav2 Smac/Navfn에 위임해도 인터페이스는 Path로 고정.</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>Hart, Nilsson, Raphael, “A Formal Basis for the Heuristic Determination of Minimum Cost Paths,” 1968</li>
+  <li>Nav2 docs (Jazzy) planner plugins — docs.nav2.org. 접근일 2026-09-03</li>
+</ul>
+<p class="meta">6. 동료평가 Module 2-③의 경로 절 / 심층 TSP·A* · Viewpoint. 운학과 P3 전 <code>/patrol_mission</code> 합의</p>
+</div>
+
+<h2>4. 수현 — Virtual Plant + 관제 (LI-05 · LI-06 · LI-24)</h2>
+<p>원문 Digital Twin 4요소 중 Virtual Plant와 Monitoring이 수현 몫이다. 월드가 없으면 전원 정지. 열화상 센서 부착(LI-07)은 환경·비전 경계라 운학과 한 페이지로 맞추고, 수현은 SDF에 heat signature를 넣는 쪽을 맡는다.</p>
+
+<div class="keep">
+<h3>LI-05. Harmonic SDF 월드와 제공 에셋</h3>
+<p><span class="k">1. 핵심 개념</span> SDF는 Gazebo 월드·모델 형식이다. URDF는 로봇, SDF는 공장·조명·가스 영역. 최소 크기: 복도 45×3.5×4 m, 공장 25×18×7 m. 방해물 복도 3·공장 5, 로봇 1, 공장기계 1. 제공 패키지(<code>PBL_AssetPackge.zip</code>)는 DAE/STL일 수 있어 Blender에서 스케일·원점·충돌 메쉬를 고친다.</p>
+<p><span class="k">2. 우리 코드</span> <code>simulation/worlds/plant.sdf</code>, <code>simulation/models/</code> · launch가 이 월드를 연다.</p>
+<p><span class="k">3. 방법</span> 에셋 변환 → 충돌 단순화(컨벡스) → 복도·공장 연결. Isaac Sim은 Phase 2 이후 금지(실측 스택은 Harmonic).</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>Gazebo Harmonic SDF 문서 — gazebosim.org/docs/harmonic</li>
+  <li>제공 에셋: download.codysseycampus.kr/PBL_AssetPackge.zip (과제 #3)</li>
+  <li>과제 원문 #2-7 모델링 최소 조건</li>
+</ul>
+<p class="meta">6. 동료평가 DT-① Virtual Plant가 실제 발전소의 무엇을 반영하는가</p>
+</div>
+
+<div class="keep">
+<h3>LI-06. Go2 URDF와 gz_ros2_control</h3>
+<p><span class="k">1. 핵심 개념</span> Robot Twin은 URDF/Xacro + 센서 프레임이다. <code>gz_ros2_control</code>이 Harmonic 물리와 ROS 2 관절 명령을 잇는다. 카메라 optical frame 규약(<code>_optical</code>, z-forward)을 여기서 고정하지 않으면 운학 정합이 전부 틀린다.</p>
+<p><span class="k">2. 우리 코드</span> <code>simulation/models/go2/</code> · 브리지와 함께 <code>ros_gz_sim</code> spawn. 제어는 도훈이 관절 명령을 보냄.</p>
+<p><span class="k">3. 방법</span> 공식 Go2 description을 Jazzy로 포팅(LI-03). 센서는 RGB·thermal·LiDAR·가스 농도를 링크에 부착. thermal은 Harmonic 네이티브.</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>ros-controls/gz_ros2_control — github.com/ros-controls/gz_ros2_control</li>
+  <li>Unitree Go2 ROS description 패키지</li>
+  <li>gazebosim/ros_gz 메시지 대응표 — github.com/gazebosim/ros_gz</li>
+</ul>
+<p class="meta">6. 동료평가 DT-② Virtual Plant↔Robot Twin 데이터 흐름 / 센서 생성 과정</p>
+</div>
+
+<div class="keep">
+<h3>LI-24. rosbridge 웹 대시보드</h3>
+<p><span class="k">1. 핵심 개념</span> Monitoring System은 rosbridge WebSocket으로 브라우저가 ROS 2 토픽을 구독하는 구조다. 원본 이미지는 로컬만, 대시보드는 CompressedImage + 결과 메시지. 보너스 ①(실시간 대시보드)은 필수 P5에 흡수되어 이 LI가 그 구현이다.</p>
+<p><span class="k">2. 우리 코드</span> <code>dashboard/</code> · 구독 <code>/tf</code> 또는 pose, <code>/gauge/reading</code>, <code>/thermal_alert</code>, <code>/gas/concentration</code>, <code>/battery</code> · rosbridge 포트 9090.</p>
+<p><span class="k">3. 방법</span> 로봇 위치 3D(또는 2D 맵) + 시야 이미지. 라이브러리는 ros2-web-bridge 관례, Foxglove는 개발 우회 GUI. E2E ≤500 ms는 P5-4에서 측정.</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>rosbridge_suite — github.com/RobotWebTools/rosbridge_suite</li>
+  <li>Foxglove Studio docs — 개발 중 시각화 우회</li>
+  <li>과제 원문 #1-2 Monitoring System, #6 관제 화면, #8 보너스 대시보드</li>
+</ul>
+<p class="meta">6. 동료평가 DT-② 관제 전달·시각화 / 통합-② 지연·실시간성</p>
+</div>
+
+<h2>5. 채현 — Gas / Safety (LI-20 · LI-21 · LI-22)</h2>
+<p>원문 Module 3: 기류 시뮬, 농도 구배 Source Seeking, 배터리 20% RTH. 가스 필드는 Gazebo 입자가 아니라 <span class="k">자체 노드가 농도를 샘플링</span>하는 편이 Harmonic 의존을 줄인다.</p>
+
+<div class="keep">
+<h3>LI-20. Gaussian Plume 확산</h3>
+<p><span class="k">1. 핵심 개념</span> 정상 상태 가우시안 플룸은 풍하 거리 x에서 농도가 횡방향·연직 가우시안으로 퍼진다. C(x,y,z) ∝ Q/u · 1/(σy σz) · exp(−y²/2σy²) · (지면 반사항). σ는 대기안정도(Pasquill-Gifford)로 커진다. 난류는 σ를 키워 국소 구멍을 만든다. 이 구멍이 LI-21의 로컬 최적이다.</p>
+<p><span class="k">2. 우리 코드</span> <code>module3_gas_safety/plume/</code> · 파라미터: 누출원 포즈, Q, 바람 벡터 · 출력 <code>/gas/field</code> 또는 로봇 위치에서 샘플한 <code>/gas/concentration</code> (Float32).</p>
+<p><span class="k">3. 방법</span> 닫힌 공장에서는 플룸이 벽에서 잘린다. 단순 반사 또는 영역 마스크. CFD는 범위 밖.</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>Sutton, <em>A Theory of Eddy Diffusion in the Atmosphere</em> / 표준 Gaussian Plume (EPA ISC) 요약</li>
+  <li>Pasquill-Gifford 분산 곡선 — σy(x), σz(x)</li>
+  <li>과제 원문 #5 Module 3-1 기류·바람 효과</li>
+</ul>
+<p class="meta">6. 심층 Module 3: 어떤 확산 모델, 실제와의 차이</p>
+</div>
+
+<div class="keep">
+<h3>LI-21. Source Seeking과 국소 최적 탈출</h3>
+<p><span class="k">1. 핵심 개념</span> 경사 상승은 농도 구배 ∇C 방향으로 간다. 플룸 구멍에서는 구배가 뒤집혀 가짜 원에 갇힌다. 탈출: 일정 시간 개선 없으면 나선(spiral) 또는 Infotaxis(정보 이득 방향으로 이동). 과제 원문은 “경사 하강법”이라 적혀 있으나 농도를 <span class="k">최대화</span>하므로 구현은 상승이다. 보고서에 용어를 바로잡는다.</p>
+<p><span class="k">2. 우리 코드</span> <code>module3_gas_safety/seek/</code> · 입력 <code>/gas/concentration</code>, <code>/odom</code> · 출력 <code>/cmd_vel</code> 또는 Nav2 목표.</p>
+<p><span class="k">3. 방법</span> 1차 유한차분 구배 + 나선 탈출. Infotaxis는 논문 인용용 2차.</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>Vergassola, Villermaux, Shraiman, “Infotaxis as a strategy for searching without gradients,” Nature 2007</li>
+  <li>Olfactory Navigation / source seeking 서베이 (로봇 후각)</li>
+  <li>과제 원문 #5 Module 3-2, 심층: Local Optima 회피</li>
+</ul>
+<p class="meta">6. 동료평가 Module 3-① 농도 구배 → 방향 벡터 / 심층 Local Optima</p>
+</div>
+
+<div class="keep">
+<h3>LI-22. 상태 머신과 Return to Home</h3>
+<p><span class="k">1. 핵심 개념</span> 임무는 Patrol / Seek / Return / Charge 상태다. 트리거: 배터리 &lt; 20%, 통신 품질 임계. Return은 Nav2로 충전 스테이션 포즈까지 장애물 회피. 태우의 순찰 경로는 중단하고 Seek도 중단한다.</p>
+<p><span class="k">2. 우리 코드</span> <code>module3_gas_safety/fsm/</code> · 입력 <code>/battery</code>, <code>/comm_health</code> · 출력 모드, Nav2 NavigateToPose. BT에서 Return이 Seek보다 우선.</p>
+<p><span class="k">3. 방법</span> Nav2 Behavior Tree에 Recovery·Return 서브트리. 동적 장애물은 DWB/MPPI 컨트롤러. LI-15는 이 노드에서 소비한다.</p>
+<p class="k">5. 출처</p>
+<ul class="src">
+  <li>Nav2 Behavior Tree, NavigateToPose — docs.nav2.org (Jazzy)</li>
+  <li>과제 원문 #5 Module 3-3 배터리 20% 미만, 통신 음영</li>
+  <li>심층: 자율 복귀 시 동적 장애물</li>
+</ul>
+<p class="meta">6. 동료평가 Module 3-② 복귀 트리거와 최단 경로 / 심층 동적 장애물</p>
+</div>
+
+<h2>6. 공통으로 안 고른 것 (나중에)</h2>
+<table>
+  <thead><tr><th>LI</th><th>왜 이번 3개에서 뺐는가</th><th>언제</th></tr></thead>
+  <tbody>
+    <tr><td>LI-01·03</td><td>환경 공통. 수현이 도커를 띄우면 전원이 따라 쓴다</td><td>Phase 0</td></tr>
+    <tr><td>LI-02·04·23</td><td>통신 규격. P5 통합 직전 전원 공유 노트</td><td>P1 초안, P5 검증</td></tr>
+    <tr><td>LI-07</td><td>수현 SDF + 운학 정합이 나눠 가짐</td><td>P1/P3</td></tr>
+    <tr><td>LI-08·11·13·14</td><td>도훈 P1. 맵·게이트 다음에 MPC·기립</td><td>P2 중반</td></tr>
+    <tr><td>LI-15</td><td>채현 RTH가 실사용. 태우 경로는 A*로 먼저</td><td>P4</td></tr>
+    <tr><td>LI-25~29</td><td>Sim2Real·RL·다중로봇·EC2. 보너스·보고서</td><td>P6</td></tr>
+  </tbody>
+</table>
+
+<h2>7. 조사 자료 출처 (공통 북마크)</h2>
+<ul>
+  <li>공식: ROS 2 Jazzy (docs.ros.org), Gazebo Harmonic (gazebosim.org/docs/harmonic), gz-sensors ThermalCameraSensor, Nav2, OpenCV, PyTorch, rosbridge_suite</li>
+  <li>브리지: gazebosim/ros_gz 메시지 타입 대응표</li>
+  <li>오픈소스: chvmp/champ 및 Jazzy 포크, ANYbotics/grid_map, elevation_mapping, gz_ros2_control, Unitree Go2 description</li>
+  <li>논문: MIT Cheetah 3 Convex MPC (Di Carlo 2018), Infotaxis (Vergassola 2007), Gaussian Plume / EPA, Zhang 카메라 캘리브레이션 (2000), A* (Hart 1968)</li>
+  <li>도구: Foxglove Studio (GUI 우회). Isaac Lab / Genesis는 보너스 학습만. Phase 2 이후 본 시뮬 전환 금지</li>
+</ul>
+
+<div class="box">
+  <p class="k">다음 액션</p>
+  <p>각자 이 PDF의 자기 섹션을 <code>docs/learning/LI-XX.md</code>로 복사한 뒤, 2번(파일·토픽)을 실제 경로로 고치고 5번 접근일을 유지한다. 태우·운학은 P3 전에 <code>/patrol_mission</code> 필드 한 장으로 합의한다.</p>
+</div>
+
+</body>
+</html>
