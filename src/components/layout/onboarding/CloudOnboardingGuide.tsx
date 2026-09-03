@@ -34,6 +34,11 @@ const COST_ROWS = [
  * 호출이 거부되어 배포가 IAM 단계에서 멈춘다 — 실계정 검증에서 실제로 그렇게 막혔다.
  * 되돌리지 말 것.
  *
+ * `SsmPublicAmiRead` 의 리소스에서 계정 자리가 비어 있는 것(`ssm:*::parameter/...`)도
+ * 실수가 아니다. 최신 AL2023 AMI 는 **AWS 가 소유한 공개 파라미터**라 계정 세그먼트가
+ * 없다 — 거기에 계정을 채우면 매칭되지 않아 AMI 조회가 거부되고 인스턴스를 띄우지
+ * 못한다. 이것도 실계정 검증에서 실제로 막혔다.
+ *
  * RDS 두 문장(Rds*)도 함께 넣는다. 지금 DB 를 안 쓰더라도 나중에 쓰게 되면 키를 다시
  * 만들어야 하는데, 처음 한 번에 넣어두면 그 일이 없다.
  */
@@ -84,6 +89,12 @@ const IAM_POLICY_JSON = `{
         "ssm:DeleteParameter", "ssm:DeleteParameters"
       ],
       "Resource": "arn:aws:ssm:*:*:parameter/qeploy/*"
+    },
+    {
+      "Sid": "SsmPublicAmiRead",
+      "Effect": "Allow",
+      "Action": "ssm:GetParameter",
+      "Resource": "arn:aws:ssm:*::parameter/aws/service/ami-amazon-linux-latest/*"
     },
     {
       "Sid": "S3ArtifactsOnly",
