@@ -300,13 +300,32 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
                     <div className="flex gap-1.5">
                       <dt className="text-[#94a3b8]">password</dt>
                       {/*
-                        자동 DB 는 사용자가 생성 요청을 하지 않아 비밀번호를 볼 기회가 없다.
-                        앱에는 env 로 주입되므로 동작에는 문제가 없다 — 찾다 헤매지 않게 적어둔다.
+                        비밀번호를 볼 기회가 없는 경우가 둘이다.
+
+                        하나는 자동 DB(PREVIEW_AUTO) — 사용자가 생성을 요청하지 않았다.
+                        다른 하나는 RDS — 승인을 거치느라 **비밀번호가 승인 뒤에 만들어져서**
+                        생성 응답에 실릴 수가 없고, 이후 조회는 서버가 전부 마스킹한다.
+
+                        그래서 이 둘에 "생성 시에만 표시" 라고 적으면 거짓말이 된다 — 보여준
+                        적이 없다. 대신 어디에 쓰이는지와, 정말 직접 붙어야 할 때의 출구를
+                        적는다. BYOC 라 RDS 는 사용자 소유이므로 콘솔에서 재설정하면 된다 —
+                        비밀번호를 안 주는 것이 영영 못 붙는다는 뜻은 아니다.
+
+                        LOCAL 은 승인이 없어 생성 응답에 실려 오므로 위 패널이 한 번 보여준다.
                       */}
                       <dd className="font-mono">
-                        {database.origin === 'PREVIEW_AUTO'
-                          ? '환경변수로 자동 주입됨'
-                          : '•••••• (생성 시에만 표시)'}
+                        {database.method === 'RDS' ? (
+                          <>
+                            환경변수로 자동 주입됨
+                            <span className="mt-0.5 block font-sans text-[11px] leading-relaxed text-[#94a3b8]">
+                              직접 접속이 필요하면 AWS 콘솔에서 비밀번호를 재설정하세요
+                            </span>
+                          </>
+                        ) : database.origin === 'PREVIEW_AUTO' ? (
+                          '환경변수로 자동 주입됨'
+                        ) : (
+                          '•••••• (생성 시에만 표시)'
+                        )}
                       </dd>
                     </div>
                   </dl>
