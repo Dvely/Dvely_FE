@@ -13,6 +13,7 @@ import {
   postAgentTaskInput,
   postAgentTaskRetry,
   SETTLED_AGENT_TASK_STATUSES,
+  useAiProviderListQuery,
 } from '@/api/agent';
 import {
   getProjectApprovalList,
@@ -200,6 +201,13 @@ function AgentConversationPanel({
     사용자가 할 수 있는 게 없다.
   */
   const [runningTaskId, setRunningTaskId] = useState<string | null>(null);
+  /*
+    고른 AI 제공자. 비어 있으면 서버 기본값으로 보낸다.
+
+    목록이 없거나(엔드포인트 미배포·조회 실패) 하나뿐이면 셀렉트를 아예 안 그린다 —
+    고를 게 없는 셀렉트는 자리만 차지하고, 그때 동작은 지금과 똑같다.
+  */
+  const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   // 승인 대기 여부는 서버만 안다 — 채팅 본문에서 유추하지 않는다
   const [pendingApprovalId, setPendingApprovalId] = useState<number | null>(null);
@@ -214,6 +222,11 @@ function AgentConversationPanel({
   const { events: taskEvents } = useAgentTaskEventStream(runningTaskId, {
     enabled: isAssistantReplying,
   });
+
+  const { data: aiProviders } = useAiProviderListQuery(AGENT_CHAT_QUERY_KEY);
+  const providerOptions = aiProviders?.providers ?? [];
+  // 둘 이상일 때만 고를 의미가 있다. 하나뿐이면 서버 기본값과 같아서 보여줄 이유가 없다
+  const canChooseProvider = providerOptions.length > 1;
 
   const queryClient = useQueryClient();
   const { data: serverMessages, isLoading: isMessagesLoading } = useConversationMessageListQuery(
@@ -283,7 +296,11 @@ function AgentConversationPanel({
         targetConversationId = created.conversationId;
       }
 
-      const createdMessage = await postConversationMessageCreate(targetConversationId, { content });
+      const createdMessage = await postConversationMessageCreate(targetConversationId, {
+        content,
+        // 고르지 않았으면 보내지 않는다 — 서버 기본값을 쓰게 둔다
+        ...(selectedProvider ? { aiProvider: selectedProvider } : {}),
+      });
 
       const taskId = createdMessage.taskId?.trim() || '';
       if (!taskId) {
@@ -966,6 +983,33 @@ function AgentConversationPanel({
           <p className="mb-2 rounded-lg bg-[#faf5ff] px-2.5 py-1.5 text-[12px] font-medium text-[#6d28d9]">
             에이전트가 답을 기다리고 있습니다. 여기에 적으면 하던 작업을 이어서 진행합니다.
           </p>
+        ) : null}
+        {/*
+          쓸 수 있는 제공자가 둘 이상일 때만 보여준다. 목록은 서버가 apiKey 가 설정된
+          것만 담아 주므로, 여기 뜨는 것은 전부 실제로 쓸 수 있다 — 골랐는데 실패하는
+          항목이 없다.
+
+          크레딧이 없는 제공자는 서버도 미리 알 수 없어 고른 뒤에야 503 으로 드러난다.
+          그때는 오류 안내가 "다른 제공자를 골라 다시 보내보세요" 라고 말하는데, 이
+          셀렉트가 그 말이 가리키는 자리다.
+        */}
+        {canChooseProvider ? (
+          <label className="mb-2 flex items-center gap-2">
+            <span className="text-[12px] text-[#94a3b8]">AI</span>
+            <select
+              value={selectedProvider}
+              disabled={isInputLocked}
+              onChange={(event) => setSelectedProvider(event.target.value)}
+              className="h-7 rounded-lg border border-[#e2e8f0] bg-white px-2 text-[12px] text-[#334155] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="">기본값</option>
+              {providerOptions.map((option) => (
+                <option key={option.provider} value={option.provider}>
+                  {option.provider}
+                </option>
+              ))}
+            </select>
+          </label>
         ) : null}
         <div className="mb-2 flex flex-wrap gap-2">
           {suggestedPrompts.map(({ label, prompt }) => (
