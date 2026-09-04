@@ -131,6 +131,13 @@ const getConversationMessageListResSchema = z.array(conversationMessageSchema);
 const postConversationMessageCreateReqSchema = z.object({
   /** 저장할 사용자 메시지 본문 */
   content: z.string().min(1, '메시지 본문을 입력해주세요.').prefault(''),
+  /**
+   * 이 메시지로 도는 에이전트가 쓸 AI 제공자. 생략하면 서버 기본값이다.
+   *
+   * 값을 열거하지 않는다 — 쓸 수 있는 제공자는 서버 설정이고 화면은 그 목록을 받아
+   * 채운다(`GET /agent/ai-providers`). 여기에 적어두면 두 벌이 된다.
+   */
+  aiProvider: z.string().optional(),
 });
 
 /**

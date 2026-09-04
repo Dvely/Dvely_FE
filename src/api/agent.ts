@@ -3,6 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { errorResponse, succesResponse } from '@/utils/response';
 import type { ApiResponse } from '@/types/response.type';
 import {
+  getAiProviderListResSchema,
+  type GetAiProviderListResType,
+} from '@/types/aiProvider.type';
+import {
   agentTaskEventSchema,
   getAgentTaskEventListParamsSchema,
   getAgentTaskEventListResSchema,
@@ -60,6 +64,34 @@ const SLOW_POLL_AFTER_MS = 60_000;
  * (AgentPollTimeoutError 참고).
  */
 const DEFAULT_MAX_POLL_MS = 20 * 60 * 1000;
+
+/**
+ * 쓸 수 있는 AI 제공자 목록 조회 API GET.
+ *
+ * 실패해도 화면을 막지 않는다 — 목록이 없으면 제공자 선택을 감추고 서버 기본값으로
+ * 보내면 지금까지와 똑같이 동작한다. 이 엔드포인트가 아직 없는 서버에 붙어도 마찬가지다.
+ */
+async function getAiProviderList() {
+  return Http.instance
+    .get<ApiResponse<GetAiProviderListResType>>(`${endpoint}/ai-providers`)
+    .then((response) => {
+      const body = succesResponse<ApiResponse<GetAiProviderListResType>>(response);
+      return getAiProviderListResSchema.parse(unwrapApiData(body));
+    })
+    .catch(errorResponse());
+}
+
+/** 쓸 수 있는 AI 제공자 목록 Query Hook. 자주 바뀌지 않아 폴링하지 않는다 */
+function useAiProviderListQuery(queryKey: unknown) {
+  if (!queryKey) throw new Error('queryKey is required');
+  return useQuery({
+    queryKey: ['ai-provider-list', queryKey],
+    queryFn: getAiProviderList,
+    gcTime: 0,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+}
 
 /** 에이전트 요청 제출 API POST */
 async function postAgentDecision(params: PostAgentDecisionReqType) {
@@ -369,6 +401,8 @@ function useAgentTaskEventListQuery(
 
 export {
   AgentPollTimeoutError,
+  getAiProviderList,
+  useAiProviderListQuery,
   postAgentDecision,
   deleteAgentSession,
   getAgentTask,
