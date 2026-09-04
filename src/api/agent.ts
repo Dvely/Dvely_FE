@@ -222,6 +222,16 @@ type OpenAgentTaskEventStreamOptions = {
   onEvent: (event: AgentTaskEvent) => void;
 };
 
+/**
+ * SSE 프레임 하나를 이벤트로 옮긴다. 실패하면 null 이고, 던지지 않는다.
+ *
+ * 예전에는 그대로 던졌다. 그러면 **이벤트 하나가 파싱에 실패할 때 스트림 전체가
+ * 죽는다** — 서버가 필드를 하나 늘리거나 프레임이 잘려 도착한 것뿐인데, 그 뒤로 오는
+ * 멀쩡한 진행 이벤트를 전부 잃는다. 한 프레임을 버리는 편이 낫다.
+ *
+ * 서버는 `id:` · `event:`(=type) · `data:`(JSON) 3줄에 빈 줄로 프레임을 가른다.
+ * 여기서는 `data:` 만 읽는다 — 나머지는 그 JSON 안에 다시 들어 있다.
+ */
 function parseSseChunk(chunk: string): AgentTaskEvent | null {
   const dataLines: string[] = [];
 
@@ -236,7 +246,14 @@ function parseSseChunk(chunk: string): AgentTaskEvent | null {
   const raw = dataLines.join('\n').trim();
   if (!raw || raw === '[DONE]') return null;
 
-  return agentTaskEventSchema.parse(JSON.parse(raw));
+  try {
+    return agentTaskEventSchema.parse(JSON.parse(raw));
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.debug('[agent] 이벤트 프레임 하나를 건너뜁니다', { raw, error });
+    }
+    return null;
+  }
 }
 
 /** 에이전트 태스크 이벤트 SSE 스트림. envelope 없이 text/event-stream을 직접 수신한다. */
