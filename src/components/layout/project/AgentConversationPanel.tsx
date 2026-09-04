@@ -25,7 +25,8 @@ import { refreshUserInfoInBackground } from '@/api/user';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
 import AgentRetryCard from '@/components/layout/project/AgentRetryCard';
-import type { GetAgentTaskResType } from '@/types/agent.type';
+import { useAgentTaskEventStream } from '@/hooks/useAgentTaskEventStream';
+import type { AgentTaskEvent, GetAgentTaskResType } from '@/types/agent.type';
 import type { ConversationMessage } from '@/types/chat.type';
 import {
   AGENT_CHAT_QUERY_KEY,
@@ -202,6 +203,17 @@ function AgentConversationPanel({
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   // 승인 대기 여부는 서버만 안다 — 채팅 본문에서 유추하지 않는다
   const [pendingApprovalId, setPendingApprovalId] = useState<number | null>(null);
+
+  /*
+    실행 이벤트 스트림. 도는 태스크가 있을 때만 연다.
+
+    상태 문구("빌드 중")는 지금 무엇을 기다리는지만 말한다. 이벤트는 **여기까지 왔다**를
+    말한다 — 몇 분짜리 빌드에서 그 차이가 크다. 서버가 결과를 chat_messages 에 적는 것과
+    별개라 겹치지 않는다: 이건 진행이고 그건 결과다.
+  */
+  const { events: taskEvents } = useAgentTaskEventStream(runningTaskId, {
+    enabled: isAssistantReplying,
+  });
 
   const queryClient = useQueryClient();
   const { data: serverMessages, isLoading: isMessagesLoading } = useConversationMessageListQuery(
@@ -908,6 +920,7 @@ function AgentConversationPanel({
           {isSending || isAssistantReplying ? (
             <AssistantReplySkeleton
               progressLabel={describeTaskProgress(progressTask)}
+              events={taskEvents}
               onCancel={
                 runningTaskId && !cancelTaskMutation.isPending
                   ? () => cancelTaskMutation.mutate(runningTaskId)
@@ -1034,11 +1047,19 @@ function linkifyMessageContent(content: string, linkClassName: string) {
  * 두 곳에서 쓴다 — 메시지 목록을 처음 읽는 동안과, 에이전트가 도는 동안.
  * 앞쪽은 곧 끝나므로 문구가 없고, 뒤쪽은 몇 분 걸릴 수 있어 지금 무슨 단계인지 적는다.
  */
+/** 이벤트에 붙은 시각. 서버가 오프셋 없이 보내므로 벽시계 그대로 읽는다 */
+function formatEventTime(createdAt: string): string {
+  const match = /T(\d{2}):(\d{2})/.exec(createdAt);
+  return match ? `${match[1]}:${match[2]}` : '';
+}
+
 function AssistantReplySkeleton({
   progressLabel,
+  events = [],
   onCancel,
 }: {
   progressLabel?: string;
+  events?: AgentTaskEvent[];
   onCancel?: () => void;
 }) {
   return (
@@ -1063,6 +1084,30 @@ function AssistantReplySkeleton({
             </button>
           ) : null}
         </div>
+      ) : null}
+      {/*
+        지나온 단계. 서버가 이벤트마다 message 를 적어 보내므로 그대로 보여준다 —
+        FE 가 다시 서술하면 서버 문구와 두 벌이 된다.
+
+        메시지가 없는 이벤트는 건너뛴다. type 만 있는 것(CREATED 등)을 그대로 찍으면
+        사용자에게는 뜻 없는 대문자 나열이다.
+      */}
+      {events.length > 0 ? (
+        <ol className="mb-2 flex flex-col gap-1">
+          {events
+            .filter((event) => event.message?.trim())
+            .map((event) => (
+              <li
+                key={event.eventId}
+                className="flex gap-2 text-[12px] leading-relaxed text-[#64748b]"
+              >
+                <span className="shrink-0 font-mono text-[11px] text-[#cbd5e1]">
+                  {formatEventTime(event.createdAt)}
+                </span>
+                <span className="break-all">{event.message}</span>
+              </li>
+            ))}
+        </ol>
       ) : null}
       <div aria-hidden="true" className="flex flex-col gap-2">
         <div className="h-3 w-[78%] animate-pulse rounded bg-[#e2e8f0]" />
