@@ -191,7 +191,20 @@ const environmentVariableScopeSchema = z.enum(['PREVIEW', 'PRODUCTION']);
  * AI 제공자
  * @example "ANTHROPIC"
  */
-const aiProviderSchema = z.enum(['ANTHROPIC', 'OPENAI']);
+/**
+ * AI 제공자. 알려진 값: ANTHROPIC · OPENAI · GLM.
+ *
+ * 열린 문자열로 받는다. 닫아두면 서버가 제공자를 하나 늘릴 때 그 값이 실린 응답이
+ * 통째로 파싱에 실패한다 — 실제로 서버는 이미 GLM 을 선언하고 있는데 여기 없었다.
+ * 지금 안 터지는 건 그 응답을 읽는 화면이 아직 없어서일 뿐이다.
+ *
+ * 화면은 제공자 목록을 서버에서 받아 채운다(`GET /agent/ai-providers`). 여기에 값을
+ * 나열해 두면 그 목록과 두 벌이 되어, 늘 때마다 양쪽을 고쳐야 한다.
+ *
+ * min(1) 은 걸지 않는다 — 이 스키마는 요청과 응답에 함께 쓰이고, 응답 필드에 걸면
+ * 서버가 비워 보낼 때 응답 전체가 파싱에 실패한다(response.type.ts 의 규칙).
+ */
+const aiProviderSchema = z.string().prefault('');
 
 /**
  * 에이전트 단계 유형.
