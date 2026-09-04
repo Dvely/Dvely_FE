@@ -26,7 +26,6 @@ import { Route as AuthenticatedProjectNewRouteImport } from './routes/_authentic
 import { Route as AuthenticatedProjectSlugRouteImport } from './routes/_authenticated/project.$slug'
 import { Route as AuthenticatedOnboardingCloudRouteImport } from './routes/_authenticated/onboarding.cloud'
 import { Route as AuthenticatedProjectSlugIndexRouteImport } from './routes/_authenticated/project.$slug.index'
-import { Route as AuthenticatedProjectSlugPipelineRouteImport } from './routes/_authenticated/project.$slug.pipeline'
 import { Route as AuthenticatedProjectSlugInfraRouteImport } from './routes/_authenticated/project.$slug.infra'
 import { Route as AuthenticatedProjectSlugEnvironmentRouteImport } from './routes/_authenticated/project.$slug.environment'
 import { Route as AuthenticatedProjectSlugDomainsRouteImport } from './routes/_authenticated/project.$slug.domains'
@@ -123,12 +122,6 @@ const AuthenticatedProjectSlugIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedProjectSlugRoute,
   } as any)
-const AuthenticatedProjectSlugPipelineRoute =
-  AuthenticatedProjectSlugPipelineRouteImport.update({
-    id: '/pipeline',
-    path: '/pipeline',
-    getParentRoute: () => AuthenticatedProjectSlugRoute,
-  } as any)
 const AuthenticatedProjectSlugInfraRoute =
   AuthenticatedProjectSlugInfraRouteImport.update({
     id: '/infra',
@@ -195,7 +188,6 @@ export interface FileRoutesByFullPath {
   '/project/$slug/domains': typeof AuthenticatedProjectSlugDomainsRoute
   '/project/$slug/environment': typeof AuthenticatedProjectSlugEnvironmentRoute
   '/project/$slug/infra': typeof AuthenticatedProjectSlugInfraRoute
-  '/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute
   '/project/$slug/': typeof AuthenticatedProjectSlugIndexRoute
 }
 export interface FileRoutesByTo {
@@ -219,7 +211,6 @@ export interface FileRoutesByTo {
   '/project/$slug/domains': typeof AuthenticatedProjectSlugDomainsRoute
   '/project/$slug/environment': typeof AuthenticatedProjectSlugEnvironmentRoute
   '/project/$slug/infra': typeof AuthenticatedProjectSlugInfraRoute
-  '/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute
   '/project/$slug': typeof AuthenticatedProjectSlugIndexRoute
 }
 export interface FileRoutesById {
@@ -247,7 +238,6 @@ export interface FileRoutesById {
   '/_authenticated/project/$slug/domains': typeof AuthenticatedProjectSlugDomainsRoute
   '/_authenticated/project/$slug/environment': typeof AuthenticatedProjectSlugEnvironmentRoute
   '/_authenticated/project/$slug/infra': typeof AuthenticatedProjectSlugInfraRoute
-  '/_authenticated/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute
   '/_authenticated/project/$slug/': typeof AuthenticatedProjectSlugIndexRoute
 }
 export interface FileRouteTypes {
@@ -275,7 +265,6 @@ export interface FileRouteTypes {
     | '/project/$slug/domains'
     | '/project/$slug/environment'
     | '/project/$slug/infra'
-    | '/project/$slug/pipeline'
     | '/project/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -299,7 +288,6 @@ export interface FileRouteTypes {
     | '/project/$slug/domains'
     | '/project/$slug/environment'
     | '/project/$slug/infra'
-    | '/project/$slug/pipeline'
     | '/project/$slug'
   id:
     | '__root__'
@@ -326,7 +314,6 @@ export interface FileRouteTypes {
     | '/_authenticated/project/$slug/domains'
     | '/_authenticated/project/$slug/environment'
     | '/_authenticated/project/$slug/infra'
-    | '/_authenticated/project/$slug/pipeline'
     | '/_authenticated/project/$slug/'
   fileRoutesById: FileRoutesById
 }
@@ -459,13 +446,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectSlugIndexRouteImport
       parentRoute: typeof AuthenticatedProjectSlugRoute
     }
-    '/_authenticated/project/$slug/pipeline': {
-      id: '/_authenticated/project/$slug/pipeline'
-      path: '/pipeline'
-      fullPath: '/project/$slug/pipeline'
-      preLoaderRoute: typeof AuthenticatedProjectSlugPipelineRouteImport
-      parentRoute: typeof AuthenticatedProjectSlugRoute
-    }
     '/_authenticated/project/$slug/infra': {
       id: '/_authenticated/project/$slug/infra'
       path: '/infra'
@@ -526,7 +506,6 @@ interface AuthenticatedProjectSlugRouteChildren {
   AuthenticatedProjectSlugDomainsRoute: typeof AuthenticatedProjectSlugDomainsRoute
   AuthenticatedProjectSlugEnvironmentRoute: typeof AuthenticatedProjectSlugEnvironmentRoute
   AuthenticatedProjectSlugInfraRoute: typeof AuthenticatedProjectSlugInfraRoute
-  AuthenticatedProjectSlugPipelineRoute: typeof AuthenticatedProjectSlugPipelineRoute
   AuthenticatedProjectSlugIndexRoute: typeof AuthenticatedProjectSlugIndexRoute
 }
 
@@ -542,8 +521,6 @@ const AuthenticatedProjectSlugRouteChildren: AuthenticatedProjectSlugRouteChildr
     AuthenticatedProjectSlugEnvironmentRoute:
       AuthenticatedProjectSlugEnvironmentRoute,
     AuthenticatedProjectSlugInfraRoute: AuthenticatedProjectSlugInfraRoute,
-    AuthenticatedProjectSlugPipelineRoute:
-      AuthenticatedProjectSlugPipelineRoute,
     AuthenticatedProjectSlugIndexRoute: AuthenticatedProjectSlugIndexRoute,
   }
 

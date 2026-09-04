@@ -50,9 +50,6 @@ import AgentConversationPanel from '@/components/layout/project/AgentConversatio
 import AgentSitePreviewPanel from '@/components/layout/project/AgentSitePreviewPanel';
 import GithubRepositoryPicker from '@/components/layout/project/GithubRepositoryPicker';
 import ProjectCodeExplorerPanel from '@/components/layout/project/ProjectCodeExplorerPanel';
-import ProjectPipelinePanel from '@/components/layout/project/ProjectPipelinePanel';
-import { createIdlePipelineRun, runPipelineSequence } from '@/lib/projectPipelineRunner';
-import type { PipelineRun } from '@/types/pipeline.type';
 import { useHorizontalPanelResize } from '@/hooks/useHorizontalPanelResize';
 import { cn } from '@/lib/utils';
 
@@ -64,7 +61,7 @@ const AGENT_CHAT_PANEL_MAX_WIDTH = 640;
 const AGENT_CHAT_PANEL_DEFAULT_WIDTH = 380;
 
 type AgentSidebarTab = 'list' | 'conversation';
-type RightPanelView = 'preview' | 'code' | 'pipeline';
+type RightPanelView = 'preview' | 'code';
 
 type ProjectAgentPageProps = {
   projectId: number;
@@ -82,10 +79,13 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
   const [previewFrameKey, setPreviewFrameKey] = useState(0);
   const [isAgentTaskActive, setIsAgentTaskActive] = useState(false);
-  const [deployWatchStartedAt, setDeployWatchStartedAt] = useState<number | null>(null);
-  const [isDeployWatchActive, setIsDeployWatchActive] = useState(false);
-  const [pipelineRun, setPipelineRun] = useState<PipelineRun>(() => createIdlePipelineRun());
-  const pipelineAbortRef = useRef<AbortController | null>(null);
+  /*
+    배포 완료 안내를 지켜보는 마감 시각. 상태 둘(시작시각 + 활성여부)을 하나로 합쳤다 —
+    시작 시각은 effect 를 깨우는 데만 쓰였고, effect 안에서 활성 여부를 동기적으로 세우고
+    있었다. 그러면 렌더가 한 번 더 도는 데다, 두 값이 어긋날 자리도 생긴다.
+    지금은 켜는 쪽이 마감 시각을 적고 effect 는 끄는 타이머만 건다.
+  */
+  const [deployWatchUntil, setDeployWatchUntil] = useState<number | null>(null);
   const wasAgentTaskActiveRef = useRef(false);
 
   const { width: chatPanelWidth, handleResizeStart: handleChatPanelResizeStart } =
@@ -134,8 +134,6 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const isRepositoryBusy =
     connectRepositoryMutation.isPending || disconnectRepositoryMutation.isPending;
 
-  const isPipelineRunning = pipelineRun.status === 'running';
-
   const handleDisconnectRepository = useCallback(async () => {
     await disconnectRepositoryMutation.mutateAsync();
   }, [disconnectRepositoryMutation]);
@@ -166,35 +164,14 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     [connectRepositoryMutation],
   );
 
-  const handleDeployPipelineStart = useCallback(async () => {
-    pipelineAbortRef.current?.abort();
-    const controller = new AbortController();
-    pipelineAbortRef.current = controller;
-    setRightPanelView('pipeline');
-
-    try {
-      await runPipelineSequence(setPipelineRun, { signal: controller.signal });
-    } finally {
-      if (pipelineAbortRef.current === controller) {
-        pipelineAbortRef.current = null;
-      }
-    }
-  }, []);
-
+  // 마감이 지나면 지켜보기를 끝낸다. 켜는 것은 이 자리가 아니다
   useEffect(() => {
-    return () => {
-      pipelineAbortRef.current?.abort();
-    };
-  }, []);
+    if (deployWatchUntil == null) return;
 
-  // 태스크 종료 후 이 시간 동안 배포 완료를 지켜본다. 실측 배포는 30~50초라 넉넉하다
-  useEffect(() => {
-    if (deployWatchStartedAt == null) return;
-
-    setIsDeployWatchActive(true);
-    const timer = setTimeout(() => setIsDeployWatchActive(false), DEPLOY_WATCH_MS);
+    const remainingMs = Math.max(0, deployWatchUntil - Date.now());
+    const timer = setTimeout(() => setDeployWatchUntil(null), remainingMs);
     return () => clearTimeout(timer);
-  }, [deployWatchStartedAt]);
+  }, [deployWatchUntil]);
 
   const { data: conversations = [], isLoading: isConversationsLoading } =
     useProjectConversationListQuery(AGENT_CHAT_QUERY_KEY, projectId);
@@ -227,7 +204,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   //
   // 감시 창은 태스크 종료 직후 메시지 간격을 좁히는 용도로만 남긴다. 창이 안 열려도
   // 기본 폴링이 받아내므로 이제 정확성이 여기에 걸려 있지 않다.
-  const isDeployInFlight = isDeployWatchActive;
+  const isDeployInFlight = deployWatchUntil != null;
 
   const activePreviewSessionId =
     projectPreview?.status === 'ACTIVE' && projectPreview.sessionId
@@ -298,7 +275,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     // 실제로 돌던 태스크가 끝났을 때만 연다. 패널은 마운트 시에도 false를 알리는데
     // 거기에 반응하면 페이지를 열 때마다 3분씩 폴링하게 된다
     if (!isActive && wasAgentTaskActiveRef.current) {
-      setDeployWatchStartedAt(Date.now());
+      setDeployWatchUntil(Date.now() + DEPLOY_WATCH_MS);
     }
     wasAgentTaskActiveRef.current = isActive;
   }, []);
@@ -429,7 +406,6 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             onConversationActivity={handleConversationActivity}
             onAgentTaskActiveChange={handleAgentTaskActiveChange}
             isDeployInFlight={isDeployInFlight}
-            onDeployPipelineStart={handleDeployPipelineStart}
           />
         )}
         <div
@@ -519,21 +495,6 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             </button>
             <button
               type="button"
-              onClick={() =>
-                setRightPanelView((view) => (view === 'pipeline' ? 'preview' : 'pipeline'))
-              }
-              aria-pressed={rightPanelView === 'pipeline'}
-              className={cn(
-                'inline-flex h-8 items-center rounded-lg px-3 text-[12px] font-semibold transition',
-                rightPanelView === 'pipeline'
-                  ? 'bg-[#1e293b] text-white ring-2 ring-[#0f172a]/20 ring-offset-1'
-                  : 'bg-[#0f172a] text-white hover:bg-[#1e293b]',
-              )}
-            >
-              게시
-            </button>
-            <button
-              type="button"
               className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#e2e8f0] bg-white px-3 text-[12px] font-semibold text-[#334155]"
             >
               <Pencil className="size-3.5" />
@@ -552,8 +513,6 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
 
         {rightPanelView === 'code' ? (
           <ProjectCodeExplorerPanel />
-        ) : rightPanelView === 'pipeline' ? (
-          <ProjectPipelinePanel run={pipelineRun} isRunning={isPipelineRunning} />
         ) : (
           <AgentSitePreviewPanel
             phase={previewPhase}

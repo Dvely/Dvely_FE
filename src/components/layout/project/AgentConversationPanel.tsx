@@ -63,8 +63,6 @@ type AgentConversationPanelProps = {
   onAgentTaskActiveChange?: (isActive: boolean) => void;
   /** 배포 중이면 서버가 완료 안내를 나중에 덧붙이므로 메시지를 계속 다시 읽는다 */
   isDeployInFlight?: boolean;
-  /** 배포 제안(약 2~3분) 수락 시 파이프라인 실행 */
-  onDeployPipelineStart?: () => Promise<void>;
 };
 
 // 태스크 상태를 사람이 읽을 문구로 옮기던 formatAgentTaskReply 는 없앴다.
@@ -94,10 +92,6 @@ const TASK_PROGRESS_LABEL: Record<string, string> = {
 };
 
 /**
- * 스켈레톤 옆에 붙일 한 줄. 모르는 상태가 와도 "작업 중"으로 떨어진다 —
- * status 는 열린 문자열이라 서버가 단계를 늘리면 여기 없는 값이 온다.
- */
-/**
  * 이어서 다시 돌릴 수 있는 실패인가.
  *
  * `retryable` 은 서버가 승인 대기 여부까지 반영해 계산해 준다. 다만 그 값은 읽는 시점에
@@ -109,6 +103,10 @@ function isRetryableFailure(task: GetAgentTaskResType | null): boolean {
   return task?.status === 'FAILED' && task.retryable === true && task.pendingApprovalId == null;
 }
 
+/**
+ * 스켈레톤 옆에 붙일 한 줄. 모르는 상태가 와도 "작업 중"으로 떨어진다 —
+ * status 는 열린 문자열이라 서버가 단계를 늘리면 여기 없는 값이 온다.
+ */
 function describeTaskProgress(task: GetAgentTaskResType | null): string {
   if (!task) return '작업 중';
 
