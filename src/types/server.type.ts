@@ -21,6 +21,13 @@ const provisionedServerSchema = z.object({
   projectId: z.number().int(),
   /** 프로비저닝 상태 */
   status: serverStatusSchema,
+  /**
+   * 프론트 전용 서버인지. true 면 정적 웹 서버(nginx), false 면 백엔드 앱 서버다.
+   *
+   * 한 프로젝트에 둘이 함께 뜰 수 있어서 목록에서 구분해야 한다 — 둘 다 "인스턴스" 로만
+   * 보이면 어느 쪽을 끄는지 모른 채 종료를 누르게 된다.
+   */
+  webOnly: z.boolean().nullable().prefault(null),
   /** 인스턴스 티어. 예: t3.micro */
   instanceType: z.string().nullable().prefault(null),
   /** 퍼블릭 호스트. 인스턴스가 뜨기 전이면 null */

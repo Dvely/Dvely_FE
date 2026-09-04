@@ -192,8 +192,23 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
             return (
               <li key={server.serverId} className="rounded-xl border border-[#f1f5f9] px-4 py-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-[13px] font-semibold text-[#0f172a]">
+                  <p className="flex flex-wrap items-center gap-1.5 text-[13px] font-semibold text-[#0f172a]">
                     {server.instanceType ?? '인스턴스'}
+                    {/*
+                      한 프로젝트에 프론트 서버와 백엔드 서버가 함께 뜰 수 있다. 둘 다
+                      "t3.micro" 로만 보이면 어느 쪽을 끄는지 모른 채 종료를 누르게 된다.
+                      webOnly 가 null 인 옛 응답에는 아무것도 붙이지 않는다 — 모르면서
+                      아는 척하느니 침묵하는 편이 낫다.
+                    */}
+                    {server.webOnly === true ? (
+                      <span className="rounded-full bg-[#f0fdf4] px-2 py-0.5 text-[11px] font-medium text-[#15803d]">
+                        프론트
+                      </span>
+                    ) : server.webOnly === false ? (
+                      <span className="rounded-full bg-[#eff6ff] px-2 py-0.5 text-[11px] font-medium text-[#1d4ed8]">
+                        백엔드
+                      </span>
+                    ) : null}
                   </p>
                   <span className="shrink-0 rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
                     {STATUS_LABEL[server.status] ?? server.status}
