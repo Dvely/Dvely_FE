@@ -60,6 +60,23 @@ const provisionedServerSchema = z.object({
   healthy: z.boolean().nullable().prefault(null),
   /** 마지막 헬스체크 시각. 아직 확인 전이면 null */
   lastHealthCheckAt: z.string().nullable().prefault(null),
+  /**
+   * 자동복구를 시도한 시각. 시도한 적 없으면 null.
+   *
+   * 서버는 앱이 두 번 연속 무응답이면 컨테이너를 스스로 재시작한다. 그래서 `healthy`
+   * 하나만으로는 부족하다 — **무응답인데 아직 복구를 안 해본 상태**(기다리면 된다)와
+   * **복구해봤는데도 안 살아난 상태**(사람이 재배포해야 한다)는 사용자가 할 일이 다르다.
+   * 되살아나면 서버가 이 값을 다시 null 로 지운다.
+   */
+  recoveryAttemptedAt: z.string().nullable().prefault(null),
+  /**
+   * 종료된 서버의 부트 로그가 보존돼 있는지.
+   *
+   * 부트 타임아웃으로 실패하면 인스턴스가 종료돼 로그를 볼 수 없었다 — **왜 안 떴는지
+   * 알 방법이 아예 없었다.** 이제 종료 직전 스냅샷을 남기므로, 이 값이 true 면 FAILED
+   * 서버에서도 BOOT 로그를 읽을 수 있다(APP·CADDY 는 인스턴스가 없어 안 된다).
+   */
+  hasBootDiagnostics: z.boolean().prefault(false),
   /** 생성 시각 */
   createdAt: z.string().nullable().prefault(null),
   /** 수정 시각 */
