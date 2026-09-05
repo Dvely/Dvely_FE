@@ -8,6 +8,7 @@ import {
   postProjectDomainBind,
   useProjectDomainListQuery,
   useHostingTargetsQuery,
+  FALLBACK_HOSTING_TARGETS,
 } from '@/api/domains';
 import type { Domain, GetDomainVerificationGuideResType } from '@/types/domain.type';
 import type { DomainStatus, DomainType, HostingTarget, VerificationMethod } from '@/types/common.enum';
@@ -156,11 +157,16 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
     구조적으로 안 생긴다 — 어댑터가 등록된 것만 담겨 온다.
 
     조회에 실패하면(운영에는 아직 이 엔드포인트가 없다) 운영이 실제로 지원하는 둘로
-    떨어진다. 그래서 여기서 로딩·오류를 다루지 않는다.
+    떨어진다. 그래서 여기서 오류를 다루지 않는다.
+
+    **아직 못 받았을 때도 같은 둘을 쓴다.** 빈 목록으로 두면 한 프레임 동안 고를 것이
+    하나도 없는 select 가 되고, 기본값에 맞는 항목이 없어 빈 칸처럼 보인다. 어차피 둘은
+    어디서나 되므로 먼저 보여주고, 응답이 오면 늘어난다.
   */
-  const { data: supportedTargets } = useHostingTargetsQuery('project-domains-page');
+  const { data: supportedTargets = FALLBACK_HOSTING_TARGETS } =
+    useHostingTargetsQuery('project-domains-page');
   const availableTargetOptions = HOSTING_TARGET_OPTIONS.filter((option) =>
-    (supportedTargets ?? []).includes(option.value),
+    supportedTargets.includes(option.value),
   );
   const [bindType, setBindType] = useState<DomainType>('managed_subdomain');
   const [label, setLabel] = useState('');
