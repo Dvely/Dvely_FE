@@ -66,13 +66,17 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
     infraSettings?.cloudConnectionId != null && infraSettings.status === 'CONNECTED';
 
   /*
-    이 프로젝트의 백엔드에 붙은 도메인. 서버를 끄면 이 주소가 끊긴다.
+    이 프로젝트의 EC2 서버에 붙은 도메인. 서버를 끄면 이 주소가 끊긴다.
 
     종료는 EIP 를 반납하는데, 그 주소를 가리키던 DNS 레코드도 함께 정리된다. 그걸 모르고
     끄면 "어제까지 되던 도메인이 왜 죽었지" 가 된다 — 종료 확인에서 미리 알린다.
+
+    프론트 서버와 백엔드 서버가 같은 `AWS` 타깃을 쓰므로 여기서는 갈리지 않는다. 한
+    프로젝트에 둘 다 있고 도메인도 둘이면 어느 쪽이 끊기는지 이 목록만으로는 모른다 —
+    그래서 이름을 하나만 적을 때는 개수가 하나일 때로 제한한다.
   */
   const { data: domains = [] } = useProjectDomainListQuery(QUERY_KEY, projectId);
-  const backendDomains = domains.filter((domain) => domain.hostingTarget === 'AWS');
+  const awsDomains = domains.filter((domain) => domain.hostingTarget === 'AWS');
 
   const createMutation = useMutation({
     mutationFn: () => postProjectServer(projectId, { instanceType }),
@@ -192,8 +196,23 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
             return (
               <li key={server.serverId} className="rounded-xl border border-[#f1f5f9] px-4 py-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-[13px] font-semibold text-[#0f172a]">
+                  <p className="flex flex-wrap items-center gap-1.5 text-[13px] font-semibold text-[#0f172a]">
                     {server.instanceType ?? '인스턴스'}
+                    {/*
+                      한 프로젝트에 프론트 서버와 백엔드 서버가 함께 뜰 수 있다. 둘 다
+                      "t3.micro" 로만 보이면 어느 쪽을 끄는지 모른 채 종료를 누르게 된다.
+                      webOnly 가 null 인 옛 응답에는 아무것도 붙이지 않는다 — 모르면서
+                      아는 척하느니 침묵하는 편이 낫다.
+                    */}
+                    {server.webOnly === true ? (
+                      <span className="rounded-full bg-[#f0fdf4] px-2 py-0.5 text-[11px] font-medium text-[#15803d]">
+                        프론트
+                      </span>
+                    ) : server.webOnly === false ? (
+                      <span className="rounded-full bg-[#eff6ff] px-2 py-0.5 text-[11px] font-medium text-[#1d4ed8]">
+                        백엔드
+                      </span>
+                    ) : null}
                   </p>
                   <span className="shrink-0 rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
                     {STATUS_LABEL[server.status] ?? server.status}
@@ -246,14 +265,34 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
                       </p>
                       <ul className="mt-1.5 flex list-disc flex-col gap-0.5 pl-4 text-[12px] leading-relaxed text-[#b91c1c]">
                         <li>되돌릴 수 없습니다. 다시 만들려면 처음부터 배포해야 합니다.</li>
-                        <li>서버에 쌓인 데이터는 사라집니다.</li>
                         <li>이 인스턴스 청구는 종료하는 순간 멈춥니다.</li>
-                        <li>데이터베이스는 별개 자원이라 남습니다 — 필요하면 따로 정리하세요.</li>
-                        {backendDomains.length > 0 ? (
+                        {/*
+                          프론트 서버와 백엔드 서버는 잃는 것이 다르다.
+
+                          프론트(webOnly)는 정적 결과물만 서빙하고 그건 배포 때마다 다시
+                          만들어진다 — **서버에 잃을 데이터가 없다.** 번들 DB 도 붙일 수
+                          없어서(서버가 거절한다) "DB 는 별개" 도 이 서버와는 무관한 말이다.
+                          그 두 줄을 그대로 두면 없는 걱정을 시키고, 정작 진짜 결과 —
+                          사이트가 닫힌다는 것 — 는 안 적히게 된다.
+                        */}
+                        {server.webOnly === true ? (
+                          <li>
+                            이 서버로 서빙하던 프론트 사이트가 더 이상 열리지 않습니다. 다시
+                            배포하면 새 서버가 뜨고 주소도 새로 받습니다.
+                          </li>
+                        ) : (
+                          <>
+                            <li>서버에 쌓인 데이터는 사라집니다.</li>
+                            <li>
+                              데이터베이스는 별개 자원이라 남습니다 — 필요하면 따로 정리하세요.
+                            </li>
+                          </>
+                        )}
+                        {awsDomains.length > 0 ? (
                           <li>
                             연결된 도메인이 끊깁니다
-                            {backendDomains.length === 1 && backendDomains[0].hostname
-                              ? ` — ${backendDomains[0].hostname}`
+                            {awsDomains.length === 1 && awsDomains[0].hostname
+                              ? ` — ${awsDomains[0].hostname}`
                               : ''}
                             . 서버를 다시 만들면 도메인도 다시 연결해야 합니다.
                           </li>
