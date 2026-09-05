@@ -161,9 +161,19 @@ const verificationMethodSchema = z.enum(['CNAME', 'A']);
 
 /**
  * 도메인 호스팅 대상
+ * - GITHUB_PAGES: 프론트(GitHub Pages)
+ * - AWS: 백엔드 EC2(A레코드→EIP, Caddy HTTPS)
+ * - AWS_EC2_FRONTEND: 독립 프론트 EC2(webOnly, A레코드→EIP, Caddy HTTPS)
+ * - AWS_S3_FRONTEND: S3 정적 프론트(CloudFront + ACM 인증서로 HTTPS)
  * @example "GITHUB_PAGES"
  */
-const hostingTargetSchema = z.enum(['GITHUB_PAGES', 'AWS', 'GCP']);
+const hostingTargetSchema = z.enum([
+  'GITHUB_PAGES',
+  'AWS',
+  'AWS_EC2_FRONTEND',
+  'AWS_S3_FRONTEND',
+  'GCP',
+]);
 
 /**
  * 인증서 상태
