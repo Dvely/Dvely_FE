@@ -4,9 +4,11 @@ import { Link } from '@tanstack/react-router';
 import { useProjectDomainListQuery } from '@/api/domains';
 import { postProjectServer, postServerTerminate, useProjectServerListQuery } from '@/api/servers';
 import { getProjectInfrastructureSettings } from '@/api/projects';
+import ServerLogViewer from '@/components/layout/project/ServerLogViewer';
 import { describeProvisionFailure } from '@/lib/provisionFailure';
 import { toSafeHttpUrl } from '@/lib/safeUrl';
 import { extractApiErrorMessage } from '@/utils/response';
+import type { ServerLogSource } from '@/types/server.type';
 
 const QUERY_KEY = 'project-infra-page';
 
@@ -40,6 +42,42 @@ const STATUS_HINT: Record<string, string> = {
   QUEUED: '배포 워커를 기다리는 중입니다.',
   BUILDING: '소스를 빌드하는 중입니다. 몇 분 걸립니다.',
   PROVISIONING: '인스턴스를 띄우고 헬스체크를 기다리는 중입니다.',
+};
+
+/**
+ * 앱이 살아 있는가.
+ *
+ * `status` 는 **인스턴스**가 떠 있는지만 말한다. 인스턴스는 멀쩡한데 그 안의 앱이 죽는
+ * 일이 흔한데, 그때도 화면은 "실행 중" 이라고 말해왔다 — 사이트가 안 열리는데 정상이라고
+ * 하는 셈이다. 그래서 상태와 별개로 갈라 보여준다.
+ *
+ * 무응답을 둘로 나누는 이유는 **사용자가 할 일이 다르기 때문**이다. 서버가 두 번 연속
+ * 무응답이면 스스로 재시작하므로, 아직 시도 전이면 기다리면 된다. 시도했는데도 안
+ * 살아났으면 그때는 사람이 재배포해야 한다.
+ */
+type HealthState = 'healthy' | 'down' | 'recovery-failed' | 'checking';
+
+function resolveHealthState(server: {
+  healthy: boolean | null;
+  recoveryAttemptedAt: string | null;
+}): HealthState {
+  if (server.healthy === true) return 'healthy';
+  if (server.healthy === null) return 'checking';
+  return server.recoveryAttemptedAt ? 'recovery-failed' : 'down';
+}
+
+const HEALTH_BADGE: Record<HealthState, { label: string; className: string }> = {
+  healthy: { label: '정상', className: 'bg-[#f0fdf4] text-[#15803d]' },
+  down: { label: '앱 무응답', className: 'bg-[#fef2f2] text-[#dc2626]' },
+  'recovery-failed': { label: '복구 실패', className: 'bg-[#991b1b] text-white' },
+  checking: { label: '확인 중', className: 'bg-[#f1f5f9] text-[#64748b]' },
+};
+
+/** 배지만으로는 무엇을 해야 할지 모른다. 갈린 상태마다 다음 행동을 한 줄로 적는다 */
+const HEALTH_HINT: Partial<Record<HealthState, string>> = {
+  down: '인스턴스는 살아 있지만 앱이 응답하지 않습니다. 잠시 뒤 자동으로 다시 시작합니다.',
+  'recovery-failed':
+    '자동으로 다시 시작해봤지만 앱이 살아나지 않았습니다. 로그를 확인하고 다시 배포해야 합니다.',
 };
 
 function ProjectServerSection({ projectId }: { projectId: number }) {
@@ -186,6 +224,23 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
               https 에 포트도 없다 — 원시 EIP 주소(http · :8080)보다 사람이 쓰기 좋고,
               EIP 는 재배포 때 바뀔 수 있지만 도메인은 그대로다.
             */
+            // 헬스는 RUNNING 일 때만 뜻이 있다. 빌드 중인 서버에 "앱 무응답" 은 당연한 말이다
+            const healthState = server.status === 'RUNNING' ? resolveHealthState(server) : null;
+            /*
+              로그를 어디까지 볼 수 있는지는 서버가 살아 있는지에 달렸다.
+
+              RUNNING 이면 인스턴스에 직접 물어 세 소스를 다 읽는다. FAILED 는 인스턴스가
+              이미 없어서 원래는 아무것도 못 봤는데, 이제 종료 직전 부팅 로그를 남긴다 —
+              **왜 안 떴는지 알 수 있는 유일한 자료**라 그것만 열어준다. 앱·HTTPS 를 함께
+              열면 눌러도 오류만 본다.
+            */
+            const logSources: ServerLogSource[] =
+              server.status === 'RUNNING'
+                ? ['APP', 'BOOT', 'CADDY']
+                : server.status === 'FAILED' && server.hasBootDiagnostics
+                  ? ['BOOT']
+                  : [];
+            const healthHint = healthState ? HEALTH_HINT[healthState] : undefined;
             const safeUrl = toSafeHttpUrl(server.domainUrl) ?? toSafeHttpUrl(server.url);
             const hasDomain = toSafeHttpUrl(server.domainUrl) != null;
             const isConfirming = terminatingId === server.serverId;
@@ -214,10 +269,28 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
                       </span>
                     ) : null}
                   </p>
-                  <span className="shrink-0 rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
-                    {STATUS_LABEL[server.status] ?? server.status}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {healthState ? (
+                      <span
+                        title={
+                          server.lastHealthCheckAt
+                            ? `마지막 확인 ${server.lastHealthCheckAt}`
+                            : undefined
+                        }
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${HEALTH_BADGE[healthState].className}`}
+                      >
+                        {HEALTH_BADGE[healthState].label}
+                      </span>
+                    ) : null}
+                    <span className="rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
+                      {STATUS_LABEL[server.status] ?? server.status}
+                    </span>
+                  </div>
                 </div>
+
+                {healthHint ? (
+                  <p className="mt-1 text-[12px] leading-relaxed text-[#b91c1c]">{healthHint}</p>
+                ) : null}
 
                 {hint ? <p className="mt-1 text-[12px] text-[#64748b]">{hint}</p> : null}
 
@@ -250,6 +323,10 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
                   <p className="mt-1 text-[11px] leading-relaxed text-[#94a3b8]">
                     {server.errorMessage}
                   </p>
+                ) : null}
+
+                {logSources.length > 0 ? (
+                  <ServerLogViewer serverId={server.serverId} sources={logSources} />
                 ) : null}
 
                 {canTerminate ? (

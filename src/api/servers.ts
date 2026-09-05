@@ -4,11 +4,14 @@ import { errorResponse, succesResponse, unwrapApiData } from '@/utils/response';
 import type { ApiResponse } from '@/types/response.type';
 import {
   getProjectServerListResSchema,
+  getServerLogsResSchema,
   postProjectServerReqSchema,
   postProjectServerResSchema,
   type GetProjectServerListResType,
+  type GetServerLogsResType,
   type PostProjectServerReqType,
   type PostProjectServerResType,
+  type ServerLogSource,
 } from '@/types/server.type';
 
 const defaultQueryOptions = {
@@ -67,6 +70,23 @@ async function postServerTerminate(serverId: number) {
 }
 
 /**
+ * EC2 서버 최근 로그 조회 API GET.
+ *
+ * 살아있는 인스턴스에서 SSM Run Command 로 tail 한다 — 종료된 서버는 인스턴스가 없어
+ * 서버가 오류로 막는다(그때 errorResponse 가 메시지를 던진다). 조회 시점마다 새로 tail 하므로
+ * 캐시하지 않는다.
+ */
+async function getServerLogs(serverId: number, source: ServerLogSource) {
+  return Http.instance
+    .get<ApiResponse<GetServerLogsResType>>(`/servers/${serverId}/logs`, { params: { source } })
+    .then((response) => {
+      const body = succesResponse<ApiResponse<GetServerLogsResType>>(response);
+      return getServerLogsResSchema.parse(unwrapApiData(body));
+    })
+    .catch(errorResponse());
+}
+
+/**
  * 프로젝트 EC2 서버 목록 조회 Query Hook.
  *
  * 빌드·인스턴스 생성이 수 분 걸리고 그동안 워커가 상태를 옮기므로, 폴링하지 않으면
@@ -96,4 +116,10 @@ function useProjectServerListQuery(queryKey: unknown, projectId: number) {
   });
 }
 
-export { getProjectServerList, postProjectServer, postServerTerminate, useProjectServerListQuery };
+export {
+  getProjectServerList,
+  getServerLogs,
+  postProjectServer,
+  postServerTerminate,
+  useProjectServerListQuery,
+};

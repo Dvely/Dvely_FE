@@ -49,10 +49,55 @@ const provisionedServerSchema = z.object({
   errorCode: z.string().nullable().prefault(null),
   /** 실패 상세. 서버 문구 그대로 */
   errorMessage: z.string().nullable().prefault(null),
+  /**
+   * RUNNING 이후 앱 건강(주기 TCP 헬스체크 결과). status 와 별개다 —
+   * status=RUNNING 은 "인스턴스가 떠 있다", 이 값은 "그 위 앱이 응답한다" 이다.
+   *
+   * true=응답 · false=포트 무응답(인스턴스는 살아있는데 앱이 죽었을 수 있음) ·
+   * null=아직 미확인(RUNNING 직후 첫 헬스체크 전, ~1분). status=RUNNING 인데 이 값이
+   * false 면 "떠 있는데 안 되는" 상태라 화면에서 눈에 띄게 갈라줘야 한다.
+   */
+  healthy: z.boolean().nullable().prefault(null),
+  /** 마지막 헬스체크 시각. 아직 확인 전이면 null */
+  lastHealthCheckAt: z.string().nullable().prefault(null),
+  /**
+   * 자동복구를 시도한 시각. 시도한 적 없으면 null.
+   *
+   * 서버는 앱이 두 번 연속 무응답이면 컨테이너를 스스로 재시작한다. 그래서 `healthy`
+   * 하나만으로는 부족하다 — **무응답인데 아직 복구를 안 해본 상태**(기다리면 된다)와
+   * **복구해봤는데도 안 살아난 상태**(사람이 재배포해야 한다)는 사용자가 할 일이 다르다.
+   * 되살아나면 서버가 이 값을 다시 null 로 지운다.
+   */
+  recoveryAttemptedAt: z.string().nullable().prefault(null),
+  /**
+   * 종료된 서버의 부트 로그가 보존돼 있는지.
+   *
+   * 부트 타임아웃으로 실패하면 인스턴스가 종료돼 로그를 볼 수 없었다 — **왜 안 떴는지
+   * 알 방법이 아예 없었다.** 이제 종료 직전 스냅샷을 남기므로, 이 값이 true 면 FAILED
+   * 서버에서도 BOOT 로그를 읽을 수 있다(APP·CADDY 는 인스턴스가 없어 안 된다).
+   */
+  hasBootDiagnostics: z.boolean().prefault(false),
   /** 생성 시각 */
   createdAt: z.string().nullable().prefault(null),
   /** 수정 시각 */
   updatedAt: z.string().nullable().prefault(null),
+});
+
+/**
+ * 조회할 서버 로그 종류. 실행 형태(NATIVE/DOCKER)와 무관한 논리적 소스다 — 서버가
+ * 형태별 실제 셸 명령으로 옮긴다. APP=앱이 뭘 찍었나 · BOOT=왜 안 떴나(부트스트랩) ·
+ * CADDY=HTTPS 종단.
+ */
+const serverLogSourceSchema = z.enum(['APP', 'BOOT', 'CADDY']);
+
+/**
+ * GET /servers/{serverId}/logs 응답. 살아있는 인스턴스에서 SSM 으로 tail 한 최근 로그다 —
+ * 종료된 서버는 인스턴스가 없어 조회되지 않는다. content 는 매우 길면 SSM 인라인 한계로 잘릴 수 있다.
+ */
+const getServerLogsResSchema = z.object({
+  serverId: z.number().int(),
+  source: z.string(),
+  content: z.string().nullable().prefault(''),
 });
 
 /** GET /projects/{projectId}/servers 응답 */
@@ -84,6 +129,8 @@ type ProvisionedServer = z.infer<typeof provisionedServerSchema>;
 type GetProjectServerListResType = z.infer<typeof getProjectServerListResSchema>;
 type PostProjectServerReqType = z.infer<typeof postProjectServerReqSchema>;
 type PostProjectServerResType = z.infer<typeof postProjectServerResSchema>;
+type ServerLogSource = z.infer<typeof serverLogSourceSchema>;
+type GetServerLogsResType = z.infer<typeof getServerLogsResSchema>;
 
 export {
   serverStatusSchema,
@@ -91,9 +138,13 @@ export {
   getProjectServerListResSchema,
   postProjectServerReqSchema,
   postProjectServerResSchema,
+  serverLogSourceSchema,
+  getServerLogsResSchema,
   type ServerStatus,
   type ProvisionedServer,
   type GetProjectServerListResType,
   type PostProjectServerReqType,
   type PostProjectServerResType,
+  type ServerLogSource,
+  type GetServerLogsResType,
 };
