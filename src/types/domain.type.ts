@@ -63,6 +63,20 @@ const domainSchema = z.object({
   updatedAt: z.string().prefault(''),
 });
 
+/**
+ * GET /domains/hosting-targets — 이 서버가 실제로 붙일 수 있는 호스팅 대상.
+ *
+ * enum 이나 OpenAPI 스펙보다 정확하다. **어댑터가 등록된 것만** 담기기 때문이다 —
+ * enum 에 있어도 어댑터가 없으면(GCP 가 그렇다) 고르는 순간 실패하는데, 이 목록에는
+ * 아예 안 들어온다.
+ *
+ * 값을 닫지 않는다. 대상이 늘어나는 것은 서버 배포이고, FE 가 목록을 들고 있으면 늘
+ * 때마다 배포가 한 번 더 필요해진다 — 오늘 실제로 그 어긋남이 운영에 나갔었다.
+ */
+const getHostingTargetsResSchema = z.object({
+  hostingTargets: z.array(z.string()).prefault([]),
+});
+
 const getProjectDomainListResSchema = z.array(domainSchema);
 
 const dnsRecordSchema = z.object({
@@ -106,11 +120,14 @@ const getDomainSearchResSchema = z.object({
 type PostProjectDomainBindReqType = z.infer<typeof postProjectDomainBindReqSchema>;
 type DomainBindingSubmission = z.infer<typeof domainBindingSubmissionSchema>;
 type Domain = z.infer<typeof domainSchema>;
+type GetHostingTargetsResType = z.infer<typeof getHostingTargetsResSchema>;
 type GetProjectDomainListResType = z.infer<typeof getProjectDomainListResSchema>;
 type GetDomainVerificationGuideResType = z.infer<typeof getDomainVerificationGuideResSchema>;
 type GetDomainSearchResType = z.infer<typeof getDomainSearchResSchema>;
 
 export {
+  getHostingTargetsResSchema,
+  type GetHostingTargetsResType,
   postProjectDomainBindReqSchema,
   domainBindingSubmissionSchema,
   domainSchema,
