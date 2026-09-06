@@ -12,6 +12,8 @@ type AgentSitePreviewPanelProps = {
   didReattach: boolean;
   failureReason: string;
   onLoadPreview: () => void;
+  /** 떠 있던 컨테이너를 버리고 처음부터 다시 짓는다. 멀쩡한 프리뷰도 죽는다 */
+  onForceRebuild: () => void;
 };
 
 function PreviewSkeleton() {
@@ -37,6 +39,7 @@ function AgentSitePreviewPanel({
   didReattach,
   failureReason,
   onLoadPreview,
+  onForceRebuild,
 }: AgentSitePreviewPanelProps) {
   if (isLoading || isProvisioning) {
     return (
@@ -82,11 +85,31 @@ function AgentSitePreviewPanel({
             <ExternalLink className="size-3.5" />새 탭에서 보기
           </a>
         </div>
+        {/*
+          다시 붙기만 하고 끝났을 때의 안내다.
+
+          여기까지 왔다는 건 컨테이너는 살아 있다는 뜻이라, 그런데도 화면이 비어 있다면
+          컨테이너가 아니라 그 안의 앱이 멈춘 것이다. 다시 붙는 것으로는 못 고친다 —
+          버리고 새로 짓는 수밖에 없어서 그 버튼을 여기 둔다.
+
+          같은 버튼이 저장소를 막 연결한 경우도 푼다. 그때 브랜치에는 새 코드가 있는데
+          컨테이너는 옛 것이고, 서버가 보기에는 똑같이 "떠 있으니 붙이면 된다" 이다.
+        */}
         {didReattach ? (
-          <p className="border-b border-[#fde68a] bg-[#fffbeb] px-4 py-2 text-[12px] leading-relaxed text-[#92400e]">
-            이미 떠 있는 컨테이너에 다시 연결했습니다 — 새로 빌드하지 않았습니다. 화면이 그대로
-            비어 있다면 컨테이너가 아니라 그 안의 앱이 멈춘 상태입니다.
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#fde68a] bg-[#fffbeb] px-4 py-2">
+            <p className="text-[12px] leading-relaxed text-[#92400e]">
+              이미 떠 있는 컨테이너에 다시 연결했습니다 — 새로 빌드하지 않았습니다. 화면이
+              그대로 비어 있다면 컨테이너가 아니라 그 안의 앱이 멈춘 상태입니다.
+            </p>
+            <button
+              type="button"
+              onClick={onForceRebuild}
+              title="떠 있는 컨테이너를 버리고 preview 브랜치를 처음부터 다시 빌드합니다"
+              className="shrink-0 cursor-pointer rounded-lg border border-[#f59e0b] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#92400e] transition hover:bg-[#fffbeb]"
+            >
+              버리고 새로 빌드
+            </button>
+          </div>
         ) : null}
         <iframe
           key={frameKey}

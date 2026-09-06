@@ -245,7 +245,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   );
 
   const provisionPreviewMutation = useMutation({
-    mutationFn: () => postProjectPreviewSession(projectId),
+    mutationFn: ({ force }: { force: boolean }) => postProjectPreviewSession(projectId, { force }),
     onSuccess: ({ reattached }) => {
       /*
         200 은 "살아 있던 컨테이너에 도로 붙었다" 는 뜻이다. 서버는 컨테이너가 떠 있으면
@@ -273,7 +273,23 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     setRightPanelView('preview');
     setPreviewFrameKey((key) => key + 1);
     setDidReattachPreview(false);
-    provisionPreviewMutation.mutate();
+    provisionPreviewMutation.mutate({ force: false });
+  };
+
+  /*
+    떠 있던 것을 버리고 처음부터 다시 짓는다.
+
+    다시 붙는 것으로는 못 고치는 경우가 있다 — 컨테이너는 살아 있는데 그 안의 앱만 죽은
+    상태, 그리고 저장소를 막 연결해서 브랜치에는 새 코드가 있는데 컨테이너는 옛 것인
+    상태. 둘 다 서버가 보기에는 "컨테이너가 떠 있으니 붙이면 된다" 라서 다시 붙기만 한다.
+
+    멀쩡한 프리뷰도 죽이고 빌드를 다시 하므로 사용자가 그러기로 정했을 때만 보낸다.
+    자동 재시도에 물리면 잘 돌던 프리뷰를 스스로 무너뜨린다.
+  */
+  const handleForceRebuildPreview = () => {
+    setPreviewFrameKey((key) => key + 1);
+    setDidReattachPreview(false);
+    provisionPreviewMutation.mutate({ force: true });
   };
 
   // AgentConversationPanel이 매 렌더에서 부르므로 identity를 고정한다.
@@ -536,6 +552,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             phase={previewPhase}
             previewUrl={previewUrl}
             didReattach={didReattachPreview}
+            onForceRebuild={handleForceRebuildPreview}
             frameKey={previewFrameKey}
             isLoading={(isPreviewLoading || isPreviewAccessLoading) && !previewUrl}
             onLoadPreview={handleLoadPreview}

@@ -130,12 +130,18 @@ async function getProjectPreviewSession(projectId: number) {
  *
  * 응답 DTO 에는 이 구분이 없어서 상태 코드가 유일한 근거다. 그래서 여기서 같이 돌려준다 —
  * 세션 ID 가 같은지로 짐작할 수도 있지만 그건 우연히 맞는 방식이고, 계약은 이쪽이다.
+ *
+ * `force` 를 주면 붙지 않고 항상 새로 빌드한다 — 떠 있던 컨테이너를 버리고 preview 브랜치를
+ * 다시 받아 온다. **멀쩡한 프리뷰도 죽이므로** 자동 재시도에 물리면 안 되고, 사용자가
+ * 그러기로 정했을 때만 보낸다. force 요청은 언제나 202 라 재연결 판정과 부딪히지 않는다.
  */
-async function postProjectPreviewSession(projectId: number) {
+async function postProjectPreviewSession(projectId: number, { force = false } = {}) {
   const { projectId: id } = getProjectPreviewSessionParamsSchema.parse({ projectId });
 
   return Http.instance
     .post<ApiResponse<PostProjectPreviewSessionResType>>(`/projects/${id}/preview-session`, undefined, {
+      // 켤 때만 붙인다 — 기본 요청은 지금까지와 한 글자도 다르지 않게 둔다
+      params: force ? { force: true } : undefined,
       validateStatus: (status) => status === 200 || status === 202,
     })
     .then((response) => {
