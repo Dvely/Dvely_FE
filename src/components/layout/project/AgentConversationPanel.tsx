@@ -22,6 +22,7 @@ import {
   postApprovalApprove,
   postApprovalReject,
   useApprovalDetailQuery,
+  useConversationPendingApprovalQuery,
 } from '@/api/approvals';
 import { composeApiErrorMessage, dispatchApiErrorAction } from '@/lib/apiErrorGuide';
 import { refreshUserInfoInBackground } from '@/api/user';
@@ -283,7 +284,29 @@ function AgentConversationPanel({
   );
   const pollAbortRef = useRef<AbortController | null>(null);
 
-  const { data: pendingApproval } = useApprovalDetailQuery(AGENT_CHAT_QUERY_KEY, pendingApprovalId);
+  /*
+    태스크가 끝난 뒤에 생기는 승인을 놓치지 않는다.
+
+    배포는 승인을 만들기 **직전에** 태스크를 끝낸다. 그래서 태스크 종료 시점에 한 번
+    묻는 것만으로는 못 잡고, 사용자는 "승인해주세요" 라는 말만 보고 누를 것을 못 받는다.
+    계속 지켜보면 언제 생기든 다음 주기에 걸린다.
+
+    이미 결정한 것은 뺀다 — 서버가 상태를 바꾸기 전에 한 번 더 조회가 돌면 방금 누른
+    카드가 잠깐 되살아나고, 그 사이 두 번 누를 수 있다.
+  */
+  const { data: watchedApprovalId } = useConversationPendingApprovalQuery(
+    AGENT_CHAT_QUERY_KEY,
+    projectId,
+    conversationId,
+  );
+  const decidedApprovalIdsRef = useRef<Set<number>>(new Set());
+  const visibleApprovalId =
+    pendingApprovalId ??
+    (watchedApprovalId != null && !decidedApprovalIdsRef.current.has(watchedApprovalId)
+      ? watchedApprovalId
+      : null);
+
+  const { data: pendingApproval } = useApprovalDetailQuery(AGENT_CHAT_QUERY_KEY, visibleApprovalId);
   const activeApproval = pendingApproval?.status === 'PENDING' ? pendingApproval : null;
 
   // 대화를 열거나 바꿀 때 미결 승인을 서버에서 복원한다.
@@ -533,7 +556,10 @@ function AgentConversationPanel({
 
       return { task, pendingApprovalId, decidedApprovalId: approvalId };
     },
-    onMutate: () => {
+    onMutate: ({ approvalId }) => {
+      // 누른 즉시 적어 둔다. 감시 조회가 서버 상태보다 먼저 한 번 더 돌면 방금 누른
+      // 카드가 되살아나는데, 그 사이 두 번 누르면 같은 승인을 두 번 보내게 된다
+      decidedApprovalIdsRef.current.add(approvalId);
       setIsAssistantReplying(true);
       setLongRunningBaseline(null);
       setRetryableTask(null);
