@@ -14,6 +14,8 @@ import {
   postAgentTaskRetry,
   SETTLED_AGENT_TASK_STATUSES,
   useAiProviderListQuery,
+  getConversationActiveTask,
+  getAgentTask,
 } from '@/api/agent';
 import {
   getProjectApprovalList,
@@ -794,6 +796,44 @@ function AgentConversationPanel({
    * 확인 대화상자는 두지 않았다. 되돌릴 수 없는 것도, 돈이 드는 것도 아니고 — 다시
    * 보내면 그만이다. 잘못 보낸 걸 알아챈 사용자를 한 번 더 붙잡을 이유가 없다.
    */
+  /*
+    새로고침하면 진행 중이던 태스크를 통째로 잊는다.
+
+    화면은 그 기억을 메모리에만 들고 있어서, 페이지를 다시 열면 답을 기다리던 질문도
+    취소 버튼도 사라진다. 그러면 그 태스크는 **영원히 대기로 남는다** — 새로 적은 글은
+    새 태스크가 되고, 원래 것은 아무도 못 건드린다. 되묻기가 생기면서 이 자리에 설 일이
+    많아졌다.
+
+    그래서 마운트할 때 서버에 묻는다. 서버는 안 끝난 것만 주므로 받은 것만 믿으면 되고,
+    낡은 폼이 뜰 걱정이 없다.
+
+    실패해도 조용히 넘어간다 — 복구는 있으면 좋은 것이지, 없다고 화면을 막을 일이 아니다.
+  */
+  useEffect(() => {
+    if (conversationId == null) return;
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const active = await getConversationActiveTask(conversationId);
+        if (cancelled || !active) return;
+
+        const task = await getAgentTask(active.taskId);
+        if (cancelled) return;
+
+        rememberConversationTaskId(conversationId, task.taskId);
+        setRunningTaskId(task.taskId || null);
+        setAwaitingInput(toAwaitingInput(task, task.taskId));
+      } catch {
+        // 못 되살려도 대화는 그대로 쓸 수 있다
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId]);
+
   const cancelTaskMutation = useMutation({
     mutationFn: (taskId: string) => deleteAgentTask(taskId),
     onSuccess: () => {
@@ -1011,11 +1051,22 @@ function AgentConversationPanel({
             onSubmit={(value) =>
               submitInputMutation.mutate({ taskId: awaitingInput.taskId, value })
             }
+            onCancel={() => cancelTaskMutation.mutate(awaitingInput.taskId)}
           />
         ) : awaitingInputTaskId ? (
-          <p className="mb-2 rounded-lg bg-[#faf5ff] px-2.5 py-1.5 text-[12px] font-medium text-[#6d28d9]">
-            에이전트가 답을 기다리고 있습니다. 여기에 적으면 하던 작업을 이어서 진행합니다.
-          </p>
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-[#faf5ff] px-2.5 py-1.5">
+            <p className="text-[12px] font-medium text-[#6d28d9]">
+              에이전트가 답을 기다리고 있습니다. 여기에 적으면 하던 작업을 이어서 진행합니다.
+            </p>
+            <button
+              type="button"
+              onClick={() => cancelTaskMutation.mutate(awaitingInputTaskId)}
+              disabled={cancelTaskMutation.isPending}
+              className="shrink-0 cursor-pointer text-[12px] font-medium text-[#a78bfa] underline underline-offset-2 hover:text-[#7c3aed] disabled:cursor-not-allowed"
+            >
+              작업 취소
+            </button>
+          </div>
         ) : null}
         {/*
           쓸 수 있는 제공자가 둘 이상일 때만 보여준다. 목록은 서버가 apiKey 가 설정된
