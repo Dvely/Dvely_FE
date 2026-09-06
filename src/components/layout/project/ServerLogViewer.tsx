@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getServerLogs } from '@/api/servers';
 import { extractApiErrorMessage } from '@/utils/response';
@@ -20,6 +20,17 @@ const SOURCE_LABEL: Record<ServerLogSource, { label: string; hint: string }> = {
   CADDY: { label: 'HTTPS', hint: '인증서 발급과 프록시 로그입니다.' },
 };
 
+/**
+ * 이만큼 지나면 "기다리는 게 맞다" 고 말해 준다.
+ *
+ * 인스턴스가 건강하면 1~3초에 온다. 그런데 부팅 직후나 인증서 발급 중이면 에이전트가
+ * 명령을 늦게 집어가서 서버가 40초 가까이 기다린다 — 그 시간을 아무 말 없는 스켈레톤으로
+ * 채우면 고장 난 것처럼 보이고, 사용자는 새로고침을 누르거나 창을 닫는다.
+ *
+ * 정상 응답보다 넉넉히 뒤에 둔다. 매번 뜨면 안내가 아니라 소음이다.
+ */
+const SLOW_LOG_NOTICE_MS = 4000;
+
 type ServerLogViewerProps = {
   serverId: number;
   /**
@@ -34,6 +45,7 @@ type ServerLogViewerProps = {
 function ServerLogViewer({ serverId, sources }: ServerLogViewerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [source, setSource] = useState<ServerLogSource>(sources[0]);
+  const [isTakingLong, setIsTakingLong] = useState(false);
 
   const {
     data: logs,
@@ -49,6 +61,16 @@ function ServerLogViewer({ serverId, sources }: ServerLogViewerProps) {
     retry: false,
     refetchOnWindowFocus: false,
   });
+
+  // 읽기가 끝나면 정리된다 — 다음 요청은 다시 조용히 시작한다
+  useEffect(() => {
+    if (!isFetching) return;
+    const timer = window.setTimeout(() => setIsTakingLong(true), SLOW_LOG_NOTICE_MS);
+    return () => {
+      window.clearTimeout(timer);
+      setIsTakingLong(false);
+    };
+  }, [isFetching]);
 
   if (!isOpen) {
     return (
@@ -108,7 +130,15 @@ function ServerLogViewer({ serverId, sources }: ServerLogViewerProps) {
       </p>
 
       {isFetching && !content ? (
-        <div className="h-24 animate-pulse bg-[#f8fafc]" />
+        <div>
+          <div className="h-24 animate-pulse bg-[#f8fafc]" />
+          {isTakingLong ? (
+            <p className="border-t border-[#f1f5f9] px-3 py-2 text-[11px] leading-relaxed text-[#94a3b8]">
+              인스턴스에 명령을 보내 읽어오는 중입니다. 서버가 막 뜬 참이거나 인증서를 받는
+              중이면 40초쯤 걸릴 수 있습니다 — 기다리시면 됩니다.
+            </p>
+          ) : null}
+        </div>
       ) : error ? (
         <p className="px-3 py-3 text-[12px] leading-relaxed text-[#b91c1c]">
           {extractApiErrorMessage(error) ?? '로그를 읽지 못했습니다.'}
