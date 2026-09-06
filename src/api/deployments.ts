@@ -40,7 +40,13 @@ async function getProjectDeploymentList(projectId: number) {
     .catch(errorResponse());
 }
 
-/** GitHub Pages 배포 요청 API POST */
+/**
+ * 배포 요청 API POST.
+ *
+ * 프론트 호스팅이 셋(GitHub Pages · S3 · EC2)이라 이름을 Pages 로 부르지 않는다.
+ * 응답의 approvalIds 가 비어 있지 않으면 **승인 전까지 아무것도 진행되지 않으므로**,
+ * 호출부는 그 값을 반드시 읽어야 한다.
+ */
 async function postProjectDeploymentCreate(
   projectId: number,
   params: PostProjectDeploymentCreateReqType,

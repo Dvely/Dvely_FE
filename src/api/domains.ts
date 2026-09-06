@@ -14,6 +14,8 @@ import {
   type GetDomainVerificationGuideResType,
   type GetProjectDomainListResType,
   type PostProjectDomainBindReqType,
+  getHostingTargetsResSchema,
+  type GetHostingTargetsResType,
 } from '@/types/domain.type';
 
 const defaultQueryOptions = {
@@ -22,6 +24,43 @@ const defaultQueryOptions = {
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,
 } as const;
+
+/**
+ * 이 서버가 붙일 수 있는 호스팅 대상 목록 조회 API GET.
+ *
+ * **운영 백엔드에는 아직 이 엔드포인트가 없다.** 그래서 실패를 정상 경로로 다룬다 —
+ * 못 읽으면 운영이 실제로 지원하는 둘로 떨어진다. 화면이 서버보다 앞서 나가서 "고를 수는
+ * 있는데 누르면 실패하는" 옵션을 내보이던 문제를 이 폴백이 막는다.
+ *
+ * 나중에 운영에도 이 엔드포인트가 생기면 폴백은 저절로 안 쓰이게 된다.
+ */
+const FALLBACK_HOSTING_TARGETS = ['GITHUB_PAGES', 'AWS'];
+
+async function getHostingTargets(): Promise<string[]> {
+  return Http.instance
+    .get<GetHostingTargetsResType>('/domains/hosting-targets')
+    .then((response) => {
+      const body = succesResponse<GetHostingTargetsResType>(response);
+      return getHostingTargetsResSchema.parse(unwrapApiData(body)).hostingTargets;
+    })
+    .catch(() => FALLBACK_HOSTING_TARGETS);
+}
+
+/**
+ * 호스팅 대상 목록 Query Hook. 서버 배포로만 바뀌는 값이라 폴링하지 않는다.
+ *
+ * 실패해도 화면이 멈추지 않는다 — 조회 함수가 폴백을 돌려주므로 오류 상태가 없다.
+ */
+function useHostingTargetsQuery(queryKey: unknown) {
+  if (!queryKey) throw new Error('queryKey is required');
+  return useQuery({
+    queryKey: ['hosting-targets', queryKey],
+    queryFn: getHostingTargets,
+    gcTime: 0,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+}
 
 /** 프로젝트 도메인 목록 조회 API GET */
 async function getProjectDomainList(projectId: number) {
@@ -126,6 +165,9 @@ function useProjectDomainListQuery(queryKey: unknown, projectId: number) {
 }
 
 export {
+  getHostingTargets,
+  useHostingTargetsQuery,
+  FALLBACK_HOSTING_TARGETS,
   getProjectDomainList,
   postProjectDomainBind,
   postDomainVerificationCheck,

@@ -201,43 +201,63 @@ const environmentVariableScopeSchema = z.enum(['PREVIEW', 'PRODUCTION']);
  * AI 제공자
  * @example "ANTHROPIC"
  */
-const aiProviderSchema = z.enum(['ANTHROPIC', 'OPENAI']);
+/**
+ * AI 제공자. 알려진 값: ANTHROPIC · OPENAI · GLM.
+ *
+ * 열린 문자열로 받는다. 닫아두면 서버가 제공자를 하나 늘릴 때 그 값이 실린 응답이
+ * 통째로 파싱에 실패한다 — 실제로 서버는 이미 GLM 을 선언하고 있는데 여기 없었다.
+ * 지금 안 터지는 건 그 응답을 읽는 화면이 아직 없어서일 뿐이다.
+ *
+ * 화면은 제공자 목록을 서버에서 받아 채운다(`GET /agent/ai-providers`). 여기에 값을
+ * 나열해 두면 그 목록과 두 벌이 되어, 늘 때마다 양쪽을 고쳐야 한다.
+ *
+ * min(1) 은 걸지 않는다 — 이 스키마는 요청과 응답에 함께 쓰이고, 응답 필드에 걸면
+ * 서버가 비워 보낼 때 응답 전체가 파싱에 실패한다(response.type.ts 의 규칙).
+ */
+const aiProviderSchema = z.string().prefault('');
 
 /**
- * 에이전트 작업 유형
- * @example "CHAT"
+ * 에이전트 단계 유형.
+ * 열린 문자열로 받는다 — 계획에 새 단계가 생길 때마다 값이 늘고(RUNTIME_SETUP 이 그 예),
+ * 화면은 이 값으로 분기하지 않는다. 닫아두면 값 하나 때문에 계획 응답 전체가 파싱에
+ * 실패해 사용자가 요청을 보내도 아무 일도 안 일어난 것처럼 보인다.
+ * 알려진 값: CHAT · CODE · DEPLOY · DOMAIN_BIND · INFRA_OPERATE · RUNTIME_SETUP
  */
-const agentTypeSchema = z.enum(['CHAT', 'CODE', 'DEPLOY', 'DOMAIN_BIND', 'INFRA_OPERATE']);
+const agentTypeSchema = z.string().prefault('');
 
 /**
- * 에이전트 태스크 상태
- * @example "RUNNING"
+ * 에이전트 태스크 상태.
+ * 알려진 값: PENDING · WAITING_APPROVAL · QUEUED · RETRY_WAIT · RUNNING ·
+ * WAITING_INPUT · WAITING_RESULT_APPROVAL · DONE · FAILED · CANCELLED.
+ *
+ * 열린 문자열로 받는다. 닫아두면 서버가 상태를 하나 늘릴 때
+ * `GET /agent/tasks/{taskId}` 응답 전체가 파싱에 실패하고, 그 조회가 채팅의
+ * 진행 판단 전부를 떠받치고 있어서 **대화가 통째로 멈춘 것처럼 보인다.**
+ * 이벤트 목록도 같은 스키마를 쓰므로 이벤트 하나에 섞이면 목록 전체가 죽는다.
+ *
+ * 모르는 값이 와도 화면은 버틴다 — 종결 판단은 Set 조회라 "아직 안 끝남"으로
+ * 떨어질 뿐이고, 폴링이 상한(5분)에 닿으면 시간 초과로 사용자에게 알린다.
+ * 파싱이 죽어 아무 일도 안 일어나는 것보다 낫다.
+ *
+ * 백엔드는 현재 10종을 늘릴 계획이 없고, 늘릴 때는 먼저 알리기로 했다.
+ * 그래도 열어두는 이유는 그 약속이 깨졌을 때의 대가가 크기 때문이다.
  */
-const agentTaskStatusSchema = z.enum([
-  'PENDING',
-  'WAITING_APPROVAL',
-  'QUEUED',
-  'RETRY_WAIT',
-  'RUNNING',
-  'WAITING_INPUT',
-  'WAITING_RESULT_APPROVAL',
-  'DONE',
-  'FAILED',
-  'CANCELLED',
-]);
+const agentTaskStatusSchema = z.string().prefault('');
 
 /**
  * 승인 유형
  * @example "CHANGE"
  */
-const approvalTypeSchema = z.enum([
-  'CHANGE',
-  'DEPLOYMENT',
-  'DOMAIN_BINDING',
-  'INFRA_OPERATION',
-  'REPOSITORY_BINDING',
-  'RESULT',
-]);
+/**
+ * 승인 유형. 알려진 값: CHANGE · DEPLOYMENT · DOMAIN_BINDING · INFRA_OPERATION ·
+ * REPOSITORY_BINDING · RESULT · SERVER_PROVISION.
+ *
+ * 열린 문자열로 받는다. 화면은 이 값으로 문구를 고르지만 모르는 값이면 기본 문구로
+ * 떨어지면 그만이다. 반면 닫아두면 서버가 유형을 하나 늘릴 때 승인 조회가 통째로
+ * 파싱에 실패하고, 그러면 승인 카드가 아예 안 떠서 사용자가 결정할 방법이 사라진다 —
+ * REPOSITORY_BINDING 이 추가됐을 때 실제로 그렇게 막혔다.
+ */
+const approvalTypeSchema = z.string().prefault('');
 
 /**
  * 승인 상태

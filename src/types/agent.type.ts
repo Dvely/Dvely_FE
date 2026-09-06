@@ -25,6 +25,45 @@ const postAgentDecisionReqSchema = z.object({
 /**
  * POST /agent/decision 에이전트 요청 제출 응답
  */
+/**
+ * GET /agent/conversations/{id}/active-task 응답.
+ *
+ * 이 대화에서 아직 안 끝난 태스크를 가리킨다. 끝난 것은 오지 않으므로, 화면은 받은
+ * 것만 믿고 되살리면 된다 — 낡은 폼이 뜰 일이 없다.
+ *
+ * 새로고침하면 화면은 진행 중이던 것을 통째로 잊는다. 그 기억을 서버에 두는 포인터다.
+ */
+const getActiveTaskResSchema = z.object({
+  taskId: z.string().prefault(''),
+  /** 열어 둔다 — 서버가 상태를 늘려도 이 조회가 통째로 실패하면 안 된다 */
+  status: z.string().prefault(''),
+});
+
+/** 되묻기 선택지 하나 */
+const clarificationOptionSchema = z.object({
+  /** 서버가 구분하는 값. 화면에는 label 을 쓴다 */
+  value: z.string().prefault(''),
+  /** 사람이 읽는 이름. 답으로 보내는 것도 이 문자열이다 */
+  label: z.string().prefault(''),
+  /** 에이전트가 미는 쪽. 하나만 true 인 것을 전제하지 않는다 */
+  recommended: z.boolean().nullable().prefault(false),
+});
+
+/**
+ * 빌드 전에 스펙을 되묻는 질문.
+ *
+ * inputType 을 열린 문자열로 둔다 — 서버가 새 형태를 더해도 화면이 통째로 못 읽는 일이
+ * 없어야 한다. 모르는 값이 오면 자유 입력으로 떨어뜨린다.
+ */
+const taskClarificationSchema = z.object({
+  question: z.string().prefault(''),
+  /** TEXT | SINGLE_SELECT | MULTI_SELECT. 모르는 값은 TEXT 로 다룬다 */
+  inputType: z.string().prefault('TEXT'),
+  options: z.array(clarificationOptionSchema).prefault([]),
+  /** 선택지 말고 직접 적을 수도 있는지 */
+  allowOther: z.boolean().nullable().prefault(false),
+});
+
 const postAgentDecisionResSchema = z.object({
   /** 실행 단계 */
   steps: z.array(agentStepSchema),
@@ -33,9 +72,9 @@ const postAgentDecisionResSchema = z.object({
   /** AI 제공자 */
   aiProvider: aiProviderSchema,
   /** 태스크 ID */
-  taskId: z.string().min(1, '태스크 ID가 없습니다.').prefault(''),
+  taskId: z.string().prefault(''),
   /** 태스크 상태 */
-  status: z.string().min(1, '태스크 상태가 없습니다.').prefault(''),
+  status: z.string().prefault(''),
   /** 생성된 승인 ID 목록 */
   approvalIds: z.array(z.number().int()),
 });
@@ -53,7 +92,7 @@ const getAgentTaskParamsSchema = z.object({
  */
 const getAgentTaskResSchema = z.object({
   /** 태스크 ID */
-  taskId: z.string().min(1, '태스크 ID가 없습니다.').prefault(''),
+  taskId: z.string().prefault(''),
   /** 태스크 상태 */
   status: agentTaskStatusSchema,
   /** 토큰 기반 프리뷰 gateway URL. CODE 스텝 완료 시에만 설정됨 */
@@ -64,6 +103,13 @@ const getAgentTaskResSchema = z.object({
   error: z.string().nullable().prefault(''),
   /** 에이전트가 사용자에게 묻는 질문. WAITING_INPUT일 때 설정됨 */
   question: z.string().nullable().prefault(''),
+  /**
+   * 고를 수 있는 형태의 되묻기. WAITING_INPUT 이면서 선택형일 때만 온다.
+   *
+   * **null 이면 자유 입력이다** — 지금까지처럼 질문만 보여주고 입력창을 쓴다. 배포가
+   * 저장소 이름을 묻는 자리가 그쪽이다.
+   */
+  clarification: taskClarificationSchema.nullable().prefault(null),
   /** 실패 로그의 마지막 일부 */
   failureLog: z.string().nullable().prefault(''),
   /** 사용자에게 제안하는 최선의 수정안 */
@@ -97,15 +143,15 @@ const agentTaskEventSchema = z.object({
   /** 이벤트 ID */
   eventId: z.number().int(),
   /** 태스크 ID */
-  taskId: z.string().min(1, '태스크 ID가 없습니다.').prefault(''),
+  taskId: z.string().prefault(''),
   /** 이벤트 타입 (CREATED, STARTED, COMPLETED 등) */
-  type: z.string().min(1, '이벤트 타입이 없습니다.').prefault(''),
+  type: z.string().prefault(''),
   /** 이벤트 시점의 태스크 상태 */
   status: agentTaskStatusSchema,
   /** 진행 메시지 */
   message: z.string().nullable().prefault(''),
   /** 이벤트 생성 시각 (ISO 8601 date-time) */
-  createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  createdAt: z.string().prefault(''),
 });
 
 /**
@@ -155,10 +201,19 @@ type PostAgentTaskInputParamsType = z.infer<typeof postAgentTaskInputParamsSchem
 /** POST /agent/tasks/{taskId}/input 사용자 입력 제출 요청 body */
 type PostAgentTaskInputReqType = z.infer<typeof postAgentTaskInputReqSchema>;
 type AgentStep = z.infer<typeof agentStepSchema>;
+type TaskClarification = z.infer<typeof taskClarificationSchema>;
+type GetActiveTaskResType = z.infer<typeof getActiveTaskResSchema>;
+type ClarificationOption = z.infer<typeof clarificationOptionSchema>;
 type PostAgentDecisionReqType = z.infer<typeof postAgentDecisionReqSchema>;
 type PostAgentDecisionResType = z.infer<typeof postAgentDecisionResSchema>;
 
 export {
+  getActiveTaskResSchema,
+  type GetActiveTaskResType,
+  taskClarificationSchema,
+  clarificationOptionSchema,
+  type TaskClarification,
+  type ClarificationOption,
   agentStepSchema,
   postAgentDecisionReqSchema,
   postAgentDecisionResSchema,

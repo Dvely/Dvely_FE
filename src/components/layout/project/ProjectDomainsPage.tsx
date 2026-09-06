@@ -7,6 +7,8 @@ import {
   postDomainVerificationCheck,
   postProjectDomainBind,
   useProjectDomainListQuery,
+  useHostingTargetsQuery,
+  FALLBACK_HOSTING_TARGETS,
 } from '@/api/domains';
 import type { Domain, GetDomainVerificationGuideResType } from '@/types/domain.type';
 import type { DomainStatus, DomainType, HostingTarget, VerificationMethod } from '@/types/common.enum';
@@ -146,6 +148,26 @@ function DnsGuide({ domain, guide }: { domain: Domain; guide: GetDomainVerificat
 
 function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
   const [hostingTarget, setHostingTarget] = useState<HostingTarget>('GITHUB_PAGES');
+
+  /*
+    서버가 실제로 붙일 수 있는 대상만 고르게 한다.
+
+    예전에는 화면이 목록을 들고 있었는데, 서버가 지원하지 않는 값이 섞여 **고를 수는
+    있는데 누르면 실패하는 옵션**이 운영에 나갔었다. 이제 서버에 물어보므로 그 어긋남이
+    구조적으로 안 생긴다 — 어댑터가 등록된 것만 담겨 온다.
+
+    조회에 실패하면(운영에는 아직 이 엔드포인트가 없다) 운영이 실제로 지원하는 둘로
+    떨어진다. 그래서 여기서 오류를 다루지 않는다.
+
+    **아직 못 받았을 때도 같은 둘을 쓴다.** 빈 목록으로 두면 한 프레임 동안 고를 것이
+    하나도 없는 select 가 되고, 기본값에 맞는 항목이 없어 빈 칸처럼 보인다. 어차피 둘은
+    어디서나 되므로 먼저 보여주고, 응답이 오면 늘어난다.
+  */
+  const { data: supportedTargets = FALLBACK_HOSTING_TARGETS } =
+    useHostingTargetsQuery('project-domains-page');
+  const availableTargetOptions = HOSTING_TARGET_OPTIONS.filter((option) =>
+    supportedTargets.includes(option.value),
+  );
   const [bindType, setBindType] = useState<DomainType>('managed_subdomain');
   const [label, setLabel] = useState('');
   const [hostname, setHostname] = useState('');
@@ -255,7 +277,7 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
               onChange={(event) => setHostingTarget(event.target.value as HostingTarget)}
               className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
             >
-              {HOSTING_TARGET_OPTIONS.map((option) => (
+              {availableTargetOptions.map((option) => (
                 <option key={option.value} value={option.value} disabled={!option.enabled}>
                   {option.label}
                 </option>
@@ -363,6 +385,25 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
                           <span className="rounded-full bg-[#dcfce7] px-2 py-0.5 text-[11px] font-medium text-[#15803d]">
                             HTTPS
                           </span>
+                        ) : null}
+                        {/*
+                          이 주소가 실제로 어느 서버로 가는지 이어 준다. 도메인이 안 열릴 때
+                          사용자가 다음으로 볼 곳이 그 서버의 상태와 로그인데, 지금까지는
+                          인프라 화면에서 어느 것이 이 도메인의 서버인지 직접 짚어야 했다.
+
+                          값이 있을 때만 건다. 서버를 안 쓰는 대상(GitHub Pages·S3)은 항상
+                          비어 있고, EC2 대상이어도 교체·재기동 중에는 잠깐 비어 온다 —
+                          그때 링크를 걸면 아무 데도 없는 곳을 가리킨다.
+                        */}
+                        {domain.serverId != null ? (
+                          <Link
+                            to="/project/$slug/infra"
+                            params={{ slug: String(projectId) }}
+                            hash={`server-${domain.serverId}`}
+                            className="rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#475569] hover:bg-[#e2e8f0]"
+                          >
+                            서버 보기
+                          </Link>
                         ) : null}
                       </div>
                       <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-[#94a3b8]">

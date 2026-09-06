@@ -26,8 +26,8 @@ import {
   usePreviewAccessQuery,
   useProjectPreviewQuery,
 } from '@/api/preview';
-import { fetchAndPersistUserInfo } from '@/api/user';
-import { extractApiErrorMessage } from '@/utils/response';
+import { refreshUserInfoInBackground } from '@/api/user';
+import { composeApiErrorMessage, dispatchApiErrorAction } from '@/lib/apiErrorGuide';
 import {
   postProjectRepositoryReqSchema,
   type GetProjectDetailResType,
@@ -50,9 +50,6 @@ import AgentConversationPanel from '@/components/layout/project/AgentConversatio
 import AgentSitePreviewPanel from '@/components/layout/project/AgentSitePreviewPanel';
 import GithubRepositoryPicker from '@/components/layout/project/GithubRepositoryPicker';
 import ProjectCodeExplorerPanel from '@/components/layout/project/ProjectCodeExplorerPanel';
-import ProjectPipelinePanel from '@/components/layout/project/ProjectPipelinePanel';
-import { createIdlePipelineRun, runPipelineSequence } from '@/lib/projectPipelineRunner';
-import type { PipelineRun } from '@/types/pipeline.type';
 import { useHorizontalPanelResize } from '@/hooks/useHorizontalPanelResize';
 import { cn } from '@/lib/utils';
 
@@ -64,7 +61,7 @@ const AGENT_CHAT_PANEL_MAX_WIDTH = 640;
 const AGENT_CHAT_PANEL_DEFAULT_WIDTH = 380;
 
 type AgentSidebarTab = 'list' | 'conversation';
-type RightPanelView = 'preview' | 'code' | 'pipeline';
+type RightPanelView = 'preview' | 'code';
 
 type ProjectAgentPageProps = {
   projectId: number;
@@ -81,11 +78,16 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [hasDisconnectedRepository, setHasDisconnectedRepository] = useState(false);
   const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
   const [previewFrameKey, setPreviewFrameKey] = useState(0);
+  /** 다시 띄우기를 눌렀는데 살아 있던 컨테이너에 도로 붙은 경우. 화면이 그대로라 설명이 필요하다 */
+  const [didReattachPreview, setDidReattachPreview] = useState(false);
   const [isAgentTaskActive, setIsAgentTaskActive] = useState(false);
-  const [deployWatchStartedAt, setDeployWatchStartedAt] = useState<number | null>(null);
-  const [isDeployWatchActive, setIsDeployWatchActive] = useState(false);
-  const [pipelineRun, setPipelineRun] = useState<PipelineRun>(() => createIdlePipelineRun());
-  const pipelineAbortRef = useRef<AbortController | null>(null);
+  /*
+    배포 완료 안내를 지켜보는 마감 시각. 상태 둘(시작시각 + 활성여부)을 하나로 합쳤다 —
+    시작 시각은 effect 를 깨우는 데만 쓰였고, effect 안에서 활성 여부를 동기적으로 세우고
+    있었다. 그러면 렌더가 한 번 더 도는 데다, 두 값이 어긋날 자리도 생긴다.
+    지금은 켜는 쪽이 마감 시각을 적고 effect 는 끄는 타이머만 건다.
+  */
+  const [deployWatchUntil, setDeployWatchUntil] = useState<number | null>(null);
   const wasAgentTaskActiveRef = useRef(false);
 
   const { width: chatPanelWidth, handleResizeStart: handleChatPanelResizeStart } =
@@ -108,10 +110,13 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
       await queryClient.invalidateQueries({ queryKey: ['project-repository-settings'] });
       await queryClient.invalidateQueries({ queryKey: ['github-repository-list'] });
     },
-    // GitHub 연동이 끊겨서 실패했을 수 있다. 사용자 정보를 다시 읽으면
-    // 재인증이 필요한 경우 모달이 뜬다 — 서버 오류 문구만 보고 막히지 않게 한다
-    onError: () => {
-      void fetchAndPersistUserInfo();
+    // GitHub 연동이 끊겼거나 App 이 이 저장소에 권한이 없어 실패했을 수 있다.
+    // 서버가 코드를 붙였으면 바로 진입점을 띄우고, 없으면 사용자 정보를 다시 읽어
+    // 재인증이 필요한지 확인한다 — 서버 오류 문구만 보고 막히지 않게 한다
+    onError: (error) => {
+      if (!dispatchApiErrorAction(error)) {
+        void refreshUserInfoInBackground();
+      }
     },
   });
   const disconnectRepositoryMutation = useMutation({
@@ -130,8 +135,6 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     !hasDisconnectedRepository && (connectedRepo != null || repositorySettings?.connected === true);
   const isRepositoryBusy =
     connectRepositoryMutation.isPending || disconnectRepositoryMutation.isPending;
-
-  const isPipelineRunning = pipelineRun.status === 'running';
 
   const handleDisconnectRepository = useCallback(async () => {
     await disconnectRepositoryMutation.mutateAsync();
@@ -163,35 +166,14 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     [connectRepositoryMutation],
   );
 
-  const handleDeployPipelineStart = useCallback(async () => {
-    pipelineAbortRef.current?.abort();
-    const controller = new AbortController();
-    pipelineAbortRef.current = controller;
-    setRightPanelView('pipeline');
-
-    try {
-      await runPipelineSequence(setPipelineRun, { signal: controller.signal });
-    } finally {
-      if (pipelineAbortRef.current === controller) {
-        pipelineAbortRef.current = null;
-      }
-    }
-  }, []);
-
+  // 마감이 지나면 지켜보기를 끝낸다. 켜는 것은 이 자리가 아니다
   useEffect(() => {
-    return () => {
-      pipelineAbortRef.current?.abort();
-    };
-  }, []);
+    if (deployWatchUntil == null) return;
 
-  // 태스크 종료 후 이 시간 동안 배포 완료를 지켜본다. 실측 배포는 30~50초라 넉넉하다
-  useEffect(() => {
-    if (deployWatchStartedAt == null) return;
-
-    setIsDeployWatchActive(true);
-    const timer = setTimeout(() => setIsDeployWatchActive(false), DEPLOY_WATCH_MS);
+    const remainingMs = Math.max(0, deployWatchUntil - Date.now());
+    const timer = setTimeout(() => setDeployWatchUntil(null), remainingMs);
     return () => clearTimeout(timer);
-  }, [deployWatchStartedAt]);
+  }, [deployWatchUntil]);
 
   const { data: conversations = [], isLoading: isConversationsLoading } =
     useProjectConversationListQuery(AGENT_CHAT_QUERY_KEY, projectId);
@@ -224,7 +206,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   //
   // 감시 창은 태스크 종료 직후 메시지 간격을 좁히는 용도로만 남긴다. 창이 안 열려도
   // 기본 폴링이 받아내므로 이제 정확성이 여기에 걸려 있지 않다.
-  const isDeployInFlight = isDeployWatchActive;
+  const isDeployInFlight = deployWatchUntil != null;
 
   const activePreviewSessionId =
     projectPreview?.status === 'ACTIVE' && projectPreview.sessionId
@@ -263,8 +245,18 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   );
 
   const provisionPreviewMutation = useMutation({
-    mutationFn: () => postProjectPreviewSession(projectId),
-    onSuccess: () => {
+    mutationFn: ({ force }: { force: boolean }) => postProjectPreviewSession(projectId, { force }),
+    onSuccess: ({ reattached }) => {
+      /*
+        200 은 "살아 있던 컨테이너에 도로 붙었다" 는 뜻이다. 서버는 컨테이너가 떠 있으면
+        다시 빌드하지 않고 만료 시각만 늘린다.
+
+        그때 화면상으로는 눌렀는데 아무 일도 안 일어난 것처럼 보인다. 그런데 이건 정보다 —
+        컨테이너는 살아 있다는 뜻이고, 그런데도 안 열린다면 컨테이너가 아니라 **그 안의
+        앱이 죽은 것**이다. 지금 화면에서 되살릴 방법이 없는 경우라 그렇게 말해 준다.
+        아무 말 없이 그대로 두면 버튼이 고장 난 것처럼 보인다.
+      */
+      setDidReattachPreview(reattached);
       void queryClient.invalidateQueries({
         queryKey: ['project-preview-session', 'project-agent-page', projectId],
       });
@@ -280,7 +272,24 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const handleLoadPreview = () => {
     setRightPanelView('preview');
     setPreviewFrameKey((key) => key + 1);
-    provisionPreviewMutation.mutate();
+    setDidReattachPreview(false);
+    provisionPreviewMutation.mutate({ force: false });
+  };
+
+  /*
+    떠 있던 것을 버리고 처음부터 다시 짓는다.
+
+    다시 붙는 것으로는 못 고치는 경우가 있다 — 컨테이너는 살아 있는데 그 안의 앱만 죽은
+    상태, 그리고 저장소를 막 연결해서 브랜치에는 새 코드가 있는데 컨테이너는 옛 것인
+    상태. 둘 다 서버가 보기에는 "컨테이너가 떠 있으니 붙이면 된다" 라서 다시 붙기만 한다.
+
+    멀쩡한 프리뷰도 죽이고 빌드를 다시 하므로 사용자가 그러기로 정했을 때만 보낸다.
+    자동 재시도에 물리면 잘 돌던 프리뷰를 스스로 무너뜨린다.
+  */
+  const handleForceRebuildPreview = () => {
+    setPreviewFrameKey((key) => key + 1);
+    setDidReattachPreview(false);
+    provisionPreviewMutation.mutate({ force: true });
   };
 
   // AgentConversationPanel이 매 렌더에서 부르므로 identity를 고정한다.
@@ -295,7 +304,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     // 실제로 돌던 태스크가 끝났을 때만 연다. 패널은 마운트 시에도 false를 알리는데
     // 거기에 반응하면 페이지를 열 때마다 3분씩 폴링하게 된다
     if (!isActive && wasAgentTaskActiveRef.current) {
-      setDeployWatchStartedAt(Date.now());
+      setDeployWatchUntil(Date.now() + DEPLOY_WATCH_MS);
     }
     wasAgentTaskActiveRef.current = isActive;
   }, []);
@@ -426,7 +435,6 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             onConversationActivity={handleConversationActivity}
             onAgentTaskActiveChange={handleAgentTaskActiveChange}
             isDeployInFlight={isDeployInFlight}
-            onDeployPipelineStart={handleDeployPipelineStart}
           />
         )}
         <div
@@ -516,31 +524,21 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             </button>
             <button
               type="button"
-              onClick={() =>
-                setRightPanelView((view) => (view === 'pipeline' ? 'preview' : 'pipeline'))
-              }
-              aria-pressed={rightPanelView === 'pipeline'}
-              className={cn(
-                'inline-flex h-8 items-center rounded-lg px-3 text-[12px] font-semibold transition',
-                rightPanelView === 'pipeline'
-                  ? 'bg-[#1e293b] text-white ring-2 ring-[#0f172a]/20 ring-offset-1'
-                  : 'bg-[#0f172a] text-white hover:bg-[#1e293b]',
-              )}
-            >
-              게시
-            </button>
-            <button
-              type="button"
               className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#e2e8f0] bg-white px-3 text-[12px] font-semibold text-[#334155]"
             >
               <Pencil className="size-3.5" />
               편집
             </button>
+            {/*
+              프레임을 다시 그릴 뿐 컨테이너를 띄우지는 않는다. 라벨이 "미리보기 불러오기"
+              였던 탓에, 프리뷰가 죽었을 때 이걸 눌러도 아무것도 살아나지 않았다.
+              실제로 띄우는 것은 패널 안의 "다시 띄우기"·"미리보기 불러오기" 쪽이다.
+            */}
             <button
               type="button"
               onClick={handleRefreshPreview}
               className="flex size-8 cursor-pointer items-center justify-center rounded-lg border border-[#e2e8f0] bg-white text-[#64748b]"
-              aria-label="미리보기 불러오기"
+              aria-label="미리보기 새로고침"
             >
               <RefreshCw className={`size-3.5 ${isPreviewFetching ? 'animate-spin' : ''}`} />
             </button>
@@ -549,19 +547,22 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
 
         {rightPanelView === 'code' ? (
           <ProjectCodeExplorerPanel />
-        ) : rightPanelView === 'pipeline' ? (
-          <ProjectPipelinePanel run={pipelineRun} isRunning={isPipelineRunning} />
         ) : (
           <AgentSitePreviewPanel
             phase={previewPhase}
             previewUrl={previewUrl}
+            didReattach={didReattachPreview}
+            onForceRebuild={handleForceRebuildPreview}
             frameKey={previewFrameKey}
             isLoading={(isPreviewLoading || isPreviewAccessLoading) && !previewUrl}
             onLoadPreview={handleLoadPreview}
             failureReason={
               projectPreview?.failureReason?.trim() ||
-              extractApiErrorMessage(provisionPreviewMutation.error) ||
-              extractApiErrorMessage(previewAccessError) ||
+              // 실행 환경(Docker) 문제면 "잠시 뒤 다시" 같은 안내가 함께 붙는다
+              (provisionPreviewMutation.error
+                ? composeApiErrorMessage(provisionPreviewMutation.error)
+                : '') ||
+              (previewAccessError ? composeApiErrorMessage(previewAccessError) : '') ||
               ''
             }
             isProvisioning={

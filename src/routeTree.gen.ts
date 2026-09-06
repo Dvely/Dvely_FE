@@ -24,8 +24,8 @@ import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedProjectIndexRouteImport } from './routes/_authenticated/project.index'
 import { Route as AuthenticatedProjectNewRouteImport } from './routes/_authenticated/project.new'
 import { Route as AuthenticatedProjectSlugRouteImport } from './routes/_authenticated/project.$slug'
+import { Route as AuthenticatedOnboardingCloudRouteImport } from './routes/_authenticated/onboarding.cloud'
 import { Route as AuthenticatedProjectSlugIndexRouteImport } from './routes/_authenticated/project.$slug.index'
-import { Route as AuthenticatedProjectSlugPipelineRouteImport } from './routes/_authenticated/project.$slug.pipeline'
 import { Route as AuthenticatedProjectSlugInfraRouteImport } from './routes/_authenticated/project.$slug.infra'
 import { Route as AuthenticatedProjectSlugEnvironmentRouteImport } from './routes/_authenticated/project.$slug.environment'
 import { Route as AuthenticatedProjectSlugDomainsRouteImport } from './routes/_authenticated/project.$slug.domains'
@@ -110,16 +110,16 @@ const AuthenticatedProjectSlugRoute =
     path: '/$slug',
     getParentRoute: () => AuthenticatedProjectRoute,
   } as any)
+const AuthenticatedOnboardingCloudRoute =
+  AuthenticatedOnboardingCloudRouteImport.update({
+    id: '/onboarding/cloud',
+    path: '/onboarding/cloud',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedProjectSlugIndexRoute =
   AuthenticatedProjectSlugIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedProjectSlugRoute,
-  } as any)
-const AuthenticatedProjectSlugPipelineRoute =
-  AuthenticatedProjectSlugPipelineRouteImport.update({
-    id: '/pipeline',
-    path: '/pipeline',
     getParentRoute: () => AuthenticatedProjectSlugRoute,
   } as any)
 const AuthenticatedProjectSlugInfraRoute =
@@ -177,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/trash': typeof AuthenticatedTrashRoute
   '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/onboarding/cloud': typeof AuthenticatedOnboardingCloudRoute
   '/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
   '/project/new': typeof AuthenticatedProjectNewRoute
   '/project/': typeof AuthenticatedProjectIndexRoute
@@ -187,7 +188,6 @@ export interface FileRoutesByFullPath {
   '/project/$slug/domains': typeof AuthenticatedProjectSlugDomainsRoute
   '/project/$slug/environment': typeof AuthenticatedProjectSlugEnvironmentRoute
   '/project/$slug/infra': typeof AuthenticatedProjectSlugInfraRoute
-  '/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute
   '/project/$slug/': typeof AuthenticatedProjectSlugIndexRoute
 }
 export interface FileRoutesByTo {
@@ -201,6 +201,7 @@ export interface FileRoutesByTo {
   '/trash': typeof AuthenticatedTrashRoute
   '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/onboarding/cloud': typeof AuthenticatedOnboardingCloudRoute
   '/project/new': typeof AuthenticatedProjectNewRoute
   '/project': typeof AuthenticatedProjectIndexRoute
   '/project/$slug/agent': typeof AuthenticatedProjectSlugAgentRoute
@@ -210,7 +211,6 @@ export interface FileRoutesByTo {
   '/project/$slug/domains': typeof AuthenticatedProjectSlugDomainsRoute
   '/project/$slug/environment': typeof AuthenticatedProjectSlugEnvironmentRoute
   '/project/$slug/infra': typeof AuthenticatedProjectSlugInfraRoute
-  '/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute
   '/project/$slug': typeof AuthenticatedProjectSlugIndexRoute
 }
 export interface FileRoutesById {
@@ -227,6 +227,7 @@ export interface FileRoutesById {
   '/_authenticated/trash': typeof AuthenticatedTrashRoute
   '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/_authenticated/onboarding/cloud': typeof AuthenticatedOnboardingCloudRoute
   '/_authenticated/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
   '/_authenticated/project/new': typeof AuthenticatedProjectNewRoute
   '/_authenticated/project/': typeof AuthenticatedProjectIndexRoute
@@ -237,7 +238,6 @@ export interface FileRoutesById {
   '/_authenticated/project/$slug/domains': typeof AuthenticatedProjectSlugDomainsRoute
   '/_authenticated/project/$slug/environment': typeof AuthenticatedProjectSlugEnvironmentRoute
   '/_authenticated/project/$slug/infra': typeof AuthenticatedProjectSlugInfraRoute
-  '/_authenticated/project/$slug/pipeline': typeof AuthenticatedProjectSlugPipelineRoute
   '/_authenticated/project/$slug/': typeof AuthenticatedProjectSlugIndexRoute
 }
 export interface FileRouteTypes {
@@ -254,6 +254,7 @@ export interface FileRouteTypes {
     | '/trash'
     | '/auth/app-callback'
     | '/auth/callback'
+    | '/onboarding/cloud'
     | '/project/$slug'
     | '/project/new'
     | '/project/'
@@ -264,7 +265,6 @@ export interface FileRouteTypes {
     | '/project/$slug/domains'
     | '/project/$slug/environment'
     | '/project/$slug/infra'
-    | '/project/$slug/pipeline'
     | '/project/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -278,6 +278,7 @@ export interface FileRouteTypes {
     | '/trash'
     | '/auth/app-callback'
     | '/auth/callback'
+    | '/onboarding/cloud'
     | '/project/new'
     | '/project'
     | '/project/$slug/agent'
@@ -287,7 +288,6 @@ export interface FileRouteTypes {
     | '/project/$slug/domains'
     | '/project/$slug/environment'
     | '/project/$slug/infra'
-    | '/project/$slug/pipeline'
     | '/project/$slug'
   id:
     | '__root__'
@@ -303,6 +303,7 @@ export interface FileRouteTypes {
     | '/_authenticated/trash'
     | '/auth/app-callback'
     | '/auth/callback'
+    | '/_authenticated/onboarding/cloud'
     | '/_authenticated/project/$slug'
     | '/_authenticated/project/new'
     | '/_authenticated/project/'
@@ -313,7 +314,6 @@ export interface FileRouteTypes {
     | '/_authenticated/project/$slug/domains'
     | '/_authenticated/project/$slug/environment'
     | '/_authenticated/project/$slug/infra'
-    | '/_authenticated/project/$slug/pipeline'
     | '/_authenticated/project/$slug/'
   fileRoutesById: FileRoutesById
 }
@@ -432,18 +432,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectSlugRouteImport
       parentRoute: typeof AuthenticatedProjectRoute
     }
+    '/_authenticated/onboarding/cloud': {
+      id: '/_authenticated/onboarding/cloud'
+      path: '/onboarding/cloud'
+      fullPath: '/onboarding/cloud'
+      preLoaderRoute: typeof AuthenticatedOnboardingCloudRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/project/$slug/': {
       id: '/_authenticated/project/$slug/'
       path: '/'
       fullPath: '/project/$slug/'
       preLoaderRoute: typeof AuthenticatedProjectSlugIndexRouteImport
-      parentRoute: typeof AuthenticatedProjectSlugRoute
-    }
-    '/_authenticated/project/$slug/pipeline': {
-      id: '/_authenticated/project/$slug/pipeline'
-      path: '/pipeline'
-      fullPath: '/project/$slug/pipeline'
-      preLoaderRoute: typeof AuthenticatedProjectSlugPipelineRouteImport
       parentRoute: typeof AuthenticatedProjectSlugRoute
     }
     '/_authenticated/project/$slug/infra': {
@@ -506,7 +506,6 @@ interface AuthenticatedProjectSlugRouteChildren {
   AuthenticatedProjectSlugDomainsRoute: typeof AuthenticatedProjectSlugDomainsRoute
   AuthenticatedProjectSlugEnvironmentRoute: typeof AuthenticatedProjectSlugEnvironmentRoute
   AuthenticatedProjectSlugInfraRoute: typeof AuthenticatedProjectSlugInfraRoute
-  AuthenticatedProjectSlugPipelineRoute: typeof AuthenticatedProjectSlugPipelineRoute
   AuthenticatedProjectSlugIndexRoute: typeof AuthenticatedProjectSlugIndexRoute
 }
 
@@ -522,8 +521,6 @@ const AuthenticatedProjectSlugRouteChildren: AuthenticatedProjectSlugRouteChildr
     AuthenticatedProjectSlugEnvironmentRoute:
       AuthenticatedProjectSlugEnvironmentRoute,
     AuthenticatedProjectSlugInfraRoute: AuthenticatedProjectSlugInfraRoute,
-    AuthenticatedProjectSlugPipelineRoute:
-      AuthenticatedProjectSlugPipelineRoute,
     AuthenticatedProjectSlugIndexRoute: AuthenticatedProjectSlugIndexRoute,
   }
 
@@ -555,6 +552,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
   AuthenticatedTrashRoute: typeof AuthenticatedTrashRoute
+  AuthenticatedOnboardingCloudRoute: typeof AuthenticatedOnboardingCloudRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -565,6 +563,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
   AuthenticatedTrashRoute: AuthenticatedTrashRoute,
+  AuthenticatedOnboardingCloudRoute: AuthenticatedOnboardingCloudRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
