@@ -51,6 +51,15 @@ const domainSchema = z.object({
   dnsTarget: z.string().nullable().prefault(''),
   /** HTTPS 강제 여부 */
   httpsEnforced: z.boolean(),
+  /**
+   * 이 도메인이 실제로 가리키는 서버.
+   *
+   * 저장값이 아니라 응답 시점에 지금 도는 서버에서 유도된다 — 서버가 교체돼도 낡지
+   * 않고 늘 현재 것을 가리킨다. 대신 그 서버가 잠깐 안 돌 때는(교체·재기동) null 이다.
+   *
+   * EC2 를 안 쓰는 대상(GitHub Pages·S3)은 가리킬 서버가 없어 항상 null 이다.
+   */
+  serverId: z.number().int().nullable().prefault(null),
   /** 인증서 상태. 없으면 null */
   certificateStatus: certificateStatusSchema.nullable().prefault(null),
   /** 인증서 만료 시각. 없으면 null */

@@ -249,7 +249,12 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
             const canTerminate = server.status !== 'TERMINATED';
 
             return (
-              <li key={server.serverId} className="rounded-xl border border-[#f1f5f9] px-4 py-3">
+              // 도메인 화면에서 이 서버로 바로 건너오는 자리다
+              <li
+                key={server.serverId}
+                id={`server-${server.serverId}`}
+                className="scroll-mt-4 rounded-xl border border-[#f1f5f9] px-4 py-3"
+              >
                 <div className="flex items-center justify-between gap-2">
                   <p className="flex flex-wrap items-center gap-1.5 text-[13px] font-semibold text-[#0f172a]">
                     {server.instanceType ?? '인스턴스'}

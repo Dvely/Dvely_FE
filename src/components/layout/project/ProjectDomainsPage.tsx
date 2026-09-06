@@ -386,6 +386,25 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
                             HTTPS
                           </span>
                         ) : null}
+                        {/*
+                          이 주소가 실제로 어느 서버로 가는지 이어 준다. 도메인이 안 열릴 때
+                          사용자가 다음으로 볼 곳이 그 서버의 상태와 로그인데, 지금까지는
+                          인프라 화면에서 어느 것이 이 도메인의 서버인지 직접 짚어야 했다.
+
+                          값이 있을 때만 건다. 서버를 안 쓰는 대상(GitHub Pages·S3)은 항상
+                          비어 있고, EC2 대상이어도 교체·재기동 중에는 잠깐 비어 온다 —
+                          그때 링크를 걸면 아무 데도 없는 곳을 가리킨다.
+                        */}
+                        {domain.serverId != null ? (
+                          <Link
+                            to="/project/$slug/infra"
+                            params={{ slug: String(projectId) }}
+                            hash={`server-${domain.serverId}`}
+                            className="rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#475569] hover:bg-[#e2e8f0]"
+                          >
+                            서버 보기
+                          </Link>
+                        ) : null}
                       </div>
                       <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-[#94a3b8]">
                         <span
