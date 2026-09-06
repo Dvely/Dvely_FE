@@ -78,6 +78,8 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [hasDisconnectedRepository, setHasDisconnectedRepository] = useState(false);
   const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
   const [previewFrameKey, setPreviewFrameKey] = useState(0);
+  /** 다시 띄우기를 눌렀는데 살아 있던 컨테이너에 도로 붙은 경우. 화면이 그대로라 설명이 필요하다 */
+  const [didReattachPreview, setDidReattachPreview] = useState(false);
   const [isAgentTaskActive, setIsAgentTaskActive] = useState(false);
   /*
     배포 완료 안내를 지켜보는 마감 시각. 상태 둘(시작시각 + 활성여부)을 하나로 합쳤다 —
@@ -243,8 +245,18 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   );
 
   const provisionPreviewMutation = useMutation({
-    mutationFn: () => postProjectPreviewSession(projectId),
-    onSuccess: () => {
+    mutationFn: ({ force }: { force: boolean }) => postProjectPreviewSession(projectId, { force }),
+    onSuccess: ({ reattached }) => {
+      /*
+        200 은 "살아 있던 컨테이너에 도로 붙었다" 는 뜻이다. 서버는 컨테이너가 떠 있으면
+        다시 빌드하지 않고 만료 시각만 늘린다.
+
+        그때 화면상으로는 눌렀는데 아무 일도 안 일어난 것처럼 보인다. 그런데 이건 정보다 —
+        컨테이너는 살아 있다는 뜻이고, 그런데도 안 열린다면 컨테이너가 아니라 **그 안의
+        앱이 죽은 것**이다. 지금 화면에서 되살릴 방법이 없는 경우라 그렇게 말해 준다.
+        아무 말 없이 그대로 두면 버튼이 고장 난 것처럼 보인다.
+      */
+      setDidReattachPreview(reattached);
       void queryClient.invalidateQueries({
         queryKey: ['project-preview-session', 'project-agent-page', projectId],
       });
@@ -260,7 +272,24 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const handleLoadPreview = () => {
     setRightPanelView('preview');
     setPreviewFrameKey((key) => key + 1);
-    provisionPreviewMutation.mutate();
+    setDidReattachPreview(false);
+    provisionPreviewMutation.mutate({ force: false });
+  };
+
+  /*
+    떠 있던 것을 버리고 처음부터 다시 짓는다.
+
+    다시 붙는 것으로는 못 고치는 경우가 있다 — 컨테이너는 살아 있는데 그 안의 앱만 죽은
+    상태, 그리고 저장소를 막 연결해서 브랜치에는 새 코드가 있는데 컨테이너는 옛 것인
+    상태. 둘 다 서버가 보기에는 "컨테이너가 떠 있으니 붙이면 된다" 라서 다시 붙기만 한다.
+
+    멀쩡한 프리뷰도 죽이고 빌드를 다시 하므로 사용자가 그러기로 정했을 때만 보낸다.
+    자동 재시도에 물리면 잘 돌던 프리뷰를 스스로 무너뜨린다.
+  */
+  const handleForceRebuildPreview = () => {
+    setPreviewFrameKey((key) => key + 1);
+    setDidReattachPreview(false);
+    provisionPreviewMutation.mutate({ force: true });
   };
 
   // AgentConversationPanel이 매 렌더에서 부르므로 identity를 고정한다.
@@ -500,11 +529,16 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               <Pencil className="size-3.5" />
               편집
             </button>
+            {/*
+              프레임을 다시 그릴 뿐 컨테이너를 띄우지는 않는다. 라벨이 "미리보기 불러오기"
+              였던 탓에, 프리뷰가 죽었을 때 이걸 눌러도 아무것도 살아나지 않았다.
+              실제로 띄우는 것은 패널 안의 "다시 띄우기"·"미리보기 불러오기" 쪽이다.
+            */}
             <button
               type="button"
               onClick={handleRefreshPreview}
               className="flex size-8 cursor-pointer items-center justify-center rounded-lg border border-[#e2e8f0] bg-white text-[#64748b]"
-              aria-label="미리보기 불러오기"
+              aria-label="미리보기 새로고침"
             >
               <RefreshCw className={`size-3.5 ${isPreviewFetching ? 'animate-spin' : ''}`} />
             </button>
@@ -517,6 +551,8 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           <AgentSitePreviewPanel
             phase={previewPhase}
             previewUrl={previewUrl}
+            didReattach={didReattachPreview}
+            onForceRebuild={handleForceRebuildPreview}
             frameKey={previewFrameKey}
             isLoading={(isPreviewLoading || isPreviewAccessLoading) && !previewUrl}
             onLoadPreview={handleLoadPreview}
