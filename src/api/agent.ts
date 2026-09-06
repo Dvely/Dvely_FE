@@ -388,6 +388,47 @@ async function postAgentTaskRetry(taskId: string) {
 }
 
 /** 에이전트 태스크 상태 조회 Query Hook (진행 중이면 자동 폴링) */
+/**
+ * 승인을 기다렸다 도는 작업이 어떻게 끝났는지 지켜본다.
+ *
+ * 도메인 연결처럼 화면에서 시작하는 작업은 승인을 거쳐야 실제로 돈다. 그런데 그
+ * 결과는 화면 어디에도 안 돌아온다 — 성공하면 목록에 도메인이 생겨서 알 수 있지만,
+ * **실패하면 아무 일도 안 일어난 것과 구분되지 않는다.** 눌렀는데 그대로인 화면만 남는다.
+ *
+ * 그래서 접수할 때 받은 태스크 ID 를 들고 결과를 본다. 실패하면 사유를 띄운다.
+ *
+ * 폴링이 촘촘하면 안 된다 — 사람이 승인을 누를 때까지 기다리는 시간이라 대부분 아무
+ * 변화가 없다. 그리고 영원히 물을 수도 없어서 상한을 둔다. 승인을 한참 뒤에 누르면
+ * 못 잡지만, 그 경우는 애초에 화면을 떠난 뒤라 띄워 줄 곳도 없다.
+ */
+const APPROVAL_TASK_WATCH_MS = 5000;
+/** 이만큼 물어보고 그만둔다. 5초 간격이므로 대략 10분이다 */
+const APPROVAL_TASK_WATCH_LIMIT = 120;
+/**
+ * 여기서 멈춘다. 정말 끝난 것만이다.
+ *
+ * `SETTLED_AGENT_TASK_STATUSES` 를 쓰면 안 된다 — 거기엔 승인 대기가 들어 있어서
+ * 접수 직후 바로 멈춘다. **그 뒤에 도는 구간이 우리가 보려는 곳이다.**
+ */
+const WATCH_TERMINAL_STATUSES = new Set(['DONE', 'FAILED', 'CANCELLED']);
+
+function useApprovalTaskWatchQuery(queryKey: unknown, taskId: string | null) {
+  if (!queryKey) throw new Error('queryKey is required');
+
+  return useQuery({
+    queryKey: ['approval-task-watch', queryKey, taskId],
+    queryFn: () => getAgentTask(taskId!),
+    enabled: typeof taskId === 'string' && taskId.length > 0,
+    gcTime: 0,
+    refetchInterval: (query) => {
+      const task = query.state.data;
+      if (task && WATCH_TERMINAL_STATUSES.has(task.status)) return false;
+      if (query.state.dataUpdateCount > APPROVAL_TASK_WATCH_LIMIT) return false;
+      return APPROVAL_TASK_WATCH_MS;
+    },
+  });
+}
+
 function useAgentTaskQuery(queryKey: unknown, taskId: string | null) {
   if (!queryKey) throw new Error('queryKey is required');
 
@@ -440,6 +481,7 @@ export {
   postAgentTaskInput,
   postAgentTaskRetry,
   useAgentTaskQuery,
+  useApprovalTaskWatchQuery,
   useAgentTaskEventListQuery,
   SETTLED_AGENT_TASK_STATUSES,
 };
