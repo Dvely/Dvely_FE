@@ -7,6 +7,8 @@ import {
   postDomainVerificationCheck,
   postProjectDomainBind,
   useProjectDomainListQuery,
+  useHostingTargetsQuery,
+  FALLBACK_HOSTING_TARGETS,
 } from '@/api/domains';
 import type { Domain, GetDomainVerificationGuideResType } from '@/types/domain.type';
 import type { DomainStatus, DomainType, HostingTarget, VerificationMethod } from '@/types/common.enum';
@@ -28,31 +30,6 @@ const MANAGED_SUFFIX = '.qeploy.com';
  * - AWS_S3_FRONTEND: S3 프론트(CloudFront + ACM)
  * GCP 는 아직 어댑터가 없어 비활성으로만 노출한다(곧 온다는 것 자체가 정보다).
  */
-/**
- * 운영 백엔드가 아직 모르는 호스팅 대상.
- *
- * 프론트 S3·EC2 는 **dev 백엔드에만** 있다. 운영에서 이 값을 보내면 서버가 알 수 없는
- * 대상으로 거부한다 — 고를 수는 있는데 누르면 실패하는 옵션이 된다. 실제로 그 상태가
- * 운영에 잠깐 나가 있었다.
- *
- * ⚠ **백엔드가 운영에 승격되면 이 목록을 비워야 한다.** 안 비우면 서버가 지원하는데도
- * 화면이 계속 감춘다 — 이번엔 반대 방향으로 어긋난다. 지우는 것을 잊기 쉬운 자리다.
- *
- * 더 나은 답은 서버에 물어보는 것이다. AI 제공자를 `GET /agent/ai-providers` 로 받아
- * 채우듯, "지금 이 서버가 지원하는 대상" 을 주면 이 목록도 gate 도 필요 없어진다.
- * 백엔드 후속 과제로 올려두었다 — 그게 오면 이 파일에서 아래 두 상수를 지우면 된다.
- */
-const TARGETS_NOT_IN_PRODUCTION: string[] = ['AWS_S3_FRONTEND', 'AWS_EC2_FRONTEND'];
-
-/**
- * 빌드가 운영용인지.
- *
- * 빌드 시점에 굳는 값이라 완벽하지 않다 — 운영 빌드로 dev 백엔드에 붙이면 옵션이 잘못
- * 사라진다. 지금 배포 구조에서는 그런 조합이 없고(main 빌드만 운영에 나간다), 서버에
- * 물어보는 방법이 생기기 전까지의 임시 방편이다.
- */
-const isProductionBuild = import.meta.env.PROD;
-
 const HOSTING_TARGET_OPTIONS: {
   value: HostingTarget;
   label: string;
@@ -90,16 +67,6 @@ const HOSTING_TARGET_OPTIONS: {
     enabled: false,
   },
 ];
-
-/**
- * 지금 붙어 있는 서버가 다룰 수 있는 대상만 남긴다.
- *
- * 감추기만 하고 라벨 함수(`describeHostingTarget`)에서는 빼지 않는다 — 이미 그 대상으로
- * 붙여둔 도메인이 목록에 있으면 이름은 제대로 보여줘야 한다. 새로 고를 수 없을 뿐이다.
- */
-const AVAILABLE_HOSTING_TARGET_OPTIONS = isProductionBuild
-  ? HOSTING_TARGET_OPTIONS.filter((option) => !TARGETS_NOT_IN_PRODUCTION.includes(option.value))
-  : HOSTING_TARGET_OPTIONS;
 
 const STATUS_STYLE: Record<DomainStatus, { label: string; className: string }> = {
   REQUESTED: { label: '요청됨', className: 'bg-[#f1f5f9] text-[#475569]' },
@@ -181,6 +148,26 @@ function DnsGuide({ domain, guide }: { domain: Domain; guide: GetDomainVerificat
 
 function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
   const [hostingTarget, setHostingTarget] = useState<HostingTarget>('GITHUB_PAGES');
+
+  /*
+    서버가 실제로 붙일 수 있는 대상만 고르게 한다.
+
+    예전에는 화면이 목록을 들고 있었는데, 서버가 지원하지 않는 값이 섞여 **고를 수는
+    있는데 누르면 실패하는 옵션**이 운영에 나갔었다. 이제 서버에 물어보므로 그 어긋남이
+    구조적으로 안 생긴다 — 어댑터가 등록된 것만 담겨 온다.
+
+    조회에 실패하면(운영에는 아직 이 엔드포인트가 없다) 운영이 실제로 지원하는 둘로
+    떨어진다. 그래서 여기서 오류를 다루지 않는다.
+
+    **아직 못 받았을 때도 같은 둘을 쓴다.** 빈 목록으로 두면 한 프레임 동안 고를 것이
+    하나도 없는 select 가 되고, 기본값에 맞는 항목이 없어 빈 칸처럼 보인다. 어차피 둘은
+    어디서나 되므로 먼저 보여주고, 응답이 오면 늘어난다.
+  */
+  const { data: supportedTargets = FALLBACK_HOSTING_TARGETS } =
+    useHostingTargetsQuery('project-domains-page');
+  const availableTargetOptions = HOSTING_TARGET_OPTIONS.filter((option) =>
+    supportedTargets.includes(option.value),
+  );
   const [bindType, setBindType] = useState<DomainType>('managed_subdomain');
   const [label, setLabel] = useState('');
   const [hostname, setHostname] = useState('');
@@ -290,7 +277,7 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
               onChange={(event) => setHostingTarget(event.target.value as HostingTarget)}
               className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
             >
-              {AVAILABLE_HOSTING_TARGET_OPTIONS.map((option) => (
+              {availableTargetOptions.map((option) => (
                 <option key={option.value} value={option.value} disabled={!option.enabled}>
                   {option.label}
                 </option>
