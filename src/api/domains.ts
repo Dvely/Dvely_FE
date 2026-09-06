@@ -109,9 +109,25 @@ async function getDomainDetail(domainId: number) {
     .catch(errorResponse());
 }
 
-/** 도메인 연결 해제 API DELETE */
+/**
+ * 도메인 연결 해제 API DELETE.
+ *
+ * **바로 지워지지 않는다.** 서버는 해제를 작업으로 접수하고 202 를 돌려주는데, 그
+ * 작업은 사람이 승인해야 진행된다 — 붙일 때와 마찬가지다. 즉 202 는 "지웠다" 가 아니라
+ * "접수했으니 승인해 달라" 는 뜻이다.
+ *
+ * 그래서 접수 여부를 같이 돌려준다. 이걸 구분하지 않으면 화면이 곧바로 목록을 다시
+ * 읽고, 도메인이 그대로 있으니 **누른 사람은 아무 일도 안 일어난 것으로 본다.**
+ */
 async function deleteDomain(domainId: number) {
-  return Http.instance.delete(`/domains/${domainId}`).then(succesResponse).catch(errorResponse());
+  return Http.instance
+    .delete(`/domains/${domainId}`)
+    .then((response) => {
+      succesResponse(response);
+      /** 202 면 승인을 기다리는 중이다. 그 외(200·204)는 그 자리에서 끝난 것이다 */
+      return { acceptedForApproval: response.status === 202 };
+    })
+    .catch(errorResponse());
 }
 
 /** DNS 검증 가이드 조회 API GET */

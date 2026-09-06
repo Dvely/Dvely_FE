@@ -213,7 +213,32 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
     },
   });
   const verifyMutation = useMutation({ mutationFn: postDomainVerificationCheck, onSuccess: invalidateDomains });
-  const unbindMutation = useMutation({ mutationFn: deleteDomain, onSuccess: invalidateDomains });
+  /*
+    해제를 눌렀지만 아직 승인을 기다리는 도메인.
+
+    서버는 해제를 작업으로 접수하고 202 를 준다 — 붙일 때처럼 사람이 승인해야 진행된다.
+    그런데 화면은 그 202 를 "끝났다" 로 다루고 곧바로 목록을 다시 읽었다. 도메인은
+    그대로 있으니 **누른 사람에게는 아무 일도 안 일어난 것처럼 보였다.** 실패도 아니고
+    진행 중이라는 표시도 없어서, 무엇을 더 해야 하는지 알 길이 없었다.
+
+    화면을 새로 열면 비워진다. 이 표시는 "방금 눌렀는데 왜 그대로지" 에 답하는 것이라
+    그 자리를 벗어나면 역할이 끝난다.
+  */
+  const [unbindingDomainIds, setUnbindingDomainIds] = useState<number[]>([]);
+
+  const unbindMutation = useMutation({
+    mutationFn: deleteDomain,
+    onSuccess: (result, domainId) => {
+      if (result?.acceptedForApproval) {
+        setUnbindingDomainIds((prev) => (prev.includes(domainId) ? prev : [...prev, domainId]));
+      }
+      invalidateDomains();
+    },
+    onError: () => {
+      // 실패는 실패라고 말한다. 접수된 것과 구분되지 않으면 둘 다 "그대로" 로 보인다
+      setFormError('도메인 해제 요청이 실패했습니다. 잠시 뒤 다시 시도해주세요.');
+    },
+  });
 
   const selectedTarget = HOSTING_TARGET_OPTIONS.find((option) => option.value === hostingTarget);
 
@@ -453,12 +478,31 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
                       <button
                         type="button"
                         onClick={() => unbindMutation.mutate(domain.domainId)}
-                        className="h-8 rounded-lg border border-[#fecaca] px-3 text-[12px] font-semibold text-[#dc2626]"
+                        disabled={unbindingDomainIds.includes(domain.domainId)}
+                        className="h-8 rounded-lg border border-[#fecaca] px-3 text-[12px] font-semibold text-[#dc2626] disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        해제
+                        {unbindingDomainIds.includes(domain.domainId) ? '해제 대기 중' : '해제'}
                       </button>
                     </div>
                   </div>
+                  {/*
+                    해제는 눌렀다고 끝나지 않는다. 승인해야 진행되는데 그 승인은 다른
+                    화면에 뜨므로, 여기서 어디로 가야 하는지 말해 주지 않으면 사용자는
+                    "눌렀는데 그대로다" 에서 멈춘다.
+                  */}
+                  {unbindingDomainIds.includes(domain.domainId) ? (
+                    <p className="mt-2 rounded-lg bg-[#fffbeb] px-3 py-2 text-[12px] leading-relaxed text-[#92400e]">
+                      해제 요청을 접수했습니다. 실제로 끊으려면{' '}
+                      <Link
+                        to="/project/$slug/approvals"
+                        params={{ slug: String(projectId) }}
+                        className="font-semibold underline underline-offset-2"
+                      >
+                        승인
+                      </Link>
+                      에서 확인해 주세요. 승인 전까지는 이 주소가 그대로 열립니다.
+                    </p>
+                  ) : null}
                   {selectedDomainId === domain.domainId && guide ? (
                     <DnsGuide domain={domain} guide={guide} />
                   ) : null}
