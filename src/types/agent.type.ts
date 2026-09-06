@@ -25,6 +25,31 @@ const postAgentDecisionReqSchema = z.object({
 /**
  * POST /agent/decision 에이전트 요청 제출 응답
  */
+/** 되묻기 선택지 하나 */
+const clarificationOptionSchema = z.object({
+  /** 서버가 구분하는 값. 화면에는 label 을 쓴다 */
+  value: z.string().prefault(''),
+  /** 사람이 읽는 이름. 답으로 보내는 것도 이 문자열이다 */
+  label: z.string().prefault(''),
+  /** 에이전트가 미는 쪽. 하나만 true 인 것을 전제하지 않는다 */
+  recommended: z.boolean().nullable().prefault(false),
+});
+
+/**
+ * 빌드 전에 스펙을 되묻는 질문.
+ *
+ * inputType 을 열린 문자열로 둔다 — 서버가 새 형태를 더해도 화면이 통째로 못 읽는 일이
+ * 없어야 한다. 모르는 값이 오면 자유 입력으로 떨어뜨린다.
+ */
+const taskClarificationSchema = z.object({
+  question: z.string().prefault(''),
+  /** TEXT | SINGLE_SELECT | MULTI_SELECT. 모르는 값은 TEXT 로 다룬다 */
+  inputType: z.string().prefault('TEXT'),
+  options: z.array(clarificationOptionSchema).prefault([]),
+  /** 선택지 말고 직접 적을 수도 있는지 */
+  allowOther: z.boolean().nullable().prefault(false),
+});
+
 const postAgentDecisionResSchema = z.object({
   /** 실행 단계 */
   steps: z.array(agentStepSchema),
@@ -64,6 +89,13 @@ const getAgentTaskResSchema = z.object({
   error: z.string().nullable().prefault(''),
   /** 에이전트가 사용자에게 묻는 질문. WAITING_INPUT일 때 설정됨 */
   question: z.string().nullable().prefault(''),
+  /**
+   * 고를 수 있는 형태의 되묻기. WAITING_INPUT 이면서 선택형일 때만 온다.
+   *
+   * **null 이면 자유 입력이다** — 지금까지처럼 질문만 보여주고 입력창을 쓴다. 배포가
+   * 저장소 이름을 묻는 자리가 그쪽이다.
+   */
+  clarification: taskClarificationSchema.nullable().prefault(null),
   /** 실패 로그의 마지막 일부 */
   failureLog: z.string().nullable().prefault(''),
   /** 사용자에게 제안하는 최선의 수정안 */
@@ -155,10 +187,16 @@ type PostAgentTaskInputParamsType = z.infer<typeof postAgentTaskInputParamsSchem
 /** POST /agent/tasks/{taskId}/input 사용자 입력 제출 요청 body */
 type PostAgentTaskInputReqType = z.infer<typeof postAgentTaskInputReqSchema>;
 type AgentStep = z.infer<typeof agentStepSchema>;
+type TaskClarification = z.infer<typeof taskClarificationSchema>;
+type ClarificationOption = z.infer<typeof clarificationOptionSchema>;
 type PostAgentDecisionReqType = z.infer<typeof postAgentDecisionReqSchema>;
 type PostAgentDecisionResType = z.infer<typeof postAgentDecisionResSchema>;
 
 export {
+  taskClarificationSchema,
+  clarificationOptionSchema,
+  type TaskClarification,
+  type ClarificationOption,
   agentStepSchema,
   postAgentDecisionReqSchema,
   postAgentDecisionResSchema,
