@@ -28,9 +28,17 @@ function AgentClarificationForm({
   const allowOther = clarification.allowOther === true;
 
   const [selected, setSelected] = useState<string[]>(() => {
-    // 권장안이 있으면 미리 골라 둔다. 대부분 그대로 보내면 되는 답이라 한 번 덜 누른다
-    const recommended = clarification.options.find((option) => option.recommended === true);
-    return recommended ? [recommended.value] : [];
+    /*
+      권장안을 미리 골라 둔다. 대체로 그대로 보내면 되는 답이라 한 번 덜 누른다.
+
+      여러 개를 고르는 질문이면 권장도 여럿일 수 있어 전부 고른다. 하나만 고르는
+      질문에서는 서버가 하나만 표시하지만, 그렇다고 믿지 않고 첫 번째만 쓴다 —
+      둘이 오면 라디오가 조용히 어긋나기 때문이다.
+    */
+    const recommended = clarification.options.filter((option) => option.recommended === true);
+    if (recommended.length === 0) return [];
+    const picked = clarification.inputType === 'MULTI_SELECT' ? recommended : recommended.slice(0, 1);
+    return picked.map((option) => option.value);
   });
   const [otherText, setOtherText] = useState('');
 
