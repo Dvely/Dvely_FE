@@ -1,4 +1,4 @@
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, RotateCcw } from 'lucide-react';
 import { extractApiErrorMessage } from '@/utils/response';
 import type { AgentPreviewPhase } from '@/components/layout/project/agentPreview.utils';
 
@@ -49,9 +49,27 @@ function AgentSitePreviewPanel({
   }
 
   if (phase === 'ready') {
+    /*
+      프레임이 살아 있는지 화면은 알 수 없다.
+
+      프리뷰는 다른 오리진이라 iframe 이 404·502 를 받아도 onload 는 그냥 성공으로
+      불린다. 서버 세션이 ACTIVE 인 채 뒤의 컨테이너만 정리된 경우가 실제로 생기는데
+      (레포 연결 뒤 임시 프리뷰가 회수된다), 그때 화면에는 죽은 프레임이 남고 되살릴
+      버튼은 없는 상태였다 — 중앙 CTA 는 ready 가 아닐 때만 나오기 때문이다.
+
+      자동 감지가 불가능하니 사람이 누를 수 있는 길을 항상 열어 둔다.
+    */
     return (
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex items-center justify-end gap-2 border-b border-[#e2e8f0] bg-white px-4 py-2">
+          <button
+            type="button"
+            onClick={onLoadPreview}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[12px] font-medium text-[#334155] transition hover:bg-[#f8fafc]"
+          >
+            <RotateCcw className="size-3.5" />
+            다시 띄우기
+          </button>
           <a
             href={previewUrl}
             target="_blank"

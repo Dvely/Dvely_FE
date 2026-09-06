@@ -500,11 +500,16 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               <Pencil className="size-3.5" />
               편집
             </button>
+            {/*
+              프레임을 다시 그릴 뿐 컨테이너를 띄우지는 않는다. 라벨이 "미리보기 불러오기"
+              였던 탓에, 프리뷰가 죽었을 때 이걸 눌러도 아무것도 살아나지 않았다.
+              실제로 띄우는 것은 패널 안의 "다시 띄우기"·"미리보기 불러오기" 쪽이다.
+            */}
             <button
               type="button"
               onClick={handleRefreshPreview}
               className="flex size-8 cursor-pointer items-center justify-center rounded-lg border border-[#e2e8f0] bg-white text-[#64748b]"
-              aria-label="미리보기 불러오기"
+              aria-label="미리보기 새로고침"
             >
               <RefreshCw className={`size-3.5 ${isPreviewFetching ? 'animate-spin' : ''}`} />
             </button>
