@@ -76,9 +76,25 @@ async function postServerTerminate(serverId: number) {
  * 서버가 오류로 막는다(그때 errorResponse 가 메시지를 던진다). 조회 시점마다 새로 tail 하므로
  * 캐시하지 않는다.
  */
+/**
+ * 로그 요청에만 거는 상한.
+ *
+ * 서버는 인스턴스에 명령을 보내고 최대 38.5초까지 응답을 기다린다 — 부팅 직후나 인증서
+ * 발급 중이면 에이전트가 늦게 집어간다. 그보다 먼저 끊으면 서버가 늘려 둔 예산이
+ * 무의미해지므로 넉넉히 위에 둔다.
+ *
+ * 무제한(axios 기본값)으로 두지 않는 이유는 반대쪽이다 — 응답이 영영 안 오면 스피너가
+ * 영원히 돌고 사용자는 기다릴지 말지도 판단할 수 없다. 서버가 스스로 끊는 시점을 넘겨서
+ * 걸어 두면 정상 동작을 방해하지 않으면서 그 경우만 잡는다.
+ */
+const SERVER_LOG_TIMEOUT_MS = 60_000;
+
 async function getServerLogs(serverId: number, source: ServerLogSource) {
   return Http.instance
-    .get<ApiResponse<GetServerLogsResType>>(`/servers/${serverId}/logs`, { params: { source } })
+    .get<ApiResponse<GetServerLogsResType>>(`/servers/${serverId}/logs`, {
+      params: { source },
+      timeout: SERVER_LOG_TIMEOUT_MS,
+    })
     .then((response) => {
       const body = succesResponse<ApiResponse<GetServerLogsResType>>(response);
       return getServerLogsResSchema.parse(unwrapApiData(body));
