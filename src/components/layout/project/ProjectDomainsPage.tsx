@@ -12,6 +12,7 @@ import {
 } from '@/api/domains';
 import type { Domain, GetDomainVerificationGuideResType } from '@/types/domain.type';
 import type { DomainStatus, DomainType, HostingTarget, VerificationMethod } from '@/types/common.enum';
+import { useApprovalTaskWatchQuery } from '@/api/agent';
 import { toSafeHttpUrl } from '@/lib/safeUrl';
 
 type ProjectDomainsPageProps = {
@@ -175,6 +176,8 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
   const [selectedDomainId, setSelectedDomainId] = useState<number | null>(null);
   const [awaitingApproval, setAwaitingApproval] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  /** 승인을 거쳐 도는 연결 작업. 실패하면 사유를 띄우려고 들고 있는다 */
+  const [bindTaskId, setBindTaskId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
   const { data: domains = [], isLoading } = useProjectDomainListQuery('project-domains-page', projectId);
@@ -210,8 +213,26 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
       void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
       // 승인 정책이 켜져 있으면 approvalIds 가 온다 — 승인 화면으로 안내한다(무시하면 "성공한 척").
       setAwaitingApproval((result?.approvalIds.length ?? 0) > 0);
+      /*
+        접수된 작업을 지켜본다.
+
+        승인해도 그 작업이 실패할 수 있는데(대상에 붙일 수 없는 경우 등), 그러면 도메인이
+        안 생긴 채로 끝난다. 화면에는 **아무 일도 안 일어난 것과 똑같이** 보인다 — 목록도
+        비어 있고 승인 대기도 비어 있고 오류도 없다. 무엇이 잘못됐는지 알 방법이 없다.
+
+        접수할 때 받은 태스크 ID 를 들고 결과를 본다.
+      */
+      setBindTaskId(result?.taskId?.trim() || null);
     },
   });
+  const { data: bindTask } = useApprovalTaskWatchQuery('project-domains-page', bindTaskId);
+  /*
+    실패했을 때만 말한다. 성공은 목록에 도메인이 생기는 것으로 이미 보이고, 진행 중은
+    위의 승인 안내가 맡는다. 여기서 채워야 할 자리는 "끝났는데 아무것도 안 생긴" 경우다.
+  */
+  const bindFailureMessage =
+    bindTask?.status === 'FAILED' ? bindTask.error?.trim() || '도메인 연결에 실패했습니다.' : null;
+
   const verifyMutation = useMutation({ mutationFn: postDomainVerificationCheck, onSuccess: invalidateDomains });
   /*
     해제를 눌렀지만 아직 승인을 기다리는 도메인.
@@ -269,6 +290,30 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
           배포한 프론트(또는 백엔드) 주소에 도메인과 HTTPS 를 붙입니다.
         </p>
         {formError ? <p className="mt-3 text-[12px] text-[#dc2626]">{formError}</p> : null}
+
+        {/*
+          승인까지 눌렀는데 그 작업이 실패한 경우다.
+
+          이 자리가 비어 있으면 화면은 아무 일도 안 일어난 것과 똑같이 보인다 — 목록도
+          비고 승인 대기도 비고 오류도 없다. 무엇이 잘못됐는지 알 방법이 없어서, 같은
+          것을 다시 눌러보는 것 말고 할 수 있는 게 없었다.
+
+          서버 문구를 그대로 쓴다. 무엇이 막혔는지는 서버만 안다.
+        */}
+        {bindFailureMessage ? (
+          <div className="mt-3 flex items-start justify-between gap-3 rounded-xl border border-[#fecaca] bg-[#fef2f2] px-4 py-3">
+            <p className="text-[12px] leading-relaxed text-[#b91c1c]">
+              도메인 연결이 실패했습니다. {bindFailureMessage}
+            </p>
+            <button
+              type="button"
+              onClick={() => setBindTaskId(null)}
+              className="shrink-0 cursor-pointer text-[12px] font-medium text-[#f87171] hover:text-[#dc2626]"
+            >
+              닫기
+            </button>
+          </div>
+        ) : null}
 
         {awaitingApproval ? (
           <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-[#fde68a] bg-[#fffbeb] px-4 py-3">
