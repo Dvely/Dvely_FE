@@ -18,6 +18,21 @@ import {
 
 const PROJECT_PREVIEW_POLL_MS = 4000;
 
+/**
+ * 떠 있는 프리뷰를 다시 확인하는 간격.
+ *
+ * 조회 자체가 정리 경로다 — 서버는 ACTIVE 행을 읽을 때 컨테이너가 실제로 있는지 한 번
+ * 보고, 없으면 그 자리에서 EXPIRED 로 내리고 빈 값을 준다. 그래서 이 폴링은 상태를
+ * 구경하는 게 아니라 **죽은 세션을 실제로 걷어낸다.**
+ *
+ * 화면은 프레임이 살아 있는지 알 수 없다(다른 오리진이라 404 도 onload 로 온다).
+ * 이 조회가 그걸 대신 알아봐 주는 유일한 길이라 ACTIVE 일 때도 멈추지 않는다.
+ *
+ * 30초는 짧지 않다 — 사라진 컨테이너는 사용자가 뭘 하든 안 돌아오므로 급할 이유가 없고,
+ * 이 조회는 컨테이너 확인을 한 번 곁들이므로 공짜도 아니다.
+ */
+const ACTIVE_PREVIEW_RECHECK_MS = 30_000;
+
 function unwrapApiData<T>(body: T | ApiResponse<T>): T {
   if (body && typeof body === 'object' && 'data' in body && body.data != null) {
     return body.data;
@@ -168,6 +183,12 @@ function useProjectPreviewQuery(
       // 여기서 멈추면 PROVISIONING → ACTIVE 전이를 통째로 놓치고 작업이 끝날 때까지
       // "프리뷰 없음" 화면이 남는다.
       if (isAgentTaskActive && status == null) return PROJECT_PREVIEW_POLL_MS;
+      // 떠 있어도 계속 확인한다. 컨테이너가 밖에서 죽는 일이 있고(도커 재시작·외부 정리),
+      // 그때 이 조회가 세션을 정리해 줘야 화면이 "다시 띄우기" 로 돌아올 수 있다.
+      //
+      // 세션 status 만 따로 읽으면 안 된다 — 그 값은 TTL 30분까지 ACTIVE 로 남는다.
+      // 컨테이너 확인이 붙어 있는 건 이 조회 쪽이다.
+      if (status === 'ACTIVE') return ACTIVE_PREVIEW_RECHECK_MS;
       return false;
     },
   });

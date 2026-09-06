@@ -8,6 +8,8 @@ type AgentSitePreviewPanelProps = {
   frameKey: number;
   isLoading: boolean;
   isProvisioning: boolean;
+  /** 다시 띄우기가 새로 빌드하지 않고 살던 컨테이너에 도로 붙었는지 */
+  didReattach: boolean;
   failureReason: string;
   onLoadPreview: () => void;
 };
@@ -32,6 +34,7 @@ function AgentSitePreviewPanel({
   frameKey,
   isLoading,
   isProvisioning,
+  didReattach,
   failureReason,
   onLoadPreview,
 }: AgentSitePreviewPanelProps) {
@@ -79,6 +82,12 @@ function AgentSitePreviewPanel({
             <ExternalLink className="size-3.5" />새 탭에서 보기
           </a>
         </div>
+        {didReattach ? (
+          <p className="border-b border-[#fde68a] bg-[#fffbeb] px-4 py-2 text-[12px] leading-relaxed text-[#92400e]">
+            이미 떠 있는 컨테이너에 다시 연결했습니다 — 새로 빌드하지 않았습니다. 화면이 그대로
+            비어 있다면 컨테이너가 아니라 그 안의 앱이 멈춘 상태입니다.
+          </p>
+        ) : null}
         <iframe
           key={frameKey}
           src={previewUrl}

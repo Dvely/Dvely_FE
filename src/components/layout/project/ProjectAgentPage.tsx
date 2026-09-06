@@ -78,6 +78,8 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [hasDisconnectedRepository, setHasDisconnectedRepository] = useState(false);
   const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
   const [previewFrameKey, setPreviewFrameKey] = useState(0);
+  /** 다시 띄우기를 눌렀는데 살아 있던 컨테이너에 도로 붙은 경우. 화면이 그대로라 설명이 필요하다 */
+  const [didReattachPreview, setDidReattachPreview] = useState(false);
   const [isAgentTaskActive, setIsAgentTaskActive] = useState(false);
   /*
     배포 완료 안내를 지켜보는 마감 시각. 상태 둘(시작시각 + 활성여부)을 하나로 합쳤다 —
@@ -244,7 +246,22 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
 
   const provisionPreviewMutation = useMutation({
     mutationFn: () => postProjectPreviewSession(projectId),
-    onSuccess: () => {
+    onMutate: () => ({ previousSessionId: activePreviewSessionId }),
+    onSuccess: (data, _variables, context) => {
+      /*
+        같은 세션이 그대로 돌아왔다면 새로 띄운 게 아니라 살아 있던 컨테이너에 다시 붙은
+        것이다. 서버는 컨테이너가 떠 있으면 다시 빌드하지 않고 만료 시각만 늘린다.
+
+        화면상으로는 눌렀는데 아무 일도 안 일어난 것처럼 보인다. 그런데 이건 정보다 —
+        컨테이너는 살아 있다는 뜻이고, 그런데도 안 열린다면 컨테이너가 아니라 **그 안의
+        앱이 죽은 것**이다. 지금 화면에서 되살릴 방법이 없는 경우라 그렇게 말해 준다.
+        아무 말 없이 그대로 두면 버튼이 고장 난 것처럼 보인다.
+      */
+      setDidReattachPreview(
+        Boolean(context?.previousSessionId) &&
+          data.sessionId === context?.previousSessionId &&
+          data.status === 'ACTIVE',
+      );
       void queryClient.invalidateQueries({
         queryKey: ['project-preview-session', 'project-agent-page', projectId],
       });
@@ -260,6 +277,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const handleLoadPreview = () => {
     setRightPanelView('preview');
     setPreviewFrameKey((key) => key + 1);
+    setDidReattachPreview(false);
     provisionPreviewMutation.mutate();
   };
 
@@ -522,6 +540,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           <AgentSitePreviewPanel
             phase={previewPhase}
             previewUrl={previewUrl}
+            didReattach={didReattachPreview}
             frameKey={previewFrameKey}
             isLoading={(isPreviewLoading || isPreviewAccessLoading) && !previewUrl}
             onLoadPreview={handleLoadPreview}
