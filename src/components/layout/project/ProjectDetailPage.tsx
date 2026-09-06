@@ -269,14 +269,22 @@ function ProjectDetailPage({
                     {/*
                       url 은 status 가 CONNECTED 일 때만 채워진다 — 값이 있으면 지금 열어도 되는
                       주소라는 뜻이라 그대로 링크 노출 조건으로 쓴다.
-                      certificateStatus / httpsEnforced 는 일부러 안 보여준다. GitHub Pages 대상은
-                      Cloudflare 프록시 때문에 인증서 검증이 끝나지 않아 영원히 PENDING 으로 남는다
-                      (BE #154). 브라우저 HTTPS 는 엣지 인증서로 정상이라 사용자 문제는 없지만,
-                      그 값을 표시하면 끝나지 않는 진행 표시가 된다.
+
+                      certificateStatus 는 여전히 안 보여준다. GitHub Pages 대상은 Cloudflare
+                      프록시 때문에 그 값이 영원히 PENDING 으로 남는다 — 브라우저 HTTPS 는 엣지
+                      인증서로 멀쩡한데 화면에는 끝나지 않는 진행 표시가 된다.
+
+                      httpsEnforced 는 다시 보여준다. 서버가 실제 https 프로브 결과로 이 값을
+                      올려 주게 됐다(BE #154) — 인증서 관점이 PENDING 이어도 실제로 열리면 true 다.
+                      즉 이제 이 값은 "지금 https 로 열리나" 를 그대로 뜻한다.
+
+                      true 일 때만 표시한다. false 는 아직 준비 중인지 정말 안 되는지를 구분하지
+                      못하는데, 연결 직후 잠깐 false 인 것을 "HTTPS 안 됨" 으로 내보이면 멀쩡한
+                      상태를 고장처럼 읽게 만든다.
                     */}
                     {domainHref ? (
-                      <p>
-                        도메인:{' '}
+                      <p className="flex flex-wrap items-center gap-1.5">
+                        <span>도메인:</span>
                         <a
                           href={domainHref}
                           target="_blank"
@@ -285,6 +293,11 @@ function ProjectDetailPage({
                         >
                           {overview?.domainSummary?.hostname}
                         </a>
+                        {overview?.domainSummary?.httpsEnforced ? (
+                          <span className="rounded-full bg-[#dcfce7] px-2 py-0.5 text-[11px] font-medium text-[#15803d]">
+                            HTTPS
+                          </span>
+                        ) : null}
                       </p>
                     ) : overview?.domainSummary ? (
                       <p>도메인: {overview.domainSummary.hostname} (연결 확인 중)</p>
