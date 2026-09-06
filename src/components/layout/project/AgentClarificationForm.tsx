@@ -17,12 +17,15 @@ type AgentClarificationFormProps = {
   clarification: TaskClarification;
   isSubmitting: boolean;
   onSubmit: (value: string) => void;
+  /** 답하지 않고 이 작업을 접는다. 이 길이 없으면 답할 때까지 빠져나갈 수 없다 */
+  onCancel: () => void;
 };
 
 function AgentClarificationForm({
   clarification,
   isSubmitting,
   onSubmit,
+  onCancel,
 }: AgentClarificationFormProps) {
   const isMulti = clarification.inputType === 'MULTI_SELECT';
   const allowOther = clarification.allowOther === true;
@@ -129,14 +132,28 @@ function AgentClarificationForm({
         />
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => onSubmit(composedValue)}
-        disabled={!canSubmit}
-        className="mt-2.5 inline-flex h-9 cursor-pointer items-center rounded-lg bg-[#7c3aed] px-4 text-[13px] font-semibold text-white transition hover:bg-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {isSubmitting ? '보내는 중' : '이대로 진행'}
-      </button>
+      {/*
+        답하지 않고 접는 길도 같이 둔다. 이게 없으면 질문이 뜬 순간부터 답할 때까지
+        빠져나갈 수 없고, 그건 사용자가 마음을 바꿀 수 없다는 뜻이다.
+      */}
+      <div className="mt-2.5 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => onSubmit(composedValue)}
+          disabled={!canSubmit}
+          className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-[#7c3aed] px-4 text-[13px] font-semibold text-white transition hover:bg-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isSubmitting ? '보내는 중' : '이대로 진행'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isSubmitting}
+          className="cursor-pointer text-[12px] font-medium text-[#a78bfa] underline underline-offset-2 hover:text-[#7c3aed] disabled:cursor-not-allowed"
+        >
+          작업 취소
+        </button>
+      </div>
     </div>
   );
 }

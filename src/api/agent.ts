@@ -24,6 +24,8 @@ import {
   type PostAgentDecisionReqType,
   type PostAgentDecisionResType,
   type PostAgentTaskInputReqType,
+  getActiveTaskResSchema,
+  type GetActiveTaskResType,
 } from '@/types/agent.type';
 
 const endpoint = '/agent';
@@ -112,6 +114,28 @@ async function deleteAgentSession() {
 }
 
 /** 에이전트 태스크 상태 조회 API GET */
+/**
+ * 이 대화에서 아직 안 끝난 태스크를 묻는다.
+ *
+ * 화면은 진행 중이던 태스크를 메모리에만 들고 있어서 새로고침하면 잊는다. 그러면 답을
+ * 기다리던 질문에 답할 길도, 취소할 길도 사라진다 — 그 태스크는 영원히 대기로 남는다.
+ *
+ * 없으면 204 로 온다. 그건 오류가 아니라 "되살릴 게 없다" 는 정상 응답이다.
+ */
+async function getConversationActiveTask(conversationId: number) {
+  return Http.instance
+    .get<ApiResponse<GetActiveTaskResType>>(`/agent/conversations/${conversationId}/active-task`)
+    .then((response) => {
+      if (response.status === 204 || !response.data) return null;
+      const body = succesResponse<ApiResponse<GetActiveTaskResType>>(response);
+      const data = unwrapApiData(body);
+      if (!data) return null;
+      const parsed = getActiveTaskResSchema.parse(data);
+      return parsed.taskId ? parsed : null;
+    })
+    .catch(errorResponse());
+}
+
 async function getAgentTask(taskId: string) {
   const { taskId: id } = getAgentTaskParamsSchema.parse({ taskId });
 
@@ -401,6 +425,7 @@ function useAgentTaskEventListQuery(
 
 export {
   AgentPollTimeoutError,
+  getConversationActiveTask,
   getAiProviderList,
   useAiProviderListQuery,
   postAgentDecision,

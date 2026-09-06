@@ -25,6 +25,20 @@ const postAgentDecisionReqSchema = z.object({
 /**
  * POST /agent/decision 에이전트 요청 제출 응답
  */
+/**
+ * GET /agent/conversations/{id}/active-task 응답.
+ *
+ * 이 대화에서 아직 안 끝난 태스크를 가리킨다. 끝난 것은 오지 않으므로, 화면은 받은
+ * 것만 믿고 되살리면 된다 — 낡은 폼이 뜰 일이 없다.
+ *
+ * 새로고침하면 화면은 진행 중이던 것을 통째로 잊는다. 그 기억을 서버에 두는 포인터다.
+ */
+const getActiveTaskResSchema = z.object({
+  taskId: z.string().prefault(''),
+  /** 열어 둔다 — 서버가 상태를 늘려도 이 조회가 통째로 실패하면 안 된다 */
+  status: z.string().prefault(''),
+});
+
 /** 되묻기 선택지 하나 */
 const clarificationOptionSchema = z.object({
   /** 서버가 구분하는 값. 화면에는 label 을 쓴다 */
@@ -188,11 +202,14 @@ type PostAgentTaskInputParamsType = z.infer<typeof postAgentTaskInputParamsSchem
 type PostAgentTaskInputReqType = z.infer<typeof postAgentTaskInputReqSchema>;
 type AgentStep = z.infer<typeof agentStepSchema>;
 type TaskClarification = z.infer<typeof taskClarificationSchema>;
+type GetActiveTaskResType = z.infer<typeof getActiveTaskResSchema>;
 type ClarificationOption = z.infer<typeof clarificationOptionSchema>;
 type PostAgentDecisionReqType = z.infer<typeof postAgentDecisionReqSchema>;
 type PostAgentDecisionResType = z.infer<typeof postAgentDecisionResSchema>;
 
 export {
+  getActiveTaskResSchema,
+  type GetActiveTaskResType,
   taskClarificationSchema,
   clarificationOptionSchema,
   type TaskClarification,
