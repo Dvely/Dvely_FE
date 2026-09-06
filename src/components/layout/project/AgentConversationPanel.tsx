@@ -22,6 +22,7 @@ import {
   postApprovalApprove,
   postApprovalReject,
   useApprovalDetailQuery,
+  useConversationPendingApprovalQuery,
 } from '@/api/approvals';
 import { composeApiErrorMessage, dispatchApiErrorAction } from '@/lib/apiErrorGuide';
 import { refreshUserInfoInBackground } from '@/api/user';
@@ -144,8 +145,17 @@ async function resolvePendingApprovalId(
   conversationId: number | null,
 ) {
   if (task.pendingApprovalId != null) return task.pendingApprovalId;
-  if (!APPROVAL_WAIT_STATUSES.has(task.status)) return null;
 
+  /*
+    태스크가 끝났어도 승인을 찾는다.
+
+    예전에는 태스크가 승인 대기 상태일 때만 찾았다. 그런데 배포는 승인을 만들어 놓고
+    태스크를 그 자리에서 끝낸다 — 실제 프로비저닝은 워커가 비동기로 돌기 때문이다.
+    그러면 채팅은 승인이 생긴 것을 모른 채 "승인해주세요" 라고만 말하고 누를 것을 주지
+    않았다. 사용자가 승인 탭을 스스로 찾아가야 했다.
+
+    말은 해 놓고 방법을 안 주는 화면이었다. 상태 조건을 걷어내면 그 자리에 카드가 뜬다.
+  */
   const approvals = await getProjectApprovalList(projectId);
   const pending = approvals.find((approval) => {
     if (approval.status !== 'PENDING') return false;
@@ -157,6 +167,12 @@ async function resolvePendingApprovalId(
   // 이 태스크·대화에 속한 승인만 쓴다. 예전에는 매칭이 실패하면 프로젝트 안 아무 PENDING이나
   // 집어왔는데, 스캐폴딩 승인이 WAITING_APPROVAL로 남아 쌓이는 구조라 다른 대화의 승인 카드가
   // 뜰 수 있었다. 승인은 되돌리기 어려우므로 엉뚱한 것을 띄우느니 아무것도 안 띄운다.
+  //
+  // 상태 조건을 걷어낸 뒤에도 이 범위 제한이 남아 있어야 안전하다. 넓히는 것은 "언제
+  // 찾나" 이지 "무엇을 고르나" 가 아니다.
+  //
+  // 배포처럼 승인이 둘 이상 생기면 하나씩 뜬다. 하나를 결정하면 그 자리에서 다시 찾아
+  // 다음 것을 세우므로(승인 mutation 참고) 순서대로 이어진다.
   return pending?.approvalId ?? null;
 }
 
@@ -268,7 +284,29 @@ function AgentConversationPanel({
   );
   const pollAbortRef = useRef<AbortController | null>(null);
 
-  const { data: pendingApproval } = useApprovalDetailQuery(AGENT_CHAT_QUERY_KEY, pendingApprovalId);
+  /*
+    태스크가 끝난 뒤에 생기는 승인을 놓치지 않는다.
+
+    배포는 승인을 만들기 **직전에** 태스크를 끝낸다. 그래서 태스크 종료 시점에 한 번
+    묻는 것만으로는 못 잡고, 사용자는 "승인해주세요" 라는 말만 보고 누를 것을 못 받는다.
+    계속 지켜보면 언제 생기든 다음 주기에 걸린다.
+
+    이미 결정한 것은 뺀다 — 서버가 상태를 바꾸기 전에 한 번 더 조회가 돌면 방금 누른
+    카드가 잠깐 되살아나고, 그 사이 두 번 누를 수 있다.
+  */
+  const { data: watchedApprovalId } = useConversationPendingApprovalQuery(
+    AGENT_CHAT_QUERY_KEY,
+    projectId,
+    conversationId,
+  );
+  const decidedApprovalIdsRef = useRef<Set<number>>(new Set());
+  const visibleApprovalId =
+    pendingApprovalId ??
+    (watchedApprovalId != null && !decidedApprovalIdsRef.current.has(watchedApprovalId)
+      ? watchedApprovalId
+      : null);
+
+  const { data: pendingApproval } = useApprovalDetailQuery(AGENT_CHAT_QUERY_KEY, visibleApprovalId);
   const activeApproval = pendingApproval?.status === 'PENDING' ? pendingApproval : null;
 
   // 대화를 열거나 바꿀 때 미결 승인을 서버에서 복원한다.
@@ -518,7 +556,10 @@ function AgentConversationPanel({
 
       return { task, pendingApprovalId, decidedApprovalId: approvalId };
     },
-    onMutate: () => {
+    onMutate: ({ approvalId }) => {
+      // 누른 즉시 적어 둔다. 감시 조회가 서버 상태보다 먼저 한 번 더 돌면 방금 누른
+      // 카드가 되살아나는데, 그 사이 두 번 누르면 같은 승인을 두 번 보내게 된다
+      decidedApprovalIdsRef.current.add(approvalId);
       setIsAssistantReplying(true);
       setLongRunningBaseline(null);
       setRetryableTask(null);
@@ -532,8 +573,8 @@ function AgentConversationPanel({
 
       rememberConversationTaskId(targetConversationId, task.taskId);
 
-      const needsApproval = APPROVAL_WAIT_STATUSES.has(task.status) && pendingApprovalId != null;
-      setPendingApprovalId(needsApproval ? pendingApprovalId : null);
+      // 찾았으면 띄운다. 태스크가 끝났어도 승인이 남아 있으면 사용자가 눌러야 할 것이다
+      setPendingApprovalId(pendingApprovalId);
       setRetryableTask(isRetryableFailure(task) ? task : null);
       // 승인 뒤 이어 달리다 되물을 수도 있다
       setAwaitingInput(toAwaitingInput(task, task.taskId));
@@ -648,11 +689,7 @@ function AgentConversationPanel({
       if (conversationId == null) return;
 
       rememberConversationTaskId(conversationId, taskId);
-      setPendingApprovalId(
-        APPROVAL_WAIT_STATUSES.has(task.status) && pendingApprovalId != null
-          ? pendingApprovalId
-          : null,
-      );
+      setPendingApprovalId(pendingApprovalId);
       setAwaitingInput(toAwaitingInput(task, task.taskId));
       setRetryableTask(isRetryableFailure(task) ? task : null);
 
@@ -729,11 +766,7 @@ function AgentConversationPanel({
       if (conversationId == null) return;
 
       rememberConversationTaskId(conversationId, taskId);
-      setPendingApprovalId(
-        APPROVAL_WAIT_STATUSES.has(task.status) && pendingApprovalId != null
-          ? pendingApprovalId
-          : null,
-      );
+      setPendingApprovalId(pendingApprovalId);
       setAwaitingInput(toAwaitingInput(task, task.taskId));
       // 또 실패하면 카드를 다시 띄운다. 남은 시도 횟수가 줄어든 채로 온다
       setRetryableTask(isRetryableFailure(task) ? task : null);
