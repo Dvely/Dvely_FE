@@ -119,7 +119,18 @@ async function getProjectPreviewSession(projectId: number) {
     .catch(errorResponse());
 }
 
-/** 프로젝트 프리뷰 띄우기 API POST. 200 즉시 활성, 202 준비 중 */
+/**
+ * 프로젝트 프리뷰 띄우기 API POST.
+ *
+ * **새로 빌드했는지 여부는 본문이 아니라 상태 코드로 온다.** 서버는 컨테이너가 이미 떠
+ * 있으면 다시 빌드하지 않고 그 세션에 도로 붙이는데, 그 구분이 200/202 다:
+ *
+ * - **200** — 살아 있던 컨테이너에 다시 연결했다. 리빌드하지 않았고 바로 쓸 수 있다
+ * - **202** — 새로 빌드를 시작했거나 이미 준비 중이다. 상태를 지켜봐야 한다
+ *
+ * 응답 DTO 에는 이 구분이 없어서 상태 코드가 유일한 근거다. 그래서 여기서 같이 돌려준다 —
+ * 세션 ID 가 같은지로 짐작할 수도 있지만 그건 우연히 맞는 방식이고, 계약은 이쪽이다.
+ */
 async function postProjectPreviewSession(projectId: number) {
   const { projectId: id } = getProjectPreviewSessionParamsSchema.parse({ projectId });
 
@@ -129,10 +140,14 @@ async function postProjectPreviewSession(projectId: number) {
     })
     .then((response) => {
       const body = succesResponse<ApiResponse<PostProjectPreviewSessionResType>>(response);
-      return postProjectPreviewSessionResSchema.parse({
-        ...emptyProjectPreviewSession(id),
-        ...unwrapApiData(body),
-      });
+      return {
+        session: postProjectPreviewSessionResSchema.parse({
+          ...emptyProjectPreviewSession(id),
+          ...unwrapApiData(body),
+        }),
+        /** 200 이면 리빌드 없이 살아 있던 컨테이너에 다시 붙은 것이다 */
+        reattached: response.status === 200,
+      };
     })
     .catch(errorResponse());
 }

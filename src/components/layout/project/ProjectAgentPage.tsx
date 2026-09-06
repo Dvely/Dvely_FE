@@ -246,22 +246,17 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
 
   const provisionPreviewMutation = useMutation({
     mutationFn: () => postProjectPreviewSession(projectId),
-    onMutate: () => ({ previousSessionId: activePreviewSessionId }),
-    onSuccess: (data, _variables, context) => {
+    onSuccess: ({ reattached }) => {
       /*
-        같은 세션이 그대로 돌아왔다면 새로 띄운 게 아니라 살아 있던 컨테이너에 다시 붙은
-        것이다. 서버는 컨테이너가 떠 있으면 다시 빌드하지 않고 만료 시각만 늘린다.
+        200 은 "살아 있던 컨테이너에 도로 붙었다" 는 뜻이다. 서버는 컨테이너가 떠 있으면
+        다시 빌드하지 않고 만료 시각만 늘린다.
 
-        화면상으로는 눌렀는데 아무 일도 안 일어난 것처럼 보인다. 그런데 이건 정보다 —
+        그때 화면상으로는 눌렀는데 아무 일도 안 일어난 것처럼 보인다. 그런데 이건 정보다 —
         컨테이너는 살아 있다는 뜻이고, 그런데도 안 열린다면 컨테이너가 아니라 **그 안의
         앱이 죽은 것**이다. 지금 화면에서 되살릴 방법이 없는 경우라 그렇게 말해 준다.
         아무 말 없이 그대로 두면 버튼이 고장 난 것처럼 보인다.
       */
-      setDidReattachPreview(
-        Boolean(context?.previousSessionId) &&
-          data.sessionId === context?.previousSessionId &&
-          data.status === 'ACTIVE',
-      );
+      setDidReattachPreview(reattached);
       void queryClient.invalidateQueries({
         queryKey: ['project-preview-session', 'project-agent-page', projectId],
       });
