@@ -27,7 +27,9 @@ import AppAlertDialog from '@/components/common/AppAlertDialog';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
 import AgentRetryCard from '@/components/layout/project/AgentRetryCard';
 import { useAgentTaskEventStream } from '@/hooks/useAgentTaskEventStream';
-import type { AgentTaskEvent, GetAgentTaskResType } from '@/types/agent.type';
+import type { AgentTaskEvent, GetAgentTaskResType, TaskClarification } from '@/types/agent.type';
+import AgentClarificationForm from '@/components/layout/project/AgentClarificationForm';
+import { canRenderAsChoices } from '@/components/layout/project/agentClarification.utils';
 import type { ConversationMessage } from '@/types/chat.type';
 import {
   AGENT_CHAT_QUERY_KEY,
@@ -92,6 +94,20 @@ const TASK_PROGRESS_LABEL: Record<string, string> = {
   WAITING_RESULT_APPROVAL: '결과 확인을 기다리는 중',
   WAITING_INPUT: '질문에 답해 주세요',
 };
+
+/**
+ * 되묻는 중이면 taskId 와 질문을 **짝으로** 만든다.
+ *
+ * 둘을 따로 들면 태스크가 바뀌는 순간 앞 질문이 새 태스크의 것처럼 잠깐 보인다.
+ * 그러면 사용자가 엉뚱한 질문에 답을 보내게 되므로 항상 같이 세운다.
+ */
+function toAwaitingInput(
+  task: { status?: string; clarification?: TaskClarification | null } | null | undefined,
+  taskId: string | null | undefined,
+) {
+  if (!task || task.status !== 'WAITING_INPUT' || !taskId) return null;
+  return { taskId, clarification: task.clarification ?? null };
+}
 
 /**
  * 이어서 다시 돌릴 수 있는 실패인가.
@@ -175,7 +191,11 @@ function AgentConversationPanel({
     보내면 서버는 새 태스크를 만들고, 원래 태스크는 WAITING_INPUT 인 채 영원히 남는다
     — 배포가 되묻는 순간부터 빠져나올 길이 없어진다.
   */
-  const [awaitingInputTaskId, setAwaitingInputTaskId] = useState<string | null>(null);
+  const [awaitingInput, setAwaitingInput] = useState<{
+    taskId: string;
+    clarification: TaskClarification | null;
+  } | null>(null);
+  const awaitingInputTaskId = awaitingInput?.taskId ?? null;
   /*
     상한까지 기다렸는데 아직 도는 중. 실패가 아니라서 오류 알림을 띄우면 안 된다 —
     서버는 계속 돌고 결과는 채팅에 올라온다. 조용한 안내로 남긴다.
@@ -256,7 +276,7 @@ function AgentConversationPanel({
   // 승인 목록에는 conversationId·taskId·input이 다 들어 있으므로 이쪽으로 찾는다.
   useEffect(() => {
     // 대화가 바뀌면 초기화한다. 남겨두면 다른 대화의 질문에 답을 보내게 된다
-    setAwaitingInputTaskId(null);
+    setAwaitingInput(null);
     setLongRunningBaseline(null);
     setRetryableTask(null);
     setRunningTaskId(null);
@@ -376,9 +396,7 @@ function AgentConversationPanel({
       setPendingApprovalId(pendingApprovalId);
       setRetryableTask(isRetryableFailure(result.task) ? result.task : null);
       // 에이전트가 되물었으면 다음 입력은 새 요청이 아니라 그 답이다
-      setAwaitingInputTaskId(
-        result.task?.status === 'WAITING_INPUT' ? (result.taskId || null) : null,
-      );
+      setAwaitingInput(toAwaitingInput(result.task, result.taskId));
 
       // 어시스턴트 답변을 task.summary 로 직접 만들지 않는다. 서버가 같은 사건을
       // chat_messages 에 이미 적어두는데 문구가 달라서(요약 전문 vs 짧은 안내) 병합에
@@ -516,7 +534,7 @@ function AgentConversationPanel({
       setPendingApprovalId(needsApproval ? pendingApprovalId : null);
       setRetryableTask(isRetryableFailure(task) ? task : null);
       // 승인 뒤 이어 달리다 되물을 수도 있다
-      setAwaitingInputTaskId(task.status === 'WAITING_INPUT' ? (task.taskId || null) : null);
+      setAwaitingInput(toAwaitingInput(task, task.taskId));
 
       // 태스크가 끝났으면 게이트 안내와 결과가 서버에 기록돼 있다.
       // 로컬 임시 메시지를 덧붙이면 곧 도착할 서버 메시지와 겹치므로 오버레이를 비우고
@@ -621,7 +639,7 @@ function AgentConversationPanel({
       setRetryableTask(null);
       setProgressTask(null);
       // 답을 보냈으니 대기 상태를 푼다. 이어 달리다 또 물으면 onSuccess 가 다시 세운다
-      setAwaitingInputTaskId(null);
+      setAwaitingInput(null);
       return { userMessage, targetConversationId };
     },
     onSuccess: ({ task, taskId, pendingApprovalId }) => {
@@ -633,7 +651,7 @@ function AgentConversationPanel({
           ? pendingApprovalId
           : null,
       );
-      setAwaitingInputTaskId(task.status === 'WAITING_INPUT' ? (task.taskId || null) : null);
+      setAwaitingInput(toAwaitingInput(task, task.taskId));
       setRetryableTask(isRetryableFailure(task) ? task : null);
 
       void queryClient.invalidateQueries({
@@ -664,7 +682,7 @@ function AgentConversationPanel({
         그때는 사용자가 적은 말을 잃지 않도록 평범한 메시지로 다시 보낸다 — 답이 갈 곳이
         없어졌다고 사용자에게 되돌려주면 같은 말을 두 번 적게 된다.
       */
-      setAwaitingInputTaskId(null);
+      setAwaitingInput(null);
       if (context?.userMessage) {
         setOverlayMessages((prev) => {
           const next = prev.filter((message) => message.messageId !== context.userMessage.messageId);
@@ -714,7 +732,7 @@ function AgentConversationPanel({
           ? pendingApprovalId
           : null,
       );
-      setAwaitingInputTaskId(task.status === 'WAITING_INPUT' ? (task.taskId || null) : null);
+      setAwaitingInput(toAwaitingInput(task, task.taskId));
       // 또 실패하면 카드를 다시 띄운다. 남은 시도 횟수가 줄어든 채로 온다
       setRetryableTask(isRetryableFailure(task) ? task : null);
 
@@ -787,7 +805,7 @@ function AgentConversationPanel({
       setRunningTaskId(null);
       setLongRunningBaseline(null);
       setRetryableTask(null);
-      setAwaitingInputTaskId(null);
+      setAwaitingInput(null);
       // 서버가 딸린 승인도 함께 취소했다 — 카드를 남기면 이미 닫힌 승인을 누르게 된다
       setPendingApprovalId(null);
 
@@ -979,7 +997,22 @@ function AgentConversationPanel({
             </button>
           </div>
         ) : null}
-        {awaitingInputTaskId ? (
+        {/*
+          되묻기가 선택형이면 고르게 하고, 아니면 지금까지처럼 채팅창으로 답하게 둔다.
+
+          선택형인데도 채팅창은 계속 살아 있다 — 적어서 보내도 같은 태스크의 답으로 간다.
+          고르는 쪽이 서버가 아는 이름과 어긋나지 않아 편할 뿐, 막을 이유는 없다.
+        */}
+        {awaitingInput && canRenderAsChoices(awaitingInput.clarification) ? (
+          <AgentClarificationForm
+            key={awaitingInput.taskId}
+            clarification={awaitingInput.clarification as TaskClarification}
+            isSubmitting={submitInputMutation.isPending}
+            onSubmit={(value) =>
+              submitInputMutation.mutate({ taskId: awaitingInput.taskId, value })
+            }
+          />
+        ) : awaitingInputTaskId ? (
           <p className="mb-2 rounded-lg bg-[#faf5ff] px-2.5 py-1.5 text-[12px] font-medium text-[#6d28d9]">
             에이전트가 답을 기다리고 있습니다. 여기에 적으면 하던 작업을 이어서 진행합니다.
           </p>
