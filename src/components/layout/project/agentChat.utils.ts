@@ -25,6 +25,9 @@ export function createLocalMessage(
     tokenCount,
     createdAt: new Date().toISOString(),
     taskId: options.taskId ?? null,
+    // 서버가 붙이는 값이다. 화면이 만든 임시 메시지에는 종류가 없고, 없으면
+    // 지금까지와 똑같은 평범한 줄로 그려진다
+    kind: null,
   };
 }
 

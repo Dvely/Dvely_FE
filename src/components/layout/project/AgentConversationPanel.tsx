@@ -43,6 +43,10 @@ import {
   canRenderAnsweredChoices,
   canRenderAsChoices,
 } from '@/components/layout/project/agentClarification.utils';
+import {
+  findCardCoveredMessageId,
+  toMessageTone,
+} from '@/components/layout/project/chatMessageKind.utils';
 import type { ConversationMessage } from '@/types/chat.type';
 import {
   AGENT_CHAT_QUERY_KEY,
@@ -375,10 +379,19 @@ function AgentConversationPanel({
   const isLongRunning =
     longRunningBaseline != null && (serverMessages?.length ?? 0) <= longRunningBaseline;
 
-  const displayMessages = useMemo(
-    () => mergeConversationMessages(serverMessages ?? [], overlayMessages),
-    [serverMessages, overlayMessages],
-  );
+  const displayMessages = useMemo(() => {
+    const merged = mergeConversationMessages(serverMessages ?? [], overlayMessages);
+
+    /*
+      "이렇게 정했습니다" 카드가 떠 있으면 같은 답을 말하는 줄을 접는다.
+
+      본문을 보고 고르지 않는다 — 서버가 붙여 주는 `kind` 로만 찾는다(BE #310).
+      카드는 새로고침하면 사라지고 이 줄은 남으므로, 지우는 게 아니라 카드가 있는
+      동안만 감추는 것이다.
+    */
+    const coveredId = findCardCoveredMessageId(merged, answeredClarification != null);
+    return coveredId == null ? merged : merged.filter((m) => m.messageId !== coveredId);
+  }, [serverMessages, overlayMessages, answeredClarification]);
   const pollAbortRef = useRef<AbortController | null>(null);
 
   /*
@@ -1380,12 +1393,28 @@ function AssistantReplySkeleton({
   );
 }
 
+/**
+ * 어시스턴트 줄의 무게별 모양.
+ *
+ * 실패만 배경까지 준다 — 대화를 훑을 때 걸려야 하는 유일한 줄이라서다. 흐린 것은
+ * 색만 낮춘다: 진행 안내는 안 읽어도 되지만 찾으면 읽을 수는 있어야 한다.
+ */
+const ASSISTANT_TONE_CLASS = {
+  default: 'px-3.5 py-3 text-[#475569]',
+  muted: 'px-3.5 py-3 text-[#94a3b8]',
+  failed: 'rounded-xl border-l-2 border-[#fca5a5] bg-[#fef2f2] px-3.5 py-3 text-[#b91c1c]',
+} as const;
+
 function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
+  // 종류는 서버가 알려준 것만 믿는다. 모르는 값이면 지금까지와 똑같이 그려진다
+  const tone = isAssistant ? toMessageTone(message.kind) : 'default';
   const linkClassName = isUser
     ? 'underline underline-offset-2 hover:text-[#5b21b6]'
-    : 'text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]';
+    : tone === 'failed'
+      ? 'underline underline-offset-2 hover:text-[#7f1d1d]'
+      : 'text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]';
 
   return (
     <div className={isUser ? 'ml-6' : undefined}>
@@ -1394,7 +1423,7 @@ function MessageBubble({ message }: MessageBubbleProps) {
           isUser
             ? 'rounded-xl border border-[#c4b5fd] bg-[#ede9fe] px-3.5 py-3 text-[#4c1d95]'
             : isAssistant
-              ? 'px-3.5 py-3 text-[#475569]'
+              ? ASSISTANT_TONE_CLASS[tone]
               : 'rounded-xl border border-[#e2e8f0] bg-white px-3.5 py-3 text-[#64748b]'
         }`}
       >
