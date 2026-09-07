@@ -24,6 +24,7 @@ import {
   previewClick,
   previewHasText,
   previewType,
+  select,
   type,
   waitForPreviewDocument,
   waitUntil,
@@ -184,10 +185,18 @@ export const scenes: Scene[] = [
     caption: { title: '직접 조작 기능', sub: '채팅 없이 화면에서도 됩니다' },
     speed: 2,
     run: async () => {
-      await goto('/project/1/approvals');
-      await read(1700);
-      await goto('/project/1/infra');
-      await read(1700);
+      /*
+        여기서는 라우터로 건너뛰지 않고 탭을 실제로 누른다.
+
+        "화면에서도 됩니다" 라고 말하면서 화면이 저절로 넘어가면 자막과 화면이 어긋난다.
+        조작하는 장면이 이 장면의 내용이므로 커서가 가서 눌러야 한다.
+      */
+      await click('tab-approvals');
+      await read(1600);
+      await click('tab-infra');
+      await read(1400);
+      await select('server-tier', 't3.small');
+      await read(1200);
     },
   },
 ];

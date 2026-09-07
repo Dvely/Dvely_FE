@@ -36,6 +36,7 @@ function ProjectWorkspaceNav({ projectId, active }: ProjectWorkspaceNavProps) {
             key={tab.id}
             to={tab.to}
             params={{ slug }}
+            data-demo={`tab-${tab.id}`}
             className={cn(
               '-mb-px border-b-2 px-3 py-2 text-[13px] font-semibold transition',
               isActive
