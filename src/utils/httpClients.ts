@@ -5,6 +5,8 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios';
 import { dispatchAuthRedirectHome } from '@/constants/authEvents';
+import { IS_DEMO } from '@/demo/config';
+import { demoAdapter } from '@/demo/adapter';
 import { clearAppLocalStorage } from '@/lib/clearAppStorage';
 
 type TokenPair = {
@@ -34,16 +36,24 @@ class Http {
   private isRefreshing = false;
   private refreshSubscribers: Array<(accessToken: string | null) => void> = [];
 
+  /**
+   * 시연 모드에서는 어댑터를 갈아끼워 요청이 네트워크로 나가지 않게 한다.
+   * 인터셉터·스키마 검증은 그대로 도므로 화면 입장에서는 실제 서버와 구분되지 않는다.
+   */
+  private readonly demoOverrides = IS_DEMO ? { adapter: demoAdapter } : {};
+
   // refresh 요청은 인터셉터 영향 없이 별도 client 사용
   private readonly refreshClient = axios.create({
     baseURL: this.baseUrl,
     withCredentials: true,
+    ...(IS_DEMO ? { adapter: demoAdapter } : {}),
   });
 
   constructor() {
     this.instance = axios.create({
       baseURL: this.baseUrl,
       withCredentials: true,
+      ...this.demoOverrides,
     });
 
     this.attachInterceptors();

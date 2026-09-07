@@ -46,6 +46,7 @@ import {
   shouldSendHomeAgentPromptOnce,
   writeSessionMessages,
 } from '@/components/layout/project/agentChat.utils';
+import { IS_DEMO } from '@/demo/config';
 
 const suggestedPrompts = [
   {
@@ -1172,7 +1173,8 @@ function AgentConversationPanel({
             </select>
           </label>
         ) : null}
-        <div className="mb-2 flex flex-wrap gap-2">
+        {/* 시연에서는 감춘다 — 제안 문구가 화면에 남으면 시나리오와 다른 것을 읽게 된다 */}
+        <div className={IS_DEMO ? 'hidden' : 'mb-2 flex flex-wrap gap-2'}>
           {suggestedPrompts.map(({ label, prompt }) => (
             <button
               key={label}

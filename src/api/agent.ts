@@ -1,4 +1,6 @@
 import Http from '@/utils/httpClients';
+import { IS_DEMO } from '@/demo/config';
+import { openDemoAgentTaskEventStream } from '@/demo/stream';
 import { useQuery } from '@tanstack/react-query';
 import { errorResponse, succesResponse } from '@/utils/response';
 import type { ApiResponse } from '@/types/response.type';
@@ -318,6 +320,15 @@ async function openAgentTaskEventStream(taskId: string, options: OpenAgentTaskEv
     taskId,
     afterEventId: options.afterEventId ?? 0,
   });
+
+  // 스트림만 raw fetch 라 axios 어댑터가 못 가로챈다. 시연 모드는 여기서 갈라진다
+  if (IS_DEMO) {
+    return openDemoAgentTaskEventStream(params.taskId, {
+      afterEventId: params.afterEventId,
+      signal: options.signal,
+      onEvent: options.onEvent,
+    });
+  }
 
   const baseUrl = import.meta.env.VITE_API_URL;
   const accessToken = localStorage.getItem('accessToken');

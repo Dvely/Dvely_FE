@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:demo": "vite --mode demo --host",
+    "build:demo": "tsr generate && tsc -b && vite build --mode demo",
     "route:gen": "tsr generate",
     "build": "tsr generate && tsc -b && vite build",
     "lint": "eslint .",
