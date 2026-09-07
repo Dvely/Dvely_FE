@@ -25,6 +25,8 @@ import {
   createTask,
   decideApproval,
   demoPreviewUrl,
+  ensureAutoDatabase,
+  ensureBackendEnvVars,
   findApproval,
   getTask,
   activeTask,
@@ -321,24 +323,17 @@ const routes: [string, RegExp, Handler][] = [
     resultApprovalRequired: false,
   })],
   ['PATCH', /^\/projects\/\d+\/settings\/chat$/, (ctx) => ({ projectId: DEMO.projectId, ...ctx.body })],
-  ['GET', /^\/projects\/\d+\/settings\/infrastructure$/, () => {
-    const connection = state.cloudConnections.find((item) => item.cloudConnectionId === state.cloudConnectionId);
-    return {
-      projectId: DEMO.projectId,
-      cloudConnectionId: state.cloudConnectionId,
-      provider: connection ? 'AWS' : null,
-      displayName: connection?.displayName ?? null,
-      region: connection?.region ?? null,
-      status: connection?.status ?? null,
-      lastCheckedAt: connection?.lastCheckedAt ?? null,
-      updatedAt: iso(),
-    };
-  }],
-  ['PUT', /^\/projects\/\d+\/settings\/infrastructure$/, (ctx) => {
-    const id = Number(ctx.body.cloudConnectionId);
-    state.cloudConnectionId = Number.isFinite(id) ? id : null;
-    return null;
-  }],
+  ['GET', /^\/projects\/\d+\/settings\/infrastructure$/, () => infraSettings()],
+  [
+    'PUT',
+    /^\/projects\/\d+\/settings\/infrastructure$/,
+    (ctx) => {
+      const id = Number(ctx.body.cloudConnectionId);
+      state.cloudConnectionId = Number.isFinite(id) ? id : null;
+      // 호출부가 응답을 설정 스키마로 파싱한다. null 을 주면 선택이 실패로 떨어진다
+      return infraSettings();
+    },
+  ],
   ['DELETE', /^\/projects\/\d+\/settings\/infrastructure$/, () => { state.cloudConnectionId = null; return null; }],
   ['GET', /^\/projects\/\d+\/settings\/infrastructure\/configuration$/, () => ({
     projectId: DEMO.projectId,
@@ -359,24 +354,8 @@ const routes: [string, RegExp, Handler][] = [
     pendingChange: null,
   })],
   ['GET', /^\/projects\/\d+\/settings\/infrastructure\/configuration\/history$/, () => []],
-  ['GET', /^\/projects\/\d+\/settings\/cost-budget$/, () => ({
-    projectId: DEMO.projectId,
-    costAvailable: state.cloudConnectionId != null,
-    provider: state.cloudConnectionId != null ? 'AWS' : null,
-    currency: 'USD',
-    estimatedMonthlyCost: 18.4,
-    resourceCosts: [
-      { resourceType: 'COMPUTE', description: 'EC2 t3.micro (730h)', monthlyCost: 8.5 },
-      { resourceType: 'STORAGE', description: 'RDS PostgreSQL db.t4g.micro + 20GB', monthlyCost: 9.1 },
-      { resourceType: 'NETWORK', description: '데이터 전송 (예상 20GB)', monthlyCost: 0.8 },
-    ],
-    assumptions: ['서울 리전(ap-northeast-2) 온디맨드 요금 기준', '프리티어 할인은 반영하지 않았습니다'],
-    priceTableVersion: '2026-09',
-    budget: { monthlyBudgetAmount: 50, currency: 'USD', updatedAt: iso() },
-    budgetStatus: 'WITHIN_BUDGET',
-    budgetUsagePercent: 36.8,
-  })],
-  ['PUT', /^\/projects\/\d+\/settings\/cost-budget$/, (ctx) => ({ ...ctx.body, updatedAt: iso() })],
+  ['GET', /^\/projects\/\d+\/settings\/cost-budget$/, () => costBudget()],
+  ['PUT', /^\/projects\/\d+\/settings\/cost-budget$/, () => costBudget()],
   ['DELETE', /^\/projects\/\d+\/settings\/cost-budget$/, () => null],
 
   /* ----- conversations ----- */
@@ -548,6 +527,11 @@ const routes: [string, RegExp, Handler][] = [
     /^\/projects\/\d+\/preview\/runtime$/,
     (ctx) => {
       state.runtimeType = String(ctx.body.runtimeType ?? 'STATIC');
+      // 서버형으로 옮기면 서버가 프리뷰용 DB 를 마련하고 접속 정보를 환경변수로 넣는다
+      if (state.runtimeType === 'NODE_SERVER') {
+        ensureAutoDatabase();
+        ensureBackendEnvVars();
+      }
       return {
         projectId: DEMO.projectId,
         runtimeType: state.runtimeType,
@@ -627,7 +611,19 @@ const routes: [string, RegExp, Handler][] = [
   })],
   ['GET', /^\/deployments\/(\d+)\/failure-analysis$/, () => NO_CONTENT],
   ['POST', /^\/deployments\/(\d+)\/failure-analysis$/, () => NO_CONTENT],
-  ['POST', /^\/deployments\/(\d+)\/retry$/, () => null],
+  ['POST', /^\/deployments\/(\d+)\/retry$/, () => {
+    const deployment = createDeployment('GITHUB_PAGES');
+    return {
+      deploymentId: deployment.historyId,
+      projectId: DEMO.projectId,
+      deployTargetType: 'LATEST',
+      versionName: deployment.versionLabel,
+      status: deployment.status,
+      pagesUrl: null,
+      createdAt: deployment.triggeredAt,
+      approvalIds: [],
+    };
+  }],
   ['GET', /^\/versions\/(\d+)$/, (ctx) => ({
     versionId: Number(ctx.params[0]),
     versionName: 'v1',
@@ -671,7 +667,11 @@ const routes: [string, RegExp, Handler][] = [
       records: [{ type: 'CNAME', host: domain?.hostname ?? DEMO.domainHostname, value: 'edge.qeploy.com' }],
     };
   }],
-  ['POST', /^\/domains\/(\d+)\/verification-checks$/, () => null],
+  ['POST', /^\/domains\/(\d+)\/verification-checks$/, (ctx) => {
+    const domain = state.domains.find((item) => item.domainId === Number(ctx.params[0]));
+    if (!domain) throw notFound('도메인을 찾을 수 없습니다.');
+    return domain;
+  }],
   ['DELETE', /^\/domains\/(\d+)$/, (ctx) => {
     const domain = state.domains.find((item) => item.domainId === Number(ctx.params[0]));
     const approval = addApproval('DOMAIN_UNBIND', `${domain?.hostname ?? ''} 연결을 해제합니다.`, null);
@@ -841,6 +841,45 @@ function taskKindFor(content: string): 'code' | 'backend' | 'generic' {
   }
   if (state.tasks.size === 0) return 'code';
   return state.runtimeType === 'STATIC' ? 'backend' : 'generic';
+}
+
+function infraSettings() {
+  const connection = state.cloudConnections.find(
+    (item) => item.cloudConnectionId === state.cloudConnectionId,
+  );
+  return {
+    projectId: DEMO.projectId,
+    cloudConnectionId: state.cloudConnectionId,
+    provider: connection ? 'AWS' : null,
+    displayName: connection?.displayName ?? null,
+    region: connection?.region ?? null,
+    status: connection?.status ?? null,
+    lastCheckedAt: connection?.lastCheckedAt ?? null,
+    updatedAt: iso(),
+  };
+}
+
+function costBudget() {
+  return {
+    projectId: DEMO.projectId,
+    costAvailable: state.cloudConnectionId != null,
+    provider: state.cloudConnectionId != null ? 'AWS' : null,
+    currency: 'USD',
+    estimatedMonthlyCost: 18.4,
+    resourceCosts: [
+      { resourceType: 'COMPUTE', description: 'EC2 t3.micro (730h)', monthlyCost: 8.5 },
+      { resourceType: 'STORAGE', description: 'RDS PostgreSQL db.t4g.micro + 20GB', monthlyCost: 9.1 },
+      { resourceType: 'NETWORK', description: '데이터 전송 (예상 20GB)', monthlyCost: 0.8 },
+    ],
+    assumptions: [
+      '서울 리전(ap-northeast-2) 온디맨드 요금 기준',
+      '프리티어 할인은 반영하지 않았습니다',
+    ],
+    priceTableVersion: '2026-09',
+    budget: { monthlyBudgetAmount: 50, currency: 'USD', updatedAt: iso() },
+    budgetStatus: 'WITHIN_BUDGET',
+    budgetUsagePercent: 36.8,
+  };
 }
 
 function conversation() {

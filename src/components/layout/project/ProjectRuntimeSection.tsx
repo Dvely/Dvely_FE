@@ -107,6 +107,7 @@ function ProjectRuntimeSection({ projectId }: { projectId: number }) {
               <select
                 value={runtimeType}
                 onChange={(event) => editDraft({ runtimeType: event.target.value })}
+                data-demo="runtime-type"
                 className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
               >
                 {RUNTIME_OPTIONS.map((option) => (
@@ -162,6 +163,7 @@ function ProjectRuntimeSection({ projectId }: { projectId: number }) {
             type="button"
             disabled={saveMutation.isPending}
             onClick={() => saveMutation.mutate()}
+            data-demo="runtime-save"
             className="mt-3 h-9 cursor-pointer rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saveMutation.isPending ? '저장 중...' : '런타임 저장'}

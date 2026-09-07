@@ -123,6 +123,7 @@ function HomePromptHero() {
           <textarea
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
+            data-demo="home-prompt"
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
@@ -194,6 +195,7 @@ function HomePromptHero() {
                 type="button"
                 disabled={!prompt.trim()}
                 onClick={handleSubmit}
+                data-demo="home-send"
                 className="flex size-9 items-center justify-center rounded-full bg-[#0f172a] text-white transition hover:bg-[#1e293b] disabled:cursor-not-allowed disabled:bg-[#cbd5e1]"
                 aria-label="전송"
               >

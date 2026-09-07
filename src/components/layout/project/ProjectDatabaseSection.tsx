@@ -146,6 +146,7 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
             <select
               value={method}
               onChange={(event) => setMethod(event.target.value as DatabaseMethod)}
+              data-demo="db-method"
               className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
             >
               {METHOD_OPTIONS.map((option) => (
@@ -200,6 +201,7 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
           type="button"
           disabled={needsPreview || needsCloudConnection || createMutation.isPending}
           onClick={() => createMutation.mutate()}
+          data-demo="db-create"
           className="mt-3 h-9 cursor-pointer rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {createMutation.isPending ? '만드는 중...' : 'DB 추가'}

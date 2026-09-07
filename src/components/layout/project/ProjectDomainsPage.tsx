@@ -345,6 +345,7 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
             <select
               value={hostingTarget}
               onChange={(event) => setHostingTarget(event.target.value as HostingTarget)}
+              data-demo="domain-target"
               className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
             >
               {availableTargetOptions.map((option) => (
@@ -359,6 +360,7 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
             <select
               value={bindType}
               onChange={(event) => setBindType(event.target.value as DomainType)}
+              data-demo="domain-type"
               className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
             >
               <option value="managed_subdomain">관리형 서브도메인 (.qeploy.com)</option>
@@ -373,6 +375,7 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
                 <input
                   value={label}
                   onChange={(event) => setLabel(event.target.value)}
+                  data-demo="domain-label"
                   placeholder="my-app"
                   className="h-9 flex-1 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
                 />
@@ -422,6 +425,7 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
           type="button"
           disabled={bindMutation.isPending}
           onClick={() => void handleBind()}
+          data-demo="domain-submit"
           className="mt-3 h-9 rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:opacity-50"
         >
           {bindMutation.isPending ? '연결 요청 중…' : '연결 요청'}

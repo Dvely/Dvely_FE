@@ -123,6 +123,7 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
           type="button"
           disabled={isBusy}
           onClick={handleApprove}
+          data-demo="approve"
           className="h-8 rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isBusy ? '처리 중' : '승인'}

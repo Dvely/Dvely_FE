@@ -63,6 +63,7 @@ function HeroSection() {
             size="sm"
             disabled={isLoggingIn}
             onClick={handleGitHubLogin}
+            data-demo="login"
             className="border-[#767676] py-2.5 text-md font-semibold rounded-2xl w-[578px] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <div className="flex items-center gap-4.5">

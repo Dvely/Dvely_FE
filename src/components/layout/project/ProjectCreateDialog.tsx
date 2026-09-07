@@ -137,6 +137,7 @@ function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogProps) {
               placeholder="예: 우리 카페 랜딩, 개발자 포트폴리오"
               disabled={isSubmitting}
               onChange={(event) => setName(event.target.value)}
+              data-demo="project-name"
               className="block w-full rounded-2xl bg-transparent px-5 py-4 text-[15px] leading-relaxed text-[#0f172a] outline-none placeholder:text-[#94a3b8] focus-visible:ring-2 focus-visible:ring-[#0f172a]/10 disabled:opacity-60"
             />
           </div>
@@ -173,6 +174,7 @@ function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogProps) {
             <button
               type="submit"
               disabled={!canSubmit}
+              data-demo="project-create"
               className={cn(
                 'h-11 flex-1 rounded-xl text-[14px] font-semibold transition',
                 canSubmit

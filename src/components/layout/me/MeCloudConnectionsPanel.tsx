@@ -97,18 +97,21 @@ function MeCloudConnectionsPanel() {
           <input
             value={displayName}
             onChange={(event) => setDisplayName(event.target.value)}
+            data-demo="cloud-name"
             placeholder="표시 이름"
             className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
           />
           <input
             value={region}
             onChange={(event) => setRegion(event.target.value)}
+            data-demo="cloud-region"
             placeholder="리전"
             className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
           />
           <input
             value={accessKeyId}
             onChange={(event) => setAccessKeyId(event.target.value)}
+            data-demo="cloud-key"
             placeholder={provider === 'AWS' ? 'Access Key ID' : '프로젝트/계정 ID'}
             className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
           />
@@ -116,6 +119,7 @@ function MeCloudConnectionsPanel() {
             type="password"
             value={secretAccessKey}
             onChange={(event) => setSecretAccessKey(event.target.value)}
+            data-demo="cloud-secret"
             placeholder={provider === 'AWS' ? 'Secret Access Key' : 'Service Account JSON'}
             className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px] sm:col-span-2"
           />
@@ -159,6 +163,7 @@ function MeCloudConnectionsPanel() {
           type="button"
           disabled={createMutation.isPending}
           onClick={() => void handleCreate()}
+          data-demo="cloud-create"
           className="mt-3 h-9 rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:opacity-50"
         >
           연결 등록

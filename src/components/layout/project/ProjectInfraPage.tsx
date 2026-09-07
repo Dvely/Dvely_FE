@@ -180,6 +180,7 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
                     type="button"
                     disabled={selected || selectConnectionMutation.isPending}
                     onClick={() => selectConnectionMutation.mutate(connection.cloudConnectionId)}
+                    data-demo="cloud-select"
                     className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold disabled:opacity-50"
                   >
                     {selected ? '선택됨' : '선택'}

@@ -3,6 +3,8 @@ import AppRouterEffects from '@/components/auth/AppRouterEffects';
 import GitHubAppInstallPromptDialog from '@/components/auth/GitHubAppInstallPromptDialog';
 import NotFoundPage from '@/components/layout/NotFoundPage';
 import AppSidebar from '@/components/common/AppSidebar';
+import { IS_DEMO } from '@/demo/config';
+import DemoDirectorPanel from '@/demo/DemoDirectorPanel';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -17,6 +19,7 @@ function RootComponent() {
     <>
       <AppRouterEffects />
       <GitHubAppInstallPromptDialog />
+      {IS_DEMO ? <DemoDirectorPanel /> : null}
 
       {!showAppChrome ? (
         <div className="min-h-screen w-full bg-[#f8fafc] text-[#0f172a]">

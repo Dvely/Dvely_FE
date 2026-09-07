@@ -1195,12 +1195,14 @@ function AgentConversationPanel({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={awaitingInputTaskId ? '위 질문에 답해 주세요' : '메시지를 입력하세요'}
+            data-demo="chat-input"
             className="min-h-[40px] flex-1 resize-none bg-transparent text-[13px] text-[#0f172a] outline-none placeholder:text-[#94a3b8] disabled:opacity-60"
           />
           <button
             type="button"
             disabled={!input.trim() || isInputLocked}
             onClick={handleSend}
+            data-demo="chat-send"
             className="mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#7c3aed] text-white transition hover:bg-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="전송"
           >

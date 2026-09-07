@@ -65,6 +65,17 @@ const T = {
   domainVerify: 3000,
 } as const;
 
+/**
+ * 상태가 바뀔 때마다 올린다.
+ *
+ * 화면 갱신을 이 값으로 판단한다 — 매 박동마다 조회를 무효화하면 아무 일도 없는데
+ * 화면 전체가 계속 다시 그려진다. 전이는 드문드문 일어나므로 바뀐 순간에만 알린다.
+ */
+let revision = 0;
+const touch = () => {
+  revision += 1;
+};
+
 const now = () => Date.now();
 const iso = (offsetMs = 0) => new Date(now() + offsetMs).toISOString();
 
@@ -337,6 +348,7 @@ function advanceTask(task: DemoTask) {
     if (elapsed(task.phaseStartedAt, T.agentThink)) {
       task.status = 'WAITING_INPUT';
       pushEvent(task, 'WAITING_INPUT', '진행 방식을 확인하고 있습니다');
+      touch();
     }
     return;
   }
@@ -354,6 +366,7 @@ function advanceTask(task: DemoTask) {
       task.approvalId = approval.approvalId;
       task.status = 'WAITING_APPROVAL';
       pushEvent(task, 'WAITING_APPROVAL', '변경 사항 승인을 기다립니다');
+      touch();
     }
     return;
   }
@@ -368,13 +381,16 @@ function advanceTask(task: DemoTask) {
         : '회원가입·로그인 화면과 할 일 목록을 만들었습니다. 프리뷰에서 확인해 보세요.';
     state.previewReady = true;
     pushEvent(task, 'COMPLETED', '작업을 마쳤습니다');
+    touch();
     addMessage('assistant', task.summary, task.taskId);
 
-    if (task.kind === 'backend') {
-      state.runtimeType = 'NODE_SERVER';
-      ensureAutoDatabase();
-      ensureBackendEnvVars();
-    }
+    /*
+      런타임은 여기서 바꾸지 않는다.
+
+      에이전트가 코드를 붙였다고 실행 방식까지 말없이 바꾸면, 사용자는 프리뷰가 왜
+      달라졌는지 알 길이 없다. 서버형으로 옮기는 것은 인프라 화면에서 사람이 정한다
+      — 그리고 그때 프리뷰용 DB 가 딸려 온다(어댑터의 런타임 저장 참고).
+    */
   }
 }
 
@@ -396,8 +412,10 @@ export function activeTask() {
 /* -------------------------------------------------------------------------- */
 
 /** 서버형 런타임으로 바꾸면 프리뷰용 DB 가 자동으로 딸려 온다 */
-function ensureAutoDatabase() {
+export function ensureAutoDatabase() {
   if (state.databases.some((item) => item.origin === 'PREVIEW_AUTO')) return;
+  // 쓸 수 있는 DB 를 이미 만들어 뒀으면 프리뷰용을 겹쳐 만들 이유가 없다
+  if (state.databases.some((item) => item.status === 'READY')) return;
   state.databases.push({
     databaseId: nextId(),
     projectId: DEMO.projectId,
@@ -418,7 +436,7 @@ function ensureAutoDatabase() {
   });
 }
 
-function ensureBackendEnvVars() {
+export function ensureBackendEnvVars() {
   const keys = ['DATABASE_URL', 'JWT_SECRET', 'NODE_ENV'];
   for (const key of keys) {
     if (state.envVars.some((item) => item.key === key)) continue;
@@ -471,6 +489,7 @@ function advanceDatabase(database: DemoState['databases'][number]) {
   database.updatedAt = iso();
   database.startedAt = null;
   ensureBackendEnvVars();
+  touch();
 }
 
 export function createServer(instanceType: string) {
@@ -508,6 +527,7 @@ function advanceServer(server: DemoState['servers'][number]) {
     server.status = 'BUILDING';
     server.startedAt = now();
     server.updatedAt = iso();
+    touch();
     return;
   }
 
@@ -517,6 +537,7 @@ function advanceServer(server: DemoState['servers'][number]) {
     server.instanceId = DEMO.ec2InstanceId;
     server.startedAt = now();
     server.updatedAt = iso();
+    touch();
     return;
   }
 
@@ -532,6 +553,7 @@ function advanceServer(server: DemoState['servers'][number]) {
 
     const connected = state.domains.find((item) => item.status === 'CONNECTED');
     if (connected) server.domainUrl = DEMO.domainUrl;
+    touch();
   }
 }
 
@@ -586,6 +608,7 @@ function advanceDeployment(deployment: DemoState['deployments'][number]) {
     : DEMO.pagesUrl;
   deployment.updatedAt = iso();
   deployment.startedAt = null;
+  touch();
 }
 
 export function createDomain(type: string, hostname: string, hostingTarget: string) {
@@ -627,6 +650,7 @@ function advanceDomain(domain: DemoState['domains'][number]) {
     domain.serverId = running.serverId;
     running.domainUrl = DEMO.domainUrl;
   }
+  touch();
 }
 
 export function createCloudConnection(displayName: string, region: string, accessKeyId: string) {
@@ -663,6 +687,7 @@ function advanceCloudConnection(connection: DemoState['cloudConnections'][number
   connection.lastCheckedAt = iso();
   connection.updatedAt = iso();
   connection.startedAt = null;
+  touch();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -675,11 +700,37 @@ function advanceCloudConnection(connection: DemoState['cloudConnections'][number
  * 타이머가 아니라 요청 시점 계산인 이유는, 화면이 이미 폴링을 하고 있어서다 —
  * 폴링이 곧 진행이고, 탭이 백그라운드로 내려가도 어긋나지 않는다.
  */
-export function advanceDemoClock() {
+export function advanceDemoClock(): boolean {
+  const before = revision;
   for (const task of state.tasks.values()) advanceTask(task);
   for (const deployment of state.deployments) advanceDeployment(deployment);
   for (const domain of state.domains) advanceDomain(domain);
   for (const server of state.servers) advanceServer(server);
   for (const database of state.databases) advanceDatabase(database);
   for (const connection of state.cloudConnections) advanceCloudConnection(connection);
+  return revision !== before;
+}
+
+/**
+ * 시나리오를 처음으로 되돌린다.
+ *
+ * 자동 재생을 다시 돌릴 때 앞선 회차의 승인·자원이 남아 있으면 "이미 다 되어 있는"
+ * 화면에서 시작하게 된다. 새로고침 없이 몇 번이고 다시 찍을 수 있어야 한다.
+ */
+export function resetDemoState() {
+  state.seq = 100;
+  state.projectCreated = false;
+  state.repositoryBound = false;
+  state.runtimeType = 'STATIC';
+  state.cloudConnectionId = null;
+  state.tasks.clear();
+  state.messages = [];
+  state.approvals = [];
+  state.deployments = [];
+  state.domains = [];
+  state.servers = [];
+  state.databases = [];
+  state.envVars = [];
+  state.cloudConnections = [];
+  state.previewReady = false;
 }
