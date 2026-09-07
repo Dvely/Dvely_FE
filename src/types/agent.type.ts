@@ -62,6 +62,17 @@ const taskClarificationSchema = z.object({
   options: z.array(clarificationOptionSchema).prefault([]),
   /** 선택지 말고 직접 적을 수도 있는지 */
   allowOther: z.boolean().nullable().prefault(false),
+  /**
+   * 답을 받는 대신 화면이 무언가를 해 줘야 하는 되묻기.
+   *
+   * `CONNECT_CLOUD` 는 "클라우드 연결이 없어서 못 간다" 는 뜻이다. 이때 사용자가 적을
+   * 답이 없다 — 다른 화면에서 연결을 마치고 돌아와야 한다. 그래서 입력창 대신 안내를
+   * 띄운다.
+   *
+   * 열어 둔다. 서버가 다른 종류를 더해도 화면이 통째로 못 읽으면 안 되고, 모르는 값은
+   * 지금까지처럼 자유 입력으로 떨어뜨린다.
+   */
+  actionType: z.string().nullable().prefault(null),
 });
 
 const postAgentDecisionResSchema = z.object({
