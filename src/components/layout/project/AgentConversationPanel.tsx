@@ -59,6 +59,20 @@ const suggestedPrompts = [
 ] as const;
 
 type AgentConversationPanelProps = {
+  /**
+   * 클라우드 연결이 없어서 멈춘 되묻기를 바깥에 알린다.
+   *
+   * 이 안내는 프리뷰 위로 덮어야 해서 이 패널이 그릴 수 없다. 상태만 올려 보내고
+   * 그리는 것은 페이지가 맡는다.
+   */
+  onCloudConnectRequired?: (payload: { taskId: string; question: string } | null) => void;
+  /**
+   * 값이 바뀌면 서버에 진행 상태를 다시 묻는다.
+   *
+   * 연결을 마치고 재시도한 뒤 이 패널이 들고 있던 "답을 기다리는 중" 이 그대로 남으면
+   * 안 된다. 화면이 스스로 지우는 대신 서버에 다시 물어 맞춘다.
+   */
+  restoreToken?: number;
   projectId: number;
   projectName: string;
   conversationId: number | null;
@@ -77,6 +91,9 @@ type AgentConversationPanelProps = {
 // 문구만 다른 두 벌이 된다. 서술은 서버 하나가 소유한다.
 
 const APPROVAL_WAIT_STATUSES = new Set(['WAITING_APPROVAL', 'WAITING_RESULT_APPROVAL']);
+
+/** 답이 아니라 화면이 무언가를 해 줘야 하는 되묻기 — 클라우드 연결이 없을 때 온다 */
+const CLOUD_CONNECT_ACTION = 'CONNECT_CLOUD';
 
 /**
  * 진행 중 상태 문구.
@@ -195,6 +212,8 @@ function AgentConversationPanel({
   onConversationActivity,
   onAgentTaskActiveChange,
   isDeployInFlight = false,
+  onCloudConnectRequired,
+  restoreToken = 0,
 }: AgentConversationPanelProps) {
   const [input, setInput] = useState('');
   const [overlayMessages, setOverlayMessages] = useState<ConversationMessage[]>([]);
@@ -214,6 +233,27 @@ function AgentConversationPanel({
     clarification: TaskClarification | null;
   } | null>(null);
   const awaitingInputTaskId = awaitingInput?.taskId ?? null;
+
+  /*
+    연결이 없어서 멈춘 되묻기는 답을 받을 게 아니다.
+
+    사용자가 여기 적을 수 있는 것이 없다 — 다른 화면에서 계정을 연결하고 프로젝트에
+    골라야 한다. 그래서 질문 폼 대신 안내를 띄우는데, 그 안내는 프리뷰 위로 덮어야
+    해서 이 패널이 그릴 수 없다. 상태만 올려 보낸다.
+
+    모르는 actionType 은 여기 안 걸린다 — 지금까지처럼 자유 입력으로 다뤄진다.
+  */
+  const cloudConnectRequest = useMemo(() => {
+    if (!awaitingInput || awaitingInput.clarification?.actionType !== CLOUD_CONNECT_ACTION) {
+      return null;
+    }
+    return { taskId: awaitingInput.taskId, question: awaitingInput.clarification.question };
+    // 값이 같으면 같은 객체를 유지한다 — 매 렌더 새 객체를 올려 보내면 바깥이 계속 다시 그린다
+  }, [awaitingInput]);
+
+  useEffect(() => {
+    onCloudConnectRequired?.(cloudConnectRequest);
+  }, [cloudConnectRequest, onCloudConnectRequired]);
   /*
     상한까지 기다렸는데 아직 도는 중. 실패가 아니라서 오류 알림을 띄우면 안 된다 —
     서버는 계속 돌고 결과는 채팅에 올라온다. 조용한 안내로 남긴다.
@@ -868,7 +908,7 @@ function AgentConversationPanel({
     return () => {
       cancelled = true;
     };
-  }, [conversationId]);
+  }, [conversationId, restoreToken]);
 
   const cancelTaskMutation = useMutation({
     mutationFn: (taskId: string) => deleteAgentTask(taskId),
@@ -1079,7 +1119,8 @@ function AgentConversationPanel({
           선택형인데도 채팅창은 계속 살아 있다 — 적어서 보내도 같은 태스크의 답으로 간다.
           고르는 쪽이 서버가 아는 이름과 어긋나지 않아 편할 뿐, 막을 이유는 없다.
         */}
-        {awaitingInput && canRenderAsChoices(awaitingInput.clarification) ? (
+        {cloudConnectRequest ? null : awaitingInput &&
+          canRenderAsChoices(awaitingInput.clarification) ? (
           <AgentClarificationForm
             key={awaitingInput.taskId}
             clarification={awaitingInput.clarification as TaskClarification}

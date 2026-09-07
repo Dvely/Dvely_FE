@@ -47,7 +47,9 @@ import {
 } from '@/components/layout/project/agentPreview.utils';
 import AgentChatListPanel from '@/components/layout/project/AgentChatListPanel';
 import AgentConversationPanel from '@/components/layout/project/AgentConversationPanel';
+import { postAgentTaskInput } from '@/api/agent';
 import AgentSitePreviewPanel from '@/components/layout/project/AgentSitePreviewPanel';
+import CloudConnectGuidePanel from '@/components/layout/project/CloudConnectGuidePanel';
 import GithubRepositoryPicker from '@/components/layout/project/GithubRepositoryPicker';
 import ProjectCodeExplorerPanel from '@/components/layout/project/ProjectCodeExplorerPanel';
 import { useHorizontalPanelResize } from '@/hooks/useHorizontalPanelResize';
@@ -78,6 +80,23 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [hasDisconnectedRepository, setHasDisconnectedRepository] = useState(false);
   const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
   const [previewFrameKey, setPreviewFrameKey] = useState(0);
+  /*
+    클라우드 연결이 없어서 멈춘 배포.
+
+    대화 패널이 그 상태를 알려 주면 여기서 프리뷰 위로 안내를 덮는다 — 하던 대화를
+    가리지 않으면서, 무엇을 해야 하는지 읽을 수 있는 자리가 그쪽이라서다.
+  */
+  const [cloudConnectRequest, setCloudConnectRequest] = useState<{
+    taskId: string;
+    question: string;
+  } | null>(null);
+  /*
+    연결을 마친 뒤 서버에 다시 물어보게 하는 값.
+
+    화면은 연결이 됐는지 스스로 알 수 없다. 재시도를 보내고 나면 이 값을 올려서 대화
+    패널이 진행 상태를 서버에서 다시 읽게 한다 — 화면이 짐작해서 지우지 않는다.
+  */
+  const [conversationRestoreToken, setConversationRestoreToken] = useState(0);
   /** 다시 띄우기를 눌렀는데 살아 있던 컨테이너에 도로 붙은 경우. 화면이 그대로라 설명이 필요하다 */
   const [didReattachPreview, setDidReattachPreview] = useState(false);
   const [isAgentTaskActive, setIsAgentTaskActive] = useState(false);
@@ -243,6 +262,21 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
       }),
     [previewUrl, projectPreview?.status],
   );
+
+  /*
+    "연결했어요" 를 누르면 서버에 다시 확인시킨다.
+
+    보내는 값은 쓰이지 않는다 — 재시도 신호일 뿐이다. 연결이 아직이면 서버가 같은
+    자리로 돌려보내고, 그때 안내가 다시 뜬다.
+  */
+  const retryCloudConnectMutation = useMutation({
+    mutationFn: (taskId: string) => postAgentTaskInput(taskId, { value: '연결 완료' }),
+    onSuccess: () => {
+      setCloudConnectRequest(null);
+      setConversationRestoreToken((token) => token + 1);
+      handleConversationActivity();
+    },
+  });
 
   const provisionPreviewMutation = useMutation({
     mutationFn: ({ force }: { force: boolean }) => postProjectPreviewSession(projectId, { force }),
@@ -433,6 +467,8 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               setIsNewConversation(false);
             }}
             onConversationActivity={handleConversationActivity}
+            onCloudConnectRequired={setCloudConnectRequest}
+            restoreToken={conversationRestoreToken}
             onAgentTaskActiveChange={handleAgentTaskActiveChange}
             isDeployInFlight={isDeployInFlight}
           />
@@ -450,7 +486,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
         />
       </section>
 
-      <section className="flex min-w-0 flex-1 flex-col bg-[#ececee]">
+      <section className="relative flex min-w-0 flex-1 flex-col bg-[#ececee]">
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e2e8f0] bg-white px-4 py-2.5">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <Link
@@ -544,6 +580,22 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             </button>
           </div>
         </header>
+
+        {/*
+          연결이 없어서 배포가 멈췄을 때 프리뷰 위로 덮는다.
+
+          대화를 가리지 않는 자리라 하던 이야기를 그대로 두고 읽을 수 있다. 프리뷰는
+          어차피 볼 것이 없는 상태이기도 하다 — 배포가 시작도 못 했으니.
+        */}
+        {cloudConnectRequest ? (
+          <CloudConnectGuidePanel
+            question={cloudConnectRequest.question}
+            projectId={projectId}
+            isRetrying={retryCloudConnectMutation.isPending}
+            onRetry={() => retryCloudConnectMutation.mutate(cloudConnectRequest.taskId)}
+            onClose={() => setCloudConnectRequest(null)}
+          />
+        ) : null}
 
         {rightPanelView === 'code' ? (
           <ProjectCodeExplorerPanel />

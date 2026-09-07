@@ -14,6 +14,8 @@ import {
   type GetCloudConnectionVerificationJobResType,
   type PostCloudConnectionCreateReqType,
   type PostCloudConnectionCreateResType,
+  getCloudRequirementsResSchema,
+  type GetCloudRequirementsResType,
 } from '@/types/cloudConnection.type';
 
 const endpoint = '/cloud-connections';
@@ -106,6 +108,47 @@ function useCloudConnectionListQuery(queryKey: unknown) {
   });
 }
 
+/**
+ * 연결에 무엇이 필요한지 조회 API GET.
+ *
+ * 방식을 바꾸면(역할 위임 ↔ 액세스 키) 필요한 값도 안내도 달라지므로 다시 묻는다.
+ */
+async function getCloudRequirements(provider: string, credentialType: string) {
+  return Http.instance
+    .get<GetCloudRequirementsResType>(`${endpoint}/requirements`, {
+      params: { provider, credentialType },
+    })
+    .then((response) => {
+      const body = succesResponse<GetCloudRequirementsResType>(response);
+      return getCloudRequirementsResSchema.parse(unwrapApiData(body));
+    })
+    .catch(errorResponse());
+}
+
+/**
+ * 연결 안내 조회 Query Hook.
+ *
+ * 열려 있을 때만 부른다 — 미리 받아 둘 이유가 없고, 서버 배포로만 바뀌는 내용이라
+ * 폴링도 하지 않는다.
+ *
+ * 실패를 조용히 넘기지 않는다. 안내를 못 받으면 사용자가 무엇을 해야 할지 알 수 없어서,
+ * 다른 조회들과 달리 화면이 그 실패를 말해 줘야 한다.
+ */
+function useCloudRequirementsQuery(
+  queryKey: unknown,
+  provider: string,
+  credentialType: string,
+  enabled: boolean,
+) {
+  if (!queryKey) throw new Error('queryKey is required');
+  return useQuery({
+    queryKey: ['cloud-requirements', queryKey, provider, credentialType],
+    queryFn: () => getCloudRequirements(provider, credentialType),
+    enabled: enabled && !!provider && !!credentialType,
+    ...defaultQueryOptions,
+  });
+}
+
 export {
   getCloudConnectionList,
   postCloudConnectionCreate,
@@ -115,4 +158,6 @@ export {
   postCloudConnectionVerificationJob,
   getCloudConnectionVerificationJob,
   useCloudConnectionListQuery,
+  getCloudRequirements,
+  useCloudRequirementsQuery,
 };
