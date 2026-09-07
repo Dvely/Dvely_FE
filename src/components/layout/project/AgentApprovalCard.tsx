@@ -69,7 +69,7 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
       <p className="mt-1 text-[12px] leading-relaxed text-[#6d28d9]">{copy.description}</p>
 
       {showSummary ? (
-        <p className="mt-2 break-all border-l-2 border-[#ddd6fe] pl-2.5 text-[12px] leading-relaxed text-[#6d28d9]/80">
+        <p className="mt-2 break-words border-l-2 border-[#ddd6fe] pl-2.5 text-[12px] leading-relaxed text-[#6d28d9]/80">
           {summary}
         </p>
       ) : null}
