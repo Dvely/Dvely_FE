@@ -508,9 +508,7 @@ function AgentConversationPanel({
           conversationId: targetConversationId,
           taskId: result.taskId,
         });
-        setAlertMessage(
-          '메시지는 저장됐지만 작업이 시작되지 않았습니다. 다시 요청해 주세요.',
-        );
+        setAlertMessage('메시지는 저장됐지만 작업이 시작되지 않았습니다. 다시 요청해 주세요.');
       }
 
       setIsAssistantReplying(false);
@@ -767,7 +765,9 @@ function AgentConversationPanel({
       setAwaitingInput(null);
       if (context?.userMessage) {
         setOverlayMessages((prev) => {
-          const next = prev.filter((message) => message.messageId !== context.userMessage.messageId);
+          const next = prev.filter(
+            (message) => message.messageId !== context.userMessage.messageId,
+          );
           writeSessionMessages(context.targetConversationId, next);
           return next;
         });
@@ -990,10 +990,7 @@ function AgentConversationPanel({
     if (!open) setAlertMessage(null);
   };
 
-  const handleDecideApproval = (
-    action: 'approve' | 'reject',
-    payload?: Record<string, string>,
-  ) => {
+  const handleDecideApproval = (action: 'approve' | 'reject', payload?: Record<string, string>) => {
     if (decideApprovalMutation.isPending || isAssistantReplying || !activeApproval) {
       return;
     }
