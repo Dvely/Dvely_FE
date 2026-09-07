@@ -18,6 +18,21 @@ import {
 
 const PROJECT_PREVIEW_POLL_MS = 4000;
 
+/**
+ * 떠 있는 프리뷰를 다시 확인하는 간격.
+ *
+ * 조회 자체가 정리 경로다 — 서버는 ACTIVE 행을 읽을 때 컨테이너가 실제로 있는지 한 번
+ * 보고, 없으면 그 자리에서 EXPIRED 로 내리고 빈 값을 준다. 그래서 이 폴링은 상태를
+ * 구경하는 게 아니라 **죽은 세션을 실제로 걷어낸다.**
+ *
+ * 화면은 프레임이 살아 있는지 알 수 없다(다른 오리진이라 404 도 onload 로 온다).
+ * 이 조회가 그걸 대신 알아봐 주는 유일한 길이라 ACTIVE 일 때도 멈추지 않는다.
+ *
+ * 30초는 짧지 않다 — 사라진 컨테이너는 사용자가 뭘 하든 안 돌아오므로 급할 이유가 없고,
+ * 이 조회는 컨테이너 확인을 한 번 곁들이므로 공짜도 아니다.
+ */
+const ACTIVE_PREVIEW_RECHECK_MS = 30_000;
+
 function unwrapApiData<T>(body: T | ApiResponse<T>): T {
   if (body && typeof body === 'object' && 'data' in body && body.data != null) {
     return body.data;
@@ -104,20 +119,41 @@ async function getProjectPreviewSession(projectId: number) {
     .catch(errorResponse());
 }
 
-/** 프로젝트 프리뷰 띄우기 API POST. 200 즉시 활성, 202 준비 중 */
-async function postProjectPreviewSession(projectId: number) {
+/**
+ * 프로젝트 프리뷰 띄우기 API POST.
+ *
+ * **새로 빌드했는지 여부는 본문이 아니라 상태 코드로 온다.** 서버는 컨테이너가 이미 떠
+ * 있으면 다시 빌드하지 않고 그 세션에 도로 붙이는데, 그 구분이 200/202 다:
+ *
+ * - **200** — 살아 있던 컨테이너에 다시 연결했다. 리빌드하지 않았고 바로 쓸 수 있다
+ * - **202** — 새로 빌드를 시작했거나 이미 준비 중이다. 상태를 지켜봐야 한다
+ *
+ * 응답 DTO 에는 이 구분이 없어서 상태 코드가 유일한 근거다. 그래서 여기서 같이 돌려준다 —
+ * 세션 ID 가 같은지로 짐작할 수도 있지만 그건 우연히 맞는 방식이고, 계약은 이쪽이다.
+ *
+ * `force` 를 주면 붙지 않고 항상 새로 빌드한다 — 떠 있던 컨테이너를 버리고 preview 브랜치를
+ * 다시 받아 온다. **멀쩡한 프리뷰도 죽이므로** 자동 재시도에 물리면 안 되고, 사용자가
+ * 그러기로 정했을 때만 보낸다. force 요청은 언제나 202 라 재연결 판정과 부딪히지 않는다.
+ */
+async function postProjectPreviewSession(projectId: number, { force = false } = {}) {
   const { projectId: id } = getProjectPreviewSessionParamsSchema.parse({ projectId });
 
   return Http.instance
     .post<ApiResponse<PostProjectPreviewSessionResType>>(`/projects/${id}/preview-session`, undefined, {
+      // 켤 때만 붙인다 — 기본 요청은 지금까지와 한 글자도 다르지 않게 둔다
+      params: force ? { force: true } : undefined,
       validateStatus: (status) => status === 200 || status === 202,
     })
     .then((response) => {
       const body = succesResponse<ApiResponse<PostProjectPreviewSessionResType>>(response);
-      return postProjectPreviewSessionResSchema.parse({
-        ...emptyProjectPreviewSession(id),
-        ...unwrapApiData(body),
-      });
+      return {
+        session: postProjectPreviewSessionResSchema.parse({
+          ...emptyProjectPreviewSession(id),
+          ...unwrapApiData(body),
+        }),
+        /** 200 이면 리빌드 없이 살아 있던 컨테이너에 다시 붙은 것이다 */
+        reattached: response.status === 200,
+      };
     })
     .catch(errorResponse());
 }
@@ -168,6 +204,12 @@ function useProjectPreviewQuery(
       // 여기서 멈추면 PROVISIONING → ACTIVE 전이를 통째로 놓치고 작업이 끝날 때까지
       // "프리뷰 없음" 화면이 남는다.
       if (isAgentTaskActive && status == null) return PROJECT_PREVIEW_POLL_MS;
+      // 떠 있어도 계속 확인한다. 컨테이너가 밖에서 죽는 일이 있고(도커 재시작·외부 정리),
+      // 그때 이 조회가 세션을 정리해 줘야 화면이 "다시 띄우기" 로 돌아올 수 있다.
+      //
+      // 세션 status 만 따로 읽으면 안 된다 — 그 값은 TTL 30분까지 ACTIVE 로 남는다.
+      // 컨테이너 확인이 붙어 있는 건 이 조회 쪽이다.
+      if (status === 'ACTIVE') return ACTIVE_PREVIEW_RECHECK_MS;
       return false;
     },
   });

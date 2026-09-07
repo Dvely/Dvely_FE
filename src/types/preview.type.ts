@@ -22,13 +22,13 @@ const projectPreviewSessionStatusSchema = z.enum(['ACTIVE', 'PROVISIONING', 'FAI
  */
 const getPreviewSessionStatusResSchema = z.object({
   /** 세션 ID */
-  sessionId: z.string().min(1, '세션 ID가 없습니다.').prefault(''),
+  sessionId: z.string().prefault(''),
   /** 프로젝트 ID */
   projectId: z.number().int(),
   /** 태스크 ID. 없으면 null */
   taskId: z.string().nullable().prefault(''),
   /** 세션 상태 */
-  sessionStatus: z.string().min(1, '세션 상태가 없습니다.').prefault(''),
+  sessionStatus: z.string().prefault(''),
   /** 컨테이너 실행 여부 */
   containerRunning: z.boolean(),
   /** OOM 종료 여부 */
@@ -48,7 +48,7 @@ const getPreviewSessionStatusResSchema = z.object({
  */
 const getPreviewSessionLogsResSchema = z.object({
   /** 세션 ID */
-  sessionId: z.string().min(1, '세션 ID가 없습니다.').prefault(''),
+  sessionId: z.string().prefault(''),
   /** 컨테이너 실행 여부 */
   containerRunning: z.boolean(),
   /** 로그 텍스트. 없으면 null */
@@ -91,7 +91,7 @@ const postProjectPreviewSessionResSchema = getProjectPreviewSessionResSchema;
  */
 const postPreviewAccessResSchema = z.object({
   /** Preview 세션 ID */
-  sessionId: z.string().min(1, '세션 ID가 없습니다.').prefault(''),
+  sessionId: z.string().prefault(''),
   /** 이 호출로 새로 발급된 프리뷰 주소. 이전 주소는 회전으로 즉시 무효 */
   previewUrl: z.string().min(1, '프리뷰 주소가 없습니다.'),
   /** 세션 만료 시각. 없으면 null */

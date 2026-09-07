@@ -4,11 +4,21 @@ import { deployTargetTypeSchema } from '@/types/common.enum';
 /**
  * POST /projects/{projectId}/deployments 배포 요청
  */
+/**
+ * 프론트를 어디에 올릴지. 생략하면 프로젝트에 저장된 현재 설정을 쓴다.
+ *
+ * 값을 닫지 않는다 — 호스팅 종류는 늘어나기 쉽고(로드맵에 AWS_S3_FRONTEND 같은 세분화가
+ * 이미 있다), 닫아두면 값이 하나 늘 때 배포 화면이 통째로 파싱에 실패한다.
+ */
+const frontendHostingTypeSchema = z.string().prefault('');
+
 const postProjectDeploymentCreateReqSchema = z.object({
   /** 배포 대상 유형 */
   deployTargetType: deployTargetTypeSchema,
   /** 버전 이름. LATEST면 null */
   versionName: z.string().nullable().prefault(''),
+  /** 프론트 호스팅 방식. 생략하면 프로젝트 설정을 따른다 */
+  frontendHostingType: z.string().optional(),
 });
 
 const deployResponseSchema = z.object({
@@ -17,15 +27,23 @@ const deployResponseSchema = z.object({
   /** 프로젝트 ID */
   projectId: z.number().int(),
   /** 배포 대상 유형 */
-  deployTargetType: z.string().min(1, '배포 대상 유형이 없습니다.').prefault(''),
+  deployTargetType: z.string().prefault(''),
   /** 버전 이름. 없으면 null */
   versionName: z.string().nullable().prefault(''),
   /** 배포 상태 */
-  status: z.string().min(1, '배포 상태가 없습니다.').prefault(''),
+  status: z.string().prefault(''),
   /** GitHub Pages URL. 없으면 null */
   pagesUrl: z.string().nullable().prefault(''),
   /** 생성 시각 */
-  createdAt: z.string().min(1, '생성 시각이 없습니다.').prefault(''),
+  createdAt: z.string().prefault(''),
+  /**
+   * 이 요청이 만든 승인 ID. 비어 있으면 승인 없이 바로 배포가 돈다.
+   *
+   * EC2 호스팅만 채워진다 — 과금되는 인스턴스를 띄우기 때문이다. 그때는 deploymentId 가
+   * 배포 id 가 아니라 **대기 중인 서버 id** 이고, 승인하기 전까지 아무것도 진행되지 않는다.
+   * 이 값을 안 읽으면 화면이 "요청됨" 으로만 보여서 멈춰 있는 것을 진행처럼 읽게 된다.
+   */
+  approvalIds: z.array(z.number().int()).prefault([]),
 });
 
 const deploymentHistorySchema = z.object({
@@ -34,17 +52,17 @@ const deploymentHistorySchema = z.object({
   /** 프로젝트 ID */
   projectId: z.number().int(),
   /** 배포 대상 유형 */
-  deployTargetType: z.string().min(1, '배포 대상 유형이 없습니다.').prefault(''),
+  deployTargetType: z.string().prefault(''),
   /** 버전 라벨. 없으면 null */
   versionLabel: z.string().nullable().prefault(''),
   /** 배포 URL. 없으면 null */
   deployedUrl: z.string().nullable().prefault(''),
   /** 배포 상태 */
-  status: z.string().min(1, '배포 상태가 없습니다.').prefault(''),
+  status: z.string().prefault(''),
   /** 트리거 시각 */
-  triggeredAt: z.string().min(1, '트리거 시각이 없습니다.').prefault(''),
+  triggeredAt: z.string().prefault(''),
   /** 수정 시각 */
-  updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
+  updatedAt: z.string().prefault(''),
   /** 재시도 원본 이력 ID. 없으면 null */
   retriedFromHistoryId: z.number().int().nullable().prefault(null),
   /**
@@ -78,7 +96,7 @@ const versionDetailSchema = z.object({
   /** 버전 ID */
   versionId: z.number().int(),
   /** 버전 이름 */
-  versionName: z.string().min(1, '버전 이름이 없습니다.').prefault(''),
+  versionName: z.string().prefault(''),
   /** 커밋 SHA. 없으면 null */
   commitSha: z.string().nullable().prefault(''),
   /** 제목. 없으면 null */
@@ -103,7 +121,7 @@ const versionSummarySchema = z.object({
   /** 버전 ID */
   versionId: z.number().int(),
   /** 버전 이름 */
-  versionName: z.string().min(1, '버전 이름이 없습니다.').prefault(''),
+  versionName: z.string().prefault(''),
   /** 커밋 SHA. 없으면 null */
   commitSha: z.string().nullable().prefault(''),
   /** 제목. 없으면 null */
@@ -120,7 +138,7 @@ const deploymentCandidateSchema = z.object({
   /** 버전 ID */
   versionId: z.number().int(),
   /** 버전 이름 */
-  versionName: z.string().min(1, '버전 이름이 없습니다.').prefault(''),
+  versionName: z.string().prefault(''),
   /** 커밋 SHA. 없으면 null */
   commitSha: z.string().nullable().prefault(''),
   /** 제목. 없으면 null */
@@ -141,28 +159,28 @@ const deploymentStatusSchema = z.object({
   /** 프로젝트 ID */
   projectId: z.number().int(),
   /** 배포 대상 유형 */
-  deployTargetType: z.string().min(1, '배포 대상 유형이 없습니다.').prefault(''),
+  deployTargetType: z.string().prefault(''),
   /** 버전 라벨. 없으면 null */
   versionLabel: z.string().nullable().prefault(''),
   /** 배포 URL. 없으면 null */
   deployedUrl: z.string().nullable().prefault(''),
   /** 배포 상태 */
-  status: z.string().min(1, '배포 상태가 없습니다.').prefault(''),
+  status: z.string().prefault(''),
   /** 빌드 상태. 없으면 null */
   buildStatus: z.string().nullable().prefault(''),
   /** 빌드 결과. 없으면 null */
   buildConclusion: z.string().nullable().prefault(''),
   /** 트리거 시각 */
-  triggeredAt: z.string().min(1, '트리거 시각이 없습니다.').prefault(''),
+  triggeredAt: z.string().prefault(''),
   /** 수정 시각 */
-  updatedAt: z.string().min(1, '수정 시각이 없습니다.').prefault(''),
+  updatedAt: z.string().prefault(''),
 });
 
 const deploymentStepSchema = z.object({
   /** 스텝 번호 */
   number: z.number().int(),
   /** 스텝 이름 */
-  name: z.string().min(1, '스텝 이름이 없습니다.').prefault(''),
+  name: z.string().prefault(''),
   /** 상태. 없으면 null */
   status: z.string().nullable().prefault(''),
   /** 결과. 없으면 null */
@@ -173,7 +191,7 @@ const deploymentJobSchema = z.object({
   /** Job ID */
   jobId: z.number().int(),
   /** Job 이름 */
-  name: z.string().min(1, 'Job 이름이 없습니다.').prefault(''),
+  name: z.string().prefault(''),
   /** 상태. 없으면 null */
   status: z.string().nullable().prefault(''),
   /** 결과. 없으면 null */
@@ -206,6 +224,7 @@ type DeploymentStatus = z.infer<typeof deploymentStatusSchema>;
 type DeploymentLogs = z.infer<typeof deploymentLogsSchema>;
 
 export {
+  frontendHostingTypeSchema,
   postProjectDeploymentCreateReqSchema,
   deployResponseSchema,
   deploymentHistorySchema,
