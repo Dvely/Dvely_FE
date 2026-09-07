@@ -260,17 +260,19 @@ function HeroSection() {
               </span>
             ))}
           </p>
-          <span className="mb-2 inline-flex h-[1.1em] overflow-hidden text-[32px] leading-none font-bold sm:text-[40px]">
-            <span
+          <div className="mb-1 h-10 w-[8.5rem] overflow-hidden text-[32px] font-bold sm:h-12 sm:w-[11rem] sm:text-[40px]">
+            <div
               className={cn(
-                'flex flex-col transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                phase === 'roll' || !showLogo ? '-translate-y-1/2' : 'translate-y-0',
+                'transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                phase === 'roll' || !showLogo
+                  ? '-translate-y-10 sm:-translate-y-12'
+                  : 'translate-y-0',
               )}
             >
-              <span className="text-[#94A3B8]">AI</span>
-              <span className="text-[#7C3AED]">Agent</span>
-            </span>
-          </span>
+              <p className="flex h-10 items-center leading-none text-[#94A3B8] sm:h-12">AI</p>
+              <p className="flex h-10 items-center leading-none text-[#7C3AED] sm:h-12">Agent</p>
+            </div>
+          </div>
         </div>
 
         <div
