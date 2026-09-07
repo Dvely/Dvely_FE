@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>기존 제품과의 비교</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1400px; height: 800px; overflow: hidden; background: #fff; }
+    body {
+      font-family: "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", sans-serif;
+      color: #2c333a;
+      padding: 22px 32px 18px;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 26px;
+      font-weight: 800;
+      color: #24344a;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 14px;
+    }
+    .title::before {
+      content: "";
+      width: 5px;
+      height: 24px;
+      border-radius: 1px;
+      background: #24344a;
+    }
+    table {
+      width: 100%;
+      flex: 1;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 14.5px;
+      border: 1px solid #d8dde4;
+    }
+    col.metric { width: 16%; }
+    col.body { width: 42%; }
+    th, td {
+      border: 1px solid #d8dde4;
+      vertical-align: middle;
+    }
+    thead th {
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      height: 48px;
+      text-align: center;
+      letter-spacing: -0.02em;
+    }
+    thead th.metric,
+    thead th.old { background: #313e4e; }
+    thead th.qeploy { background: #3662e2; font-weight: 800; }
+    td.metric {
+      background: #f2f4f9;
+      font-weight: 800;
+      font-size: 16px;
+      text-align: center;
+      color: #24344a;
+      letter-spacing: -0.03em;
+    }
+    td.old, td.qeploy {
+      text-align: left;
+      padding: 12px 18px;
+      line-height: 1.55;
+      font-weight: 500;
+      color: #2c333a;
+    }
+    td.old { background: #fff; }
+    td.qeploy { background: #f0f6fe; }
+  </style>
+</head>
+<body>
+  <div class="title">기존 제품과의 비교</div>
+  <table>
+    <colgroup>
+      <col class="metric" />
+      <col class="body" />
+      <col class="body" />
+    </colgroup>
+    <thead>
+      <tr>
+        <th class="metric">측정지표</th>
+        <th class="old">기존 AI 웹 빌더 (v0 / Lovable)</th>
+        <th class="qeploy">본 프로젝트 (Qeploy)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="metric">편리성</td>
+        <td class="old">채팅으로 화면을 바로 만들 수 있으나, 배포·도메인·저장소는 각각 다른 콘솔에서 이어 하는 경우가 많다.</td>
+        <td class="qeploy">로그인부터 계획·코드·프리뷰·GitHub·배포·도메인까지 한 화면 워크스페이스에서 이어진다.</td>
+      </tr>
+      <tr>
+        <td class="metric">기능성</td>
+        <td class="old">LLM이 코드를 생성하고 프리뷰를 띄운다. 변경은 대화로 덮어쓰며 공식 승인 단계는 없다.</td>
+        <td class="qeploy">자연어 → 실행 계획 → 코드·프리뷰 생성 후 GitHub 반영. 배포·도메인·환경변수·인프라도 승인 대상이다.</td>
+      </tr>
+      <tr>
+        <td class="metric">사용성</td>
+        <td class="old">생성 속도는 빠르나, 프로덕션 반영 여부를 사용자가 도구 밖에서 판단해야 한다.</td>
+        <td class="qeploy">승인 정책(코드 변경/배포 ON·OFF)으로 자동 반영 범위를 조절할 수 있어 실서비스 수정에 쓰기 쉽다.</td>
+      </tr>
+      <tr>
+        <td class="metric">통합성</td>
+        <td class="old">생성 도구, GitHub, 호스팅, 도메인 설정이 제품마다 분리되어 워크플로가 끊긴다.</td>
+        <td class="qeploy">에이전트 채팅·승인·GitHub·배포·도메인·환경변수를 하나의 프로젝트 파이프라인으로 연결한다.</td>
+      </tr>
+      <tr>
+        <td class="metric">안전성</td>
+        <td class="old">대화 한 번에 코드가 바로 바뀌어, 실서비스에 의도치 않은 변경이 반영될 위험이 있다.</td>
+        <td class="qeploy">실행 계획 승인과 작업 결과 승인을 분리해, 확인 없이 배포·도메인 변경이 나가지 않는다.</td>
+      </tr>
+      <tr>
+        <td class="metric">유지보수성</td>
+        <td class="old">신규 화면 생성에 강하고, 이미 운영 중인 서비스의 수정·재배포는 보조적이다.</td>
+        <td class="qeploy">기존 저장소를 연결해 수정·프리뷰·재배포할 수 있어 운영 중인 웹서비스 유지보수에 맞다.</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>
