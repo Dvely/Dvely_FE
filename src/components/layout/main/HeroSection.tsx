@@ -196,16 +196,16 @@ function HeroSection() {
       </header>
 
       {bannerOpen ? (
-        <div className="absolute inset-x-0 top-16 z-20 flex justify-center px-4">
-          <div className="flex w-full max-w-[920px] items-center gap-3 rounded-lg bg-[#1e1b4b] px-4 py-2.5 text-white">
-            <p className="min-w-0 flex-1 truncate text-[13px]">
+        <div className="absolute inset-x-0 top-16 z-20">
+          <div className="relative flex w-full items-center justify-center bg-[#1e1b4b] px-12 py-2.5 text-white">
+            <p className="truncate text-center text-[13px]">
               <b>쓰던 GitHub에 Qeploy를 연결하세요.</b> 말로 설명하면 홈페이지가 만들어집니다.
             </p>
             <button
               type="button"
               onClick={handleAuth}
               disabled={isLoggingIn}
-              className="shrink-0 rounded-md border border-white/70 px-3 py-1 text-[12px] font-semibold disabled:opacity-60"
+              className="ml-3 shrink-0 rounded-md border border-white/70 px-3 py-1 text-[12px] font-semibold disabled:opacity-60"
             >
               연결 방법 보기
             </button>
@@ -213,7 +213,7 @@ function HeroSection() {
               type="button"
               aria-label="안내 닫기"
               onClick={() => setBannerOpen(false)}
-              className="shrink-0 text-white/80 hover:text-white"
+              className="absolute right-4 text-white/80 hover:text-white"
             >
               <X className="size-4" />
             </button>
@@ -221,7 +221,7 @@ function HeroSection() {
         </div>
       ) : null}
 
-      <div className="relative z-10 flex h-full items-center justify-center px-6">
+      <div className="relative z-10 flex h-full items-center justify-center">
         <div className="pointer-events-none absolute inset-0">
           <span
             className={cn(
