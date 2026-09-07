@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { ArrowRight, ChevronDown, X } from 'lucide-react';
+import HeaderContainer from '@/components/layout/header/HeaderContainer';
 import { useGitHubLogin } from '@/hooks/useGitHubLogin';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 import { cn } from '@/lib/utils';
@@ -30,15 +31,6 @@ const ORBIT_WORDS = [
   { word: 'Agent', slot: 'right' },
   { word: 'Preview', slot: 'bottom' },
   { word: 'Deploy', slot: 'left' },
-] as const;
-
-const NAV_ITEMS = [
-  { label: '서비스 소개', id: 'intro' },
-  { label: '고민', id: 'pain' },
-  { label: '결과물', id: 'showcase' },
-  { label: '진행 과정', id: 'process' },
-  { label: '요금', id: 'pricing' },
-  { label: '후기', id: 'reviews' },
 ] as const;
 
 const PHASE_AT: Array<[Phase, number]> = [
@@ -158,42 +150,7 @@ function HeroSection() {
 
   return (
     <section className="relative isolate h-screen w-full overflow-hidden bg-white text-[#111827]">
-      <header className="absolute inset-x-0 top-0 z-30 flex items-center justify-between px-6 py-4 lg:px-10">
-        <Link to="/" className="relative z-10 text-[18px] font-bold tracking-tight">
-          Qeploy
-        </Link>
-        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-7 text-[13px] font-medium text-[#334155] xl:flex">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => scrollToSection(item.id)}
-              className="whitespace-nowrap transition hover:text-[#7C3AED]"
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-        <div className="relative z-10 flex items-center gap-2">
-          <button
-            type="button"
-            disabled={isLoggingIn}
-            onClick={handleAuth}
-            className="h-9 px-3 text-[13px] font-semibold text-[#334155] transition hover:text-[#111827] disabled:opacity-60"
-          >
-            {isLoggedIn ? '워크스페이스' : '로그인'}
-          </button>
-          <button
-            type="button"
-            disabled={isLoggingIn}
-            onClick={handleAuth}
-            className="inline-flex h-9 items-center gap-1 rounded-full bg-[#7C3AED] px-4 text-[13px] font-semibold text-white transition hover:bg-[#6D28D9] disabled:opacity-60"
-          >
-            시작하기
-            <ArrowRight className="size-3.5" />
-          </button>
-        </div>
-      </header>
+      <HeaderContainer />
 
       {bannerOpen ? (
         <div className="absolute inset-x-0 top-16 z-20">
