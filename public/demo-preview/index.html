@@ -83,6 +83,20 @@
   .remove:hover { background: none; color: var(--danger); }
   .empty { color: var(--muted); font-size: 13.5px; text-align: center; padding: 28px 0; }
   .count { font-size: 12.5px; color: var(--muted); margin-top: 16px; text-align: right; }
+  .apifail {
+    margin-top: 14px; padding: 11px 13px; border-radius: 9px;
+    background: #fef2f2; border: 1px solid #fecaca;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .apifail b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--danger); }
+  .apifail span { font-size: 12.5px; color: #991b1b; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px; margin-left: auto;
+    padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600;
+  }
+  .badge.down { background: #fef2f2; color: var(--danger); }
+  .badge.up { background: #ecfdf5; color: #047857; }
+  .badge i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; font-style: normal; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -91,6 +105,7 @@
   <div class="brand">
     <span class="mark">할</span>
     <h1>함께 할 일</h1>
+    <span class="badge down" id="apiBadge"><i></i><span id="apiBadgeText">API 연결 안 됨</span></span>
   </div>
 
   <!-- 회원가입 / 로그인 -->
@@ -107,6 +122,10 @@
         <input id="password" type="password" autocomplete="current-password" placeholder="8자 이상" required>
       </div>
       <p class="error" id="authError" hidden></p>
+      <div class="apifail" id="apiFail" hidden>
+        <b>POST /api/auth/signup — 503</b>
+        <span>서버에 연결할 수 없습니다. 백엔드가 아직 없습니다.</span>
+      </div>
       <div class="field">
         <button type="submit" id="authSubmit">가입하기</button>
       </div>
@@ -134,6 +153,14 @@
 
 <script>
 (function () {
+  /*
+    백엔드가 붙었는지는 부모 창이 localStorage 에 남긴다.
+
+    프리뷰는 같은 오리진의 iframe 이라 저장소를 공유한다. 이 값 하나로 회원가입이
+    실패하는 화면과 성공하는 화면이 갈린다 — 인프라를 붙이기 전과 후를 말이 아니라
+    동작으로 보여주는 유일한 방법이다.
+  */
+  var BACKEND_READY = 'demo-backend-ready';
   var USERS = 'demo-app-users';
   var SESSION = 'demo-app-session';
   var TODOS = 'demo-app-todos';
@@ -144,6 +171,11 @@
   }
   function write(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* 저장이 막힌 환경 */ }
+  }
+
+  function backendReady() {
+    try { return localStorage.getItem(BACKEND_READY) === '1'; }
+    catch (e) { return false; }
   }
 
   var mode = 'signup';
@@ -238,6 +270,14 @@
     event.preventDefault();
     var email = document.getElementById('email').value.trim();
     var password = document.getElementById('password').value;
+
+    if (!backendReady()) {
+      document.getElementById('apiFail').hidden = false;
+      errorEl.hidden = true;
+      return;
+    }
+    document.getElementById('apiFail').hidden = true;
+
     var users = read(USERS, {});
 
     if (mode === 'signup') {
@@ -277,6 +317,17 @@
     setMode('login');
     render();
   };
+
+  function paintApiBadge() {
+    var ready = backendReady();
+    var badge = document.getElementById('apiBadge');
+    badge.className = 'badge ' + (ready ? 'up' : 'down');
+    document.getElementById('apiBadgeText').textContent = ready ? 'API 연결됨' : 'API 연결 안 됨';
+    if (ready) document.getElementById('apiFail').hidden = true;
+  }
+
+  setInterval(paintApiBadge, 500);
+  paintApiBadge();
 
   setMode(currentEmail() ? 'login' : 'signup');
   render();

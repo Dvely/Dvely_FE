@@ -9,6 +9,7 @@
  * `succesResponse` → `body.data` → zod 파싱까지 실제 경로를 그대로 탄다.
  */
 import type { AxiosAdapter, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import type { DemoTask } from '@/demo/scenario';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { demoMs } from '@/demo/config';
 import {
@@ -25,7 +26,6 @@ import {
   createTask,
   decideApproval,
   demoPreviewUrl,
-  ensureAutoDatabase,
   ensureBackendEnvVars,
   findApproval,
   getTask,
@@ -439,7 +439,10 @@ const routes: [string, RegExp, Handler][] = [
         attempt: 1,
         maxAttempts: 3,
         retryable: true,
-        pendingApprovalId: task.status === 'WAITING_APPROVAL' ? task.approvalId : null,
+        pendingApprovalId:
+          task.status === 'WAITING_APPROVAL'
+            ? (task.approvalIds.find((id) => findApproval(id)?.status === 'PENDING') ?? null)
+            : null,
       };
     },
   ],
@@ -527,11 +530,8 @@ const routes: [string, RegExp, Handler][] = [
     /^\/projects\/\d+\/preview\/runtime$/,
     (ctx) => {
       state.runtimeType = String(ctx.body.runtimeType ?? 'STATIC');
-      // 서버형으로 옮기면 서버가 프리뷰용 DB 를 마련하고 접속 정보를 환경변수로 넣는다
-      if (state.runtimeType === 'NODE_SERVER') {
-        ensureAutoDatabase();
-        ensureBackendEnvVars();
-      }
+      // 서버형으로 옮기면 접속 정보가 환경변수로 들어온다
+      if (state.runtimeType === 'NODE_SERVER') ensureBackendEnvVars();
       return {
         projectId: DEMO.projectId,
         runtimeType: state.runtimeType,
@@ -551,7 +551,17 @@ const routes: [string, RegExp, Handler][] = [
     /^\/projects\/\d+\/deployments$/,
     (ctx) => {
       const hosting = String(ctx.body.frontendHostingType ?? 'GITHUB_PAGES');
-      const deployment = createDeployment(hosting);
+      // EC2·S3 만 승인을 거친다 — 과금 자원을 띄우기 때문이다. 실제 서버와 같은 규칙이다
+      const requiresApproval = hosting.startsWith('AWS');
+      const deployment = createDeployment(hosting, !requiresApproval);
+      if (requiresApproval) {
+        const approval = addApproval(
+          'DEPLOYMENT',
+          `${hosting} 로 배포합니다. 인스턴스가 켜져 있는 동안 과금됩니다.`,
+          null,
+        );
+        deployment.approvalId = approval.approvalId;
+      }
       return {
         deploymentId: deployment.historyId,
         projectId: DEMO.projectId,
@@ -612,7 +622,7 @@ const routes: [string, RegExp, Handler][] = [
   ['GET', /^\/deployments\/(\d+)\/failure-analysis$/, () => NO_CONTENT],
   ['POST', /^\/deployments\/(\d+)\/failure-analysis$/, () => NO_CONTENT],
   ['POST', /^\/deployments\/(\d+)\/retry$/, () => {
-    const deployment = createDeployment('GITHUB_PAGES');
+    const deployment = createDeployment('GITHUB_PAGES', true);
     return {
       deploymentId: deployment.historyId,
       projectId: DEMO.projectId,
@@ -835,12 +845,21 @@ const routes: [string, RegExp, Handler][] = [
  * **순서를 먼저 본다**. 첫 요청은 화면 만들기, 그다음 요청은 백엔드 붙이기다.
  * 문구에 백엔드 신호가 뚜렷하면 순서보다 그쪽을 따른다.
  */
-function taskKindFor(content: string): 'code' | 'backend' | 'generic' {
-  if (/백엔드|서버|api|데이터베이스|\bdb\b/i.test(content) && state.runtimeType === 'STATIC') {
-    return 'backend';
-  }
-  if (state.tasks.size === 0) return 'code';
-  return state.runtimeType === 'STATIC' ? 'backend' : 'generic';
+function taskKindFor(content: string): DemoTask['kind'] {
+  /*
+    문구를 먼저 보되 순서로 받쳐 둔다.
+
+    시연 중에 문장을 조금 바꿔 말해도 흐름이 어긋나면 안 되고, 반대로 순서만 보면
+    사용자가 직접 다른 요청을 넣었을 때 엉뚱한 장면이 돈다.
+  */
+  if (/배포|도메인|주소|공개|런칭/i.test(content)) return 'ship';
+  if (/백엔드|서버|데이터베이스|\bdb\b|aws|인프라|가입.*되게|진짜/i.test(content)) return 'infra';
+
+  const done = state.tasks.size;
+  if (done === 0) return 'code';
+  if (done === 1) return 'infra';
+  if (done === 2) return 'ship';
+  return 'generic';
 }
 
 function infraSettings() {

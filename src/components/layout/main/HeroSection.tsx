@@ -6,6 +6,8 @@ import heroSectionImage from '@/assets/images/heroSection_img.svg';
 import heroSectionBgImage from '@/assets/images/heroSection_bg_img.svg';
 import { useGitHubLogin } from '@/hooks/useGitHubLogin';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
+import { IS_DEMO } from '@/demo/config';
+import { startDirector } from '@/demo/director';
 
 const headlineGradientBg =
   'bg-[linear-gradient(90deg,#6D28D9_0%,#7C3AED_42%,#A855F7_100%)] bg-clip-text text-transparent';
@@ -21,6 +23,19 @@ function HeroSection() {
 
   const handleGitHubLogin = useCallback(() => {
     if (isLoggingIn) return;
+
+    /*
+      시연에서는 이 버튼이 전체 재생의 시작점이다.
+
+      따로 "시연 시작" 버튼을 두면 영상 첫 화면에 제품과 무관한 것이 찍힌다. 사용자가
+      실제로 누를 버튼이 그대로 출발선이 되는 편이 낫다.
+    */
+    if (IS_DEMO) {
+      startDirector();
+      void startGitHubLogin();
+      return;
+    }
+
     if (isLoggedIn) {
       void navigate({ to: '/home' });
       return;

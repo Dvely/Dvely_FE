@@ -106,3 +106,55 @@ export async function select(name: string, value: string) {
 export function pageHasText(text: string) {
   return (document.body.innerText || '').includes(text);
 }
+
+/* -------------------------------------------------------------------------- */
+/* 프리뷰 안쪽                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * 프리뷰 iframe 의 문서.
+ *
+ * 프리뷰는 같은 오리진이라 안쪽까지 조작할 수 있다. 만들어진 앱이 실제로 동작하는지는
+ * 바깥에서 말로 설명할 수 없고, 저 안에서 가입 버튼을 눌러 봐야 보인다.
+ */
+export async function waitForPreviewDocument(timeoutMs = 30000): Promise<Document> {
+  await waitUntil(
+    '프리뷰 문서',
+    () => {
+      const frame = document.querySelector('iframe');
+      return Boolean(frame?.contentDocument?.querySelector('#authForm'));
+    },
+    timeoutMs,
+  );
+  return document.querySelector('iframe')!.contentDocument!;
+}
+
+function setFrameValue(element: HTMLInputElement, value: string) {
+  const prototype = Object.getPrototypeOf(element) as object;
+  const descriptor = Object.getOwnPropertyDescriptor(prototype, 'value');
+  if (descriptor?.set) descriptor.set.call(element, value);
+  else element.value = value;
+}
+
+export async function previewType(doc: Document, selector: string, text: string, perCharMs = 22) {
+  const element = doc.querySelector<HTMLInputElement>(selector);
+  if (!element) throw new Error(`프리뷰에 ${selector} 가 없습니다`);
+  element.focus();
+  for (let index = 1; index <= text.length; index += 1) {
+    setFrameValue(element, text.slice(0, index));
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    await pause(perCharMs);
+  }
+  await pause(200);
+}
+
+export async function previewClick(doc: Document, selector: string) {
+  const element = doc.querySelector<HTMLElement>(selector);
+  if (!element) throw new Error(`프리뷰에 ${selector} 가 없습니다`);
+  element.click();
+  await pause(240);
+}
+
+export function previewHasText(doc: Document, text: string) {
+  return (doc.body?.innerText || '').includes(text);
+}

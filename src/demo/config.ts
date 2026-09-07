@@ -10,16 +10,28 @@
  */
 export const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
 
-/**
- * 시연 배속. 모든 대기 시간을 이 값으로 나눈다.
- *
- * 1 이면 아래 상수 그대로(전체 흐름이 1분 남짓), 2 면 절반이다. 리허설에서는 크게,
- * 실제 촬영에서는 1 로 두고 편집에서 자르는 쪽이 화면 전환이 자연스럽다.
- */
+/** 전체 배속. `.env.demo` 에서 한 번 정한다 */
 const rawSpeed = Number(import.meta.env.VITE_DEMO_SPEED);
-export const DEMO_SPEED = Number.isFinite(rawSpeed) && rawSpeed > 0 ? rawSpeed : 1;
+const BASE_SPEED = Number.isFinite(rawSpeed) && rawSpeed > 0 ? rawSpeed : 1;
+
+/**
+ * 장면별 추가 배속.
+ *
+ * 90초 안에 개발·인프라·배포·도메인을 다 담으려면 어떤 구간은 시간을 접어야 한다.
+ * 다만 접는다는 사실은 화면에 밝힌다(자막의 배속 표시) — 조용히 빠르게 만들면
+ * 보는 사람이 실제 소요 시간을 오해한다.
+ */
+let sceneSpeed = 1;
+
+export function setSceneSpeed(multiplier: number) {
+  sceneSpeed = multiplier > 0 ? multiplier : 1;
+}
+
+export function getSceneSpeed() {
+  return sceneSpeed;
+}
 
 /** 배속을 적용한 밀리초 */
 export function demoMs(base: number) {
-  return Math.round(base / DEMO_SPEED);
+  return Math.max(16, Math.round(base / (BASE_SPEED * sceneSpeed)));
 }
