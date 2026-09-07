@@ -4,56 +4,122 @@
  * 편집 없이 영상 하나로 끝내려면 지금 무엇을 보고 있는지가 화면 안에 있어야 한다.
  * 조작판은 두지 않는다 — 진행 표시나 버튼이 남으면 그것부터 눈에 들어온다.
  *
- * 시간을 접은 구간은 배속을 밝힌다. 조용히 빠르게 만들면 보는 사람이 실제 소요
- * 시간을 오해한다.
+ * 장면이 바뀔 때 글자가 툭 갈리면 화면 요소처럼 보인다. 앞 자막을 먼저 접고 잠깐
+ * 비운 뒤 다음 자막을 올린다 — 영상 자막이 그렇게 넘어간다.
  */
 import { useEffect, useState } from 'react';
-import { resumeDirectorIfRequested, subscribeDirector, type DirectorSnapshot } from '@/demo/director';
+import {
+  resumeDirectorIfRequested,
+  subscribeDirector,
+  type Caption,
+} from '@/demo/director';
+
+/** 접고 올리는 데 걸리는 시간. 너무 짧으면 깜빡임이고 길면 굼뜨다 */
+const FADE_MS = 260;
 
 function DemoCaption() {
-  const [snapshot, setSnapshot] = useState<DirectorSnapshot | null>(null);
+  /** 지금 그리고 있는 자막. 다음 것이 와도 접히는 동안은 이쪽이 남는다 */
+  const [shown, setShown] = useState<{ caption: Caption; speed: number } | null>(null);
+  const [visible, setVisible] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => subscribeDirector(setSnapshot), []);
+  useEffect(() => {
+    let timer = 0;
+    let currentTitle: string | null = null;
+    let currentError: string | null = null;
+
+    const unsubscribe = subscribeDirector((next) => {
+      if (next.error !== currentError) {
+        currentError = next.error;
+        setError(next.error);
+      }
+
+      const title = next.caption?.title ?? null;
+      if (title === currentTitle) return;
+      currentTitle = title;
+
+      /*
+        접었다가 올린다.
+
+        상태 두 개(무엇을 그릴지 · 보일지)를 시차를 두고 바꿔야 앞 자막이 사라지고
+        나서 다음 자막이 올라온다. 한 번에 바꾸면 글자만 툭 갈려서 영상 자막이 아니라
+        화면 요소로 읽힌다.
+      */
+      setVisible(false);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        setShown(next.caption ? { caption: next.caption, speed: next.speed } : null);
+        setVisible(next.caption != null);
+      }, FADE_MS);
+    });
+
+    return () => {
+      window.clearTimeout(timer);
+      unsubscribe();
+    };
+  }, []);
 
   // 시작 버튼이 새로고침을 끼우고 떠났다면 돌아온 뒤 여기서 이어받는다
   useEffect(() => {
     resumeDirectorIfRequested();
   }, []);
 
-  if (!snapshot) return null;
-
-  const { caption, speed, error } = snapshot;
-
   if (error) {
     return (
-      <div className="pointer-events-none fixed inset-x-0 top-5 z-[200] flex justify-center px-4">
-        <p className="max-w-[520px] rounded-xl bg-[#7f1d1d]/95 px-4 py-2.5 text-[13px] font-medium text-white shadow-lg backdrop-blur">
+      <div className="pointer-events-none fixed inset-x-0 top-6 z-[200] flex justify-center px-6">
+        <p className="rounded bg-[#7f1d1d]/95 px-4 py-2.5 text-[13px] font-medium text-white shadow-lg">
           {error}
         </p>
       </div>
     );
   }
 
-  if (!caption) return null;
+  if (!shown) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-5 z-[200] flex justify-center px-4">
+    <div
+      data-demo-caption
+      className="pointer-events-none fixed inset-x-0 top-0 z-[200] flex justify-center"
+      /*
+        위쪽을 살짝 어둡게 깔아 흰 화면 위에서도 글자가 뜬다. 테두리 있는 상자를 얹으면
+        제품 UI 의 일부처럼 읽히는데, 스크림은 영상 위에 올린 자막으로 읽힌다.
+      */
+      style={{
+        paddingTop: 30,
+        paddingBottom: 58,
+        background:
+          'linear-gradient(to bottom, rgba(2,6,23,0.88) 0%, rgba(2,6,23,0.7) 34%, rgba(2,6,23,0.28) 72%, rgba(2,6,23,0) 100%)',
+        opacity: visible ? 1 : 0,
+        transition: `opacity ${FADE_MS}ms ease`,
+      }}
+    >
       <div
-        // 자막이 바뀔 때마다 새로 마운트해 페이드가 다시 돈다
-        key={caption.title}
-        className="flex max-w-[640px] animate-[demoCaptionIn_320ms_ease-out] items-center gap-4 rounded-2xl bg-[#0b1220]/92 px-6 py-3.5 shadow-[0_12px_40px_rgba(2,6,23,0.45)] backdrop-blur-md"
+        className="flex max-w-[720px] flex-col items-center px-8 text-center"
+        style={{
+          transform: visible ? 'translateY(0)' : 'translateY(-6px)',
+          transition: `transform ${FADE_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+        }}
       >
-        <div className="min-w-0">
-          <p className="text-[19px] font-semibold leading-tight tracking-[-0.01em] text-white">
-            {caption.title}
+        <p
+          className="text-[25px] font-semibold leading-[1.25] tracking-[-0.018em] text-white"
+          style={{ textShadow: '0 2px 20px rgba(2,6,23,0.9), 0 1px 3px rgba(2,6,23,0.8)' }}
+        >
+          {shown.caption.title}
+        </p>
+        {shown.caption.sub ? (
+          <p
+            className="mt-2 text-[14.5px] font-normal leading-snug text-white/85"
+            style={{ textShadow: '0 1px 14px rgba(2,6,23,0.85)' }}
+          >
+            {shown.caption.sub}
           </p>
-          {caption.sub ? (
-            <p className="mt-1 text-[13.5px] leading-snug text-white/60">{caption.sub}</p>
-          ) : null}
-        </div>
-        {speed > 1 ? (
-          <span className="shrink-0 rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/75">
-            ×{speed} 배속
+        ) : null}
+        {shown.speed > 1 ? (
+          <span
+            className="mt-3 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/60"
+            style={{ textShadow: '0 1px 10px rgba(2,6,23,0.7)' }}
+          >
+            ×{shown.speed} speed
           </span>
         ) : null}
       </div>
