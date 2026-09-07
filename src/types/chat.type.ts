@@ -110,6 +110,20 @@ const conversationMessageSchema = z.object({
   createdAt: z.string().prefault(''),
   /** 큐잉된 Agent 작업 ID. 없거나 과거 메시지 조회 시 null */
   taskId: z.string().nullable().prefault(''),
+  /**
+   * 서버가 이 줄을 왜 남겼는지.
+   *
+   * 알려진 값: AGENT_RESULT · TASK_PROGRESS · APPROVAL_REQUESTED · INPUT_REQUIRED ·
+   * CLARIFICATION_ANSWER · TASK_FAILED · TASK_CANCELLED.
+   *
+   * 이게 없을 때는 본문을 읽어야 종류를 알 수 있었는데, 그건 하면 안 되는 일이다 —
+   * 서버가 문구를 한 글자 다듬으면 화면이 조용히 어긋나고, 모델이 비슷한 문장을
+   * 지어내면 없는 의미가 붙는다(mergeConversationMessages 주석의 그 사고다).
+   *
+   * 열린 문자열로 받는다. 종류는 계속 늘기로 되어 있고, 모르는 값은 평범한 줄로
+   * 떨어뜨린다. 사용자 메시지와 이 필드 이전에 쌓인 줄은 null 이다.
+   */
+  kind: z.string().nullable().prefault(null),
 });
 
 /**
