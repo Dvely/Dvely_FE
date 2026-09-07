@@ -68,6 +68,23 @@ async function fetchAndPersistUserInfo() {
   return response;
 }
 
+/**
+ * 사용자 정보를 배경에서 다시 읽는다. 실패는 삼킨다.
+ *
+ * 호출부는 전부 "겸사겸사 갱신"이다 — 재인증 진입점을 띄우거나 만료 플래그를 씻어내는
+ * 용도라, 실패했다고 진행 중인 화면을 막을 이유가 없다. 그런데 `void fetch...()` 로
+ * 두면 토큰이 만료됐을 때 잡히지 않은 rejection 이 콘솔에 쌓인다. 실제 오류를 찾을 때
+ * 그 잡음이 눈을 가린다.
+ */
+function refreshUserInfoInBackground() {
+  return fetchAndPersistUserInfo().catch((error: unknown) => {
+    if (import.meta.env.DEV) {
+      console.debug('[user] 사용자 정보 배경 갱신 실패 — 무시합니다', error);
+    }
+    return null;
+  });
+}
+
 function useUserInfoQuery(queryKey: unknown) {
   if (!queryKey) throw new Error('queryKey is required');
 
@@ -91,4 +108,11 @@ function useUserInfoQuery(queryKey: unknown) {
   });
 }
 
-export { getUserInfo, fetchAndPersistUserInfo, useUserInfoQuery, clearStoredUser, readStoredUser };
+export {
+  getUserInfo,
+  fetchAndPersistUserInfo,
+  refreshUserInfoInBackground,
+  useUserInfoQuery,
+  clearStoredUser,
+  readStoredUser,
+};

@@ -1,41 +1,12 @@
 import { useState } from 'react';
+import { APPROVAL_COPY, FALLBACK_APPROVAL_COPY } from '@/lib/approvalCopy';
 import type { Approval, ApprovalInput } from '@/types/approval.type';
-import type { ApprovalType } from '@/types/common.enum';
 
 type AgentApprovalCardProps = {
   approval: Approval;
   isBusy: boolean;
   onApprove: (payload?: Record<string, string>) => void;
   onReject: () => void;
-};
-
-/** 승인 유형별 제목과 설명. 무엇을 승인하는지 버튼 바로 옆에서 읽히게 한다 */
-const APPROVAL_COPY: Record<ApprovalType, { title: string; description: string }> = {
-  CHANGE: {
-    title: '변경 사항 승인',
-    description: '에이전트가 만든 코드 변경을 적용할지 결정합니다.',
-  },
-  DEPLOYMENT: {
-    title: '배포 승인',
-    description: '이 작업물을 배포할지 결정합니다.',
-  },
-  DOMAIN_BINDING: {
-    title: '도메인 연결 승인',
-    description: '이 프로젝트에 도메인을 연결할지 결정합니다.',
-  },
-  INFRA_OPERATION: {
-    title: '인프라 작업 승인',
-    description: '인프라를 변경하는 작업입니다. 진행할지 결정합니다.',
-  },
-  REPOSITORY_BINDING: {
-    title: 'GitHub 저장소 연결',
-    description:
-      '작업물이 준비됐는데 이 프로젝트에는 아직 GitHub 저장소가 연결되어 있지 않습니다. 아래 이름으로 새 저장소를 만들어 연결합니다.',
-  },
-  RESULT: {
-    title: '작업 결과 승인',
-    description: '에이전트가 낸 결과를 확정할지 결정합니다.',
-  },
 };
 
 const INPUT_LABEL: Record<string, string> = {
@@ -69,7 +40,7 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
   const [value, setValue] = useState(input?.defaultValue ?? '');
   const [touched, setTouched] = useState(false);
 
-  const copy = APPROVAL_COPY[approval.type];
+  const copy = APPROVAL_COPY[approval.type] ?? FALLBACK_APPROVAL_COPY;
   const summary = approval.summary?.trim() ?? '';
   // summary가 입력 기본값을 되풀이할 뿐이면(예: "[저장소 연결] my-repo") 아래 입력 필드와
   // 같은 값이 두 번 보인다. 그럴 때는 입력 필드만 남긴다

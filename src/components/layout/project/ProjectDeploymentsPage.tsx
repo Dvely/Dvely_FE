@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
+import { getProjectInfrastructureSettings } from '@/api/projects';
 import {
   getDeploymentFailureAnalysis,
   getDeploymentLogs,
@@ -15,6 +17,39 @@ type ProjectDeploymentsPageProps = {
 };
 
 const skeletonItems = Array.from({ length: 4 }, (_, index) => `deploy-skeleton-${index}`);
+
+/**
+ * 프론트를 어디에 올릴지.
+ *
+ * S3·EC2 는 사용자 AWS 계정에 실제 자원을 만든다. GitHub Pages 만 무료이고, 나머지는
+ * 무엇이 다른지 고르기 전에 읽혀야 한다 — 고르고 나서 알게 하면 늦다.
+ */
+const HOSTING_OPTIONS: {
+  value: string;
+  label: string;
+  description: string;
+  needsCloud: boolean;
+}[] = [
+  {
+    value: 'GITHUB_PAGES',
+    label: 'GitHub Pages',
+    description: '무료. 별도 설정 없이 바로 배포됩니다.',
+    needsCloud: false,
+  },
+  {
+    value: 'S3',
+    label: 'AWS S3 (정적 호스팅)',
+    description: '당신의 AWS 계정에 올립니다. 정적 파일 보관·전송 비용이 듭니다.',
+    needsCloud: true,
+  },
+  {
+    value: 'EC2',
+    label: 'AWS EC2 (전용 서버)',
+    description:
+      '당신의 AWS 계정에 서버를 띄웁니다. 켜져 있는 동안 과금되고, 승인 절차를 거칩니다.',
+    needsCloud: true,
+  },
+];
 
 /**
  * RESULT_UNKNOWN 은 실패가 아니다. 회수 워커가 GitHub 에서 실행을 못 찾고 포기한 것이라
@@ -71,6 +106,27 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
     retry: false,
   });
 
+  /*
+    비워 두면 프로젝트에 저장된 현재 설정을 쓴다. 화면이 기본값을 지어내지 않는다 —
+    서버가 아는 값을 화면이 되풀이하면 둘이 어긋날 때 어느 쪽이 참인지 알 수 없다.
+  */
+  const [hostingType, setHostingType] = useState('');
+  // 승인이 필요한 배포(EC2)를 요청했을 때. 승인 전에는 아무것도 진행되지 않는다
+  const [awaitingApproval, setAwaitingApproval] = useState(false);
+
+  // S3·EC2 는 사용자 AWS 계정에 자원을 만든다. 연결이 없으면 서버가 막는데,
+  // 인프라 탭에 그 설정이 있으니 눌러보기 전에 알린다(RDS·서버 섹션과 같은 판단)
+  const { data: infraSettings } = useQuery({
+    queryKey: ['project-infra-settings', projectId],
+    queryFn: () => getProjectInfrastructureSettings(projectId),
+    enabled: !!projectId,
+    gcTime: 0,
+  });
+  const isCloudConnected =
+    infraSettings?.cloudConnectionId != null && infraSettings.status === 'CONNECTED';
+  const selectedHosting = HOSTING_OPTIONS.find((option) => option.value === hostingType);
+  const needsCloudConnection = (selectedHosting?.needsCloud ?? false) && !isCloudConnected;
+
   const invalidateDeployments = () => {
     void queryClient.invalidateQueries({ queryKey: ['project-deployment-list'] });
   };
@@ -80,8 +136,20 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
       postProjectDeploymentCreate(projectId, {
         deployTargetType: versionName ? 'VERSION' : 'LATEST',
         versionName: versionName || '',
+        // 안 고르면 필드를 아예 뺀다 — 프로젝트에 저장된 설정을 쓰게 둔다
+        ...(hostingType ? { frontendHostingType: hostingType } : {}),
       }),
-    onSuccess: invalidateDeployments,
+    onSuccess: (result) => {
+      /*
+        승인이 필요한 배포(EC2)는 여기서 끝이 아니다. 응답의 approvalIds 가 비어 있지
+        않으면 **승인하기 전까지 아무것도 진행되지 않는다** — 목록만 새로고침하고 넘어가면
+        멈춰 있는 것을 진행처럼 보여주게 된다.
+      */
+      setAwaitingApproval((result?.approvalIds.length ?? 0) > 0);
+      invalidateDeployments();
+      void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
+      void queryClient.invalidateQueries({ queryKey: ['project-server-list'] });
+    },
   });
   const retryMutation = useMutation({
     mutationFn: postDeploymentRetry,
@@ -129,15 +197,75 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
               ))}
             </select>
           </label>
+          <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-[12px] font-medium text-[#475569]">
+            호스팅
+            <select
+              value={hostingType}
+              onChange={(event) => setHostingType(event.target.value)}
+              className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-3 text-[13px] text-[#334155]"
+            >
+              <option value="">현재 설정 유지</option>
+              {HOSTING_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <button
             type="button"
-            disabled={deployMutation.isPending}
+            disabled={deployMutation.isPending || needsCloudConnection}
             onClick={() => void handleDeploy()}
-            className="h-9 rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:opacity-50"
+            className="h-9 rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {deployMutation.isPending ? '요청 중' : '배포'}
           </button>
         </div>
+
+        {selectedHosting ? (
+          <p className="mt-2 text-[12px] leading-relaxed text-[#64748b]">
+            {selectedHosting.description}
+          </p>
+        ) : null}
+
+        {needsCloudConnection ? (
+          <p className="mt-2 text-[12px] leading-relaxed text-[#b45309]">
+            이 방식은 연결된 클라우드 계정이 있어야 합니다. 인프라 탭에서 먼저 연결해 주세요.{' '}
+            <Link
+              to="/onboarding/cloud"
+              className="font-semibold underline underline-offset-2 hover:text-[#92400e]"
+            >
+              AWS가 처음이신가요?
+            </Link>
+          </p>
+        ) : null}
+
+        {awaitingApproval ? (
+          <div className="mt-4 rounded-xl border border-[#fcd34d] bg-[#fffbeb] px-4 py-3">
+            <p className="text-[13px] font-semibold text-[#92400e]">승인을 기다리고 있습니다</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-[#b45309]">
+              과금되는 서버를 띄우는 방식이라 승인 절차를 거칩니다.{' '}
+              <b className="font-semibold">승인하기 전까지는 배포가 시작되지 않습니다.</b> 승인
+              탭에서 결정해 주세요.
+            </p>
+            <div className="mt-2 flex gap-3">
+              <Link
+                to="/project/$slug/approvals"
+                params={{ slug: String(projectId) }}
+                className="text-[12px] font-semibold text-[#92400e] underline underline-offset-2"
+              >
+                승인 탭으로 가기
+              </Link>
+              <button
+                type="button"
+                onClick={() => setAwaitingApproval(false)}
+                className="cursor-pointer text-[12px] font-medium text-[#b45309] hover:underline"
+              >
+                확인했습니다
+              </button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
