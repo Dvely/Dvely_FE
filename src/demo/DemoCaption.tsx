@@ -4,18 +4,15 @@
  * 편집 없이 영상 하나로 끝내려면 지금 무엇을 보고 있는지가 화면 안에 있어야 한다.
  * 조작판은 두지 않는다 — 진행 표시나 버튼이 남으면 그것부터 눈에 들어온다.
  *
- * 장면이 바뀔 때 글자가 툭 갈리면 화면 요소처럼 보인다. 앞 자막을 먼저 접고 잠깐
- * 비운 뒤 다음 자막을 올린다 — 영상 자막이 그렇게 넘어간다.
+ * 화면 맨 위 한 줄로만 쓴다. 앞서 제목·부제를 두 줄로 크게 깔았더니 자막이 아니라
+ * 그게 화면의 주인공이 됐다. 자막은 무엇을 보는지 알려 주면 되고, 보여 줄 것은
+ * 그 아래 제품이다.
  */
 import { useEffect, useState } from 'react';
-import {
-  resumeDirectorIfRequested,
-  subscribeDirector,
-  type Caption,
-} from '@/demo/director';
+import { resumeDirectorIfRequested, subscribeDirector, type Caption } from '@/demo/director';
 
 /** 접고 올리는 데 걸리는 시간. 너무 짧으면 깜빡임이고 길면 굼뜨다 */
-const FADE_MS = 260;
+const FADE_MS = 240;
 
 function DemoCaption() {
   /** 지금 그리고 있는 자막. 다음 것이 와도 접히는 동안은 이쪽이 남는다 */
@@ -66,8 +63,8 @@ function DemoCaption() {
 
   if (error) {
     return (
-      <div className="pointer-events-none fixed inset-x-0 top-6 z-[200] flex justify-center px-6">
-        <p className="rounded bg-[#7f1d1d]/95 px-4 py-2.5 text-[13px] font-medium text-white shadow-lg">
+      <div className="pointer-events-none fixed inset-x-0 top-4 z-[200] flex justify-center px-6">
+        <p className="rounded bg-[#7f1d1d]/95 px-3.5 py-2 text-[12.5px] font-medium text-white shadow-lg">
           {error}
         </p>
       </div>
@@ -81,48 +78,43 @@ function DemoCaption() {
       data-demo-caption
       className="pointer-events-none fixed inset-x-0 top-0 z-[200] flex justify-center"
       /*
-        위쪽을 살짝 어둡게 깔아 흰 화면 위에서도 글자가 뜬다. 테두리 있는 상자를 얹으면
-        제품 UI 의 일부처럼 읽히는데, 스크림은 영상 위에 올린 자막으로 읽힌다.
+        얕은 스크림 한 겹만 깐다. 밝은 UI 위에서 흰 글자가 읽힐 만큼이면 되고,
+        그보다 진하면 가리는 쪽이 커진다.
       */
       style={{
-        paddingTop: 30,
-        paddingBottom: 58,
+        paddingTop: 13,
+        paddingBottom: 22,
         background:
-          'linear-gradient(to bottom, rgba(2,6,23,0.88) 0%, rgba(2,6,23,0.7) 34%, rgba(2,6,23,0.28) 72%, rgba(2,6,23,0) 100%)',
+          'linear-gradient(to bottom, rgba(2,6,23,0.62) 0%, rgba(2,6,23,0.34) 55%, rgba(2,6,23,0) 100%)',
         opacity: visible ? 1 : 0,
         transition: `opacity ${FADE_MS}ms ease`,
       }}
     >
-      <div
-        className="flex max-w-[720px] flex-col items-center px-8 text-center"
+      <p
+        className="flex max-w-[860px] flex-wrap items-baseline justify-center gap-x-2.5 px-6 text-center"
         style={{
-          transform: visible ? 'translateY(0)' : 'translateY(-6px)',
+          transform: visible ? 'translateY(0)' : 'translateY(-4px)',
           transition: `transform ${FADE_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+          textShadow: '0 1px 10px rgba(2,6,23,0.9), 0 1px 2px rgba(2,6,23,0.8)',
         }}
       >
-        <p
-          className="text-[25px] font-semibold leading-[1.25] tracking-[-0.018em] text-white"
-          style={{ textShadow: '0 2px 20px rgba(2,6,23,0.9), 0 1px 3px rgba(2,6,23,0.8)' }}
-        >
+        <span className="text-[16px] font-semibold tracking-[-0.01em] text-white">
           {shown.caption.title}
-        </p>
+        </span>
         {shown.caption.sub ? (
-          <p
-            className="mt-2 text-[14.5px] font-normal leading-snug text-white/85"
-            style={{ textShadow: '0 1px 14px rgba(2,6,23,0.85)' }}
-          >
-            {shown.caption.sub}
-          </p>
+          <>
+            <span className="text-[13px] text-white/35" aria-hidden>
+              ·
+            </span>
+            <span className="text-[13.5px] font-normal text-white/80">{shown.caption.sub}</span>
+          </>
         ) : null}
         {shown.speed > 1 ? (
-          <span
-            className="mt-3 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/60"
-            style={{ textShadow: '0 1px 10px rgba(2,6,23,0.7)' }}
-          >
-            ×{shown.speed} speed
+          <span className="font-mono text-[10.5px] font-medium tracking-[0.14em] text-white/50">
+            ×{shown.speed}
           </span>
         ) : null}
-      </div>
+      </p>
     </div>
   );
 }

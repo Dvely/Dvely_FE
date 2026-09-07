@@ -78,14 +78,14 @@ async function sendChat(prompt: string) {
 
 export const scenes: Scene[] = [
   {
-    caption: { title: 'GitHub 계정 하나로 시작', sub: '따로 가입할 것이 없습니다' },
+    caption: { title: 'GitHub 로그인 기능', sub: '계정을 따로 만들지 않습니다' },
     run: async () => {
       await waitUntil('홈 진입', () => window.location.pathname.startsWith('/home'), 20000);
       await read(1200);
     },
   },
   {
-    caption: { title: '만들고 싶은 것을 말로 적습니다', sub: '기획서도 설정 파일도 없습니다' },
+    caption: { title: 'AI 코드 생성 기능', sub: '말로 적으면 앱이 만들어집니다' },
     run: async () => {
       await goto('/project');
       await click('project-new');
@@ -100,7 +100,7 @@ export const scenes: Scene[] = [
     },
   },
   {
-    caption: { title: '모르는 것은 되묻습니다', sub: '멋대로 정하고 만들지 않습니다' },
+    caption: { title: '요구사항 확인 기능', sub: '모르는 것은 먼저 되묻습니다' },
     run: async () => {
       await waitUntil('되묻기', () => findAll('clarify-option').length > 0, 25000);
       await read(1600);
@@ -110,7 +110,7 @@ export const scenes: Scene[] = [
     },
   },
   {
-    caption: { title: '코드 변경은 사람이 승인합니다', sub: '무엇이 바뀌는지 먼저 보여줍니다' },
+    caption: { title: '변경 승인 기능', sub: '적용 전에 무엇이 바뀌는지 봅니다' },
     run: async () => {
       await approve(1);
       await waitUntil('프리뷰', () => document.querySelector('iframe') != null, 30000);
@@ -118,7 +118,7 @@ export const scenes: Scene[] = [
     },
   },
   {
-    caption: { title: '아직은 화면뿐입니다', sub: '가입을 눌러도 받아 줄 서버가 없습니다' },
+    caption: { title: '실시간 프리뷰 기능', sub: '백엔드가 없어 가입이 실패합니다' },
     run: async () => {
       const preview = await waitForPreviewDocument();
       await previewType(preview, '#email', 'danto@qeploy.com');
@@ -130,14 +130,14 @@ export const scenes: Scene[] = [
     },
   },
   {
-    caption: { title: '인프라도 같은 채팅에서', sub: '콘솔을 열지 않습니다' },
+    caption: { title: '인프라 자동 구성 기능', sub: '채팅으로 서버와 DB를 요청합니다' },
     run: async () => {
       await sendChat(PROMPT_INFRA);
       await read(1200);
     },
   },
   {
-    caption: { title: '돈이 나가는 자원은 반드시 승인', sub: '무엇을 어디에 만드는지 말하고 멈춥니다' },
+    caption: { title: '과금 자원 승인 기능', sub: '내 AWS에 만들기 전 확인합니다' },
     speed: 3,
     run: async () => {
       await approve(2);
@@ -146,7 +146,7 @@ export const scenes: Scene[] = [
     },
   },
   {
-    caption: { title: '이제 진짜로 가입됩니다', sub: '데이터는 내 AWS의 RDS로 들어갑니다' },
+    caption: { title: '백엔드 연동 기능', sub: '실제로 가입되고 데이터가 남습니다' },
     run: async () => {
       const preview = await waitForPreviewDocument();
       await previewClick(preview, '#authSubmit');
@@ -158,7 +158,7 @@ export const scenes: Scene[] = [
     },
   },
   {
-    caption: { title: '배포와 도메인도 채팅으로', sub: '내 계정에 올리고 내 주소를 붙입니다' },
+    caption: { title: '배포·도메인 연결 기능', sub: '내 계정에 올리고 내 주소를 붙입니다' },
     speed: 3,
     run: async () => {
       await goto('/project/1/agent');
@@ -169,7 +169,7 @@ export const scenes: Scene[] = [
     },
   },
   {
-    caption: { title: '말 한 줄에서 실제 주소까지', sub: '코드·서버·DB·도메인이 전부 내 것입니다' },
+    caption: { title: '프로젝트 개요 기능', sub: '주소·커밋·승인 이력을 한 화면에' },
     run: async () => {
       await goto('/project/1');
       await waitUntil('개요', () => pageHasText('현재 URL'), 20000);
@@ -177,7 +177,7 @@ export const scenes: Scene[] = [
     },
   },
   {
-    caption: { title: '화면에서 직접 조작할 수도 있습니다', sub: '승인 이력·인프라·도메인이 전부 남습니다' },
+    caption: { title: '직접 조작 기능', sub: '채팅 없이 화면에서도 됩니다' },
     speed: 2,
     run: async () => {
       await goto('/project/1/approvals');
