@@ -7,7 +7,11 @@
  *
  * 선택자는 컴포넌트에 심어 둔 `data-demo` 값이다. 클래스명이나 화면 문구로 찾으면
  * 디자인을 손볼 때마다 조용히 깨진다.
+ *
+ * 누르기 전에는 커서를 그 자리로 옮긴다. 원인 없이 버튼이 눌리면 편집한 화면으로
+ * 읽히는데, 커서가 가서 누르면 인과가 눈에 보인다.
  */
+import { moveCursorToElement, pressCursor } from '@/demo/cursor';
 
 /** React 가 관리하는 입력에 값을 넣는다 */
 function setNativeValue(element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, value: string) {
@@ -68,6 +72,8 @@ async function reveal(element: HTMLElement) {
 export async function click(name: string, timeoutMs = 30000) {
   const element = await waitFor<HTMLElement>(name, timeoutMs);
   await reveal(element);
+  await moveCursorToElement(element);
+  await pressCursor();
   element.click();
   await pause(180);
 }
@@ -76,6 +82,8 @@ export async function click(name: string, timeoutMs = 30000) {
 export async function type(name: string, text: string, perCharMs = 26) {
   const element = await waitFor<HTMLTextAreaElement | HTMLInputElement>(name);
   await reveal(element);
+  await moveCursorToElement(element);
+  await pressCursor();
   element.focus();
 
   for (let index = 1; index <= text.length; index += 1) {
@@ -97,6 +105,8 @@ export async function fill(name: string, text: string) {
 export async function select(name: string, value: string) {
   const element = await waitFor<HTMLSelectElement>(name);
   await reveal(element);
+  await moveCursorToElement(element);
+  await pressCursor();
   setNativeValue(element, value);
   element.dispatchEvent(new Event('change', { bubbles: true }));
   await pause(320);
@@ -139,6 +149,8 @@ function setFrameValue(element: HTMLInputElement, value: string) {
 export async function previewType(doc: Document, selector: string, text: string, perCharMs = 22) {
   const element = doc.querySelector<HTMLInputElement>(selector);
   if (!element) throw new Error(`프리뷰에 ${selector} 가 없습니다`);
+  await moveCursorToElement(element, document.querySelector('iframe'));
+  await pressCursor();
   element.focus();
   for (let index = 1; index <= text.length; index += 1) {
     setFrameValue(element, text.slice(0, index));
@@ -151,6 +163,8 @@ export async function previewType(doc: Document, selector: string, text: string,
 export async function previewClick(doc: Document, selector: string) {
   const element = doc.querySelector<HTMLElement>(selector);
   if (!element) throw new Error(`프리뷰에 ${selector} 가 없습니다`);
+  await moveCursorToElement(element, document.querySelector('iframe'));
+  await pressCursor();
   element.click();
   await pause(240);
 }

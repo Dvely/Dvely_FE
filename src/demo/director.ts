@@ -13,6 +13,7 @@
 import { router } from '@/router';
 import { setSceneSpeed } from '@/demo/config';
 import { resetDemoState } from '@/demo/scenario';
+import { hideCursor, showCursor } from '@/demo/cursor';
 import { clearAppLocalStorage } from '@/lib/clearAppStorage';
 import {
   click,
@@ -23,7 +24,6 @@ import {
   previewClick,
   previewHasText,
   previewType,
-  select,
   type,
   waitForPreviewDocument,
   waitUntil,
@@ -62,10 +62,14 @@ function read(ms = 1000) {
 async function approve(count: number) {
   for (let index = 0; index < count; index += 1) {
     await waitUntil('승인 카드', () => findAll('approve').length > 0, 30000);
-    // 과금 문구를 읽을 시간. 배속을 걸어도 이 대기는 줄지 않는다 — 시나리오 시간만 접는다
-    await read(2200);
+    /*
+      승인 문구를 읽을 시간. 배속을 걸어도 이 대기는 줄지 않는다 — 접는 것은 시나리오
+      시간이지 사람이 읽는 시간이 아니다. 다만 같은 장면의 두 번째부터는 무엇을 묻는
+      화면인지 이미 봤으므로 짧게 지나간다.
+    */
+    await read(index === 0 ? 2200 : 1400);
     await click('approve');
-    await pause(700);
+    await pause(600);
   }
 }
 
@@ -114,7 +118,7 @@ export const scenes: Scene[] = [
     run: async () => {
       await approve(1);
       await waitUntil('프리뷰', () => document.querySelector('iframe') != null, 30000);
-      await read(2000);
+      await read(1500);
     },
   },
   {
@@ -126,7 +130,7 @@ export const scenes: Scene[] = [
       await read(400);
       await previewClick(preview, '#authSubmit');
       await waitUntil('503 표시', () => previewHasText(preview, '503'), 10000);
-      await read(2400);
+      await read(1800);
     },
   },
   {
@@ -142,7 +146,7 @@ export const scenes: Scene[] = [
     run: async () => {
       await approve(2);
       await waitUntil('백엔드 준비', () => pageHasText('프리뷰에서 실제로 가입'), 40000);
-      await read(1500);
+      await read(1100);
     },
   },
   {
@@ -154,7 +158,7 @@ export const scenes: Scene[] = [
       await read(700);
       await previewType(preview, '#newTodo', '시연 영상 편집하기', 24);
       await previewClick(preview, '#addForm button');
-      await read(1800);
+      await read(1300);
     },
   },
   {
@@ -165,7 +169,7 @@ export const scenes: Scene[] = [
       await sendChat(PROMPT_SHIP);
       await approve(2);
       await waitUntil('배포 완료', () => pageHasText('에서 열립니다'), 40000);
-      await read(1600);
+      await read(1200);
     },
   },
   {
@@ -173,7 +177,7 @@ export const scenes: Scene[] = [
     run: async () => {
       await goto('/project/1');
       await waitUntil('개요', () => pageHasText('현재 URL'), 20000);
-      await read(3000);
+      await read(2400);
     },
   },
   {
@@ -181,13 +185,9 @@ export const scenes: Scene[] = [
     speed: 2,
     run: async () => {
       await goto('/project/1/approvals');
-      await read(1800);
+      await read(1700);
       await goto('/project/1/infra');
-      await read(1800);
-      await select('server-tier', 't3.small');
-      await read(1200);
-      await goto('/project/1/domains');
-      await read(1800);
+      await read(1700);
     },
   },
 ];
@@ -269,6 +269,7 @@ async function runScenes() {
   running = true;
   error = null;
   emit();
+  showCursor();
 
   try {
     for (const scene of scenes) {
@@ -283,6 +284,7 @@ async function runScenes() {
   } catch (thrown) {
     error = thrown instanceof Error ? thrown.message : String(thrown);
   } finally {
+    hideCursor();
     setSceneSpeed(1);
     running = false;
     caption = null;
