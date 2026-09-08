@@ -84,6 +84,7 @@ export default function AppSidebar() {
               ) : null}
               <Link
                 to={to}
+                data-demo={`nav-${to.replace('/', '')}`}
                 title={collapsed ? label : undefined}
                 className={`flex w-full items-center rounded-xl text-[13px] font-medium transition ${
                   collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5 text-left'

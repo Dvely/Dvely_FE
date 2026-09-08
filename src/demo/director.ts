@@ -119,7 +119,7 @@ export const scenes: Scene[] = [
     run: async () => {
       await approve(1);
       await waitUntil('프리뷰', () => document.querySelector('iframe') != null, 30000);
-      await read(1500);
+      await read(1200);
     },
   },
   {
@@ -138,12 +138,12 @@ export const scenes: Scene[] = [
     caption: { title: '인프라 자동 구성 기능', sub: '채팅으로 서버와 DB를 요청합니다' },
     run: async () => {
       await sendChat(PROMPT_INFRA);
-      await read(1200);
+      await read(900);
     },
   },
   {
     caption: { title: '과금 자원 승인 기능', sub: '내 AWS에 만들기 전 확인합니다' },
-    speed: 3,
+    speed: 5,
     run: async () => {
       await approve(2);
       await waitUntil('백엔드 준비', () => pageHasText('프리뷰에서 실제로 가입'), 40000);
@@ -164,7 +164,7 @@ export const scenes: Scene[] = [
   },
   {
     caption: { title: '배포·도메인 연결 기능', sub: '내 계정에 올리고 내 주소를 붙입니다' },
-    speed: 3,
+    speed: 5,
     run: async () => {
       await goto('/project/1/agent');
       await sendChat(PROMPT_SHIP);
@@ -176,27 +176,34 @@ export const scenes: Scene[] = [
   {
     caption: { title: '프로젝트 개요 기능', sub: '주소·커밋·승인 이력을 한 화면에' },
     run: async () => {
-      await goto('/project/1');
+      // 목록에서 프로젝트를 골라 들어간다 — 사람이 다음에 할 일이 그것이다
+      await click('nav-project');
+      await read(800);
+      await click('project-card');
       await waitUntil('개요', () => pageHasText('현재 URL'), 20000);
-      await read(2400);
+      await read(1900);
     },
   },
   {
     caption: { title: '직접 조작 기능', sub: '채팅 없이 화면에서도 됩니다' },
-    speed: 2,
     run: async () => {
       /*
-        여기서는 라우터로 건너뛰지 않고 탭을 실제로 누른다.
+        라우터로 건너뛰지 않고 탭을 하나씩 누른다.
 
         "화면에서도 됩니다" 라고 말하면서 화면이 저절로 넘어가면 자막과 화면이 어긋난다.
         조작하는 장면이 이 장면의 내용이므로 커서가 가서 눌러야 한다.
+
+        배속도 걸지 않는다 — 여기서 접을 시나리오 시간이 없는데 배속을 표시하면
+        보는 사람에게 없는 압축을 있다고 말하는 셈이다.
       */
-      await click('tab-approvals');
-      await read(1600);
+      for (const tab of ['tab-approvals', 'tab-deployments', 'tab-domains', 'tab-environment']) {
+        await click(tab);
+        await read(850);
+      }
       await click('tab-infra');
-      await read(1400);
+      await read(700);
       await select('server-tier', 't3.small');
-      await read(1200);
+      await read(1000);
     },
   },
 ];
