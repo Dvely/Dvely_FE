@@ -11,7 +11,12 @@ import {
   FALLBACK_HOSTING_TARGETS,
 } from '@/api/domains';
 import type { Domain, GetDomainVerificationGuideResType } from '@/types/domain.type';
-import type { DomainStatus, DomainType, HostingTarget, VerificationMethod } from '@/types/common.enum';
+import type {
+  DomainStatus,
+  DomainType,
+  HostingTarget,
+  VerificationMethod,
+} from '@/types/common.enum';
 import { useApprovalTaskWatchQuery } from '@/api/agent';
 import { toSafeHttpUrl } from '@/lib/safeUrl';
 
@@ -100,7 +105,9 @@ function CopyField({ labelText, value }: { labelText: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-2 rounded-lg border border-[#e2e8f0] bg-white px-3 py-2">
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94a3b8]">{labelText}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94a3b8]">
+          {labelText}
+        </p>
         <p className="truncate font-mono text-[12px] text-[#334155]">{value}</p>
       </div>
       <button
@@ -121,8 +128,8 @@ function DnsGuide({ domain, guide }: { domain: Domain; guide: GetDomainVerificat
   return (
     <div className="mt-3 rounded-lg bg-[#f8fafc] p-3">
       <p className="text-[12px] leading-relaxed text-[#475569]">
-        아래 레코드를 <span className="font-semibold">{domain.hostname}</span> 도메인의 DNS 에 추가한 뒤{' '}
-        <span className="font-semibold">검증 재시도</span>를 누르세요.
+        아래 레코드를 <span className="font-semibold">{domain.hostname}</span> 도메인의 DNS 에
+        추가한 뒤 <span className="font-semibold">검증 재시도</span>를 누르세요.
       </p>
       {isS3Custom ? (
         <p className="mt-1.5 text-[11px] leading-relaxed text-[#a16207]">
@@ -140,7 +147,9 @@ function DnsGuide({ domain, guide }: { domain: Domain; guide: GetDomainVerificat
           </div>
         ))}
         {guide.records.length === 0 ? (
-          <p className="text-[12px] text-[#94a3b8]">레코드를 준비 중입니다. 잠시 후 다시 열어주세요.</p>
+          <p className="text-[12px] text-[#94a3b8]">
+            레코드를 준비 중입니다. 잠시 후 다시 열어주세요.
+          </p>
         ) : null}
       </div>
     </div>
@@ -180,7 +189,10 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
   const [bindTaskId, setBindTaskId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
-  const { data: domains = [], isLoading } = useProjectDomainListQuery('project-domains-page', projectId);
+  const { data: domains = [], isLoading } = useProjectDomainListQuery(
+    'project-domains-page',
+    projectId,
+  );
   const { data: guide } = useQuery({
     queryKey: ['domain-verification-guide', selectedDomainId],
     queryFn: () => getDomainVerificationGuide(selectedDomainId as number),
@@ -233,7 +245,10 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
   const bindFailureMessage =
     bindTask?.status === 'FAILED' ? bindTask.error?.trim() || '도메인 연결에 실패했습니다.' : null;
 
-  const verifyMutation = useMutation({ mutationFn: postDomainVerificationCheck, onSuccess: invalidateDomains });
+  const verifyMutation = useMutation({
+    mutationFn: postDomainVerificationCheck,
+    onSuccess: invalidateDomains,
+  });
   /*
     해제를 눌렀지만 아직 승인을 기다리는 도메인.
 
@@ -402,7 +417,9 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
               <span className="text-[12px] font-semibold text-[#334155]">DNS 검증 방식</span>
               <select
                 value={verificationMethod}
-                onChange={(event) => setVerificationMethod(event.target.value as VerificationMethod)}
+                onChange={(event) =>
+                  setVerificationMethod(event.target.value as VerificationMethod)
+                }
                 className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
               >
                 <option value="A">A (IP 직접)</option>
@@ -432,7 +449,9 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
         <h2 className="text-[16px] font-bold text-[#0f172a]">연결된 도메인</h2>
         <ul className="mt-4 flex flex-col gap-2">
           {isLoading ? (
-            skeletonItems.map((key) => <li key={key} className="h-16 animate-pulse rounded-xl bg-[#f8fafc]" />)
+            skeletonItems.map((key) => (
+              <li key={key} className="h-16 animate-pulse rounded-xl bg-[#f8fafc]" />
+            ))
           ) : domains.length === 0 ? (
             <li className="rounded-xl border border-dashed border-[#e2e8f0] px-4 py-8 text-center text-[13px] text-[#94a3b8]">
               연결된 도메인이 없습니다.
@@ -447,8 +466,12 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <p className="text-[13px] font-semibold text-[#0f172a]">{domain.hostname}</p>
-                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${status.className}`}>
+                        <p className="text-[13px] font-semibold text-[#0f172a]">
+                          {domain.hostname}
+                        </p>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${status.className}`}
+                        >
                           {status.label}
                         </span>
                         {domain.status === 'CONNECTED' && domain.httpsEnforced ? (

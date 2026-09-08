@@ -101,8 +101,8 @@ function AgentSitePreviewPanel({
         {didReattach ? (
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#fde68a] bg-[#fffbeb] px-4 py-2">
             <p className="text-[12px] leading-relaxed text-[#92400e]">
-              이미 떠 있는 컨테이너에 다시 연결했습니다 — 새로 빌드하지 않았습니다. 저장소를
-              막 연결했거나 그 뒤로 코드가 바뀌었다면 아직 옛 화면입니다.
+              이미 떠 있는 컨테이너에 다시 연결했습니다 — 새로 빌드하지 않았습니다. 저장소를 막
+              연결했거나 그 뒤로 코드가 바뀌었다면 아직 옛 화면입니다.
             </p>
             <button
               type="button"
