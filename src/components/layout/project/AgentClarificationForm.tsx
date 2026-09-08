@@ -40,8 +40,7 @@ function AgentClarificationForm({
     */
     const recommended = clarification.options.filter((option) => option.recommended === true);
     if (recommended.length === 0) return [];
-    const picked =
-      clarification.inputType === 'MULTI_SELECT' ? recommended : recommended.slice(0, 1);
+    const picked = clarification.inputType === 'MULTI_SELECT' ? recommended : recommended.slice(0, 1);
     return picked.map((option) => option.value);
   });
   const [otherText, setOtherText] = useState('');
@@ -81,8 +80,8 @@ function AgentClarificationForm({
         {clarification.question}
       </p>
       <p className="mt-1 text-[11px] text-[#a78bfa]">
-        {isMulti ? '해당하는 것을 모두 고르세요.' : '하나를 고르세요.'} 답하면 하던 작업을 이어서
-        진행합니다.
+        {isMulti ? '해당하는 것을 모두 고르세요.' : '하나를 고르세요.'} 답하면 하던 작업을
+        이어서 진행합니다.
       </p>
 
       <div className="mt-2.5 flex flex-col gap-1.5">

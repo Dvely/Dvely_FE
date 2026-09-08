@@ -173,62 +173,62 @@ function ProjectDetailPage({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#f1f5f9]">
-                    {isRelatedLoading ? (
-                      Array.from({ length: 3 }, (_, index) => (
-                        <tr key={`activity-skeleton-${index}`} className="text-[#334155]">
-                          <td className="px-4 py-3">
-                            <div className="h-4 w-5/6 animate-pulse rounded bg-[#e2e8f0]" />
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="h-4 w-16 animate-pulse rounded bg-[#e2e8f0]" />
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="h-4 w-14 animate-pulse rounded bg-[#e2e8f0]" />
-                          </td>
-                        </tr>
-                      ))
-                    ) : activityRows.length === 0 ? (
-                      <tr>
-                        <td colSpan={3} className="px-4 py-4 text-[12px] text-[#94a3b8]">
-                          표시할 이력이 없습니다.
-                        </td>
-                      </tr>
-                    ) : (
-                      activityRows.map((row) => (
-                        <tr
-                          key={`${row.type}-${row.occurredAt}`}
-                          onClick={() => setDetailActivity(row)}
-                          className="cursor-pointer text-[#334155] transition hover:bg-[#f8fafc]"
-                        >
-                          {/* CHANGE_* 는 30줄짜리 마크다운이 들어온다. 목록은 한 줄로 자르고
+                    {isRelatedLoading
+                      ? Array.from({ length: 3 }, (_, index) => (
+                          <tr key={`activity-skeleton-${index}`} className="text-[#334155]">
+                            <td className="px-4 py-3">
+                              <div className="h-4 w-5/6 animate-pulse rounded bg-[#e2e8f0]" />
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="h-4 w-16 animate-pulse rounded bg-[#e2e8f0]" />
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="h-4 w-14 animate-pulse rounded bg-[#e2e8f0]" />
+                            </td>
+                          </tr>
+                        ))
+                      : activityRows.length === 0
+                        ? (
+                            <tr>
+                              <td colSpan={3} className="px-4 py-4 text-[12px] text-[#94a3b8]">
+                                표시할 이력이 없습니다.
+                              </td>
+                            </tr>
+                          )
+                        : activityRows.map((row) => (
+                          <tr
+                            key={`${row.type}-${row.occurredAt}`}
+                            onClick={() => setDetailActivity(row)}
+                            className="cursor-pointer text-[#334155] transition hover:bg-[#f8fafc]"
+                          >
+                            {/* CHANGE_* 는 30줄짜리 마크다운이 들어온다. 목록은 한 줄로 자르고
                                 전문은 상세 모달에서 본다 */}
-                          <td className="max-w-0 px-4 py-3">
-                            <p className="truncate">{row.message}</p>
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-[#64748b]">
-                            {formatActivityTime(row.occurredAt)}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="truncate rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
-                                {row.type}
-                              </span>
-                              <button
-                                type="button"
-                                aria-label={`${row.type} 상세 보기`}
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  setDetailActivity(row);
-                                }}
-                                className="shrink-0 cursor-pointer text-[#94a3b8] transition hover:text-[#0f172a]"
-                              >
-                                <ChevronRight className="size-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
+                            <td className="max-w-0 px-4 py-3">
+                              <p className="truncate">{row.message}</p>
+                            </td>
+                            <td className="whitespace-nowrap px-4 py-3 text-[#64748b]">
+                              {formatActivityTime(row.occurredAt)}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="truncate rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
+                                  {row.type}
+                                </span>
+                                <button
+                                  type="button"
+                                  aria-label={`${row.type} 상세 보기`}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setDetailActivity(row);
+                                  }}
+                                  className="shrink-0 cursor-pointer text-[#94a3b8] transition hover:text-[#0f172a]"
+                                >
+                                  <ChevronRight className="size-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                   </tbody>
                 </table>
               </div>

@@ -56,9 +56,8 @@ function ProjectRuntimeSection({ projectId }: { projectId: number }) {
   const startCommand = draft?.startCommand ?? runtime?.startCommand ?? '';
   const dbEngine = draft?.dbEngine ?? runtime?.dbEngine ?? 'MYSQL';
 
-  const editDraft = (
-    patch: Partial<{ runtimeType: string; startCommand: string; dbEngine: string }>,
-  ) => setDraft({ runtimeType, startCommand, dbEngine, ...patch });
+  const editDraft = (patch: Partial<{ runtimeType: string; startCommand: string; dbEngine: string }>) =>
+    setDraft({ runtimeType, startCommand, dbEngine, ...patch });
 
   const saveMutation = useMutation({
     mutationFn: () =>

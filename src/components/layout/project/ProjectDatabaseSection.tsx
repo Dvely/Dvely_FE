@@ -11,7 +11,11 @@ import { usePreviewRuntimeConfigQuery } from '@/api/previewRuntime';
 import { getProjectInfrastructureSettings } from '@/api/projects';
 import { describeProvisionFailure } from '@/lib/provisionFailure';
 import { extractApiErrorMessage } from '@/utils/response';
-import type { CreatedDatabase, DatabaseEngine, DatabaseMethod } from '@/types/database.type';
+import type {
+  CreatedDatabase,
+  DatabaseEngine,
+  DatabaseMethod,
+} from '@/types/database.type';
 
 const QUERY_KEY = 'project-infra-page';
 
@@ -136,70 +140,70 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
 
       {isServerRuntime ? null : (
         <>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-[#475569]">방식</span>
-              <select
-                value={method}
-                onChange={(event) => setMethod(event.target.value as DatabaseMethod)}
-                className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
-              >
-                {METHOD_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value} disabled={!option.enabled}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-[#475569]">엔진</span>
-              <select
-                value={engine}
-                onChange={(event) => setEngine(event.target.value as DatabaseEngine)}
-                className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
-              >
-                {ENGINE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1">
+            <span className="text-[12px] font-medium text-[#475569]">방식</span>
+            <select
+              value={method}
+              onChange={(event) => setMethod(event.target.value as DatabaseMethod)}
+              className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
+            >
+              {METHOD_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value} disabled={!option.enabled}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[12px] font-medium text-[#475569]">엔진</span>
+            <select
+              value={engine}
+              onChange={(event) => setEngine(event.target.value as DatabaseEngine)}
+              className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
+            >
+              {ENGINE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
-          {needsPreview ? (
-            <p className="mt-3 text-[12px] text-[#b45309]">
-              테스트용 DB는 실행 중인 프리뷰가 있어야 만들 수 있습니다. 먼저 프리뷰를 띄워주세요.
-            </p>
-          ) : null}
-          {needsCloudConnection ? (
-            <p className="mt-3 text-[12px] leading-relaxed text-[#b45309]">
-              RDS는 연결된 클라우드 계정이 있어야 만들 수 있습니다. 위 클라우드 연결 선택에서 먼저
-              연결해 주세요.{' '}
-              <Link
-                to="/onboarding/cloud"
-                className="font-semibold underline underline-offset-2 hover:text-[#92400e]"
-              >
-                AWS가 처음이신가요?
-              </Link>
-            </p>
-          ) : null}
-          {method === 'RDS' ? (
-            <p className="mt-3 text-[12px] leading-relaxed text-[#64748b]">
-              RDS는 실제 AWS 자원이라 과금됩니다. 요청하면 승인 절차를 거치고, 승인 후 생성에
-              5~10분이 걸립니다.
-            </p>
-          ) : null}
-          {createError ? <p className="mt-3 text-[12px] text-[#dc2626]">{createError}</p> : null}
+        {needsPreview ? (
+          <p className="mt-3 text-[12px] text-[#b45309]">
+            테스트용 DB는 실행 중인 프리뷰가 있어야 만들 수 있습니다. 먼저 프리뷰를 띄워주세요.
+          </p>
+        ) : null}
+        {needsCloudConnection ? (
+          <p className="mt-3 text-[12px] leading-relaxed text-[#b45309]">
+            RDS는 연결된 클라우드 계정이 있어야 만들 수 있습니다. 위 클라우드 연결 선택에서 먼저
+            연결해 주세요.{' '}
+            <Link
+              to="/onboarding/cloud"
+              className="font-semibold underline underline-offset-2 hover:text-[#92400e]"
+            >
+              AWS가 처음이신가요?
+            </Link>
+          </p>
+        ) : null}
+        {method === 'RDS' ? (
+          <p className="mt-3 text-[12px] leading-relaxed text-[#64748b]">
+            RDS는 실제 AWS 자원이라 과금됩니다. 요청하면 승인 절차를 거치고, 승인 후 생성에 5~10분이
+            걸립니다.
+          </p>
+        ) : null}
+        {createError ? <p className="mt-3 text-[12px] text-[#dc2626]">{createError}</p> : null}
 
-          <button
-            type="button"
-            disabled={needsPreview || needsCloudConnection || createMutation.isPending}
-            onClick={() => createMutation.mutate()}
-            className="mt-3 h-9 cursor-pointer rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {createMutation.isPending ? '만드는 중...' : 'DB 추가'}
-          </button>
+        <button
+          type="button"
+          disabled={needsPreview || needsCloudConnection || createMutation.isPending}
+          onClick={() => createMutation.mutate()}
+          className="mt-3 h-9 cursor-pointer rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {createMutation.isPending ? '만드는 중...' : 'DB 추가'}
+        </button>
         </>
       )}
 
@@ -207,8 +211,8 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
         <div className="mt-4 rounded-xl border border-[#fcd34d] bg-[#fffbeb] px-4 py-3">
           <p className="text-[13px] font-semibold text-[#92400e]">승인을 기다리고 있습니다</p>
           <p className="mt-1 text-[12px] leading-relaxed text-[#b45309]">
-            과금되는 자원이라 승인 절차를 거칩니다. 승인 탭에서 결정하면 생성이 시작되고, 5~10분 뒤
-            접속정보가 아래 목록에 나타납니다.
+            과금되는 자원이라 승인 절차를 거칩니다. 승인 탭에서 결정하면 생성이 시작되고, 5~10분
+            뒤 접속정보가 아래 목록에 나타납니다.
           </p>
           <button
             type="button"

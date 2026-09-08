@@ -270,8 +270,8 @@ function CloudOnboardingGuide() {
             내 클라우드에 백엔드를 올리기 위한 딱 한 번의 준비
           </h1>
           <p className="mt-4 max-w-[34rem] text-[15px] leading-relaxed text-[#64748b]">
-            Qeploy가 당신의 백엔드 서버를 직접 띄우려면, 당신 소유의 AWS 계정 한 개가 필요합니다.
-            AWS를 처음 써봐도 괜찮습니다 — 순서대로만 따라오면 됩니다.
+            Qeploy가 당신의 백엔드 서버를 직접 띄우려면, 당신 소유의 AWS 계정 한 개가
+            필요합니다. AWS를 처음 써봐도 괜찮습니다 — 순서대로만 따라오면 됩니다.
           </p>
           <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#e2e8f0] bg-[#f5f3ff] px-3.5 py-1.5 text-[13px] font-medium text-[#4c1d95]">
             <span className="size-2 rounded-full bg-[#16a34a]" aria-hidden />
@@ -292,9 +292,7 @@ function CloudOnboardingGuide() {
           </p>
           <p className="mt-2 text-[14px] leading-relaxed text-[#64748b]">
             그 대신 딱 한 번,{' '}
-            <strong className="font-semibold text-[#0f172a]">
-              당신의 AWS 계정을 Qeploy에 연결
-            </strong>
+            <strong className="font-semibold text-[#0f172a]">당신의 AWS 계정을 Qeploy에 연결</strong>
             해 주면 됩니다. 그다음부터는 &ldquo;백엔드 올려줘&rdquo;라고 요청하면 Qeploy가 알아서
             빌드하고 서버를 띄웁니다.
           </p>
@@ -338,7 +336,9 @@ function CloudOnboardingGuide() {
 
           <p className="mt-4 text-[13px] leading-relaxed text-[#0f172a]">
             첫 12개월은 AWS 프리티어로 더 저렴할 수 있고,{' '}
-            <strong className="font-semibold">서버를 종료하면 그 순간부터 청구가 멈춥니다.</strong>{' '}
+            <strong className="font-semibold">
+              서버를 종료하면 그 순간부터 청구가 멈춥니다.
+            </strong>{' '}
             만들기 전에 Qeploy가 예상 비용을 보여주고, 당신이 승인해야만 진행합니다.
           </p>
         </div>
@@ -415,13 +415,13 @@ function CloudOnboardingGuide() {
             한 곳에서 멈춰도 괜찮습니다
           </h2>
           <p className="mt-3 text-[14px] leading-relaxed text-[#64748b]">
-            어느 단계든 화면 안내를 그대로 따르면 됩니다. 계정을 만드는 1단계가 가장 낯설 수 있는데,
-            그건 당신 명의의 계정이라 우리가 대신 만들어 드릴 수는 없는 부분입니다 — 대신
+            어느 단계든 화면 안내를 그대로 따르면 됩니다. 계정을 만드는 1단계가 가장 낯설 수
+            있는데, 그건 당신 명의의 계정이라 우리가 대신 만들어 드릴 수는 없는 부분입니다 — 대신
             준비물(이메일·카드·휴대폰)만 있으면 화면을 따라 충분히 하실 수 있습니다.
           </p>
           <p className="mt-5 text-[13px] leading-relaxed text-[#94a3b8]">
-            이 안내는 백엔드(서버형) 배포를 위한 것입니다. 정적 사이트만 올릴 때는 AWS 연결 없이도
-            배포됩니다.
+            이 안내는 백엔드(서버형) 배포를 위한 것입니다. 정적 사이트만 올릴 때는 AWS 연결
+            없이도 배포됩니다.
           </p>
         </footer>
       </div>
