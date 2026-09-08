@@ -385,11 +385,11 @@ function AgentConversationPanel({
     /*
       "이렇게 정했습니다" 카드가 떠 있으면 같은 답을 말하는 줄을 접는다.
 
-      본문을 보고 고르지 않는다 — 서버가 붙여 주는 `kind` 로만 찾는다(BE #310).
-      카드는 새로고침하면 사라지고 이 줄은 남으므로, 지우는 게 아니라 카드가 있는
-      동안만 감추는 것이다.
+      본문을 보고 고르지 않는다 — 서버가 붙여 주는 `kind` 와 `taskId` 로만 찾는다
+      (BE #310·#315). 카드는 새로고침하면 사라지고 이 줄은 남으므로, 지우는 게 아니라
+      카드가 있는 동안만 감추는 것이다.
     */
-    const coveredId = findCardCoveredMessageId(merged, answeredClarification != null);
+    const coveredId = findCardCoveredMessageId(merged, answeredClarification?.taskId ?? null);
     return coveredId == null ? merged : merged.filter((m) => m.messageId !== coveredId);
   }, [serverMessages, overlayMessages, answeredClarification]);
   const pollAbortRef = useRef<AbortController | null>(null);

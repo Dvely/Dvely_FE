@@ -54,18 +54,25 @@ function toMessageTone(kind: string | null | undefined): MessageTone {
  * 있는 동안만이고 새로고침하면 사라지므로, **영구 기록은 이 줄 쪽이다** — 그래서
  * 지우는 게 아니라 카드가 있을 때만 감춘다.
  *
- * 짝을 taskId 로 맞추고 싶었지만 **서버가 메시지에 taskId 를 안 실어 준다**(전부
- * null 로 온다). 그래서 마지막 것 하나만 고른다 — 카드는 늘 가장 최근 태스크의
- * 것이므로 그 짝도 가장 최근 답변 줄이다. 앞선 되묻기의 기록은 그대로 남는다.
+ * **`taskId` 로 정확히 짝지운다.** 처음에는 서버가 메시지에 taskId 를 안 실어 줘서
+ * "마지막 CLARIFICATION_ANSWER 하나" 로 골랐는데, 그건 카드의 짝이 늘 가장 최근
+ * 답변이라는 가정에 기댄 것이었다. 이제 컬럼이 생겨(BE #315) 가정 없이 맞출 수 있다.
+ *
+ * 짝을 못 찾으면 아무것도 감추지 않는다. 카드와 줄이 같이 보일 뿐이라 잃는 것이
+ * 없다 — 엉뚱한 줄을 감춰 기록이 사라지는 쪽이 훨씬 나쁘다. taskId 가 없던 시절에
+ * 쌓인 줄이 그 경우다.
  */
 function findCardCoveredMessageId(
   messages: ConversationMessage[],
-  isCardVisible: boolean,
+  cardTaskId: string | null,
 ): number | null {
-  if (!isCardVisible) return null;
+  if (!cardTaskId) return null;
 
   for (let i = messages.length - 1; i >= 0; i -= 1) {
-    if (messages[i].kind === CLARIFICATION_ANSWER_KIND) return messages[i].messageId;
+    const message = messages[i];
+    if (message.kind === CLARIFICATION_ANSWER_KIND && message.taskId === cardTaskId) {
+      return message.messageId;
+    }
   }
   return null;
 }
