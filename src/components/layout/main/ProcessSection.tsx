@@ -49,7 +49,10 @@ const processCards = [
 
 function ProcessSection() {
   return (
-    <section className="w-full bg-[linear-gradient(180deg,#FDFBFF_0%,#F3EEFF_100%)]">
+    <section
+      id="process"
+      className="w-full scroll-mt-4 bg-[linear-gradient(180deg,#FDFBFF_0%,#F3EEFF_100%)]"
+    >
       <div className="flex flex-col gap-2 items-start justify-center py-16 px-52">
         <p className="text-[#7C3AED] text-lg font-extrabold">프로그램 진행 과정</p>
         <p className="text-[#111827] typo-h2-bd">이렇게 이어집니다</p>

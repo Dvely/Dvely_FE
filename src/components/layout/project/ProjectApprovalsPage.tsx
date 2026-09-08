@@ -58,8 +58,13 @@ function ProjectApprovalsPage({ projectId }: ProjectApprovalsPageProps) {
   const approveMutation = useMutation({
     // 입력 명세가 있는 승인(REPOSITORY_BINDING)은 값을 실어 보낸다. 비워 보내면
     // 서버가 defaultValue 를 쓴다 — 그래서 payload 는 선택이다
-    mutationFn: ({ approvalId, payload }: { approvalId: number; payload?: Record<string, string> }) =>
-      postApprovalApprove(approvalId, payload),
+    mutationFn: ({
+      approvalId,
+      payload,
+    }: {
+      approvalId: number;
+      payload?: Record<string, string>;
+    }) => postApprovalApprove(approvalId, payload),
     onSuccess: invalidateApprovals,
   });
   const rejectMutation = useMutation({
