@@ -30,9 +30,23 @@ import AppAlertDialog from '@/components/common/AppAlertDialog';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
 import AgentRetryCard from '@/components/layout/project/AgentRetryCard';
 import { useAgentTaskEventStream } from '@/hooks/useAgentTaskEventStream';
-import type { AgentTaskEvent, GetAgentTaskResType, TaskClarification } from '@/types/agent.type';
+import type {
+  AgentTaskEvent,
+  AnsweredClarification,
+  GetAgentTaskResType,
+  TaskClarification,
+} from '@/types/agent.type';
 import AgentClarificationForm from '@/components/layout/project/AgentClarificationForm';
-import { canRenderAsChoices } from '@/components/layout/project/agentClarification.utils';
+import AgentAnsweredClarificationCard from '@/components/layout/project/AgentAnsweredClarificationCard';
+import AgentTaskTimeline from '@/components/layout/project/AgentTaskTimeline';
+import {
+  canRenderAnsweredChoices,
+  canRenderAsChoices,
+} from '@/components/layout/project/agentClarification.utils';
+import {
+  findCardCoveredMessageId,
+  toMessageTone,
+} from '@/components/layout/project/chatMessageKind.utils';
 import type { ConversationMessage } from '@/types/chat.type';
 import {
   AGENT_CHAT_QUERY_KEY,
@@ -233,6 +247,23 @@ function AgentConversationPanel({
     clarification: TaskClarification | null;
   } | null>(null);
   const awaitingInputTaskId = awaitingInput?.taskId ?? null;
+  /*
+    답이 끝난 되묻기. **폼이 아니라 기록이다.**
+
+    되묻기 폼은 답한 순간 사라진다 — 서버가 `clarification` 을 null 로 만들어 이중 제출을
+    막기 때문이다. 그 동작은 그대로 둔다. 되살리면 폼이 다시 떠서 두 번 보낼 창이 열린다.
+
+    그런데 그러고 나면 **무엇을 골랐는지 확인할 길이 없었다.** 서버가 답한 시점의
+    스냅샷을 따로 남기기 시작했으므로(`answeredClarification`), 그것을 읽기 전용 카드로
+    세운다.
+
+    taskId 와 짝으로 든다 — 되묻기 폼과 같은 이유다. 따로 들면 태스크가 바뀌는 순간 앞
+    태스크의 결정이 새 태스크의 것처럼 보인다.
+  */
+  const [answeredClarification, setAnsweredClarification] = useState<{
+    taskId: string;
+    answered: AnsweredClarification;
+  } | null>(null);
 
   /*
     연결이 없어서 멈춘 되묻기는 답을 받을 게 아니다.
@@ -301,6 +332,36 @@ function AgentConversationPanel({
     enabled: isAssistantReplying,
   });
 
+  /**
+   * 태스크에 답이 끝난 되묻기가 실려 있으면 카드로 세운다.
+   *
+   * 값이 그대로면 상태를 바꾸지 않는다 — 폴링이 2초마다 같은 값을 새 객체로 넣으면
+   * 카드가 매번 다시 그려진다.
+   */
+  const captureAnsweredClarification = (task: GetAgentTaskResType) => {
+    const answered = task.answeredClarification;
+    // 자유 입력으로 물은 되묻기는 카드로 그리지 않는다 — 답 문장은 이미 말풍선으로 남아
+    // 있어서, 질문과 나머지 선택지가 없으면 같은 문장을 두 번 보여줄 뿐이다
+    if (!answered || !canRenderAnsweredChoices(answered) || !task.taskId) return;
+
+    setAnsweredClarification((prev) =>
+      prev && prev.taskId === task.taskId && prev.answered.answer === answered.answer
+        ? prev
+        : { taskId: task.taskId, answered },
+    );
+  };
+
+  /**
+   * 폴링이 태스크를 읽을 때마다 부른다. 진행 문구와 "이렇게 정했습니다" 를 같이 세운다.
+   *
+   * 둘을 한 자리에서 받는 이유는, 되묻기에 답한 뒤 이어 도는 구간을 지켜보는 것이 곧
+   * 폴링이기 때문이다. 폴링 밖에서 따로 조회하면 같은 것을 두 번 묻게 된다.
+   */
+  const captureTaskProgress = (task: GetAgentTaskResType) => {
+    setProgressTask(task);
+    captureAnsweredClarification(task);
+  };
+
   const { data: aiProviders } = useAiProviderListQuery(AGENT_CHAT_QUERY_KEY);
   const providerOptions = aiProviders?.providers ?? [];
   // 둘 이상일 때만 고를 의미가 있다. 하나뿐이면 서버 기본값과 같아서 보여줄 이유가 없다
@@ -318,10 +379,19 @@ function AgentConversationPanel({
   const isLongRunning =
     longRunningBaseline != null && (serverMessages?.length ?? 0) <= longRunningBaseline;
 
-  const displayMessages = useMemo(
-    () => mergeConversationMessages(serverMessages ?? [], overlayMessages),
-    [serverMessages, overlayMessages],
-  );
+  const displayMessages = useMemo(() => {
+    const merged = mergeConversationMessages(serverMessages ?? [], overlayMessages);
+
+    /*
+      "이렇게 정했습니다" 카드가 떠 있으면 같은 답을 말하는 줄을 접는다.
+
+      본문을 보고 고르지 않는다 — 서버가 붙여 주는 `kind` 와 `taskId` 로만 찾는다
+      (BE #310·#315). 카드는 새로고침하면 사라지고 이 줄은 남으므로, 지우는 게 아니라
+      카드가 있는 동안만 감추는 것이다.
+    */
+    const coveredId = findCardCoveredMessageId(merged, answeredClarification?.taskId ?? null);
+    return coveredId == null ? merged : merged.filter((m) => m.messageId !== coveredId);
+  }, [serverMessages, overlayMessages, answeredClarification]);
   const pollAbortRef = useRef<AbortController | null>(null);
 
   /*
@@ -363,6 +433,7 @@ function AgentConversationPanel({
     setLongRunningBaseline(null);
     setRetryableTask(null);
     setRunningTaskId(null);
+    setAnsweredClarification(null);
 
     if (conversationId == null) {
       setPendingApprovalId(null);
@@ -436,7 +507,7 @@ function AgentConversationPanel({
       pollAbortRef.current = controller;
       const task = await pollAgentTask(taskId, {
         signal: controller.signal,
-        onProgress: setProgressTask,
+        onProgress: captureTaskProgress,
       });
 
       const pendingApprovalId = await resolvePendingApprovalId(
@@ -466,6 +537,8 @@ function AgentConversationPanel({
       setRetryableTask(null);
       // 앞선 실행의 문구가 남아 있으면 새 요청이 그 상태인 것처럼 보인다
       setProgressTask(null);
+      // 새 요청은 새 태스크다. 앞 태스크의 결정을 남기면 이번에 그렇게 정한 것처럼 읽힌다
+      setAnsweredClarification(null);
       return { content, userMessage, draftConversationId };
     },
     onSuccess: (result, _content, context) => {
@@ -508,9 +581,7 @@ function AgentConversationPanel({
           conversationId: targetConversationId,
           taskId: result.taskId,
         });
-        setAlertMessage(
-          '메시지는 저장됐지만 작업이 시작되지 않았습니다. 다시 요청해 주세요.',
-        );
+        setAlertMessage('메시지는 저장됐지만 작업이 시작되지 않았습니다. 다시 요청해 주세요.');
       }
 
       setIsAssistantReplying(false);
@@ -585,7 +656,7 @@ function AgentConversationPanel({
       setRunningTaskId(taskId);
       const task = await pollAgentTask(taskId, {
         signal: controller.signal,
-        onProgress: setProgressTask,
+        onProgress: captureTaskProgress,
         until: (nextTask) => {
           const stillSameApproval =
             nextTask.pendingApprovalId === approvalId &&
@@ -700,25 +771,43 @@ function AgentConversationPanel({
       await postAgentTaskInput(taskId, { value });
       setRunningTaskId(taskId);
 
+      /*
+        답이 닿자마자 대화를 다시 읽는다.
+
+        서버가 답을 대화에 남기므로(#305) 화면이 그것을 그대로 쓰면 되는데, 메시지 목록은
+        기본 15초 주기라 그냥 두면 **답한 뒤 최대 15초 동안 자기가 뭘 보냈는지 화면에서
+        사라진다.** 폴링이 끝난 뒤(=작업이 다 끝난 뒤) 무효화하는 것으로는 늦다 — 그
+        사이가 몇 분이다.
+      */
+      if (conversationId != null) {
+        void queryClient.invalidateQueries({
+          queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, conversationId],
+        });
+      }
+
       pollAbortRef.current?.abort();
       const controller = new AbortController();
       pollAbortRef.current = controller;
       const task = await pollAgentTask(taskId, {
         signal: controller.signal,
-        onProgress: setProgressTask,
+        onProgress: captureTaskProgress,
       });
 
       const pendingApprovalId = await resolvePendingApprovalId(task, projectId, conversationId);
       return { task, taskId, pendingApprovalId };
     },
-    onMutate: ({ value }) => {
-      const targetConversationId = conversationId ?? 0;
-      const userMessage = createLocalMessage(targetConversationId, 'user', value);
-      setOverlayMessages((prev) => {
-        const next = [...mergeConversationMessages(serverMessages ?? [], prev), userMessage];
-        writeSessionMessages(targetConversationId, next);
-        return next;
-      });
+    onMutate: () => {
+      /*
+        답을 말풍선으로 미리 얹지 않는다.
+
+        예전에는 여기서 사용자 메시지를 하나 만들어 붙였다. 서버가 답을 대화에 안 남기던
+        때라 그러지 않으면 대화가 "질문 → (공백) → 결과" 로 읽혔기 때문이다. 지금은 서버가
+        남긴다(#305) — 그런데 문구가 다르고("답변을 반영해 작업을 이어갑니다: X") role 도
+        달라서 병합에 안 걸린다. 그대로 두면 같은 답이 두 줄로 보인다.
+
+        서술은 서버 하나가 소유한다는 이 파일의 규칙을 그대로 따른다. 대신 답이 닿는 즉시
+        대화를 다시 읽어(mutationFn 참고) 빈 구간을 짧게 만든다.
+      */
       setInput('');
       setIsAssistantReplying(true);
       setLongRunningBaseline(null);
@@ -726,7 +815,6 @@ function AgentConversationPanel({
       setProgressTask(null);
       // 답을 보냈으니 대기 상태를 푼다. 이어 달리다 또 물으면 onSuccess 가 다시 세운다
       setAwaitingInput(null);
-      return { userMessage, targetConversationId };
     },
     onSuccess: ({ task, taskId, pendingApprovalId }) => {
       if (conversationId == null) return;
@@ -746,7 +834,7 @@ function AgentConversationPanel({
       setRunningTaskId(null);
       onConversationActivity?.(conversationId);
     },
-    onError: (error, variables, context) => {
+    onError: (error, variables) => {
       setIsAssistantReplying(false);
       setProgressTask(null);
       setRunningTaskId(null);
@@ -765,13 +853,6 @@ function AgentConversationPanel({
         없어졌다고 사용자에게 되돌려주면 같은 말을 두 번 적게 된다.
       */
       setAwaitingInput(null);
-      if (context?.userMessage) {
-        setOverlayMessages((prev) => {
-          const next = prev.filter((message) => message.messageId !== context.userMessage.messageId);
-          writeSessionMessages(context.targetConversationId, next);
-          return next;
-        });
-      }
       sendMessageMutation.mutate(variables.value);
     },
   });
@@ -793,7 +874,7 @@ function AgentConversationPanel({
       pollAbortRef.current = controller;
       const task = await pollAgentTask(taskId, {
         signal: controller.signal,
-        onProgress: setProgressTask,
+        onProgress: captureTaskProgress,
       });
 
       const pendingApprovalId = await resolvePendingApprovalId(task, projectId, conversationId);
@@ -900,6 +981,10 @@ function AgentConversationPanel({
         rememberConversationTaskId(conversationId, task.taskId);
         setRunningTaskId(task.taskId || null);
         setAwaitingInput(toAwaitingInput(task, task.taskId));
+        // 새로고침해도 무엇을 정했는지는 남아 있어야 한다 — 서버가 들고 있는 기록이라
+        // 다시 물으면 그대로 온다. 진행 문구는 세우지 않는다: 여기서 되살리는 것은
+        // 기록이지 "지금 도는 중" 이 아니다
+        captureAnsweredClarification(task);
       } catch {
         // 못 되살려도 대화는 그대로 쓸 수 있다
       }
@@ -922,6 +1007,7 @@ function AgentConversationPanel({
       setLongRunningBaseline(null);
       setRetryableTask(null);
       setAwaitingInput(null);
+      setAnsweredClarification(null);
       // 서버가 딸린 승인도 함께 취소했다 — 카드를 남기면 이미 닫힌 승인을 누르게 된다
       setPendingApprovalId(null);
 
@@ -990,10 +1076,7 @@ function AgentConversationPanel({
     if (!open) setAlertMessage(null);
   };
 
-  const handleDecideApproval = (
-    action: 'approve' | 'reject',
-    payload?: Record<string, string>,
-  ) => {
+  const handleDecideApproval = (action: 'approve' | 'reject', payload?: Record<string, string>) => {
     if (decideApprovalMutation.isPending || isAssistantReplying || !activeApproval) {
       return;
     }
@@ -1046,6 +1129,18 @@ function AgentConversationPanel({
             : displayMessages.map((message) => (
                 <MessageBubble key={message.messageId} message={message} />
               ))}
+          {/*
+            무엇을 정했는지. 답하는 폼이 사라진 자리를 대신하는 **읽기 전용** 기록이다.
+
+            메시지 다음, 결정할 것들(승인·재시도) 앞에 둔다 — 이건 방금 지나온 일이고
+            아래 둘은 지금 눌러야 할 일이라, 순서가 곧 읽는 순서가 된다.
+          */}
+          {answeredClarification ? (
+            <AgentAnsweredClarificationCard
+              key={answeredClarification.taskId}
+              answered={answeredClarification.answered}
+            />
+          ) : null}
           {activeApproval ? (
             <AgentApprovalCard
               key={activeApproval.approvalId}
@@ -1252,12 +1347,6 @@ function linkifyMessageContent(content: string, linkClassName: string) {
  * 두 곳에서 쓴다 — 메시지 목록을 처음 읽는 동안과, 에이전트가 도는 동안.
  * 앞쪽은 곧 끝나므로 문구가 없고, 뒤쪽은 몇 분 걸릴 수 있어 지금 무슨 단계인지 적는다.
  */
-/** 이벤트에 붙은 시각. 서버가 오프셋 없이 보내므로 벽시계 그대로 읽는다 */
-function formatEventTime(createdAt: string): string {
-  const match = /T(\d{2}):(\d{2})/.exec(createdAt);
-  return match ? `${match[1]}:${match[2]}` : '';
-}
-
 function AssistantReplySkeleton({
   progressLabel,
   events = [],
@@ -1291,29 +1380,10 @@ function AssistantReplySkeleton({
         </div>
       ) : null}
       {/*
-        지나온 단계. 서버가 이벤트마다 message 를 적어 보내므로 그대로 보여준다 —
-        FE 가 다시 서술하면 서버 문구와 두 벌이 된다.
-
-        메시지가 없는 이벤트는 건너뛴다. type 만 있는 것(CREATED 등)을 그대로 찍으면
-        사용자에게는 뜻 없는 대문자 나열이다.
+        지나온 단계와 지금 도는 단계. 서버가 이벤트마다 사용자 말로 문장을 적어 보내므로
+        그대로 보여준다 — FE 가 다시 서술하면 서버 문구와 두 벌이 된다.
       */}
-      {events.length > 0 ? (
-        <ol className="mb-2 flex flex-col gap-1">
-          {events
-            .filter((event) => event.message?.trim())
-            .map((event) => (
-              <li
-                key={event.eventId}
-                className="flex gap-2 text-[12px] leading-relaxed text-[#64748b]"
-              >
-                <span className="shrink-0 font-mono text-[11px] text-[#cbd5e1]">
-                  {formatEventTime(event.createdAt)}
-                </span>
-                <span className="break-all">{event.message}</span>
-              </li>
-            ))}
-        </ol>
-      ) : null}
+      <AgentTaskTimeline events={events} />
       <div aria-hidden="true" className="flex flex-col gap-2">
         <div className="h-3 w-[78%] animate-pulse rounded bg-[#e2e8f0]" />
         <div className="h-3 w-[92%] animate-pulse rounded bg-[#e2e8f0]" />
@@ -1323,12 +1393,28 @@ function AssistantReplySkeleton({
   );
 }
 
+/**
+ * 어시스턴트 줄의 무게별 모양.
+ *
+ * 실패만 배경까지 준다 — 대화를 훑을 때 걸려야 하는 유일한 줄이라서다. 흐린 것은
+ * 색만 낮춘다: 진행 안내는 안 읽어도 되지만 찾으면 읽을 수는 있어야 한다.
+ */
+const ASSISTANT_TONE_CLASS = {
+  default: 'px-3.5 py-3 text-[#475569]',
+  muted: 'px-3.5 py-3 text-[#94a3b8]',
+  failed: 'rounded-xl border-l-2 border-[#fca5a5] bg-[#fef2f2] px-3.5 py-3 text-[#b91c1c]',
+} as const;
+
 function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
+  // 종류는 서버가 알려준 것만 믿는다. 모르는 값이면 지금까지와 똑같이 그려진다
+  const tone = isAssistant ? toMessageTone(message.kind) : 'default';
   const linkClassName = isUser
     ? 'underline underline-offset-2 hover:text-[#5b21b6]'
-    : 'text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]';
+    : tone === 'failed'
+      ? 'underline underline-offset-2 hover:text-[#7f1d1d]'
+      : 'text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]';
 
   return (
     <div className={isUser ? 'ml-6' : undefined}>
@@ -1337,7 +1423,7 @@ function MessageBubble({ message }: MessageBubbleProps) {
           isUser
             ? 'rounded-xl border border-[#c4b5fd] bg-[#ede9fe] px-3.5 py-3 text-[#4c1d95]'
             : isAssistant
-              ? 'px-3.5 py-3 text-[#475569]'
+              ? ASSISTANT_TONE_CLASS[tone]
               : 'rounded-xl border border-[#e2e8f0] bg-white px-3.5 py-3 text-[#64748b]'
         }`}
       >
