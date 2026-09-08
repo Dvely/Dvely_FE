@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowRight, ChevronDown, X } from 'lucide-react';
-import HeaderContainer from '@/components/layout/header/HeaderContainer';
+import { ArrowRight, ChevronDown } from 'lucide-react';
 import { useGitHubLogin } from '@/hooks/useGitHubLogin';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 import { cn } from '@/lib/utils';
@@ -49,7 +48,9 @@ const PHASE_AT: Array<[Phase, number]> = [
 function scrollToSection(sectionId: string) {
   const target = document.getElementById(sectionId);
   if (!target) return;
-  const top = target.getBoundingClientRect().top + window.scrollY - 12;
+  const header = document.querySelector('header');
+  const offset = header instanceof HTMLElement ? header.offsetHeight + 12 : 84;
+  const top = target.getBoundingClientRect().top + window.scrollY - offset;
   window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
 }
 
@@ -65,7 +66,6 @@ function scatterOffset(word: string, index: number, slot: string) {
 }
 
 function HeroSection() {
-  const [bannerOpen, setBannerOpen] = useState(true);
   const [phase, setPhase] = useState<Phase>('logo');
   const [typed, setTyped] = useState('');
   const [cutIndex, setCutIndex] = useState(0);
@@ -149,35 +149,7 @@ function HeroSection() {
   }, [showHeadline]);
 
   return (
-    <section className="relative isolate h-screen w-full overflow-hidden bg-white text-[#111827]">
-      <HeaderContainer />
-
-      {bannerOpen ? (
-        <div className="absolute inset-x-0 top-16 z-20">
-          <div className="relative flex w-full items-center justify-center bg-[#1e1b4b] px-12 py-2.5 text-white">
-            <p className="truncate text-center text-[13px]">
-              <b>쓰던 GitHub에 Qeploy를 연결하세요.</b> 말로 설명하면 홈페이지가 만들어집니다.
-            </p>
-            <button
-              type="button"
-              onClick={handleAuth}
-              disabled={isLoggingIn}
-              className="ml-3 shrink-0 rounded-md border border-white/70 px-3 py-1 text-[12px] font-semibold disabled:opacity-60"
-            >
-              연결 방법 보기
-            </button>
-            <button
-              type="button"
-              aria-label="안내 닫기"
-              onClick={() => setBannerOpen(false)}
-              className="absolute right-4 text-white/80 hover:text-white"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-        </div>
-      ) : null}
-
+    <section className="relative h-screen w-full overflow-hidden bg-white text-[#111827]">
       <div className="relative z-10 flex h-full items-center justify-center">
         <div className="pointer-events-none absolute inset-0">
           <span
