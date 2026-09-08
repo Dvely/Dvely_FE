@@ -29,6 +29,7 @@ import {
   ensureBackendEnvVars,
   findApproval,
   getTask,
+  markGithubAppInstalled,
   activeTask,
   state,
   terminateServer,
@@ -58,8 +59,8 @@ function demoUser() {
     id: DEMO.userId,
     username: DEMO.username,
     avatarUrl: DEMO.avatarUrl,
-    githubAppInstalled: true,
-    githubAppTokenLinked: true,
+    githubAppInstalled: state.githubAppInstalled,
+    githubAppTokenLinked: state.githubAppInstalled,
     githubAppTokenExpired: false,
     githubAppReauthorizationRequired: false,
     githubAppAccessTokenExpiresAt: iso(1000 * 60 * 60 * 8),
@@ -233,7 +234,15 @@ const routes: [string, RegExp, Handler][] = [
   ],
   ['GET', /^\/auth\/github\/callback$/, () => ({ accessToken: 'demo-access-token', refreshToken: 'demo-refresh-token', githubAppInstalled: true })],
   ['POST', /^\/auth\/refresh$/, () => ({ accessToken: 'demo-access-token', refreshToken: 'demo-refresh-token', githubAppInstalled: true })],
-  ['GET', /^\/auth\/github\/app\/install-url$/, () => ({ url: `${window.location.origin}/auth/app-callback?setup_action=install`, state: null })],
+  [
+    'GET',
+    /^\/auth\/github\/app\/install-url$/,
+    () => {
+      // 시연은 팝업을 열지 않는다. 설치 URL 을 받아 가는 순간 설치가 끝난 것으로 둔다
+      markGithubAppInstalled();
+      return { url: `${window.location.origin}/auth/app-callback?setup_action=install`, state: null };
+    },
+  ],
   ['GET', /^\/auth\/github\/app\/reauthorize-url$/, () => ({ url: `${window.location.origin}/auth/app-callback?setup_action=reauthorize`, state: null })],
   ['GET', /^\/auth\/github\/app\/callback$/, () => ({})],
   ['DELETE', /^\/auth\/logout$/, () => null],
@@ -414,26 +423,15 @@ const routes: [string, RegExp, Handler][] = [
     (ctx) => {
       const task = getTask(ctx.params[0]);
       if (!task) throw notFound('태스크를 찾을 수 없습니다.');
+      const waiting = task.status === 'WAITING_INPUT';
       return {
         taskId: task.taskId,
         status: task.status,
         previewUrl: task.previewUrl,
         summary: task.summary,
         error: null,
-        question: task.status === 'WAITING_INPUT' ? '어떤 화면 구성으로 만들까요?' : null,
-        clarification:
-          task.status === 'WAITING_INPUT'
-            ? {
-                question: '어떤 화면 구성으로 만들까요?',
-                inputType: 'SINGLE_SELECT',
-                options: [
-                  { value: 'minimal', label: '깔끔한 단일 페이지', recommended: true },
-                  { value: 'dashboard', label: '사이드바가 있는 대시보드', recommended: false },
-                ],
-                allowOther: true,
-                actionType: null,
-              }
-            : null,
+        question: waiting ? clarificationFor(task).question : null,
+        clarification: waiting ? clarificationFor(task) : null,
         failureLog: null,
         suggestedFix: null,
         attempt: 1,
@@ -860,6 +858,34 @@ function taskKindFor(content: string): DemoTask['kind'] {
   if (done === 1) return 'infra';
   if (done === 2) return 'ship';
   return 'generic';
+}
+
+/**
+ * 무엇을 되묻는지는 태스크 종류에 달렸다.
+ *
+ * 인프라는 답을 받을 수 있는 질문이 아니다 — 자격 증명은 다른 화면에서 사용자만
+ * 넣을 수 있으므로, 입력창 대신 안내를 펴라는 신호(CONNECT_CLOUD)를 보낸다.
+ */
+function clarificationFor(task: DemoTask) {
+  if (task.kind === 'infra') {
+    return {
+      question: '연결된 클라우드 계정이 없습니다. AWS 계정을 연결한 뒤 다시 시도해 주세요.',
+      inputType: 'TEXT',
+      options: [],
+      allowOther: false,
+      actionType: 'CONNECT_CLOUD',
+    };
+  }
+  return {
+    question: '어떤 화면 구성으로 만들까요?',
+    inputType: 'SINGLE_SELECT',
+    options: [
+      { value: 'minimal', label: '깔끔한 단일 페이지', recommended: true },
+      { value: 'dashboard', label: '사이드바가 있는 대시보드', recommended: false },
+    ],
+    allowOther: true,
+    actionType: null,
+  };
 }
 
 function infraSettings() {

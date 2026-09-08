@@ -146,6 +146,7 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
             <div className="mt-3 flex justify-center gap-3">
               <Link
                 to="/settings"
+                data-demo="cloud-register-link"
                 className="text-[12px] font-semibold text-[#0f172a] underline underline-offset-2"
               >
                 연결 등록하러 가기

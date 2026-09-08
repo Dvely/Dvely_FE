@@ -280,6 +280,7 @@ function CloudConnectGuidePanel({
         <Link
           to="/project/$slug/infra"
           params={{ slug: String(projectId) }}
+          data-demo="cloud-guide-select"
           className="inline-flex h-9 items-center rounded-lg border border-[#e2e8f0] bg-white px-4 text-[13px] font-semibold text-[#334155] hover:bg-[#f8fafc]"
         >
           이 프로젝트에 선택하기
@@ -292,6 +293,7 @@ function CloudConnectGuidePanel({
           type="button"
           onClick={onRetry}
           disabled={isRetrying}
+          data-demo="cloud-guide-retry"
           className="ml-auto inline-flex h-9 cursor-pointer items-center rounded-lg border border-[#c4b5fd] bg-white px-4 text-[13px] font-semibold text-[#6d28d9] hover:bg-[#faf5ff] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isRetrying ? '확인하는 중' : '연결했어요 — 다시 시도'}

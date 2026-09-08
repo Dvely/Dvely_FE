@@ -16,6 +16,7 @@ import { hideCursor, showCursor } from '@/demo/cursor';
 import { clearAppLocalStorage } from '@/lib/clearAppStorage';
 import {
   click,
+  fill,
   find,
   findAll,
   pageHasText,
@@ -62,7 +63,7 @@ async function approve(count: number) {
       시간이지 사람이 읽는 시간이 아니다. 다만 같은 장면의 두 번째부터는 무엇을 묻는
       화면인지 이미 봤으므로 짧게 지나간다.
     */
-    await read(index === 0 ? 2200 : 1400);
+    await read(index === 0 ? 2000 : 1200);
     await click('approve');
     await pause(420);
   }
@@ -84,17 +85,28 @@ export const scenes: Scene[] = [
     },
   },
   {
+    caption: { title: 'GitHub 권한 연결 기능', sub: '저장소에 접근할 권한을 허용합니다' },
+    run: async () => {
+      // 로그인 직후 App 이 아직 설치되지 않아 안내가 뜬다. 실제 첫 로그인이 그렇다
+      await waitUntil('권한 안내', () => find('github-app-confirm') != null, 20000);
+      await read(1500);
+      await click('github-app-confirm');
+      await waitUntil('안내 닫힘', () => find('github-app-confirm') == null, 15000);
+      await read(800);
+    },
+  },
+  {
     caption: { title: '프로젝트 생성 기능', sub: '이름만 정하면 바로 시작합니다' },
     run: async () => {
       await click('nav-project');
-      await read(800);
+      await read(600);
       await click('project-new');
-      await read(700);
+      await read(500);
       await type('project-name', '할 일 관리 앱', 26);
-      await read(700);
+      await read(500);
       await click('project-create');
       await waitUntil('프로젝트 생성됨', () => pageHasText('할 일 관리 앱'), 20000);
-      await read(1400);
+      await read(1100);
     },
   },
   {
@@ -150,7 +162,48 @@ export const scenes: Scene[] = [
     caption: { title: '인프라 자동 구성 기능', sub: '채팅으로 서버와 DB를 요청합니다' },
     run: async () => {
       await sendChat(PROMPT_INFRA);
-      await read(900);
+      // 연결된 AWS 계정이 없으면 에이전트가 여기서 멈추고 안내를 편다
+      await waitUntil('클라우드 안내', () => find('cloud-guide-select') != null, 25000);
+      await read(1900);
+    },
+  },
+  {
+    caption: { title: 'BYOC 연결 기능', sub: '자원은 내 AWS 계정에 만들어집니다' },
+    run: async () => {
+      await click('cloud-guide-select');
+      await waitUntil('연결 없음', () => find('cloud-register-link') != null, 20000);
+      await read(1300);
+      await click('cloud-register-link');
+      await click('settings-cloud-browser');
+      await waitUntil('등록 폼', () => find('cloud-name') != null, 20000);
+      await read(600);
+      await type('cloud-name', '내 AWS 계정', 20);
+      await fill('cloud-region', 'ap-northeast-2');
+      await fill('cloud-key', 'AKIAIOSFODNN7EXAMPLE');
+      await fill('cloud-secret', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY');
+      await read(700);
+      await click('cloud-create');
+      await waitUntil('검증됨', () => pageHasText('CONNECTED'), 25000);
+      await read(1300);
+    },
+  },
+  {
+    caption: { title: '프로젝트 연결 기능', sub: '어느 계정에 만들지 프로젝트마다 고릅니다' },
+    run: async () => {
+      // 설정에서 프로젝트로 돌아온다 — 사이드바 · 카드 · 인프라 탭
+      await click('nav-project');
+      await read(600);
+      await click('project-card');
+      await click('tab-infra');
+      await waitUntil('연결 목록', () => find('cloud-select') != null, 20000);
+      await read(800);
+      await click('cloud-select');
+      await waitUntil('선택됨', () => pageHasText('선택됨'), 20000);
+      await read(1100);
+      await click('open-agent');
+      await waitUntil('안내 복귀', () => find('cloud-guide-retry') != null, 20000);
+      await read(700);
+      await click('cloud-guide-retry');
     },
   },
   {
@@ -166,6 +219,13 @@ export const scenes: Scene[] = [
     caption: { title: '백엔드 연동 기능', sub: '실제로 가입되고 데이터가 남습니다' },
     run: async () => {
       const preview = await waitForPreviewDocument();
+      /*
+        값을 다시 넣는다. 인프라를 붙이는 동안 화면을 떠났다 돌아오면 프리뷰가 새로
+        로드되어 아까 친 것이 남아 있지 않다 — 빈 폼으로 누르면 아무 일도 안 일어난다.
+      */
+      await previewType(preview, '#email', 'danto@qeploy.com', 14);
+      await previewType(preview, '#password', 'qeploy1234', 14);
+      await read(400);
       await previewClick(preview, '#authSubmit');
       await waitUntil('가입 성공', () => previewHasText(preview, '로그아웃'), 15000);
       await read(700);

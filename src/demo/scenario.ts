@@ -154,16 +154,12 @@ type DemoState = {
   envVars: EnvironmentVariable[];
   cloudConnections: (CloudConnection & { startedAt: number | null })[];
   previewReady: boolean;
+  /** GitHub App 설치 여부. 로그인 직후에는 아직 안 되어 있다 */
+  githubAppInstalled: boolean;
 };
 
-function seedCloudConnection(): DemoState['cloudConnections'][number] {
-  /*
-    연결은 이미 등록돼 있는 것으로 둔다.
-
-    BYOC 등록은 액세스 키를 붙여넣는 설정 화면 작업이라 채팅 흐름을 끊는다. 90초
-    안에 개발·인프라·배포·도메인을 보여주려면 그 자리는 접어야 한다 — 대신 마지막
-    "직접 조작" 구간에서 이 연결이 어디에 있는지 화면으로 보여준다.
-  */
+/** 등록 폼이 만들어 낼 연결의 틀 */
+function blankCloudConnection(): DemoState['cloudConnections'][number] {
   return {
     cloudConnectionId: 7,
     provider: 'AWS',
@@ -193,7 +189,7 @@ function freshState(): DemoState {
     projectCreated: false,
     repositoryBound: false,
     runtimeType: 'STATIC',
-    cloudConnectionId: 7,
+    cloudConnectionId: null,
     tasks: new Map(),
     messages: [],
     approvals: [],
@@ -202,8 +198,9 @@ function freshState(): DemoState {
     servers: [],
     databases: [],
     envVars: [],
-    cloudConnections: [seedCloudConnection()],
+    cloudConnections: [],
     previewReady: false,
+    githubAppInstalled: false,
   };
 }
 
@@ -414,7 +411,8 @@ export function answerClarification(task: DemoTask) {
   task.askedClarification = true;
   task.status = 'RUNNING';
   task.phaseStartedAt = now();
-  task.pendingEvents = [...CODE_EVENTS_AFTER_ASK];
+  // 인프라는 "연결하고 왔다" 는 재시도 신호다. 연결이 아직이면 다음 순회에서 다시 멈춘다
+  task.pendingEvents = task.kind === 'code' ? [...CODE_EVENTS_AFTER_ASK] : [];
   touch();
 }
 
@@ -523,6 +521,21 @@ function advanceTask(task: DemoTask) {
   if (task.kind === 'infra') {
     if (!task.approvalsCreated) {
       if (!elapsed(task.phaseStartedAt, T.infraPlan)) return;
+
+      /*
+        연결된 클라우드 계정이 없으면 여기서 멈춘다.
+
+        에이전트가 대신 만들 수 있는 것이 아니다 — 자격 증명은 사용자만 넣을 수 있고,
+        그 화면은 다른 곳에 있다. 그래서 답을 받는 되묻기가 아니라 "가서 연결하고
+        오라" 는 신호(CONNECT_CLOUD)를 보내고 화면이 안내를 편다.
+      */
+      if (state.cloudConnectionId == null) {
+        task.status = 'WAITING_INPUT';
+        pushEvent(task, 'WAITING_INPUT', '연결된 클라우드 계정이 없습니다');
+        touch();
+        return;
+      }
+
       createDatabase('RDS', 'POSTGRESQL');
       createServer('t3.micro');
       const dbApproval = addApproval(
@@ -823,7 +836,7 @@ function advanceDomain(domain: DemoState['domains'][number]) {
 
 export function createCloudConnection(displayName: string, region: string, accessKeyId: string) {
   const connection = {
-    ...seedCloudConnection(),
+    ...blankCloudConnection(),
     cloudConnectionId: nextId(),
     displayName,
     region: region || DEMO.awsRegion,
@@ -870,4 +883,11 @@ export function advanceDemoClock(): boolean {
   const changed = revision !== before;
   if (changed) persistDemoState();
   return changed;
+}
+
+/** GitHub App 설치를 마쳤다고 표시한다 */
+export function markGithubAppInstalled() {
+  state.githubAppInstalled = true;
+  persistDemoState();
+  touch();
 }
