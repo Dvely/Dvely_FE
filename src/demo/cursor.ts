@@ -12,6 +12,7 @@ const SIZE = 24;
 
 let root: HTMLDivElement | null = null;
 let ring: HTMLDivElement | null = null;
+let hideStyle: HTMLStyleElement | null = null;
 let pointerX = 0;
 let pointerY = 0;
 
@@ -73,12 +74,23 @@ export function showCursor() {
     root.style.transform = `translate3d(${pointerX}px, ${pointerY}px, 0)`;
   }
   root.style.opacity = '1';
-  document.documentElement.style.cursor = 'none';
+
+  /*
+    html 에 cursor:none 만 걸면 버튼 위에서 진짜 커서가 다시 나타난다 — 그 값은
+    상속인데 버튼·링크에는 자기 cursor:pointer 가 있어서 그쪽이 이긴다. 규칙 하나로
+    전부 덮는다.
+  */
+  if (!hideStyle) {
+    hideStyle = document.createElement('style');
+    hideStyle.setAttribute('data-demo-hide-cursor', '');
+    hideStyle.textContent = '*, *::before, *::after { cursor: none !important; }';
+  }
+  if (!hideStyle.isConnected) document.head.appendChild(hideStyle);
 }
 
 export function hideCursor() {
   if (root) root.style.opacity = '0';
-  document.documentElement.style.cursor = '';
+  hideStyle?.remove();
 }
 
 /**

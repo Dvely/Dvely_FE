@@ -12,7 +12,7 @@
  */
 import { router } from '@/router';
 import { setSceneSpeed } from '@/demo/config';
-import { resetDemoState } from '@/demo/scenario';
+import { resetDemoState, seedCompletedState } from '@/demo/scenario';
 import { hideCursor, showCursor } from '@/demo/cursor';
 import { clearAppLocalStorage } from '@/lib/clearAppStorage';
 import {
@@ -90,16 +90,49 @@ export const scenes: Scene[] = [
     },
   },
   {
-    caption: { title: 'AI 코드 생성 기능', sub: '말로 적으면 앱이 만들어집니다' },
+    caption: { title: '90초 뒤, 이렇게 됩니다', sub: '지금부터 이 앱을 만들어 보겠습니다' },
+    run: async () => {
+      /*
+        결과를 먼저 보여준다.
+
+        순서대로만 가면 끝까지 봐야 무엇이 되는지 알 수 있는데, 그 전에 대부분 떠난다.
+        완성 상태를 세워 두 화면만 보여주고 본편 시작에서 전부 지운다.
+      */
+      seedCompletedState();
+      await goto('/project/1');
+      await waitUntil('개요', () => pageHasText('현재 URL'), 20000);
+      await read(2600);
+
+      await goto('/project/1/agent');
+      await waitUntil('프리뷰', () => document.querySelector('iframe') != null, 20000);
+      await read(3000);
+
+      resetDemoState();
+      await goto('/home');
+      await read(900);
+    },
+  },
+  {
+    caption: { title: '프로젝트 생성 기능', sub: '이름만 정하면 바로 시작합니다' },
     run: async () => {
       await goto('/project');
+      await read(900);
       await click('project-new');
-      await type('project-name', '할 일 관리 앱', 28);
+      await read(700);
+      await type('project-name', '할 일 관리 앱', 26);
+      await read(700);
       await click('project-create');
       await waitUntil('프로젝트 생성됨', () => pageHasText('할 일 관리 앱'), 20000);
+      await read(1400);
+    },
+  },
+  {
+    caption: { title: 'AI 코드 생성 기능', sub: '말로 적으면 앱이 만들어집니다' },
+    run: async () => {
       await goto('/home');
+      await read(700);
       await type('home-prompt', PROMPT_APP, 17);
-      await read(400);
+      await read(600);
       await click('home-send');
       await waitUntil('채팅 진입', () => find('chat-input') != null, 20000);
     },

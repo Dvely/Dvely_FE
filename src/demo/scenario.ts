@@ -57,6 +57,9 @@ export function demoPreviewUrl() {
  */
 const BACKEND_READY_KEY = 'demo-backend-ready';
 
+/** 프리뷰 앱이 쓰는 저장소. 오프닝에서 채웠다가 본편 시작 때 비운다 */
+const PREVIEW_KEYS = ['demo-app-users', 'demo-app-session', 'demo-app-todos'];
+
 function setBackendReady(ready: boolean) {
   try {
     if (ready) localStorage.setItem(BACKEND_READY_KEY, '1');
@@ -246,6 +249,11 @@ function nextId() {
 export function resetDemoState() {
   Object.assign(state, freshState());
   setBackendReady(false);
+  try {
+    for (const key of PREVIEW_KEYS) localStorage.removeItem(key);
+  } catch {
+    // 지우지 못하면 프리뷰가 이미 가입된 상태로 열린다 — 흐름은 이어진다
+  }
   try {
     sessionStorage.removeItem(STORAGE_KEY);
   } catch {
@@ -862,4 +870,104 @@ export function advanceDemoClock(): boolean {
   const changed = revision !== before;
   if (changed) persistDemoState();
   return changed;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 오프닝                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * 90초 뒤의 화면을 미리 만들어 둔다.
+ *
+ * 영상 첫머리에 결과부터 보여주기 위한 것이다. 순서대로만 보여주면 끝까지 봐야
+ * 무엇이 되는지 알 수 있는데, 그 전에 대부분 떠난다.
+ *
+ * 애니메이션 없이 종료 상태를 그대로 세운다 — 오프닝은 과정을 보여주는 자리가 아니다.
+ * 본편이 시작될 때 resetDemoState 가 전부 지운다.
+ */
+export function seedCompletedState() {
+  resetDemoState();
+
+  state.projectCreated = true;
+  state.repositoryBound = true;
+  state.runtimeType = 'NODE_SERVER';
+  state.previewReady = true;
+
+  createDatabase('RDS', 'POSTGRESQL');
+  const database = state.databases[state.databases.length - 1];
+  database.status = 'READY';
+  database.host = DEMO.rdsHost;
+  database.port = 5432;
+  database.database = 'todo_app';
+  database.username = 'qeploy';
+  database.startedAt = null;
+
+  createServer('t3.micro');
+  const server = state.servers[state.servers.length - 1];
+  server.status = 'RUNNING';
+  server.stage = 'RUNNING';
+  server.instanceId = DEMO.ec2InstanceId;
+  server.host = DEMO.ec2Host;
+  server.url = `http://${DEMO.ec2Host}:8080`;
+  server.domainUrl = DEMO.domainUrl;
+  server.healthy = true;
+  server.lastHealthCheckAt = iso();
+  server.startedAt = null;
+
+  createDeployment('AWS_EC2_FRONTEND', false);
+  const deployment = state.deployments[0];
+  deployment.status = 'SUCCESS';
+  deployment.deployedUrl = `http://${DEMO.ec2Host}`;
+  deployment.startedAt = null;
+
+  createDomain('managed_subdomain', DEMO.domainHostname, 'AWS');
+  const domain = state.domains[state.domains.length - 1];
+  domain.status = 'CONNECTED';
+  domain.certificateStatus = 'ACTIVE';
+  domain.certificateExpiresAt = iso(7776000000);
+  domain.lastCheckedAt = iso();
+  domain.serverId = server.serverId;
+  domain.startedAt = null;
+
+  ensureBackendEnvVars();
+  setBackendReady(true);
+
+  addMessage('user', '회원가입과 로그인이 되는 할 일 관리 웹앱을 만들어줘.', null);
+  addMessage('assistant', '회원가입·로그인 화면과 할 일 목록을 만들었습니다.', null);
+  addMessage('user', '내 AWS 계정에 백엔드 서버랑 데이터베이스를 만들어줘.', null);
+  addMessage('assistant', `백엔드 서버와 데이터베이스를 마련했습니다. ${DEMO.ec2InstanceId}`, null);
+  addMessage('user', '배포하고 도메인 붙여줘.', null);
+  addMessage('assistant', `배포를 마쳤습니다. ${DEMO.domainUrl} 에서 열립니다.`, null);
+
+  for (const [type, summary] of [
+    ['CHANGE', '회원가입·로그인 화면과 할 일 목록 화면을 추가합니다.'],
+    ['DATABASE_PROVISION', 'PostgreSQL 데이터베이스를 당신의 AWS 계정에 만듭니다.'],
+    ['SERVER_PROVISION', 't3.micro 인스턴스를 당신의 AWS 계정에 만듭니다.'],
+    ['DEPLOYMENT', '현재 버전을 당신의 AWS 계정으로 배포합니다.'],
+    ['DOMAIN_BINDING', `${DEMO.domainHostname} 을 이 프로젝트에 연결합니다.`],
+  ] as const) {
+    const approval = addApproval(type, summary, null);
+    approval.status = 'APPROVED';
+    approval.decidedAt = iso();
+  }
+
+  // 프리뷰 안의 앱도 이미 쓰던 상태로 열린다 — 빈 목록이면 "된다" 가 안 보인다
+  try {
+    localStorage.setItem('demo-app-users', JSON.stringify({ 'danto@qeploy.com': 'qeploy1234' }));
+    localStorage.setItem('demo-app-session', JSON.stringify('danto@qeploy.com'));
+    localStorage.setItem(
+      'demo-app-todos',
+      JSON.stringify({
+        'danto@qeploy.com': [
+          { text: '시연 영상 편집하기', done: false },
+          { text: '도메인 인증서 확인', done: true },
+        ],
+      }),
+    );
+  } catch {
+    // 저장이 막히면 프리뷰가 가입 화면으로 열린다
+  }
+
+  persistDemoState();
+  touch();
 }
