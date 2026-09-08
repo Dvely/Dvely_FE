@@ -75,6 +75,30 @@ const taskClarificationSchema = z.object({
   actionType: z.string().nullable().prefault(null),
 });
 
+/**
+ * 답이 끝난 되묻기의 스냅샷.
+ *
+ * 되묻기 폼은 **답한 순간 사라진다** — 서버가 `clarification` 을 null 로 만들어 이중 제출을
+ * 막는다. 그래서 답하고 나면 무엇을 골랐는지 확인할 길이 없었다. 이 필드는 그 자리를
+ * 대신하는 읽기 전용 기록이다. 폼을 되살리는 것이 아니다.
+ *
+ * 구조화 질문이 아니었던 되묻기(저장소 이름·도메인처럼 자유 입력)는 `question` 과
+ * `options` 가 비어 오고 `answer` 만 온다.
+ *
+ * 되묻기를 거치지 않은 태스크면 이 필드 자체가 null 이다.
+ */
+const answeredClarificationSchema = z.object({
+  /** 그때 물었던 질문. 자유 입력 되묻기면 null */
+  question: z.string().nullable().prefault(null),
+  /** TEXT | SINGLE_SELECT | MULTI_SELECT. 자유 입력 되묻기면 null */
+  inputType: z.string().nullable().prefault(null),
+  /** 그때 보여준 선택지 전부. 고른 것만이 아니라 전부다 — 무엇 중에서 골랐는지가 정보다 */
+  options: z.array(clarificationOptionSchema).nullable().prefault(null),
+  allowOther: z.boolean().nullable().prefault(false),
+  /** 실제로 보낸 답. 선택형이면 고른 것의 label 이고, 여럿이면 ", " 로 이어져 있다 */
+  answer: z.string().prefault(''),
+});
+
 const postAgentDecisionResSchema = z.object({
   /** 실행 단계 */
   steps: z.array(agentStepSchema),
@@ -133,6 +157,13 @@ const getAgentTaskResSchema = z.object({
   retryable: z.boolean().nullable().prefault(null),
   /** PENDING 승인 ID. 없으면 null */
   pendingApprovalId: z.number().int().nullable().prefault(null),
+  /**
+   * 이 태스크에서 되물었고 이미 답이 끝난 것. 되묻기를 안 거쳤으면 null.
+   *
+   * `clarification` 과 배타적이다 — 답하는 폼은 지금까지처럼 `status == WAITING_INPUT &&
+   * clarification != null` 일 때만 뜨고, 이 필드는 그 뒤에 남는 기록이다.
+   */
+  answeredClarification: answeredClarificationSchema.nullable().prefault(null),
 });
 
 const getAgentTaskStatusResSchema = getAgentTaskResSchema;
@@ -161,6 +192,20 @@ const agentTaskEventSchema = z.object({
   status: agentTaskStatusSchema,
   /** 진행 메시지 */
   message: z.string().nullable().prefault(''),
+  /**
+   * 계획의 몇 번째 단계인지. 스텝 이벤트(STEP_STARTED·STEP_COMPLETED)에만 실린다 —
+   * 태스크 생명주기 이벤트(CREATED·QUEUED 등)에는 null 이다.
+   */
+  stepIndex: z.number().int().nullable().prefault(null),
+  /** 계획의 전체 단계 수. 위와 같이 스텝 이벤트에만 실린다 */
+  stepTotal: z.number().int().nullable().prefault(null),
+  /**
+   * 이 단계를 도는 에이전트 종류(CODE·DEPLOY 등). 스텝 이벤트에만 실린다.
+   *
+   * 열린 문자열이다. 화면은 아는 값에만 라벨을 붙이고 모르는 값은 조용히 넘긴다 —
+   * 원시 대문자를 그대로 보여주면 사용자에게는 뜻이 없다.
+   */
+  agentType: z.string().nullable().prefault(null),
   /** 이벤트 생성 시각 (ISO 8601 date-time) */
   createdAt: z.string().prefault(''),
 });
@@ -213,6 +258,7 @@ type PostAgentTaskInputParamsType = z.infer<typeof postAgentTaskInputParamsSchem
 type PostAgentTaskInputReqType = z.infer<typeof postAgentTaskInputReqSchema>;
 type AgentStep = z.infer<typeof agentStepSchema>;
 type TaskClarification = z.infer<typeof taskClarificationSchema>;
+type AnsweredClarification = z.infer<typeof answeredClarificationSchema>;
 type GetActiveTaskResType = z.infer<typeof getActiveTaskResSchema>;
 type ClarificationOption = z.infer<typeof clarificationOptionSchema>;
 type PostAgentDecisionReqType = z.infer<typeof postAgentDecisionReqSchema>;
@@ -222,8 +268,10 @@ export {
   getActiveTaskResSchema,
   type GetActiveTaskResType,
   taskClarificationSchema,
+  answeredClarificationSchema,
   clarificationOptionSchema,
   type TaskClarification,
+  type AnsweredClarification,
   type ClarificationOption,
   agentStepSchema,
   postAgentDecisionReqSchema,

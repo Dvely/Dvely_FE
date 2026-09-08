@@ -113,10 +113,12 @@ function useCloudConnectionListQuery(queryKey: unknown) {
  *
  * 방식을 바꾸면(역할 위임 ↔ 액세스 키) 필요한 값도 안내도 달라지므로 다시 묻는다.
  */
-async function getCloudRequirements(provider: string, credentialType: string) {
+async function getCloudRequirements(provider: string, credentialType?: string | null) {
   return Http.instance
     .get<GetCloudRequirementsResType>(`${endpoint}/requirements`, {
-      params: { provider, credentialType },
+      // 안 고른 상태면 아예 안 보낸다 — 무엇을 권할지는 서버가 정한다.
+      // 화면이 기본값을 들고 있으면 서버가 그 방식을 접었을 때 어긋난다
+      params: credentialType ? { provider, credentialType } : { provider },
     })
     .then((response) => {
       const body = succesResponse<GetCloudRequirementsResType>(response);
@@ -137,14 +139,14 @@ async function getCloudRequirements(provider: string, credentialType: string) {
 function useCloudRequirementsQuery(
   queryKey: unknown,
   provider: string,
-  credentialType: string,
+  credentialType: string | null,
   enabled: boolean,
 ) {
   if (!queryKey) throw new Error('queryKey is required');
   return useQuery({
     queryKey: ['cloud-requirements', queryKey, provider, credentialType],
     queryFn: () => getCloudRequirements(provider, credentialType),
-    enabled: enabled && !!provider && !!credentialType,
+    enabled: enabled && !!provider,
     ...defaultQueryOptions,
   });
 }

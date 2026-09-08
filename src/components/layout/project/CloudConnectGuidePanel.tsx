@@ -94,16 +94,30 @@ function CloudConnectGuidePanel({
   isRetrying,
   onClose,
 }: CloudConnectGuidePanelProps) {
-  const [credentialType, setCredentialType] = useState('ROLE_ARN');
+  /*
+    사용자가 방식을 직접 고르기 전에는 비워 둔다.
+
+    화면이 기본값을 들고 있으면 안 된다 — 서버가 어떤 방식을 접었을 때(그 환경에서
+    준비가 안 됐다든지) 화면만 그걸 계속 가리키게 된다. 무엇을 권할지 아는 쪽은 서버다.
+  */
+  const [chosenType, setChosenType] = useState<string | null>(null);
 
   const { data, isLoading, error } = useCloudRequirementsQuery(
     'cloud-connect-guide',
     'AWS',
-    credentialType,
+    chosenType,
     true,
   );
 
   const requirements = data as GetCloudRequirementsResType | undefined;
+  /*
+    서버가 실제로 답한 방식을 쓴다.
+
+    고른 것과 다를 수 있다 — 요청한 방식이 그 환경에서 안 되면 서버가 되는 쪽으로
+    바꿔서 답한다. 그때 화면이 고른 값을 계속 들고 있으면, 보여주는 안내와 표시된
+    방식이 어긋난다.
+  */
+  const credentialType = requirements?.credentialType || chosenType;
   const recommendedPolicy = stringifyPolicy(requirements?.recommendedPolicy);
   const trustPolicy = stringifyPolicy(requirements?.trustPolicy);
 
@@ -161,7 +175,7 @@ function CloudConnectGuidePanel({
                   <button
                     key={option.type}
                     type="button"
-                    onClick={() => setCredentialType(option.type)}
+                    onClick={() => setChosenType(option.type)}
                     aria-pressed={option.type === credentialType}
                     className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold ${
                       option.type === credentialType
