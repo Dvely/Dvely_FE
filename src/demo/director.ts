@@ -10,9 +10,8 @@
  *
  * 상태를 몰래 바꾸지 않는다. 화면의 컨트롤을 실제로 찾아 누른다(dom.ts 참고).
  */
-import { router } from '@/router';
 import { setSceneSpeed } from '@/demo/config';
-import { resetDemoState, seedCompletedState } from '@/demo/scenario';
+import { resetDemoState } from '@/demo/scenario';
 import { hideCursor, showCursor } from '@/demo/cursor';
 import { clearAppLocalStorage } from '@/lib/clearAppStorage';
 import {
@@ -48,11 +47,6 @@ const PROMPT_APP =
   '회원가입과 로그인이 되는 할 일 관리 웹앱을 만들어줘. 로그인하면 내 할 일만 보이게.';
 const PROMPT_INFRA = '내 AWS 계정에 백엔드 서버랑 데이터베이스를 만들어서 진짜로 가입되게 해줘.';
 const PROMPT_SHIP = '배포하고 todo-together.qeploy.com 도메인 붙여줘.';
-
-async function goto(path: string) {
-  await router.navigate({ to: path } as Parameters<typeof router.navigate>[0]);
-  await pause(320);
-}
 
 /** 읽을 시간. 승인 문구처럼 사람이 읽어야 하는 자리에 둔다 */
 function read(ms = 1000) {
@@ -90,33 +84,10 @@ export const scenes: Scene[] = [
     },
   },
   {
-    caption: { title: '90초 뒤, 이렇게 됩니다', sub: '지금부터 이 앱을 만들어 보겠습니다' },
-    run: async () => {
-      /*
-        결과를 먼저 보여준다.
-
-        순서대로만 가면 끝까지 봐야 무엇이 되는지 알 수 있는데, 그 전에 대부분 떠난다.
-        완성 상태를 세워 두 화면만 보여주고 본편 시작에서 전부 지운다.
-      */
-      seedCompletedState();
-      await goto('/project/1');
-      await waitUntil('개요', () => pageHasText('현재 URL'), 20000);
-      await read(2600);
-
-      await goto('/project/1/agent');
-      await waitUntil('프리뷰', () => document.querySelector('iframe') != null, 20000);
-      await read(3000);
-
-      resetDemoState();
-      await goto('/home');
-      await read(900);
-    },
-  },
-  {
     caption: { title: '프로젝트 생성 기능', sub: '이름만 정하면 바로 시작합니다' },
     run: async () => {
-      await goto('/project');
-      await read(900);
+      await click('nav-project');
+      await read(800);
       await click('project-new');
       await read(700);
       await type('project-name', '할 일 관리 앱', 26);
@@ -129,12 +100,20 @@ export const scenes: Scene[] = [
   {
     caption: { title: 'AI 코드 생성 기능', sub: '말로 적으면 앱이 만들어집니다' },
     run: async () => {
-      await goto('/home');
-      await read(700);
-      await type('home-prompt', PROMPT_APP, 17);
-      await read(600);
-      await click('home-send');
+      /*
+        만든 프로젝트를 열고 그 안의 채팅으로 요청한다.
+
+        홈의 프롬프트로도 되지만, 방금 만든 프로젝트를 두고 홈으로 되돌아가는 것은
+        사람이 하지 않는 동선이다. 화면 전환은 전부 커서가 눌러서 일어난다.
+      */
+      await click('project-card');
+      await read(900);
+      await click('open-agent');
       await waitUntil('채팅 진입', () => find('chat-input') != null, 20000);
+      await read(700);
+      await type('chat-input', PROMPT_APP, 17);
+      await read(600);
+      await click('chat-send');
     },
   },
   {
@@ -199,7 +178,6 @@ export const scenes: Scene[] = [
     caption: { title: '배포·도메인 연결 기능', sub: '내 계정에 올리고 내 주소를 붙입니다' },
     speed: 5,
     run: async () => {
-      await goto('/project/1/agent');
       await sendChat(PROMPT_SHIP);
       await approve(2);
       await waitUntil('배포 완료', () => pageHasText('에서 열립니다'), 40000);

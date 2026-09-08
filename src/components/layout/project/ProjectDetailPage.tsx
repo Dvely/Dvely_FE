@@ -128,6 +128,7 @@ function ProjectDetailPage({
                 <Link
                   to="/project/$slug/agent"
                   params={{ slug: String(projectId) }}
+                  data-demo="open-agent"
                   className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg bg-[#7c3aed] px-5 text-[13px] font-semibold text-white"
                 >
                   <Play className="size-4 fill-current" />
