@@ -197,8 +197,8 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
         <div className="mt-4 rounded-xl border border-[#fcd34d] bg-[#fffbeb] px-4 py-3">
           <p className="text-[13px] font-semibold text-[#92400e]">승인을 기다리고 있습니다</p>
           <p className="mt-1 text-[12px] leading-relaxed text-[#b45309]">
-            과금되는 자원이라 승인 절차를 거칩니다. 승인 탭에서 결정하면 빌드가 시작되고, 진행
-            상황이 아래 목록에 나타납니다.
+            과금되는 자원이라 승인 절차를 거칩니다. 승인 탭에서 결정하면 빌드가 시작되고, 진행 상황이
+            아래 목록에 나타납니다.
           </p>
           <button
             type="button"

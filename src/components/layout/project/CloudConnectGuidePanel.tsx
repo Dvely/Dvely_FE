@@ -164,8 +164,8 @@ function CloudConnectGuidePanel({
             비워 두면 사용자가 할 수 있는 일이 없다.
           */
           <p className="mt-4 rounded-xl bg-[#fef2f2] px-4 py-3 text-[12px] leading-relaxed text-[#b91c1c]">
-            {extractApiErrorMessage(error) ?? '연결 안내를 불러오지 못했습니다.'} 연결 화면에서 직접
-            등록하실 수 있습니다.
+            {extractApiErrorMessage(error) ?? '연결 안내를 불러오지 못했습니다.'} 연결 화면에서
+            직접 등록하실 수 있습니다.
           </p>
         ) : requirements ? (
           <>

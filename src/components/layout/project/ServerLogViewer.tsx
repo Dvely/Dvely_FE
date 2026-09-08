@@ -134,8 +134,8 @@ function ServerLogViewer({ serverId, sources }: ServerLogViewerProps) {
           <div className="h-24 animate-pulse bg-[#f8fafc]" />
           {isTakingLong ? (
             <p className="border-t border-[#f1f5f9] px-3 py-2 text-[11px] leading-relaxed text-[#94a3b8]">
-              인스턴스에 명령을 보내 읽어오는 중입니다. 서버가 막 뜬 참이거나 인증서를 받는 중이면
-              40초쯤 걸릴 수 있습니다 — 기다리시면 됩니다.
+              인스턴스에 명령을 보내 읽어오는 중입니다. 서버가 막 뜬 참이거나 인증서를 받는
+              중이면 40초쯤 걸릴 수 있습니다 — 기다리시면 됩니다.
             </p>
           ) : null}
         </div>

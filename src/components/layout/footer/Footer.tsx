@@ -25,7 +25,7 @@ const footerColumns = [
 
 export default function Footer() {
   return (
-    <footer id="footer" className="w-full border-t border-[#0B0C12]/8 bg-white">
+    <footer className="w-full border-t border-[#0B0C12]/8 bg-white">
       <div className="mx-auto w-[1120px] pt-[52px] pb-[34px]">
         <div className="flex items-center justify-between pb-[30px]">
           <div className="flex items-center gap-[10px]">
