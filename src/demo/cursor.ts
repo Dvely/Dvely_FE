@@ -147,14 +147,14 @@ export async function moveCursorTo(x: number, y: number) {
   if (!root) return;
 
   const distance = Math.hypot(x - pointerX, y - pointerY);
-  const duration = Math.min(400, Math.max(130, Math.round(distance * 0.5)));
+  const duration = Math.min(280, Math.max(95, Math.round(distance * 0.34)));
 
   root.style.transition = `transform ${duration}ms cubic-bezier(0.4, 0, 0.15, 1), opacity 160ms ease`;
   root.style.transform = `translate3d(${x}px, ${y}px, 0)`;
   pointerX = x;
   pointerY = y;
 
-  await sleep(duration + 20);
+  await sleep(duration + 12);
 }
 
 /** 누르는 시늉. 화살표가 살짝 눌리고 고리가 한 번 퍼진다 */
@@ -164,7 +164,7 @@ export async function pressCursor() {
 
   const arrow = root.querySelector('svg');
   if (arrow) {
-    arrow.style.transition = 'transform 60ms ease';
+    arrow.style.transition = 'transform 45ms ease';
     arrow.style.transform = 'scale(0.82)';
   }
 
@@ -173,13 +173,13 @@ export async function pressCursor() {
   ring.style.transform = 'scale(0.35)';
   // 값을 강제로 적용해야 아래 전환이 시작점부터 돈다
   void ring.getBoundingClientRect();
-  ring.style.transition = 'transform 320ms cubic-bezier(0.16, 1, 0.3, 1), opacity 320ms ease';
+  ring.style.transition = 'transform 260ms cubic-bezier(0.16, 1, 0.3, 1), opacity 260ms ease';
   ring.style.transform = 'scale(1)';
   ring.style.opacity = '0';
 
-  await sleep(70);
+  await sleep(50);
   if (arrow) arrow.style.transform = 'scale(1)';
-  await sleep(55);
+  await sleep(40);
 }
 
 /** 요소 위로 옮긴다. iframe 안쪽이면 프레임 위치만큼 더한다 */

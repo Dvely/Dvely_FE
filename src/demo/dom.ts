@@ -48,7 +48,7 @@ export async function waitUntil(label: string, probe: () => boolean, timeoutMs =
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     if (probe()) return;
-    await pause(80);
+    await pause(60);
   }
   throw new Error(`기다리다 지쳤습니다: ${label}`);
 }
@@ -66,7 +66,7 @@ export async function waitFor<T extends HTMLElement>(name: string, timeoutMs = 3
 /** 화면에 보이게 스크롤하고 잠깐 둔다 — 영상에서 무엇을 누르는지 보여야 한다 */
 async function reveal(element: HTMLElement) {
   element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  await pause(240);
+  await pause(170);
 }
 
 export async function click(name: string, timeoutMs = 30000) {
@@ -75,11 +75,11 @@ export async function click(name: string, timeoutMs = 30000) {
   await moveCursorToElement(element);
   await pressCursor();
   element.click();
-  await pause(110);
+  await pause(80);
 }
 
 /** 한 글자씩 넣는다. 사람이 치는 것처럼 보이는 유일한 구간이라 그대로 둔다 */
-export async function type(name: string, text: string, perCharMs = 18) {
+export async function type(name: string, text: string, perCharMs = 14) {
   const element = await waitFor<HTMLTextAreaElement | HTMLInputElement>(name);
   await reveal(element);
   await moveCursorToElement(element);
@@ -91,7 +91,7 @@ export async function type(name: string, text: string, perCharMs = 18) {
     element.dispatchEvent(new Event('input', { bubbles: true }));
     await pause(perCharMs);
   }
-  await pause(180);
+  await pause(130);
 }
 
 /** 입력을 통째로 채운다. 보여줄 값이 아닌 것(액세스 키 등)에 쓴다 */
@@ -99,7 +99,7 @@ export async function fill(name: string, text: string) {
   const element = await waitFor<HTMLTextAreaElement | HTMLInputElement>(name);
   setNativeValue(element, text);
   element.dispatchEvent(new Event('input', { bubbles: true }));
-  await pause(90);
+  await pause(70);
 }
 
 export async function select(name: string, value: string) {
@@ -109,7 +109,7 @@ export async function select(name: string, value: string) {
   await pressCursor();
   setNativeValue(element, value);
   element.dispatchEvent(new Event('change', { bubbles: true }));
-  await pause(200);
+  await pause(150);
 }
 
 /** 화면에 이 문구가 떴는지 */
@@ -146,7 +146,7 @@ function setFrameValue(element: HTMLInputElement, value: string) {
   else element.value = value;
 }
 
-export async function previewType(doc: Document, selector: string, text: string, perCharMs = 16) {
+export async function previewType(doc: Document, selector: string, text: string, perCharMs = 12) {
   const element = doc.querySelector<HTMLInputElement>(selector);
   if (!element) throw new Error(`프리뷰에 ${selector} 가 없습니다`);
   await moveCursorToElement(element, document.querySelector('iframe'));
@@ -157,7 +157,7 @@ export async function previewType(doc: Document, selector: string, text: string,
     element.dispatchEvent(new Event('input', { bubbles: true }));
     await pause(perCharMs);
   }
-  await pause(140);
+  await pause(100);
 }
 
 export async function previewClick(doc: Document, selector: string) {
@@ -166,7 +166,7 @@ export async function previewClick(doc: Document, selector: string) {
   await moveCursorToElement(element, document.querySelector('iframe'));
   await pressCursor();
   element.click();
-  await pause(150);
+  await pause(110);
 }
 
 export function previewHasText(doc: Document, text: string) {

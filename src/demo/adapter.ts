@@ -1005,7 +1005,7 @@ function respond(config: InternalAxiosRequestConfig, status: number, data: unkno
 
 /** 응답이 오기까지의 짧은 지연. 즉시 돌아오면 화면이 로딩 상태를 못 그려 부자연스럽다 */
 function latency() {
-  return new Promise((resolve) => setTimeout(resolve, demoMs(70 + Math.random() * 80)));
+  return new Promise((resolve) => setTimeout(resolve, demoMs(55 + Math.random() * 60)));
 }
 
 export const demoAdapter: AxiosAdapter = async (config) => {

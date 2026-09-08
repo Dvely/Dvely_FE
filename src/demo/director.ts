@@ -71,8 +71,8 @@ async function approve(count: number) {
 
 /** 채팅에 한 줄 보내고 태스크가 붙을 때까지 기다린다 */
 async function sendChat(prompt: string) {
-  await type('chat-input', prompt, 17);
-  await read(400);
+  await type('chat-input', prompt, 13);
+  await read(280);
   await click('chat-send');
 }
 
@@ -102,7 +102,7 @@ export const scenes: Scene[] = [
       await read(600);
       await click('project-new');
       await read(500);
-      await type('project-name', '할 일 관리 앱', 26);
+      await type('project-name', '할 일 관리 앱', 20);
       await read(500);
       await click('project-create');
       await waitUntil('프로젝트 생성됨', () => pageHasText('할 일 관리 앱'), 20000);
@@ -123,8 +123,8 @@ export const scenes: Scene[] = [
       await click('open-agent');
       await waitUntil('채팅 진입', () => find('chat-input') != null, 20000);
       await read(700);
-      await type('chat-input', PROMPT_APP, 17);
-      await read(600);
+      await type('chat-input', PROMPT_APP, 13);
+      await read(420);
       await click('chat-send');
     },
   },
@@ -132,7 +132,7 @@ export const scenes: Scene[] = [
     caption: { title: '요구사항 확인 기능', sub: '모르는 것은 먼저 되묻습니다' },
     run: async () => {
       await waitUntil('되묻기', () => findAll('clarify-option').length > 0, 25000);
-      await read(1600);
+      await read(1150);
       findAll<HTMLInputElement>('clarify-option')[0].click();
       await pause(400);
       await click('clarify-submit');
@@ -143,7 +143,7 @@ export const scenes: Scene[] = [
     run: async () => {
       await approve(1);
       await waitUntil('프리뷰', () => document.querySelector('iframe') != null, 30000);
-      await read(1200);
+      await read(950);
     },
   },
   {
@@ -151,11 +151,11 @@ export const scenes: Scene[] = [
     run: async () => {
       const preview = await waitForPreviewDocument();
       await previewType(preview, '#email', 'danto@qeploy.com');
-      await previewType(preview, '#password', 'qeploy1234', 18);
-      await read(400);
+      await previewType(preview, '#password', 'qeploy1234', 12);
+      await read(280);
       await previewClick(preview, '#authSubmit');
       await waitUntil('503 표시', () => previewHasText(preview, '503'), 10000);
-      await read(1800);
+      await read(1500);
     },
   },
   {
@@ -164,7 +164,7 @@ export const scenes: Scene[] = [
       await sendChat(PROMPT_INFRA);
       // 연결된 AWS 계정이 없으면 에이전트가 여기서 멈추고 안내를 편다
       await waitUntil('클라우드 안내', () => find('cloud-guide-select') != null, 25000);
-      await read(1900);
+      await read(1500);
     },
   },
   {
@@ -177,7 +177,7 @@ export const scenes: Scene[] = [
       await click('settings-cloud-browser');
       await waitUntil('등록 폼', () => find('cloud-name') != null, 20000);
       await read(600);
-      await type('cloud-name', '내 AWS 계정', 20);
+      await type('cloud-name', '내 AWS 계정', 16);
       await fill('cloud-region', 'ap-northeast-2');
       await fill('cloud-key', 'AKIAIOSFODNN7EXAMPLE');
       await fill('cloud-secret', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY');
@@ -212,7 +212,7 @@ export const scenes: Scene[] = [
     run: async () => {
       await approve(2);
       await waitUntil('백엔드 준비', () => pageHasText('프리뷰에서 실제로 가입'), 40000);
-      await read(1100);
+      await read(850);
     },
   },
   {
@@ -223,15 +223,15 @@ export const scenes: Scene[] = [
         값을 다시 넣는다. 인프라를 붙이는 동안 화면을 떠났다 돌아오면 프리뷰가 새로
         로드되어 아까 친 것이 남아 있지 않다 — 빈 폼으로 누르면 아무 일도 안 일어난다.
       */
-      await previewType(preview, '#email', 'danto@qeploy.com', 14);
-      await previewType(preview, '#password', 'qeploy1234', 14);
-      await read(400);
+      await previewType(preview, '#email', 'danto@qeploy.com', 11);
+      await previewType(preview, '#password', 'qeploy1234', 11);
+      await read(260);
       await previewClick(preview, '#authSubmit');
       await waitUntil('가입 성공', () => previewHasText(preview, '로그아웃'), 15000);
-      await read(700);
-      await previewType(preview, '#newTodo', '시연 영상 편집하기', 24);
+      await read(550);
+      await previewType(preview, '#newTodo', '시연 영상 편집하기', 18);
       await previewClick(preview, '#addForm button');
-      await read(1300);
+      await read(1050);
     },
   },
   {
@@ -241,7 +241,7 @@ export const scenes: Scene[] = [
       await sendChat(PROMPT_SHIP);
       await approve(2);
       await waitUntil('배포 완료', () => pageHasText('에서 열립니다'), 40000);
-      await read(1200);
+      await read(950);
     },
   },
   {
@@ -249,10 +249,10 @@ export const scenes: Scene[] = [
     run: async () => {
       // 목록에서 프로젝트를 골라 들어간다 — 사람이 다음에 할 일이 그것이다
       await click('nav-project');
-      await read(800);
+      await read(600);
       await click('project-card');
       await waitUntil('개요', () => pageHasText('현재 URL'), 20000);
-      await read(1900);
+      await read(1550);
     },
   },
   {
@@ -273,12 +273,12 @@ export const scenes: Scene[] = [
           시간이 없는 것은 다른 문제다 — 탭당 1초는 있어야 무슨 화면인지 읽힌다.
         */
         await click(tab);
-        await read(1050);
+        await read(780);
       }
       await click('tab-infra');
-      await read(700);
+      await read(550);
       await select('server-tier', 't3.small');
-      await read(1000);
+      await read(800);
     },
   },
 ];

@@ -14,7 +14,7 @@ import { advanceDemoClock } from '@/demo/scenario';
 import { demoMs } from '@/demo/config';
 
 /** 상태가 넘어가는 순간과 화면에 뜨는 순간의 간격. 눈에 띄지 않을 만큼만 */
-const BEAT_MS = 260;
+const BEAT_MS = 190;
 
 export function startDemoHeartbeat(queryClient: QueryClient) {
   window.setInterval(() => {
