@@ -51,7 +51,7 @@ const PROMPT_SHIP = '배포하고 todo-together.qeploy.com 도메인 붙여줘.'
 
 async function goto(path: string) {
   await router.navigate({ to: path } as Parameters<typeof router.navigate>[0]);
-  await pause(500);
+  await pause(320);
 }
 
 /** 읽을 시간. 승인 문구처럼 사람이 읽어야 하는 자리에 둔다 */
@@ -70,13 +70,13 @@ async function approve(count: number) {
     */
     await read(index === 0 ? 2200 : 1400);
     await click('approve');
-    await pause(600);
+    await pause(420);
   }
 }
 
 /** 채팅에 한 줄 보내고 태스크가 붙을 때까지 기다린다 */
 async function sendChat(prompt: string) {
-  await type('chat-input', prompt, 20);
+  await type('chat-input', prompt, 17);
   await read(400);
   await click('chat-send');
 }
@@ -98,7 +98,7 @@ export const scenes: Scene[] = [
       await click('project-create');
       await waitUntil('프로젝트 생성됨', () => pageHasText('할 일 관리 앱'), 20000);
       await goto('/home');
-      await type('home-prompt', PROMPT_APP, 20);
+      await type('home-prompt', PROMPT_APP, 17);
       await read(400);
       await click('home-send');
       await waitUntil('채팅 진입', () => find('chat-input') != null, 20000);
@@ -197,8 +197,12 @@ export const scenes: Scene[] = [
         보는 사람에게 없는 압축을 있다고 말하는 셈이다.
       */
       for (const tab of ['tab-approvals', 'tab-deployments', 'tab-domains', 'tab-environment']) {
+        /*
+          움직임은 빠르게, 머무는 것은 읽을 만큼. 커서가 굼뜬 것과 화면을 알아볼
+          시간이 없는 것은 다른 문제다 — 탭당 1초는 있어야 무슨 화면인지 읽힌다.
+        */
         await click(tab);
-        await read(850);
+        await read(1050);
       }
       await click('tab-infra');
       await read(700);
