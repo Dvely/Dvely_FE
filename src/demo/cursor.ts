@@ -10,9 +10,12 @@
 
 const SIZE = 24;
 
+const HIDE_RULE = '*, *::before, *::after { cursor: none !important; }';
+const HIDE_MARK = 'data-demo-hide-cursor';
+
 let root: HTMLDivElement | null = null;
 let ring: HTMLDivElement | null = null;
-let hideStyle: HTMLStyleElement | null = null;
+let hideTimer = 0;
 let pointerX = 0;
 let pointerY = 0;
 
@@ -75,22 +78,62 @@ export function showCursor() {
   }
   root.style.opacity = '1';
 
+  applyHideRule();
   /*
-    html 에 cursor:none 만 걸면 버튼 위에서 진짜 커서가 다시 나타난다 — 그 값은
-    상속인데 버튼·링크에는 자기 cursor:pointer 가 있어서 그쪽이 이긴다. 규칙 하나로
-    전부 덮는다.
+    한 번 넣고 끝낼 수 없다.
+
+    프리뷰는 iframe 이고 그 안은 별개의 문서라 부모에 넣은 규칙이 닿지 않는다 —
+    프리뷰가 뜨는 구간에서만 진짜 커서가 되살아났다. 게다가 프리뷰는 주소가 회전할
+    때마다 다시 로드되어 넣어 둔 규칙이 사라진다. 그래서 주기적으로 다시 확인한다.
   */
-  if (!hideStyle) {
-    hideStyle = document.createElement('style');
-    hideStyle.setAttribute('data-demo-hide-cursor', '');
-    hideStyle.textContent = '*, *::before, *::after { cursor: none !important; }';
+  window.clearInterval(hideTimer);
+  hideTimer = window.setInterval(applyHideRule, 400);
+}
+
+/** 이 문서와, 접근할 수 있는 모든 iframe 문서에 규칙을 심는다 */
+function applyHideRule() {
+  injectInto(document);
+
+  for (const frame of Array.from(document.querySelectorAll('iframe'))) {
+    try {
+      // 다른 오리진이면 접근 자체가 막힌다. 그때는 손댈 방법이 없으므로 넘어간다
+      const doc = frame.contentDocument;
+      if (doc) injectInto(doc);
+    } catch {
+      // 교차 오리진 프레임 — 무시한다
+    }
   }
-  if (!hideStyle.isConnected) document.head.appendChild(hideStyle);
+}
+
+function injectInto(doc: Document) {
+  const head = doc.head ?? doc.documentElement;
+  if (!head || head.querySelector(`style[${HIDE_MARK}]`)) return;
+
+  const style = doc.createElement('style');
+  style.setAttribute(HIDE_MARK, '');
+  style.textContent = HIDE_RULE;
+  head.appendChild(style);
+}
+
+function removeHideRule() {
+  const docs: Document[] = [document];
+  for (const frame of Array.from(document.querySelectorAll('iframe'))) {
+    try {
+      if (frame.contentDocument) docs.push(frame.contentDocument);
+    } catch {
+      // 교차 오리진 프레임 — 무시한다
+    }
+  }
+  for (const doc of docs) {
+    doc.querySelectorAll(`style[${HIDE_MARK}]`).forEach((node) => node.remove());
+  }
 }
 
 export function hideCursor() {
   if (root) root.style.opacity = '0';
-  hideStyle?.remove();
+  window.clearInterval(hideTimer);
+  hideTimer = 0;
+  removeHideRule();
 }
 
 /**
