@@ -65,16 +65,19 @@ function scatterOffset(word: string, index: number, slot: string) {
   return { x: 40 + spread, y: (index - mid) * 22 };
 }
 
+function getPrefersReducedMotion() {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
 function HeroSection() {
-  const [phase, setPhase] = useState<Phase>('logo');
-  const [typed, setTyped] = useState('');
+  const [reduceMotion] = useState(getPrefersReducedMotion);
+  const [phase, setPhase] = useState<Phase>(reduceMotion ? 'copy' : 'logo');
+  const [typed, setTyped] = useState(reduceMotion ? PROMPT : '');
   const [cutIndex, setCutIndex] = useState(0);
   const [roleIndex, setRoleIndex] = useState(0);
-  const [reduceMotion] = useState(
-    () =>
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  );
 
   const navigate = useNavigate();
   const { startGitHubLogin, isLoading: isLoggingIn } = useGitHubLogin();
@@ -98,11 +101,7 @@ function HeroSection() {
   }, [isLoggedIn, isLoggingIn, navigate, startGitHubLogin]);
 
   useEffect(() => {
-    if (reduceMotion) {
-      setPhase('copy');
-      setTyped(PROMPT);
-      return;
-    }
+    if (reduceMotion) return;
 
     const timers = PHASE_AT.filter(([, at]) => at > 0).map(([nextPhase, at]) =>
       window.setTimeout(() => setPhase(nextPhase), at),
@@ -116,7 +115,6 @@ function HeroSection() {
   useEffect(() => {
     if (phase !== 'type' || reduceMotion) return;
 
-    setTyped('');
     let index = 0;
     const timer = window.setInterval(() => {
       index += 1;
@@ -130,7 +128,6 @@ function HeroSection() {
   useEffect(() => {
     if (phase !== 'cuts' || reduceMotion) return;
 
-    setCutIndex(0);
     const timer = window.setInterval(() => {
       setCutIndex((current) => (current + 1) % CUT_WORDS.length);
     }, 620);
