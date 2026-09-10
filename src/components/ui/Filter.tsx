@@ -82,7 +82,7 @@ function FilterSelect({
         aria-expanded={open}
         aria-controls={listId}
         onClick={handleToggle}
-        className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-[#e5e7eb] bg-white py-0 pr-2.5 pl-3 text-[13px] font-medium whitespace-nowrap text-[#334155] outline-none transition hover:bg-[#f8fafc]"
+        className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-[#e5e7eb] bg-white py-0 pr-2.5 pl-3 text-[13px] font-medium whitespace-nowrap text-[#334155] outline-none transition hover:bg-[#f8fafc]"
       >
         {selected?.label}
         <ChevronDown
@@ -110,7 +110,9 @@ function FilterSelect({
                   onClick={() => handleSelect(option.value)}
                   className={cn(
                     'flex w-full cursor-pointer items-center justify-between gap-4 px-3 py-2 text-left text-[13px] font-medium whitespace-nowrap transition',
-                    isSelected ? 'bg-[#f8fafc] text-[#0f172a]' : 'text-[#334155] hover:bg-[#f8fafc]',
+                    isSelected
+                      ? 'bg-[#f8fafc] text-[#0f172a]'
+                      : 'text-[#334155] hover:bg-[#f8fafc]',
                   )}
                 >
                   {option.label}
