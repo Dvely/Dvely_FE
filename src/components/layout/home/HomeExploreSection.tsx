@@ -39,8 +39,8 @@ const themeOptions: { value: ThemeFilter; label: string }[] = [
 ];
 
 const sortOptions: { value: SortOption; label: string }[] = [
-  { value: 'popular', label: '정렬 기준: 인기순' },
-  { value: 'newest', label: '정렬 기준: 최신순' },
+  { value: 'popular', label: '인기순' },
+  { value: 'newest', label: '최신순' },
 ];
 
 function HomeExploreSection() {
@@ -97,19 +97,21 @@ function HomeExploreSection() {
 
       {activeTab === 'explore' ? (
         <>
-          <Filter className="mt-4">
-            <FilterSelect
-              value={styleFilter}
-              onChange={(value) => setStyleFilter(value as StyleFilter)}
-              options={styleOptions}
-              aria-label="스타일 필터"
-            />
-            <FilterSelect
-              value={themeFilter}
-              onChange={(value) => setThemeFilter(value as ThemeFilter)}
-              options={themeOptions}
-              aria-label="테마 필터"
-            />
+          <Filter className="relative z-20 mt-4 justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <FilterSelect
+                value={styleFilter}
+                onChange={(value) => setStyleFilter(value as StyleFilter)}
+                options={styleOptions}
+                aria-label="스타일 필터"
+              />
+              <FilterSelect
+                value={themeFilter}
+                onChange={(value) => setThemeFilter(value as ThemeFilter)}
+                options={themeOptions}
+                aria-label="테마 필터"
+              />
+            </div>
             <FilterSelect
               value={sort}
               onChange={(value) => setSort(value as SortOption)}
