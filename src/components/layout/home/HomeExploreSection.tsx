@@ -95,43 +95,43 @@ function HomeExploreSection() {
         ))}
       </div>
 
-      {activeTab === 'explore' ? (
-        <>
-          <Filter className="relative z-20 mt-4 justify-between">
-            <div className="flex flex-wrap items-center gap-2">
-              <FilterSelect
-                value={styleFilter}
-                onChange={(value) => setStyleFilter(value as StyleFilter)}
-                options={styleOptions}
-                aria-label="스타일 필터"
-              />
-              <FilterSelect
-                value={themeFilter}
-                onChange={(value) => setThemeFilter(value as ThemeFilter)}
-                options={themeOptions}
-                aria-label="테마 필터"
-              />
-            </div>
-            <FilterSelect
-              value={sort}
-              onChange={(value) => setSort(value as SortOption)}
-              options={sortOptions}
-              aria-label="정렬 기준"
-            />
-          </Filter>
+      <Filter className="relative z-20 mt-4 justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterSelect
+            value={styleFilter}
+            onChange={(value) => setStyleFilter(value as StyleFilter)}
+            options={styleOptions}
+            aria-label="스타일 필터"
+          />
+          <FilterSelect
+            value={themeFilter}
+            onChange={(value) => setThemeFilter(value as ThemeFilter)}
+            options={themeOptions}
+            aria-label="테마 필터"
+          />
+        </div>
+        {activeTab === 'explore' ? (
+          <FilterSelect
+            value={sort}
+            onChange={(value) => setSort(value as SortOption)}
+            options={sortOptions}
+            aria-label="정렬 기준"
+          />
+        ) : null}
+      </Filter>
 
-          <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <HomeAddTemplateCard />
-            {filteredCards.map((card) => (
-              <HomeTemplateCard
-                key={card.id}
-                card={card}
-                selected={selectedId === card.id}
-                onSelect={() => setSelectedId(card.id)}
-              />
-            ))}
-          </div>
-        </>
+      {activeTab === 'explore' ? (
+        <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <HomeAddTemplateCard />
+          {filteredCards.map((card) => (
+            <HomeTemplateCard
+              key={card.id}
+              card={card}
+              selected={selectedId === card.id}
+              onSelect={() => setSelectedId(card.id)}
+            />
+          ))}
+        </div>
       ) : (
         <div className="mt-5 grid max-w-[280px] grid-cols-1 gap-5 sm:max-w-none sm:grid-cols-2 lg:grid-cols-4">
           <HomeAddTemplateCard />
