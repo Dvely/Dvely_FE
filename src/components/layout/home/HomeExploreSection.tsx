@@ -135,7 +135,7 @@ function HomeExploreSection() {
       ) : (
         <div className="mt-5 grid max-w-[280px] grid-cols-1 gap-5 sm:max-w-none sm:grid-cols-2 lg:grid-cols-4">
           <HomeAddTemplateCard />
-          <div className="col-span-full flex min-h-[200px] items-center justify-center rounded-2xl border border-dashed border-[#e2e8f0] bg-[#f8fafc] sm:col-span-2 lg:col-span-3">
+          <div className="col-span-full flex min-h-[150px] items-center justify-center rounded-2xl border border-dashed border-[#e2e8f0] bg-[#f8fafc] sm:col-span-2 lg:col-span-3">
             <p className="text-[14px] text-[#94a3b8]">저장한 템플릿이 없습니다.</p>
           </div>
         </div>
