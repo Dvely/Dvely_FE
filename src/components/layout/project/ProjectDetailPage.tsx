@@ -59,7 +59,7 @@ function ProjectDetailPage({
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#f8fafc]">
       <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="mx-auto max-w-[960px]">
+        <div className="mx-auto max-w-[1280px]">
           {/* 프로젝트 헤더 */}
           <div className="mb-6">
             <Link

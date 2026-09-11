@@ -1,7 +1,6 @@
 import HeaderContainer from '@/components/layout/header/HeaderContainer';
 import HeroSection from './HeroSection';
 import HighlightSection from './HighlightSection';
-import PainPointsSection from './PainPointsSection';
 import RoleSpecificUsage from './RoleSpecificUsage';
 import ServiceIntro from './ServiceIntro';
 import OutputShowcase from './OutputShowcase';
@@ -18,7 +17,7 @@ function MainContainer() {
       <HeaderContainer />
       <HeroSection />
       <HighlightSection />
-      <PainPointsSection />
+
       <RoleSpecificUsage />
       <ServiceIntro />
       <OutputShowcase />

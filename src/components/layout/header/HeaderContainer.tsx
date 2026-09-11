@@ -5,7 +5,7 @@ import { useGitHubLogin } from '@/hooks/useGitHubLogin';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 
 const NAV_ITEMS = [
-  { label: '서비스소개', id: 'intro' },
+  { label: '서비스 소개', id: 'intro' },
   { label: '요금제', id: 'pricing' },
   { label: '도움말', id: 'process' },
   { label: '공지/소식', id: 'reviews' },
