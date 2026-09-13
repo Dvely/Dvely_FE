@@ -19,11 +19,11 @@ function RootComponent() {
       <GitHubAppInstallPromptDialog />
 
       {!showAppChrome ? (
-        <div className="min-h-screen w-full bg-[#f8fafc] text-[#0f172a]">
+        <div className="min-h-screen w-full bg-white text-[#0f172a]">
           <Outlet />
         </div>
       ) : (
-        <div className="flex h-screen w-full overflow-hidden bg-[#f8fafc] text-[#0f172a]">
+        <div className="flex h-screen w-full overflow-hidden bg-white text-[#0f172a]">
           <AppSidebar />
           <main id="app-main-scroll" className="min-h-0 min-w-0 flex-1 overflow-y-auto">
             {/* <HeaderContainer /> */}
