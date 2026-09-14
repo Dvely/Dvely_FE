@@ -165,7 +165,7 @@ function ProjectsView() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-2">
-            <label className="flex h-9 min-w-[210px] flex-1 items-center gap-2 rounded-lg border border-transparent bg-white px-3 text-[#94a3b8] shadow-sm transition focus-within:border-[#c4b5fd] focus-within:ring-2 focus-within:ring-[#ede9fe] sm:max-w-[340px]">
+            <label className="flex h-9 min-w-[210px] flex-1 items-center gap-2 rounded-lg border border-transparent bg-white px-3 text-[#94a3b8] shadow-sm  sm:max-w-[340px]">
               <Search className="size-4" />
               <input
                 value={searchQuery}
