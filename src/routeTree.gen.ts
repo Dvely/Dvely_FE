@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TemplateRouteImport } from './routes/template'
 import { Route as CallbackRouteImport } from './routes/callback'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -34,6 +35,11 @@ import { Route as AuthenticatedProjectSlugCodeRouteImport } from './routes/_auth
 import { Route as AuthenticatedProjectSlugApprovalsRouteImport } from './routes/_authenticated/project.$slug.approvals'
 import { Route as AuthenticatedProjectSlugAgentRouteImport } from './routes/_authenticated/project.$slug.agent'
 
+const TemplateRoute = TemplateRouteImport.update({
+  id: '/template',
+  path: '/template',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CallbackRoute = CallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
@@ -168,6 +174,7 @@ const AuthenticatedProjectSlugAgentRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
+  '/template': typeof TemplateRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/help': typeof AuthenticatedHelpRoute
   '/home': typeof AuthenticatedHomeRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
+  '/template': typeof TemplateRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/help': typeof AuthenticatedHelpRoute
   '/home': typeof AuthenticatedHomeRoute
@@ -218,6 +226,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/callback': typeof CallbackRoute
+  '/template': typeof TemplateRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
@@ -245,6 +254,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/callback'
+    | '/template'
     | '/analytics'
     | '/help'
     | '/home'
@@ -270,6 +280,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/callback'
+    | '/template'
     | '/analytics'
     | '/help'
     | '/home'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/callback'
+    | '/template'
     | '/_authenticated/analytics'
     | '/_authenticated/help'
     | '/_authenticated/home'
@@ -321,12 +333,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   CallbackRoute: typeof CallbackRoute
+  TemplateRoute: typeof TemplateRoute
   AuthAppCallbackRoute: typeof AuthAppCallbackRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/template': {
+      id: '/template'
+      path: '/template'
+      fullPath: '/template'
+      preLoaderRoute: typeof TemplateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/callback': {
       id: '/callback'
       path: '/callback'
@@ -574,6 +594,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   CallbackRoute: CallbackRoute,
+  TemplateRoute: TemplateRoute,
   AuthAppCallbackRoute: AuthAppCallbackRoute,
   AuthCallbackRoute: AuthCallbackRoute,
 }
