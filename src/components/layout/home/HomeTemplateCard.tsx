@@ -8,6 +8,7 @@ export type HomeTemplateCardData = {
   tags: string[];
   image: string;
   startType: ProjectStartType;
+  thumbnailPreviewUrl?: string;
 };
 
 type HomeTemplateCardProps = {
@@ -36,6 +37,17 @@ function HomeTemplateCard({ card, onSelect }: HomeTemplateCardProps) {
           alt={card.title}
           className="size-full object-cover object-top transition duration-500 group-hover:scale-[1.035]"
         />
+        {card.thumbnailPreviewUrl && (
+          <iframe
+            src={card.thumbnailPreviewUrl}
+            title={`${card.title} 썸네일`}
+            aria-hidden="true"
+            tabIndex={-1}
+            loading="lazy"
+            sandbox="allow-scripts allow-same-origin"
+            className="pointer-events-none absolute inset-0 h-[400%] w-[400%] origin-top-left scale-[0.25] border-0 bg-transparent"
+          />
+        )}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/50 to-transparent" />
 
         <Link

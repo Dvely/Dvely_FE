@@ -23,6 +23,7 @@ const templateCards: TemplateCard[] = homeTemplates.map((item) => ({
   image: item.image,
   startType: item.startType,
   category: item.category,
+  thumbnailPreviewUrl: item.thumbnailPreviewUrl,
 }));
 
 const styleOptions: { value: StyleFilter; label: string }[] = [
@@ -45,7 +46,7 @@ const sortOptions: { value: SortOption; label: string }[] = [
 
 function HomeExploreSection() {
   const [activeTab, setActiveTab] = useState<HomeTab>('explore');
-  const [selectedId, setSelectedId] = useState('2');
+  const [selectedId, setSelectedId] = useState(templateCards[0]?.id ?? '');
   const [styleFilter, setStyleFilter] = useState<StyleFilter>('all');
   const [themeFilter, setThemeFilter] = useState<ThemeFilter>('all');
   const [sort, setSort] = useState<SortOption>('popular');
