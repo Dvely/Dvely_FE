@@ -5,10 +5,12 @@ import otherday from './assets/otherday.png';
 import paperwave from './assets/paperwave.svg';
 import axiom from './assets/axiom.svg';
 import stillhouse from './assets/stillhouse.svg';
+import offgrid from './assets/offgrid.svg';
+import indexfolio from './assets/indexfolio.svg';
+import relay from './assets/relay.svg';
 
 const sourceOrigin = 'https://figma-react-eight-plum.vercel.app';
 
-/** Static demo catalog. These entries do not create or deploy a real project. */
 const catalog = [
   {
     id: 'monoform',
@@ -32,7 +34,7 @@ const catalog = [
     tags: ['#커피', '#브랜드'],
     image: otherday,
     startType: 'landing',
-    category: 'service',
+    category: 'company',
   },
   {
     id: 'paperwave',
@@ -40,7 +42,7 @@ const catalog = [
     tags: ['#북스토어', '#에디토리얼'],
     image: paperwave,
     startType: 'landing',
-    category: 'service',
+    category: 'company',
   },
   {
     id: 'axiom',
@@ -48,7 +50,7 @@ const catalog = [
     tags: ['#SaaS', '#대시보드'],
     image: axiom,
     startType: 'landing',
-    category: 'company',
+    category: 'service',
   },
   {
     id: 'stillhouse',
@@ -57,6 +59,30 @@ const catalog = [
     image: stillhouse,
     startType: 'portfolio',
     category: 'company',
+  },
+  {
+    id: 'offgrid',
+    title: 'OFFGRID 페스티벌',
+    tags: ['#페스티벌', '#타이포그래피'],
+    image: offgrid,
+    startType: 'landing',
+    category: 'service',
+  },
+  {
+    id: 'indexfolio',
+    title: 'INDEX 디자이너',
+    tags: ['#포트폴리오', '#스위스디자인'],
+    image: indexfolio,
+    startType: 'portfolio',
+    category: 'company',
+  },
+  {
+    id: 'relay',
+    title: 'RELAY 팀 워크스페이스',
+    tags: ['#협업툴', '#칸반보드'],
+    image: relay,
+    startType: 'landing',
+    category: 'service',
   },
 ] satisfies HomeTemplateItem[];
 
