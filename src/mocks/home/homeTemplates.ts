@@ -22,11 +22,8 @@ export function getHomeTemplateById(id: string) {
   return homeTemplates.find((template) => template.id === id);
 }
 
-const DEFAULT_LANDING_PREVIEW_URL =
-  'https://aih-b-image-service.cafe24.com/templates/professional/crimson/';
-
 export function resolveHomeTemplatePreviewUrl(template: HomeTemplateItem): string {
   if (template.previewUrl) return template.previewUrl;
   if (template.startType === 'portfolio') return '/template/portfolio';
-  return DEFAULT_LANDING_PREVIEW_URL;
+  return '/template/portfolio';
 }
