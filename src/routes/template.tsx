@@ -1,7 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router';
-import TemplateGalleryPage from '@/components/layout/templates/TemplateGalleryPage';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/template')({
-  component: TemplateGalleryPage,
-  head: () => ({ meta: [{ title: '템플릿 | Qeploy' }] }),
+  component: TemplateLayout,
 });
+
+function TemplateLayout() {
+  return <Outlet />;
+}

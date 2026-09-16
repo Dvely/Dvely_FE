@@ -13,6 +13,8 @@ import { Route as TemplateRouteImport } from './routes/template'
 import { Route as CallbackRouteImport } from './routes/callback'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TemplateIndexRouteImport } from './routes/template.index'
+import { Route as TemplateIdRouteImport } from './routes/template.$id'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthAppCallbackRouteImport } from './routes/auth/app-callback'
 import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash'
@@ -53,6 +55,16 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const TemplateIndexRoute = TemplateIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TemplateRoute,
+} as any)
+const TemplateIdRoute = TemplateIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => TemplateRoute,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
@@ -174,7 +186,7 @@ const AuthenticatedProjectSlugAgentRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
-  '/template': typeof TemplateRoute
+  '/template': typeof TemplateRouteWithChildren
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/help': typeof AuthenticatedHelpRoute
   '/home': typeof AuthenticatedHomeRoute
@@ -184,6 +196,8 @@ export interface FileRoutesByFullPath {
   '/trash': typeof AuthenticatedTrashRoute
   '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/template/$id': typeof TemplateIdRoute
+  '/template/': typeof TemplateIndexRoute
   '/onboarding/cloud': typeof AuthenticatedOnboardingCloudRoute
   '/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
   '/project/new': typeof AuthenticatedProjectNewRoute
@@ -200,7 +214,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
-  '/template': typeof TemplateRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/help': typeof AuthenticatedHelpRoute
   '/home': typeof AuthenticatedHomeRoute
@@ -209,6 +222,8 @@ export interface FileRoutesByTo {
   '/trash': typeof AuthenticatedTrashRoute
   '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/template/$id': typeof TemplateIdRoute
+  '/template': typeof TemplateIndexRoute
   '/onboarding/cloud': typeof AuthenticatedOnboardingCloudRoute
   '/project/new': typeof AuthenticatedProjectNewRoute
   '/project': typeof AuthenticatedProjectIndexRoute
@@ -226,7 +241,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/callback': typeof CallbackRoute
-  '/template': typeof TemplateRoute
+  '/template': typeof TemplateRouteWithChildren
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
@@ -236,6 +251,8 @@ export interface FileRoutesById {
   '/_authenticated/trash': typeof AuthenticatedTrashRoute
   '/auth/app-callback': typeof AuthAppCallbackRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/template/$id': typeof TemplateIdRoute
+  '/template/': typeof TemplateIndexRoute
   '/_authenticated/onboarding/cloud': typeof AuthenticatedOnboardingCloudRoute
   '/_authenticated/project/$slug': typeof AuthenticatedProjectSlugRouteWithChildren
   '/_authenticated/project/new': typeof AuthenticatedProjectNewRoute
@@ -264,6 +281,8 @@ export interface FileRouteTypes {
     | '/trash'
     | '/auth/app-callback'
     | '/auth/callback'
+    | '/template/$id'
+    | '/template/'
     | '/onboarding/cloud'
     | '/project/$slug'
     | '/project/new'
@@ -280,7 +299,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/callback'
-    | '/template'
     | '/analytics'
     | '/help'
     | '/home'
@@ -289,6 +307,8 @@ export interface FileRouteTypes {
     | '/trash'
     | '/auth/app-callback'
     | '/auth/callback'
+    | '/template/$id'
+    | '/template'
     | '/onboarding/cloud'
     | '/project/new'
     | '/project'
@@ -315,6 +335,8 @@ export interface FileRouteTypes {
     | '/_authenticated/trash'
     | '/auth/app-callback'
     | '/auth/callback'
+    | '/template/$id'
+    | '/template/'
     | '/_authenticated/onboarding/cloud'
     | '/_authenticated/project/$slug'
     | '/_authenticated/project/new'
@@ -333,7 +355,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   CallbackRoute: typeof CallbackRoute
-  TemplateRoute: typeof TemplateRoute
+  TemplateRoute: typeof TemplateRouteWithChildren
   AuthAppCallbackRoute: typeof AuthAppCallbackRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
 }
@@ -367,6 +389,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/template/': {
+      id: '/template/'
+      path: '/'
+      fullPath: '/template/'
+      preLoaderRoute: typeof TemplateIndexRouteImport
+      parentRoute: typeof TemplateRoute
+    }
+    '/template/$id': {
+      id: '/template/$id'
+      path: '/$id'
+      fullPath: '/template/$id'
+      preLoaderRoute: typeof TemplateIdRouteImport
+      parentRoute: typeof TemplateRoute
     }
     '/auth/callback': {
       id: '/auth/callback'
@@ -590,11 +626,25 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface TemplateRouteChildren {
+  TemplateIdRoute: typeof TemplateIdRoute
+  TemplateIndexRoute: typeof TemplateIndexRoute
+}
+
+const TemplateRouteChildren: TemplateRouteChildren = {
+  TemplateIdRoute: TemplateIdRoute,
+  TemplateIndexRoute: TemplateIndexRoute,
+}
+
+const TemplateRouteWithChildren = TemplateRoute._addFileChildren(
+  TemplateRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   CallbackRoute: CallbackRoute,
-  TemplateRoute: TemplateRoute,
+  TemplateRoute: TemplateRouteWithChildren,
   AuthAppCallbackRoute: AuthAppCallbackRoute,
   AuthCallbackRoute: AuthCallbackRoute,
 }
