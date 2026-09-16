@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="750" viewBox="0 0 1200 750">
+  <rect width="1200" height="750" fill="#090807"/>
+  <path d="M0 78 H1200" stroke="#241f1a"/>
+  <text x="48" y="50" fill="#efe4cf" font-family="Arial,sans-serif" font-size="22" font-weight="800" letter-spacing="8">NOC<tspan fill="#e4b15a">TUA</tspan></text>
+  <text x="820" y="48" fill="#8a8376" font-family="Arial,sans-serif" font-size="12" letter-spacing="4">상영    하우스    멤버십</text>
+  <circle cx="62" cy="148" r="5" fill="#e4b15a"/>
+  <text x="78" y="153" fill="#e4b15a" font-family="Arial,sans-serif" font-size="12" letter-spacing="3">NOW SHOWING · HAEBANGCHON</text>
+  <text x="48" y="250" fill="#efe4cf" font-family="Arial,sans-serif" font-size="64" font-weight="800">밤이 되면,</text>
+  <text x="48" y="330" fill="#efe4cf" font-family="Arial,sans-serif" font-size="64" font-weight="800">이야기가 켜진다.</text>
+  <text x="52" y="400" fill="#8a8376" font-family="Arial,sans-serif" font-size="16">한 스크린, 마흔여덟 좌석.</text>
+  <rect x="52" y="440" width="62" height="34" fill="#e4b15a"/>
+  <text x="66" y="462" fill="#090807" font-family="Arial,sans-serif" font-size="13">오늘</text>
+  <rect x="124" y="440" width="62" height="34" fill="none" stroke="#3a342c"/>
+  <text x="138" y="462" fill="#efe4cf" font-family="Arial,sans-serif" font-size="13">내일</text>
+  <rect x="740" y="110" width="400" height="560" fill="#16120e" stroke="#2a261f"/>
+  <rect x="740" y="110" width="400" height="260" fill="#2a2218"/>
+  <text x="772" y="430" fill="#e4b15a" font-family="Arial,sans-serif" font-size="12" letter-spacing="3">19:20 · 102분</text>
+  <text x="772" y="490" fill="#efe4cf" font-family="Arial,sans-serif" font-size="36" font-weight="700">밤의 우체국</text>
+  <text x="772" y="540" fill="#8a8376" font-family="Arial,sans-serif" font-size="15">편지를 배달하다 길을 잃는 이야기.</text>
+  <text x="772" y="600" fill="#efe4cf" font-family="Arial,sans-serif" font-size="12" letter-spacing="2">DIR. 한소윤</text>
+</svg>

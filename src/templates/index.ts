@@ -8,6 +8,9 @@ import stillhouse from './assets/stillhouse.svg';
 import offgrid from './assets/offgrid.svg';
 import indexfolio from './assets/indexfolio.svg';
 import relay from './assets/relay.svg';
+import maru from './assets/maru.svg';
+import kiln from './assets/kiln.svg';
+import noctua from './assets/noctua.svg';
 
 const sourceOrigin = 'https://figma-react-eight-plum.vercel.app';
 
@@ -84,10 +87,41 @@ const catalog = [
     startType: 'landing',
     category: 'service',
   },
+  {
+    id: 'maru',
+    title: 'MARU 한옥 스테이',
+    tags: ['#한옥', '#스테이'],
+    image: maru,
+    startType: 'landing',
+    category: 'academy',
+    previewUrl: '/template/maru',
+    thumbnailPreviewUrl: '/template/maru',
+  },
+  {
+    id: 'kiln',
+    title: 'KILN 도예 공방',
+    tags: ['#도예', '#공방'],
+    image: kiln,
+    startType: 'landing',
+    category: 'company',
+    previewUrl: '/template/kiln',
+    thumbnailPreviewUrl: '/template/kiln',
+  },
+  {
+    id: 'noctua',
+    title: 'NOCTUA 독립 영화관',
+    tags: ['#시네마', '#독립영화'],
+    image: noctua,
+    startType: 'landing',
+    category: 'service',
+    previewUrl: '/template/noctua',
+    thumbnailPreviewUrl: '/template/noctua',
+  },
 ] satisfies HomeTemplateItem[];
 
 export const dummyTemplates: HomeTemplateItem[] = catalog.map((template) => ({
   ...template,
-  previewUrl: `${sourceOrigin}/template/${template.id}`,
-  thumbnailPreviewUrl: `${sourceOrigin}/template/${template.id}`,
+  previewUrl: template.previewUrl ?? `${sourceOrigin}/template/${template.id}`,
+  thumbnailPreviewUrl:
+    template.thumbnailPreviewUrl ?? `${sourceOrigin}/template/${template.id}`,
 }));
