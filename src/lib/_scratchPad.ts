@@ -1,3 +1,3 @@
-export function scratchPad() {
+export function scratchPad(): boolean {
   return true;
 }
