@@ -19,6 +19,11 @@ const myTemplateItemSchema = z.object({
 const myTemplateListSchema = z.array(myTemplateItemSchema);
 
 type MyTemplateItem = z.infer<typeof myTemplateItemSchema>;
+type MyTemplateList = z.infer<typeof myTemplateListSchema>;
 
-export { myTemplateItemSchema, myTemplateListSchema };
-export type { MyTemplateItem };
+export {
+  myTemplateItemSchema,
+  myTemplateListSchema,
+  type MyTemplateItem,
+  type MyTemplateList,
+};
