@@ -1,16 +1,3 @@
-export const IS_SCRATCH_ENABLED = false;
-export const scratchCount = 1;
-
-export const scratchConfig: { retries: number } = {
-  retries: 1,
-};
-
 export function scratchPad(): boolean {
-  return IS_SCRATCH_ENABLED;
-}
-
-export function scratchNoop() {}
-
-export function scratchGuard(value: unknown) {
-  return value !== undefined && value !== null;
+  return false;
 }
