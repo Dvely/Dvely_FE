@@ -48,7 +48,8 @@ function HomeExploreSection() {
   const [sort, setSort] = useState<SortOption>('popular');
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
-  const { templates: myTemplates, isLoading: isMyTemplatesLoading, addTemplate } = useMyTemplates();
+  const { templates: myTemplates, isLoading: isMyTemplatesLoading, addTemplate, removeTemplate } =
+    useMyTemplates();
   const filteredCards = useMemo(() => {
     let items = templateCards;
 
@@ -151,7 +152,11 @@ function HomeExploreSection() {
                 />
               ))
             : myTemplates.map((template) => (
-                <MyTemplateFileCard key={template.id} template={template} />
+                <MyTemplateFileCard
+                  key={template.id}
+                  template={template}
+                  onRemove={removeTemplate}
+                />
               ))}
         </div>
       )}
