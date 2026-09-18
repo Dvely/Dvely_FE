@@ -5,6 +5,4 @@ export function scratchPad(): boolean {
   return IS_SCRATCH_ENABLED;
 }
 
-export function scratchNoop(): void {
-  return;
-}
+export function scratchNoop() {}
