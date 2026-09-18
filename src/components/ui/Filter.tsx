@@ -101,7 +101,7 @@ function FilterSelect({
           role="listbox"
           aria-label={ariaLabel ?? selected?.label}
           className={cn(
-            'animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 min-w-full origin-top rounded-2xl border border-[#ececf1] bg-white py-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)] duration-200',
+            'animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 min-w-full origin-top rounded-2xl border border-[#ececf1] bg-white px-2 py-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)] duration-200',
             isPush ? 'mt-2' : 'absolute top-full left-0 z-30 mt-2',
           )}
         >
@@ -114,7 +114,7 @@ function FilterSelect({
                   type="button"
                   onClick={() => handleSelect(option.value)}
                   className={cn(
-                    'flex w-full cursor-pointer items-center justify-between gap-4 px-4 py-2.5 text-left text-[14px] whitespace-nowrap transition',
+                    'flex w-full cursor-pointer items-center justify-between gap-4 rounded-xl px-3 py-2.5 text-left text-[14px] whitespace-nowrap transition',
                     isSelected
                       ? 'bg-[#f8f5ff] font-medium text-[#6d28d9]'
                       : 'text-[#334155] hover:bg-[#f8fafc]',

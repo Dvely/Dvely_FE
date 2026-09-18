@@ -20,10 +20,7 @@ type TemplateBrowseFiltersProps = {
   align?: 'start' | 'center';
 };
 
-const typeOptions = [
-  { id: 'all', label: '모든 유형' },
-  ...TEMPLATE_SITE_TYPES,
-] as const;
+const typeOptions = [{ id: 'all', label: '모든 유형' }, ...TEMPLATE_SITE_TYPES] as const;
 
 const industryMidpoint = Math.ceil(TEMPLATE_INDUSTRY_CATEGORIES.length / 2);
 const leftIndustries = TEMPLATE_INDUSTRY_CATEGORIES.slice(0, industryMidpoint);
@@ -47,8 +44,7 @@ function TemplateBrowseFilters({
   const industryMenuId = useId();
   const industryLabel =
     industryValue === 'all' ? '모든 업종' : TEMPLATE_INDUSTRY_LABEL[industryValue];
-  const typeLabel =
-    typeOptions.find((option) => option.id === typeValue)?.label ?? '모든 유형';
+  const typeLabel = typeOptions.find((option) => option.id === typeValue)?.label ?? '모든 유형';
   const isCentered = align === 'center';
 
   const handleToggle = useCallback((menu: MenuId) => {
@@ -96,7 +92,11 @@ function TemplateBrowseFilters({
   return (
     <div
       ref={rootRef}
-      className={cn('relative z-20 flex items-center gap-2', isCentered && 'justify-center', className)}
+      className={cn(
+        'relative z-20 flex items-center gap-2',
+        isCentered && 'justify-center',
+        className,
+      )}
     >
       <div className="relative">
         <FilterTrigger
@@ -164,7 +164,7 @@ function TemplateBrowseFilters({
             aria-label="유형"
             className={cn(
               panelClassName,
-              'absolute top-full z-30 mt-2 min-w-[200px] py-2',
+              'absolute top-full z-30 mt-2 min-w-[200px] px-2 py-2',
               isCentered ? 'left-1/2 -translate-x-1/2' : 'left-0',
             )}
           >
@@ -177,7 +177,7 @@ function TemplateBrowseFilters({
                     type="button"
                     onClick={() => handleTypeSelect(option.id)}
                     className={cn(
-                      'flex w-full cursor-pointer items-center justify-between gap-6 px-4 py-2.5 text-left text-[14px] transition',
+                      'flex w-full cursor-pointer items-center justify-between gap-6 rounded-xl px-3 py-2.5 text-left text-[14px] transition',
                       selected
                         ? 'bg-[#f8f5ff] font-medium text-[#6d28d9]'
                         : 'text-[#334155] hover:bg-[#f8fafc]',
@@ -245,9 +245,7 @@ function IndustryOption({ label, selected, onSelect, className }: IndustryOption
       onClick={onSelect}
       className={cn(
         'flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-[14px] transition',
-        selected
-          ? 'bg-[#f8f5ff] font-medium text-[#6d28d9]'
-          : 'text-[#334155] hover:bg-[#f8fafc]',
+        selected ? 'bg-[#f8f5ff] font-medium text-[#6d28d9]' : 'text-[#334155] hover:bg-[#f8fafc]',
         className,
       )}
     >
