@@ -1,4 +1,5 @@
 export const IS_SCRATCH_ENABLED = false;
+export const scratchCount = 0;
 
 export const scratchConfig: { retries: number } = {
   retries: 1,
