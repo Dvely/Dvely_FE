@@ -15,7 +15,7 @@ function HomeAddTemplateCard({ label = '내 템플릿 추가', onClick }: HomeAd
       <span className="flex size-10 items-center justify-center rounded-full border border-[#e2e8f0] bg-white">
         <Plus className="size-5" strokeWidth={1.75} />
       </span>
-      <span className="text-[13px] font-medium">ZIP 템플릿 추가</span>
+      <span className="text-[13px] font-medium">{label}</span>
     </button>
   );
 }
