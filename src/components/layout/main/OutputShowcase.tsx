@@ -3,45 +3,28 @@ import { Link } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
 import {
   homeTemplates,
-  type HomeTemplateCategory,
   type HomeTemplateItem,
 } from '@/mocks/home/homeTemplates';
+import {
+  TEMPLATE_INDUSTRY_CATEGORIES,
+  TEMPLATE_INDUSTRY_LABEL,
+  templateHasIndustry,
+  type TemplateIndustryCategory,
+} from '@/lib/templateCategories';
 import { cn } from '@/lib/utils';
 
-type CategoryFilter = 'all' | HomeTemplateCategory | 'leisure';
-
-const categoryLabels: Record<HomeTemplateCategory, string> = {
-  service: '서비스업',
-  academy: '교육/학원',
-  company: '기업',
-  church: '종교/단체',
-  politics: '정치',
-};
+type CategoryFilter = 'all' | TemplateIndustryCategory;
 
 const filterOptions: { value: CategoryFilter; label: string }[] = [
   { value: 'all', label: '전체' },
-  { value: 'service', label: '서비스업' },
-  { value: 'academy', label: '교육/학원' },
-  { value: 'leisure', label: '숙박/레저' },
-  { value: 'company', label: '기업' },
-  { value: 'church', label: '종교/단체' },
-  { value: 'politics', label: '정치' },
+  ...TEMPLATE_INDUSTRY_CATEGORIES.map((item) => ({ value: item.id, label: item.label })),
 ];
 
 const LANDING_TEMPLATE_LIMIT = 3;
 
 function filterTemplates(templates: HomeTemplateItem[], filter: CategoryFilter) {
   if (filter === 'all') return templates;
-
-  if (filter === 'leisure') {
-    return templates.filter(
-      (template) =>
-        template.category === 'service' &&
-        template.tags.some((tag) => tag.includes('빌라') || tag.includes('풀빌라')),
-    );
-  }
-
-  return templates.filter((template) => template.category === filter);
+  return templates.filter((template) => templateHasIndustry(template.categories, filter));
 }
 
 type LandingTemplateCardProps = {
@@ -70,7 +53,9 @@ function LandingTemplateCard({ template }: LandingTemplateCardProps) {
           무료
         </span>
         <span className="text-[15px] font-semibold text-[#0f172a]">{template.title}</span>
-        <span className="text-[14px] text-[#64748b]">{categoryLabels[template.category]}</span>
+        <span className="text-[14px] text-[#64748b]">
+          {TEMPLATE_INDUSTRY_LABEL[template.categories[0]]}
+        </span>
       </div>
     </article>
   );

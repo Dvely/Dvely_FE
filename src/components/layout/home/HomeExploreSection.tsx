@@ -5,15 +5,21 @@ import HomeTemplateCard, {
 import HomeAddTemplateCard from '@/components/layout/home/HomeAddTemplateCard';
 import Filter, { FilterSelect } from '@/components/ui/Filter';
 import { homeTemplates } from '@/mocks/home/homeTemplates';
+import {
+  TEMPLATE_INDUSTRY_CATEGORIES,
+  TEMPLATE_SITE_TYPES,
+  templateHasIndustry,
+  type TemplateIndustryCategory,
+} from '@/lib/templateCategories';
 import { cn } from '@/lib/utils';
 
 type HomeTab = 'explore' | 'my-templates';
-type StyleFilter = 'all' | 'service' | 'company' | 'academy';
-type ThemeFilter = 'all' | 'landing' | 'portfolio';
+type StyleFilter = 'all' | TemplateIndustryCategory;
+type ThemeFilter = 'all' | (typeof TEMPLATE_SITE_TYPES)[number]['id'];
 type SortOption = 'popular' | 'newest';
 
 type TemplateCard = HomeTemplateCardData & {
-  category: (typeof homeTemplates)[number]['category'];
+  categories: (typeof homeTemplates)[number]['categories'];
 };
 
 const templateCards: TemplateCard[] = homeTemplates.map((item) => ({
@@ -22,21 +28,18 @@ const templateCards: TemplateCard[] = homeTemplates.map((item) => ({
   tags: item.tags,
   image: item.image,
   startType: item.startType,
-  category: item.category,
+  categories: item.categories,
   thumbnailPreviewUrl: item.thumbnailPreviewUrl,
 }));
 
 const styleOptions: { value: StyleFilter; label: string }[] = [
-  { value: 'all', label: '모든 스타일' },
-  { value: 'service', label: '서비스' },
-  { value: 'company', label: '기업' },
-  { value: 'academy', label: '숙박/레저' },
+  { value: 'all', label: '모든 업종' },
+  ...TEMPLATE_INDUSTRY_CATEGORIES.map((item) => ({ value: item.id, label: item.label })),
 ];
 
 const themeOptions: { value: ThemeFilter; label: string }[] = [
-  { value: 'all', label: '모든 테마' },
-  { value: 'landing', label: '랜딩' },
-  { value: 'portfolio', label: '포트폴리오' },
+  { value: 'all', label: '모든 유형' },
+  ...TEMPLATE_SITE_TYPES.map((item) => ({ value: item.id, label: item.label })),
 ];
 
 const sortOptions: { value: SortOption; label: string }[] = [
@@ -55,7 +58,7 @@ function HomeExploreSection() {
     let items = templateCards;
 
     if (styleFilter !== 'all') {
-      items = items.filter((card) => card.category === styleFilter);
+      items = items.filter((card) => templateHasIndustry(card.categories, styleFilter));
     }
 
     if (themeFilter === 'portfolio') {
@@ -102,13 +105,13 @@ function HomeExploreSection() {
             value={styleFilter}
             onChange={(value) => setStyleFilter(value as StyleFilter)}
             options={styleOptions}
-            aria-label="스타일 필터"
+            aria-label="업종 필터"
           />
           <FilterSelect
             value={themeFilter}
             onChange={(value) => setThemeFilter(value as ThemeFilter)}
             options={themeOptions}
-            aria-label="테마 필터"
+            aria-label="사이트 유형 필터"
           />
         </div>
         {activeTab === 'explore' ? (

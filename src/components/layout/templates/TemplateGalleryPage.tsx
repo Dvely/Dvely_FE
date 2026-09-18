@@ -4,21 +4,11 @@ import { Dialog } from 'radix-ui';
 import { ArrowUp, X } from 'lucide-react';
 import HeaderContainer from '@/components/layout/header/HeaderContainer';
 import { templates } from './templateCatalog';
+import { TEMPLATE_INDUSTRY_CATEGORIES } from '@/lib/templateCategories';
 
 const categories = [
-  ['all', '전체'],
-  ['company', '기업'],
-  ['construct', '분양/건설/인테리어'],
-  ['product', '제품'],
-  ['culture', '공연/전시/행사'],
-  ['shopping', '쇼핑'],
-  ['beauty', '패션/뷰티'],
-  ['cafe', '카페/레스토랑'],
-  ['franchise', '프랜차이즈'],
-  ['sports', '레저/스포츠/여행'],
-  ['studio', '포트폴리오/스튜디오'],
-  ['expo', '졸업전시회'],
-  ['edu', '학원(교육)/취미'],
+  { id: 'all', label: '전체' },
+  ...TEMPLATE_INDUSTRY_CATEGORIES,
 ] as const;
 
 export default function TemplateGalleryPage() {
@@ -53,21 +43,21 @@ export default function TemplateGalleryPage() {
           aria-label="템플릿 카테고리"
           className="mx-auto mb-[70px] mt-[50px] flex max-w-[840px] flex-wrap justify-center gap-x-[14px] gap-y-[15px]"
         >
-          {categories.map(([id, label]) => (
+          {categories.map((item) => (
             <button
-              key={id}
+              key={item.id}
               type="button"
-              aria-pressed={category === id}
-              onClick={() => setCategory(id)}
-              className={`min-h-10 cursor-pointer rounded-full border bg-white px-4 py-2 text-[14px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7396d3] ${category === id ? 'border-[#7396d3] text-[#7396d3]' : 'border-[#e1e1e6] text-[#333] hover:border-[#7396d3] hover:text-[#7396d3]'}`}
+              aria-pressed={category === item.id}
+              onClick={() => setCategory(item.id)}
+              className={`min-h-10 cursor-pointer rounded-full border bg-white px-4 py-2 text-[14px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7396d3] ${category === item.id ? 'border-[#7396d3] text-[#7396d3]' : 'border-[#e1e1e6] text-[#333] hover:border-[#7396d3] hover:text-[#7396d3]'}`}
             >
-              {label}
+              {item.label}
             </button>
           ))}
         </nav>
 
         <p role="status" className="sr-only">
-          {categories.find(([id]) => id === category)?.[1]} 템플릿 {filtered.length}개
+          {categories.find((item) => item.id === category)?.label} 템플릿 {filtered.length}개
         </p>
         <section
           aria-label="템플릿 목록"

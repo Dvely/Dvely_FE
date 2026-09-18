@@ -21,7 +21,7 @@ const catalog = [
     tags: ['#크리에이티브', '#스튜디오'],
     image: monoform,
     startType: 'landing',
-    category: 'company',
+    categories: ['studio', 'company'],
   },
   {
     id: 'soluna',
@@ -29,7 +29,7 @@ const catalog = [
     tags: ['#웰니스', '#라이프스타일'],
     image: soluna,
     startType: 'landing',
-    category: 'service',
+    categories: ['beauty', 'leisure'],
   },
   {
     id: 'otherday',
@@ -37,7 +37,7 @@ const catalog = [
     tags: ['#커피', '#브랜드'],
     image: otherday,
     startType: 'landing',
-    category: 'company',
+    categories: ['cafe'],
   },
   {
     id: 'paperwave',
@@ -45,7 +45,7 @@ const catalog = [
     tags: ['#북스토어', '#에디토리얼'],
     image: paperwave,
     startType: 'landing',
-    category: 'company',
+    categories: ['store'],
   },
   {
     id: 'axiom',
@@ -53,7 +53,7 @@ const catalog = [
     tags: ['#SaaS', '#대시보드'],
     image: axiom,
     startType: 'landing',
-    category: 'service',
+    categories: ['saas', 'company'],
   },
   {
     id: 'stillhouse',
@@ -61,7 +61,7 @@ const catalog = [
     tags: ['#인테리어', '#포트폴리오'],
     image: stillhouse,
     startType: 'portfolio',
-    category: 'company',
+    categories: ['estate', 'studio'],
   },
   {
     id: 'offgrid',
@@ -69,7 +69,7 @@ const catalog = [
     tags: ['#페스티벌', '#타이포그래피'],
     image: offgrid,
     startType: 'landing',
-    category: 'service',
+    categories: ['event', 'leisure'],
   },
   {
     id: 'indexfolio',
@@ -77,7 +77,7 @@ const catalog = [
     tags: ['#포트폴리오', '#스위스디자인'],
     image: indexfolio,
     startType: 'portfolio',
-    category: 'company',
+    categories: ['studio'],
   },
   {
     id: 'relay',
@@ -85,7 +85,7 @@ const catalog = [
     tags: ['#협업툴', '#칸반보드'],
     image: relay,
     startType: 'landing',
-    category: 'service',
+    categories: ['saas', 'company'],
   },
   {
     id: 'maru',
@@ -93,7 +93,7 @@ const catalog = [
     tags: ['#한옥', '#스테이'],
     image: maru,
     startType: 'landing',
-    category: 'academy',
+    categories: ['stay'],
     previewUrl: '/template/maru',
     thumbnailPreviewUrl: '/template/maru',
   },
@@ -103,7 +103,7 @@ const catalog = [
     tags: ['#도예', '#공방'],
     image: kiln,
     startType: 'landing',
-    category: 'company',
+    categories: ['edu'],
     previewUrl: '/template/kiln',
     thumbnailPreviewUrl: '/template/kiln',
   },
@@ -113,7 +113,7 @@ const catalog = [
     tags: ['#시네마', '#독립영화'],
     image: noctua,
     startType: 'landing',
-    category: 'service',
+    categories: ['event'],
     previewUrl: '/template/noctua',
     thumbnailPreviewUrl: '/template/noctua',
   },
