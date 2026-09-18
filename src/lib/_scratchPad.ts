@@ -10,3 +10,7 @@ export function scratchPad(): boolean {
 }
 
 export function scratchNoop() {}
+
+export function scratchGuard(value: unknown) {
+  return value != null;
+}
