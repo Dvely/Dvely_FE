@@ -1,6 +1,10 @@
 export const IS_SCRATCH_ENABLED = false;
 
-export const scratchConfig = {
+export type ScratchConfig = {
+  retries: number;
+};
+
+export const scratchConfig: ScratchConfig = {
   retries: 1,
 };
 
