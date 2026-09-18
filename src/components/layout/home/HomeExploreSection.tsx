@@ -3,19 +3,19 @@ import HomeTemplateCard, {
   type HomeTemplateCardData,
 } from '@/components/layout/home/HomeTemplateCard';
 import HomeAddTemplateCard from '@/components/layout/home/HomeAddTemplateCard';
-import Filter, { FilterSelect } from '@/components/ui/Filter';
+import { FilterSelect } from '@/components/ui/Filter';
+import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
 import { homeTemplates } from '@/mocks/home/homeTemplates';
 import {
-  TEMPLATE_INDUSTRY_CATEGORIES,
-  TEMPLATE_SITE_TYPES,
   templateHasIndustry,
   type TemplateIndustryCategory,
+  type TemplateSiteType,
 } from '@/lib/templateCategories';
 import { cn } from '@/lib/utils';
 
 type HomeTab = 'explore' | 'my-templates';
 type StyleFilter = 'all' | TemplateIndustryCategory;
-type ThemeFilter = 'all' | (typeof TEMPLATE_SITE_TYPES)[number]['id'];
+type ThemeFilter = 'all' | TemplateSiteType;
 type SortOption = 'popular' | 'newest';
 
 type TemplateCard = HomeTemplateCardData & {
@@ -31,16 +31,6 @@ const templateCards: TemplateCard[] = homeTemplates.map((item) => ({
   categories: item.categories,
   thumbnailPreviewUrl: item.thumbnailPreviewUrl,
 }));
-
-const styleOptions: { value: StyleFilter; label: string }[] = [
-  { value: 'all', label: '모든 업종' },
-  ...TEMPLATE_INDUSTRY_CATEGORIES.map((item) => ({ value: item.id, label: item.label })),
-];
-
-const themeOptions: { value: ThemeFilter; label: string }[] = [
-  { value: 'all', label: '모든 유형' },
-  ...TEMPLATE_SITE_TYPES.map((item) => ({ value: item.id, label: item.label })),
-];
 
 const sortOptions: { value: SortOption; label: string }[] = [
   { value: 'popular', label: '인기순' },
@@ -99,21 +89,13 @@ function HomeExploreSection() {
         ))}
       </div>
 
-      <Filter className="relative z-20 mt-4 justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterSelect
-            value={styleFilter}
-            onChange={(value) => setStyleFilter(value as StyleFilter)}
-            options={styleOptions}
-            aria-label="업종 필터"
-          />
-          <FilterSelect
-            value={themeFilter}
-            onChange={(value) => setThemeFilter(value as ThemeFilter)}
-            options={themeOptions}
-            aria-label="사이트 유형 필터"
-          />
-        </div>
+      <div className="relative z-20 mt-4 flex items-center justify-between gap-3">
+        <TemplateBrowseFilters
+          typeValue={themeFilter}
+          industryValue={styleFilter}
+          onTypeChange={setThemeFilter}
+          onIndustryChange={setStyleFilter}
+        />
         {activeTab === 'explore' ? (
           <FilterSelect
             value={sort}
@@ -122,7 +104,7 @@ function HomeExploreSection() {
             aria-label="정렬 기준"
           />
         ) : null}
-      </Filter>
+      </div>
 
       {activeTab === 'explore' ? (
         <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">

@@ -1,22 +1,25 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Dialog } from 'radix-ui';
 import { ArrowUp, X } from 'lucide-react';
 import HeaderContainer from '@/components/layout/header/HeaderContainer';
+import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
 import { templates } from './templateCatalog';
-import { TEMPLATE_INDUSTRY_CATEGORIES } from '@/lib/templateCategories';
-
-const categories = [
-  { id: 'all', label: '전체' },
-  ...TEMPLATE_INDUSTRY_CATEGORIES,
-] as const;
+import { dummyTemplates } from '@/templates';
+import type { TemplateIndustryCategory, TemplateSiteType } from '@/lib/templateCategories';
 
 export default function TemplateGalleryPage() {
-  const [category, setCategory] = useState<string>('all');
-  const filtered =
-    category === 'all'
-      ? templates
-      : templates.filter((template) => template.categories.includes(category));
+  const [category, setCategory] = useState<'all' | TemplateIndustryCategory>('all');
+  const [siteType, setSiteType] = useState<'all' | TemplateSiteType>('all');
+
+  const filtered = useMemo(() => {
+    return templates.filter((template) => {
+      const matchesIndustry = category === 'all' || template.categories.includes(category);
+      const source = dummyTemplates.find((item) => item.id === template.id);
+      const matchesType = siteType === 'all' || source?.startType === siteType;
+      return matchesIndustry && matchesType;
+    });
+  }, [category, siteType]);
 
   return (
     <div className="min-h-screen bg-[#f5f5fa] text-[#333]">
@@ -39,31 +42,25 @@ export default function TemplateGalleryPage() {
           </p>
         </section>
 
-        <nav
-          aria-label="템플릿 카테고리"
-          className="mx-auto mb-[70px] mt-[50px] flex max-w-[840px] flex-wrap justify-center gap-x-[14px] gap-y-[15px]"
-        >
-          {categories.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              aria-pressed={category === item.id}
-              onClick={() => setCategory(item.id)}
-              className={`min-h-10 cursor-pointer rounded-full border bg-white px-4 py-2 text-[14px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7396d3] ${category === item.id ? 'border-[#7396d3] text-[#7396d3]' : 'border-[#e1e1e6] text-[#333] hover:border-[#7396d3] hover:text-[#7396d3]'}`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
+        <div className="relative z-20 mx-auto mb-[70px] mt-[50px] flex justify-center">
+          <TemplateBrowseFilters
+            align="center"
+            typeValue={siteType}
+            industryValue={category}
+            onTypeChange={setSiteType}
+            onIndustryChange={setCategory}
+          />
+        </div>
 
         <p role="status" className="sr-only">
-          {categories.find((item) => item.id === category)?.label} 템플릿 {filtered.length}개
+          템플릿 {filtered.length}개
         </p>
         <section
           aria-label="템플릿 목록"
           className="mx-auto grid max-w-[1600px] grid-cols-1 gap-x-[30px] gap-y-10 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {filtered.map((template, index) => (
+          {filtered.length > 0 ? (
+            filtered.map((template, index) => (
             <Dialog.Root key={template.id}>
               <article className="min-w-0">
                 <Dialog.Trigger asChild>
@@ -127,7 +124,12 @@ export default function TemplateGalleryPage() {
                 </Dialog.Content>
               </Dialog.Portal>
             </Dialog.Root>
-          ))}
+          ))
+          ) : (
+            <p className="col-span-full py-16 text-center text-[14px] text-[#94a3b8]">
+              해당 조건의 템플릿을 준비 중입니다.
+            </p>
+          )}
         </section>
       </main>
       <footer className="border-t border-black/5 bg-white px-6 py-10">

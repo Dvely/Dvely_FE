@@ -5,26 +5,35 @@ import {
   homeTemplates,
   type HomeTemplateItem,
 } from '@/mocks/home/homeTemplates';
+import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
 import {
-  TEMPLATE_INDUSTRY_CATEGORIES,
   TEMPLATE_INDUSTRY_LABEL,
   templateHasIndustry,
   type TemplateIndustryCategory,
+  type TemplateSiteType,
 } from '@/lib/templateCategories';
-import { cn } from '@/lib/utils';
 
 type CategoryFilter = 'all' | TemplateIndustryCategory;
-
-const filterOptions: { value: CategoryFilter; label: string }[] = [
-  { value: 'all', label: '전체' },
-  ...TEMPLATE_INDUSTRY_CATEGORIES.map((item) => ({ value: item.id, label: item.label })),
-];
+type TypeFilter = 'all' | TemplateSiteType;
 
 const LANDING_TEMPLATE_LIMIT = 3;
 
-function filterTemplates(templates: HomeTemplateItem[], filter: CategoryFilter) {
-  if (filter === 'all') return templates;
-  return templates.filter((template) => templateHasIndustry(template.categories, filter));
+function filterTemplates(
+  templates: HomeTemplateItem[],
+  industry: CategoryFilter,
+  siteType: TypeFilter,
+) {
+  let items = templates;
+
+  if (industry !== 'all') {
+    items = items.filter((template) => templateHasIndustry(template.categories, industry));
+  }
+
+  if (siteType !== 'all') {
+    items = items.filter((template) => template.startType === siteType);
+  }
+
+  return items;
 }
 
 type LandingTemplateCardProps = {
@@ -63,10 +72,14 @@ function LandingTemplateCard({ template }: LandingTemplateCardProps) {
 
 function OutputShowcase() {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
 
   const visibleTemplates = useMemo(() => {
-    return filterTemplates(homeTemplates, categoryFilter).slice(0, LANDING_TEMPLATE_LIMIT);
-  }, [categoryFilter]);
+    return filterTemplates(homeTemplates, categoryFilter, typeFilter).slice(
+      0,
+      LANDING_TEMPLATE_LIMIT,
+    );
+  }, [categoryFilter, typeFilter]);
 
   return (
     <section id="showcase" className="w-full scroll-mt-4 bg-white">
@@ -80,27 +93,14 @@ function OutputShowcase() {
           </p>
         </header>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
-          {filterOptions.map((option) => {
-            const isActive = categoryFilter === option.value;
-
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setCategoryFilter(option.value)}
-                className={cn(
-                  'rounded-full px-4 py-2 text-[14px] font-medium transition',
-                  isActive
-                    ? 'bg-[#0f172a] text-white'
-                    : 'border border-[#e2e8f0] bg-white text-[#0f172a] hover:border-[#cbd5e1]',
-                )}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
+        <TemplateBrowseFilters
+          className="mt-10"
+          align="center"
+          typeValue={typeFilter}
+          industryValue={categoryFilter}
+          onTypeChange={setTypeFilter}
+          onIndustryChange={setCategoryFilter}
+        />
 
         <div className="mt-10 grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {visibleTemplates.length > 0 ? (
