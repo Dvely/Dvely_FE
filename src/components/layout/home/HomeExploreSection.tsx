@@ -3,17 +3,23 @@ import HomeTemplateCard, {
   type HomeTemplateCardData,
 } from '@/components/layout/home/HomeTemplateCard';
 import HomeAddTemplateCard from '@/components/layout/home/HomeAddTemplateCard';
-import Filter, { FilterSelect } from '@/components/ui/Filter';
+import { FilterSelect } from '@/components/ui/Filter';
+import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
 import { homeTemplates } from '@/mocks/home/homeTemplates';
+import {
+  templateHasIndustry,
+  type TemplateIndustryCategory,
+  type TemplateSiteType,
+} from '@/lib/templateCategories';
 import { cn } from '@/lib/utils';
 
 type HomeTab = 'explore' | 'my-templates';
-type StyleFilter = 'all' | 'service' | 'company' | 'academy';
-type ThemeFilter = 'all' | 'landing' | 'portfolio';
+type StyleFilter = 'all' | TemplateIndustryCategory;
+type ThemeFilter = 'all' | TemplateSiteType;
 type SortOption = 'popular' | 'newest';
 
 type TemplateCard = HomeTemplateCardData & {
-  category: (typeof homeTemplates)[number]['category'];
+  categories: (typeof homeTemplates)[number]['categories'];
 };
 
 const templateCards: TemplateCard[] = homeTemplates.map((item) => ({
@@ -22,22 +28,9 @@ const templateCards: TemplateCard[] = homeTemplates.map((item) => ({
   tags: item.tags,
   image: item.image,
   startType: item.startType,
-  category: item.category,
+  categories: item.categories,
   thumbnailPreviewUrl: item.thumbnailPreviewUrl,
 }));
-
-const styleOptions: { value: StyleFilter; label: string }[] = [
-  { value: 'all', label: '모든 스타일' },
-  { value: 'service', label: '서비스' },
-  { value: 'company', label: '기업' },
-  { value: 'academy', label: '숙박/레저' },
-];
-
-const themeOptions: { value: ThemeFilter; label: string }[] = [
-  { value: 'all', label: '모든 테마' },
-  { value: 'landing', label: '랜딩' },
-  { value: 'portfolio', label: '포트폴리오' },
-];
 
 const sortOptions: { value: SortOption; label: string }[] = [
   { value: 'popular', label: '인기순' },
@@ -55,7 +48,7 @@ function HomeExploreSection() {
     let items = templateCards;
 
     if (styleFilter !== 'all') {
-      items = items.filter((card) => card.category === styleFilter);
+      items = items.filter((card) => templateHasIndustry(card.categories, styleFilter));
     }
 
     if (themeFilter === 'portfolio') {
@@ -96,21 +89,13 @@ function HomeExploreSection() {
         ))}
       </div>
 
-      <Filter className="relative z-20 mt-4 justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterSelect
-            value={styleFilter}
-            onChange={(value) => setStyleFilter(value as StyleFilter)}
-            options={styleOptions}
-            aria-label="스타일 필터"
-          />
-          <FilterSelect
-            value={themeFilter}
-            onChange={(value) => setThemeFilter(value as ThemeFilter)}
-            options={themeOptions}
-            aria-label="테마 필터"
-          />
-        </div>
+      <div className="relative z-20 mt-4 flex items-center justify-between gap-3">
+        <TemplateBrowseFilters
+          typeValue={themeFilter}
+          industryValue={styleFilter}
+          onTypeChange={setThemeFilter}
+          onIndustryChange={setStyleFilter}
+        />
         {activeTab === 'explore' ? (
           <FilterSelect
             value={sort}
@@ -119,7 +104,7 @@ function HomeExploreSection() {
             aria-label="정렬 기준"
           />
         ) : null}
-      </Filter>
+      </div>
 
       {activeTab === 'explore' ? (
         <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">

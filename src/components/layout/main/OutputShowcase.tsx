@@ -3,45 +3,37 @@ import { Link } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
 import {
   homeTemplates,
-  type HomeTemplateCategory,
   type HomeTemplateItem,
 } from '@/mocks/home/homeTemplates';
-import { cn } from '@/lib/utils';
+import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
+import {
+  TEMPLATE_INDUSTRY_LABEL,
+  templateHasIndustry,
+  type TemplateIndustryCategory,
+  type TemplateSiteType,
+} from '@/lib/templateCategories';
 
-type CategoryFilter = 'all' | HomeTemplateCategory | 'leisure';
-
-const categoryLabels: Record<HomeTemplateCategory, string> = {
-  service: '서비스업',
-  academy: '교육/학원',
-  company: '기업',
-  church: '종교/단체',
-  politics: '정치',
-};
-
-const filterOptions: { value: CategoryFilter; label: string }[] = [
-  { value: 'all', label: '전체' },
-  { value: 'service', label: '서비스업' },
-  { value: 'academy', label: '교육/학원' },
-  { value: 'leisure', label: '숙박/레저' },
-  { value: 'company', label: '기업' },
-  { value: 'church', label: '종교/단체' },
-  { value: 'politics', label: '정치' },
-];
+type CategoryFilter = 'all' | TemplateIndustryCategory;
+type TypeFilter = 'all' | TemplateSiteType;
 
 const LANDING_TEMPLATE_LIMIT = 3;
 
-function filterTemplates(templates: HomeTemplateItem[], filter: CategoryFilter) {
-  if (filter === 'all') return templates;
+function filterTemplates(
+  templates: HomeTemplateItem[],
+  industry: CategoryFilter,
+  siteType: TypeFilter,
+) {
+  let items = templates;
 
-  if (filter === 'leisure') {
-    return templates.filter(
-      (template) =>
-        template.category === 'service' &&
-        template.tags.some((tag) => tag.includes('빌라') || tag.includes('풀빌라')),
-    );
+  if (industry !== 'all') {
+    items = items.filter((template) => templateHasIndustry(template.categories, industry));
   }
 
-  return templates.filter((template) => template.category === filter);
+  if (siteType !== 'all') {
+    items = items.filter((template) => template.startType === siteType);
+  }
+
+  return items;
 }
 
 type LandingTemplateCardProps = {
@@ -70,7 +62,9 @@ function LandingTemplateCard({ template }: LandingTemplateCardProps) {
           무료
         </span>
         <span className="text-[15px] font-semibold text-[#0f172a]">{template.title}</span>
-        <span className="text-[14px] text-[#64748b]">{categoryLabels[template.category]}</span>
+        <span className="text-[14px] text-[#64748b]">
+          {TEMPLATE_INDUSTRY_LABEL[template.categories[0]]}
+        </span>
       </div>
     </article>
   );
@@ -78,10 +72,14 @@ function LandingTemplateCard({ template }: LandingTemplateCardProps) {
 
 function OutputShowcase() {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
 
   const visibleTemplates = useMemo(() => {
-    return filterTemplates(homeTemplates, categoryFilter).slice(0, LANDING_TEMPLATE_LIMIT);
-  }, [categoryFilter]);
+    return filterTemplates(homeTemplates, categoryFilter, typeFilter).slice(
+      0,
+      LANDING_TEMPLATE_LIMIT,
+    );
+  }, [categoryFilter, typeFilter]);
 
   return (
     <section id="showcase" className="w-full scroll-mt-4 bg-white">
@@ -95,27 +93,14 @@ function OutputShowcase() {
           </p>
         </header>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
-          {filterOptions.map((option) => {
-            const isActive = categoryFilter === option.value;
-
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setCategoryFilter(option.value)}
-                className={cn(
-                  'rounded-full px-4 py-2 text-[14px] font-medium transition',
-                  isActive
-                    ? 'bg-[#0f172a] text-white'
-                    : 'border border-[#e2e8f0] bg-white text-[#0f172a] hover:border-[#cbd5e1]',
-                )}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
+        <TemplateBrowseFilters
+          className="mt-10"
+          align="center"
+          typeValue={typeFilter}
+          industryValue={categoryFilter}
+          onTypeChange={setTypeFilter}
+          onIndustryChange={setCategoryFilter}
+        />
 
         <div className="mt-10 grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {visibleTemplates.length > 0 ? (

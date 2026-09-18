@@ -1,7 +1,8 @@
 import type { ProjectStartType } from '@/lib/userProjects';
+import type { TemplateIndustryCategory } from '@/lib/templateCategories';
 import { dummyTemplates } from '@/templates';
 
-export type HomeTemplateCategory = 'service' | 'church' | 'academy' | 'company' | 'politics';
+export type HomeTemplateCategory = TemplateIndustryCategory;
 
 export type HomeTemplateItem = {
   id: string;
@@ -9,7 +10,7 @@ export type HomeTemplateItem = {
   tags: string[];
   image: string;
   startType: ProjectStartType;
-  category: HomeTemplateCategory;
+  categories: TemplateIndustryCategory[];
   previewUrl?: string;
   thumbnailPreviewUrl?: string;
 };

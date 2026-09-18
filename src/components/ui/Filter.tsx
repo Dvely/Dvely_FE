@@ -82,11 +82,16 @@ function FilterSelect({
         aria-expanded={open}
         aria-controls={listId}
         onClick={handleToggle}
-        className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-[#e5e7eb] bg-white py-0 pr-2.5 pl-3 text-[13px] font-medium whitespace-nowrap text-[#334155] outline-none transition hover:bg-[#f8fafc]"
+        className={cn(
+          'inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-xl border bg-white px-3.5 text-[14px] font-medium whitespace-nowrap outline-none transition',
+          open
+            ? 'border-[#ddd6fe] bg-[#faf5ff] text-[#6d28d9] shadow-[0_0_0_3px_rgba(124,58,237,0.12)]'
+            : 'border-[#e5e7eb] text-[#334155] hover:border-[#d4d4d8] hover:bg-[#fafafa]',
+        )}
       >
         {selected?.label}
         <ChevronDown
-          className={cn('size-3.5 text-[#94a3b8] transition', open && 'rotate-180')}
+          className={cn('size-4 text-current transition duration-200', open && 'rotate-180')}
           aria-hidden
         />
       </button>
@@ -96,8 +101,8 @@ function FilterSelect({
           role="listbox"
           aria-label={ariaLabel ?? selected?.label}
           className={cn(
-            'min-w-full rounded-xl border border-[#e5e7eb] bg-white py-1 shadow-sm',
-            isPush ? 'mt-1' : 'absolute top-full left-0 z-30 mt-1',
+            'animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 min-w-full origin-top rounded-2xl border border-[#ececf1] bg-white px-2 py-2 shadow-[0_18px_50px_rgba(15,23,42,0.12)] duration-200',
+            isPush ? 'mt-2' : 'absolute top-full left-0 z-30 mt-2',
           )}
         >
           {options.map((option) => {
@@ -109,9 +114,9 @@ function FilterSelect({
                   type="button"
                   onClick={() => handleSelect(option.value)}
                   className={cn(
-                    'flex w-full cursor-pointer items-center justify-between gap-4 px-3 py-2 text-left text-[13px] font-medium whitespace-nowrap transition',
+                    'flex w-full cursor-pointer items-center justify-between gap-4 rounded-xl px-3 py-2.5 text-left text-[14px] whitespace-nowrap transition',
                     isSelected
-                      ? 'bg-[#f8fafc] text-[#0f172a]'
+                      ? 'bg-[#f8f5ff] font-medium text-[#6d28d9]'
                       : 'text-[#334155] hover:bg-[#f8fafc]',
                   )}
                 >
