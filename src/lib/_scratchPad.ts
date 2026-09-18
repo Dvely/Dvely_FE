@@ -1,5 +1,5 @@
-export const SCRATCH_ENABLED = false;
+export const IS_SCRATCH_ENABLED = false;
 
 export function scratchPad(): boolean {
-  return SCRATCH_ENABLED;
+  return IS_SCRATCH_ENABLED;
 }
