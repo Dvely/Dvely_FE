@@ -1,11 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import HomeTemplateCard, {
   type HomeTemplateCardData,
 } from '@/components/layout/home/HomeTemplateCard';
 import HomeAddTemplateCard from '@/components/layout/home/HomeAddTemplateCard';
+import MyTemplateFileCard from '@/components/layout/home/MyTemplateFileCard';
+import MyTemplateUploadDialog from '@/components/layout/home/MyTemplateUploadDialog';
 import { FilterSelect } from '@/components/ui/Filter';
 import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
 import { homeTemplates } from '@/mocks/home/homeTemplates';
+import { useMyTemplates } from '@/hooks/useMyTemplates';
 import {
   templateHasIndustry,
   type TemplateIndustryCategory,
@@ -43,7 +46,9 @@ function HomeExploreSection() {
   const [styleFilter, setStyleFilter] = useState<StyleFilter>('all');
   const [themeFilter, setThemeFilter] = useState<ThemeFilter>('all');
   const [sort, setSort] = useState<SortOption>('popular');
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
 
+  const { templates: myTemplates, isLoading: isMyTemplatesLoading, addTemplate } = useMyTemplates();
   const filteredCards = useMemo(() => {
     let items = templateCards;
 
@@ -63,6 +68,19 @@ function HomeExploreSection() {
 
     return items;
   }, [sort, styleFilter, themeFilter]);
+  const skeletonItems = Array.from({ length: 3 }, (_, idx) => idx);
+
+  const handleOpenUpload = useCallback(() => {
+    setActiveTab('my-templates');
+    setIsUploadOpen(true);
+  }, []);
+
+  const handleAddTemplate = useCallback(
+    (file: File, name: string) => {
+      addTemplate(file, name);
+    },
+    [addTemplate],
+  );
 
   return (
     <section className="mx-auto w-full max-w-[1280px]">
@@ -90,25 +108,29 @@ function HomeExploreSection() {
       </div>
 
       <div className="relative z-20 mt-4 flex items-center justify-between gap-3">
-        <TemplateBrowseFilters
-          typeValue={themeFilter}
-          industryValue={styleFilter}
-          onTypeChange={setThemeFilter}
-          onIndustryChange={setStyleFilter}
-        />
         {activeTab === 'explore' ? (
-          <FilterSelect
-            value={sort}
-            onChange={(value) => setSort(value as SortOption)}
-            options={sortOptions}
-            aria-label="정렬 기준"
-          />
-        ) : null}
+          <>
+            <TemplateBrowseFilters
+              typeValue={themeFilter}
+              industryValue={styleFilter}
+              onTypeChange={setThemeFilter}
+              onIndustryChange={setStyleFilter}
+            />
+            <FilterSelect
+              value={sort}
+              onChange={(value) => setSort(value as SortOption)}
+              options={sortOptions}
+              aria-label="정렬 기준"
+            />
+          </>
+        ) : (
+          <p className="text-[14px] text-[#64748b]">ZIP 파일을 첨부해 나만의 템플릿을 추가하세요.</p>
+        )}
       </div>
 
       {activeTab === 'explore' ? (
         <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <HomeAddTemplateCard />
+          <HomeAddTemplateCard onClick={handleOpenUpload} />
           {filteredCards.map((card) => (
             <HomeTemplateCard
               key={card.id}
@@ -119,13 +141,26 @@ function HomeExploreSection() {
           ))}
         </div>
       ) : (
-        <div className="mt-5 grid max-w-[280px] grid-cols-1 gap-5 sm:max-w-none sm:grid-cols-2 lg:grid-cols-4">
-          <HomeAddTemplateCard />
-          <div className="col-span-full flex min-h-[150px] items-center justify-center rounded-2xl border border-dashed border-[#e2e8f0] bg-[#f8fafc] sm:col-span-2 lg:col-span-3">
-            <p className="text-[14px] text-[#94a3b8]">저장한 템플릿이 없습니다.</p>
-          </div>
+        <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <HomeAddTemplateCard label="ZIP 템플릿 추가" onClick={handleOpenUpload} />
+          {isMyTemplatesLoading
+            ? skeletonItems.map((item) => (
+                <div
+                  key={item}
+                  className="aspect-16/10 animate-pulse rounded-2xl border border-[#e2e8f0] bg-[#f8fafc]"
+                />
+              ))
+            : myTemplates.map((template) => (
+                <MyTemplateFileCard key={template.id} template={template} />
+              ))}
         </div>
       )}
+
+      <MyTemplateUploadDialog
+        open={isUploadOpen}
+        onOpenChange={setIsUploadOpen}
+        onSubmit={handleAddTemplate}
+      />
     </section>
   );
 }
