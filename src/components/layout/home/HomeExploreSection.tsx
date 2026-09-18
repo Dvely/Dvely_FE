@@ -69,6 +69,19 @@ function HomeExploreSection() {
 
     return items;
   }, [sort, styleFilter, themeFilter]);
+  const filteredMyTemplates = useMemo(() => {
+    let items = myTemplates;
+
+    if (styleFilter !== 'all') {
+      items = items.filter((template) => templateHasIndustry(template.categories, styleFilter));
+    }
+
+    if (themeFilter !== 'all') {
+      items = items.filter((template) => template.siteType === themeFilter);
+    }
+
+    return items;
+  }, [myTemplates, styleFilter, themeFilter]);
   const skeletonItems = Array.from({ length: 3 }, (_, idx) => idx);
 
   const handleOpenUpload = useCallback(() => {
@@ -77,8 +90,15 @@ function HomeExploreSection() {
   }, []);
 
   const handleAddTemplate = useCallback(
-    (file: File, name: string) => {
-      addTemplate(file, name);
+    (
+      file: File,
+      payload: {
+        name: string;
+        siteType: TemplateSiteType;
+        categories: TemplateIndustryCategory[];
+      },
+    ) => {
+      addTemplate(file, payload);
     },
     [addTemplate],
   );
@@ -109,23 +129,21 @@ function HomeExploreSection() {
       </div>
 
       <div className="relative z-20 mt-4 flex items-center justify-between gap-3">
+        <TemplateBrowseFilters
+          typeValue={themeFilter}
+          industryValue={styleFilter}
+          onTypeChange={setThemeFilter}
+          onIndustryChange={setStyleFilter}
+        />
         {activeTab === 'explore' ? (
-          <>
-            <TemplateBrowseFilters
-              typeValue={themeFilter}
-              industryValue={styleFilter}
-              onTypeChange={setThemeFilter}
-              onIndustryChange={setStyleFilter}
-            />
-            <FilterSelect
-              value={sort}
-              onChange={(value) => setSort(value as SortOption)}
-              options={sortOptions}
-              aria-label="정렬 기준"
-            />
-          </>
+          <FilterSelect
+            value={sort}
+            onChange={(value) => setSort(value as SortOption)}
+            options={sortOptions}
+            aria-label="정렬 기준"
+          />
         ) : (
-          <p className="text-[14px] text-[#64748b]">ZIP 파일을 첨부해 나만의 템플릿을 추가하세요.</p>
+          <p className="hidden text-[13px] text-[#64748b] sm:block">ZIP을 첨부하고 카테고리를 지정하세요.</p>
         )}
       </div>
 
@@ -151,7 +169,7 @@ function HomeExploreSection() {
                   className="aspect-16/10 animate-pulse rounded-2xl border border-[#e2e8f0] bg-[#f8fafc]"
                 />
               ))
-            : myTemplates.map((template) => (
+            : filteredMyTemplates.map((template) => (
                 <MyTemplateFileCard
                   key={template.id}
                   template={template}

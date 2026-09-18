@@ -1,26 +1,38 @@
 import { useCallback, useState, type ChangeEvent } from 'react';
 import { Dialog } from 'radix-ui';
 import { X } from 'lucide-react';
+import MyTemplateCategoryFields from '@/components/layout/home/MyTemplateCategoryFields';
 import MyTemplateZipDropzone from '@/components/layout/home/MyTemplateZipDropzone';
 import MyTemplateZipPreview from '@/components/layout/home/MyTemplateZipPreview';
+import type { TemplateIndustryCategory, TemplateSiteType } from '@/lib/templateCategories';
+
+type MyTemplateUploadPayload = {
+  name: string;
+  siteType: TemplateSiteType;
+  categories: TemplateIndustryCategory[];
+};
 
 type MyTemplateUploadDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (file: File, name: string) => void;
+  onSubmit: (file: File, payload: MyTemplateUploadPayload) => void;
 };
 
 function MyTemplateUploadDialog({ open, onOpenChange, onSubmit }: MyTemplateUploadDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState('');
+  const [siteType, setSiteType] = useState<TemplateSiteType | null>(null);
+  const [categories, setCategories] = useState<TemplateIndustryCategory[]>([]);
 
-  const canSubmit = Boolean(file) && !error;
+  const canSubmit = Boolean(file) && !error && siteType !== null && categories.length > 0;
 
   const resetForm = useCallback(() => {
     setFile(null);
     setError(null);
     setName('');
+    setSiteType(null);
+    setCategories([]);
   }, []);
 
   const handleOpenChange = useCallback(
@@ -49,17 +61,21 @@ function MyTemplateUploadDialog({ open, onOpenChange, onSubmit }: MyTemplateUplo
   }, []);
 
   const handleSubmit = useCallback(() => {
-    if (!file || error) return;
-    onSubmit(file, name.trim() || file.name.replace(/\.zip$/i, ''));
+    if (!file || error || !siteType || categories.length === 0) return;
+    onSubmit(file, {
+      name: name.trim() || file.name.replace(/\.zip$/i, ''),
+      siteType,
+      categories,
+    });
     resetForm();
     onOpenChange(false);
-  }, [error, file, name, onOpenChange, onSubmit, resetForm]);
+  }, [categories, error, file, name, onOpenChange, onSubmit, resetForm, siteType]);
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-32px)] max-w-[480px] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 max-h-[90dvh] w-[calc(100%-32px)] max-w-[520px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
           <div className="flex items-start justify-between gap-4">
             <div>
               <Dialog.Title className="text-[18px] font-semibold tracking-tight text-[#0f172a]">
@@ -96,6 +112,13 @@ function MyTemplateUploadDialog({ open, onOpenChange, onSubmit }: MyTemplateUplo
               className="h-10 w-full rounded-xl border border-[#e5e7eb] bg-white px-3 text-[14px] text-[#0f172a] outline-none transition placeholder:text-[#94a3b8] focus:border-[#c4b5fd] focus:shadow-[0_0_0_3px_rgba(124,58,237,0.12)]"
             />
           </label>
+
+          <MyTemplateCategoryFields
+            siteType={siteType}
+            categories={categories}
+            onSiteTypeChange={setSiteType}
+            onCategoriesChange={setCategories}
+          />
 
           <div className="mt-6 flex justify-end gap-2">
             <Dialog.Close className="inline-flex h-10 cursor-pointer items-center rounded-xl border border-[#e5e7eb] px-4 text-[14px] font-medium text-[#334155] transition hover:bg-[#f8fafc]">

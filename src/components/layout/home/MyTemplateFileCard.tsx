@@ -1,6 +1,10 @@
 import { useCallback } from 'react';
 import { FileArchive, Trash2 } from 'lucide-react';
 import { formatFileSize } from '@/lib/zipFile';
+import {
+  TEMPLATE_INDUSTRY_LABEL,
+  TEMPLATE_SITE_TYPES,
+} from '@/lib/templateCategories';
 import type { MyTemplateItem } from '@/types/my-template.type';
 
 type MyTemplateFileCardProps = {
@@ -19,6 +23,9 @@ function formatAddedAt(value: string) {
 
 function MyTemplateFileCard({ template, onRemove }: MyTemplateFileCardProps) {
   const addedLabel = formatAddedAt(template.addedAt);
+  const siteTypeLabel =
+    TEMPLATE_SITE_TYPES.find((item) => item.id === template.siteType)?.label ?? null;
+  const industryLabels = template.categories.map((id) => TEMPLATE_INDUSTRY_LABEL[id]);
 
   const handleRemove = useCallback(() => {
     onRemove(template.id);
@@ -44,6 +51,11 @@ function MyTemplateFileCard({ template, onRemove }: MyTemplateFileCardProps) {
           {template.name}
         </p>
         <p className="mt-1 truncate text-[13px] text-[#64748b]">{template.fileName}</p>
+        {siteTypeLabel || industryLabels.length > 0 ? (
+          <p className="mt-1 truncate text-[12px] text-[#6d28d9]">
+            {[siteTypeLabel, ...industryLabels].filter(Boolean).join(' · ')}
+          </p>
+        ) : null}
         <p className="mt-2 text-[12px] text-[#94a3b8]">
           {formatFileSize(template.size)}
           {addedLabel ? ` · ${addedLabel} 추가` : ''}
