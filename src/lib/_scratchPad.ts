@@ -9,7 +9,3 @@ export function scratchPad(): boolean {
 }
 
 export function scratchNoop() {}
-
-export function scratchLog(message: string) {
-  void message;
-}
