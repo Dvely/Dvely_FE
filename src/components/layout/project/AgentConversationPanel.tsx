@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SendHorizontal } from 'lucide-react';
 import {
@@ -24,7 +25,12 @@ import {
   useApprovalDetailQuery,
   useConversationPendingApprovalQuery,
 } from '@/api/approvals';
-import { composeApiErrorMessage, dispatchApiErrorAction } from '@/lib/apiErrorGuide';
+import {
+  composeApiErrorMessage,
+  dispatchApiErrorAction,
+  findApiErrorGuide,
+  type ApiErrorAction,
+} from '@/lib/apiErrorGuide';
 import { refreshUserInfoInBackground } from '@/api/user';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
@@ -216,6 +222,18 @@ function formatApiErrorMessage(error: unknown) {
   return composeApiErrorMessage(error);
 }
 
+/**
+ * 오류가 "어디로 가면 풀린다" 를 아는 경우 그 이동만 꺼낸다.
+ *
+ * AI_CREDENTIAL_NOT_REGISTERED 가 이 경우다 — 코딩 에이전트는 본인 키로만 돌고
+ * 서버가 대신 채워 주지 않으므로, 키 등록 화면까지 데려다 주지 않으면 사용자가
+ * 설정 어딘가를 직접 뒤져야 한다.
+ */
+function findApiErrorNavigation(error: unknown) {
+  const action = findApiErrorGuide(error)?.action;
+  return action?.kind === 'navigate' ? action : null;
+}
+
 function AgentConversationPanel({
   projectId,
   projectName,
@@ -318,6 +336,18 @@ function AgentConversationPanel({
   */
   const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  /** 오류 안내가 데려다 줄 곳. 없으면 확인 버튼만 나온다 */
+  const [alertNavigation, setAlertNavigation] = useState<Extract<
+    ApiErrorAction,
+    { kind: 'navigate' }
+  > | null>(null);
+
+  const navigate = useNavigate();
+
+  const showApiError = useCallback((error: unknown) => {
+    setAlertMessage(formatApiErrorMessage(error));
+    setAlertNavigation(findApiErrorNavigation(error));
+  }, []);
   // 승인 대기 여부는 서버만 안다 — 채팅 본문에서 유추하지 않는다
   const [pendingApprovalId, setPendingApprovalId] = useState<number | null>(null);
 
@@ -362,10 +392,39 @@ function AgentConversationPanel({
     captureAnsweredClarification(task);
   };
 
-  const { data: aiProviders } = useAiProviderListQuery(AGENT_CHAT_QUERY_KEY);
-  const providerOptions = aiProviders?.providers ?? [];
-  // 둘 이상일 때만 고를 의미가 있다. 하나뿐이면 서버 기본값과 같아서 보여줄 이유가 없다
+  const { data: aiProviders, isLoading: isProvidersLoading } =
+    useAiProviderListQuery(AGENT_CHAT_QUERY_KEY);
+  /*
+    본인 키로 도는 제공자만 남긴다.
+
+    서버 목록에는 **서버 키가 설정된 제공자**(ANTHROPIC·OPENAI·GLM)와 **사용자가
+    등록한 키로 도는 코딩 에이전트**(CLAUDE_CODE·CODEX)가 섞여 온다. 앞의 것은
+    운영자 계정으로 과금되므로 공개 서비스에서 그대로 열어 둘 수 없다.
+
+    둘을 가르는 신호는 모델 목록이다 — 코딩 에이전트는 벤더 CLI 가 모델을 정하므로
+    `models: []`, `defaultModel: null` 로 오고, 벤더 제공자는 항상 모델을 갖는다
+    (FRONTEND_API_GUIDE 제공자 절). 이름을 하드코딩하지 않는 이유는 벤더가 늘 때마다
+    배포가 한 번 더 필요해지기 때문이다.
+  */
+  const providerOptions = (aiProviders?.providers ?? []).filter(
+    (option) => option.models.length === 0 && option.defaultModel === null,
+  );
   const canChooseProvider = providerOptions.length > 1;
+  /** 쓸 수 있는 본인 키 제공자가 하나도 없다. 키를 넣기 전에는 보낼 수 없다 */
+  const hasNoByokProvider = !isProvidersLoading && providerOptions.length === 0;
+
+  /*
+    제공자를 비워 보내지 않는다.
+
+    aiProvider 를 생략하면 서버가 자기 기본 제공자(= 서버 키)로 실행한다. 공개
+    서비스에서는 그 경로가 곧 운영자 과금이므로, 화면이 언제나 본인 키 제공자를
+    명시해서 보낸다.
+  */
+  useEffect(() => {
+    if (providerOptions.length === 0) return;
+    if (providerOptions.some((option) => option.provider === selectedProvider)) return;
+    setSelectedProvider(providerOptions[0].provider);
+  }, [providerOptions, selectedProvider]);
 
   const queryClient = useQueryClient();
   const { data: serverMessages, isLoading: isMessagesLoading } = useConversationMessageListQuery(
@@ -612,7 +671,7 @@ function AgentConversationPanel({
 
       console.error('[agent] send/poll failed', error);
 
-      setAlertMessage(formatApiErrorMessage(error));
+      showApiError(error);
       // GitHub App 권한이 원인이면 여기서 설정 진입점을 띄운다. 문구만 보여주면
       // 사용자가 GitHub 설정까지 스스로 찾아가야 한다
       dispatchApiErrorAction(error);
@@ -743,7 +802,7 @@ function AgentConversationPanel({
         return;
       }
 
-      setAlertMessage(formatApiErrorMessage(error));
+      showApiError(error);
       setIsAssistantReplying(false);
       setProgressTask(null);
       setRunningTaskId(null);
@@ -923,7 +982,7 @@ function AgentConversationPanel({
         새로 생겼거나 시도 횟수를 다 썼거나. 그때는 서버 문구를 그대로 보여주고 카드를
         되살리지 않는다. 다시 눌러도 같은 결과라 버튼을 남기면 사용자만 헛돈다.
       */
-      setAlertMessage(formatApiErrorMessage(error));
+      showApiError(error);
       void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
       // 승인이 생겨서 막혔을 수 있다 — 그 카드를 띄워 주면 사용자가 나아갈 길이 생긴다
       void (async () => {
@@ -1032,7 +1091,11 @@ function AgentConversationPanel({
 
   const isSending = sendMessageMutation.isPending;
   const isInputLocked =
-    isSending || isAssistantReplying || submitInputMutation.isPending || retryMutation.isPending;
+    hasNoByokProvider ||
+    isSending ||
+    isAssistantReplying ||
+    submitInputMutation.isPending ||
+    retryMutation.isPending;
 
   // 세 경로 모두 mutationFn 안에서 태스크가 끝날 때까지 폴링하므로, 이 값이 참인 동안이 곧 작업 구간이다
   const isAgentTaskActive = isInputLocked || decideApprovalMutation.isPending;
@@ -1073,7 +1136,9 @@ function AgentConversationPanel({
   };
 
   const handleAlertOpenChange = (open: boolean) => {
-    if (!open) setAlertMessage(null);
+    if (open) return;
+    setAlertMessage(null);
+    setAlertNavigation(null);
   };
 
   const handleDecideApproval = (action: 'approve' | 'reject', payload?: Record<string, string>) => {
@@ -1241,14 +1306,32 @@ function AgentConversationPanel({
           </div>
         ) : null}
         {/*
-          쓸 수 있는 제공자가 둘 이상일 때만 보여준다. 목록은 서버가 apiKey 가 설정된
-          것만 담아 주므로, 여기 뜨는 것은 전부 실제로 쓸 수 있다 — 골랐는데 실패하는
-          항목이 없다.
+          본인 키로 도는 제공자만 담긴다(위 providerOptions 참고). 둘 이상일 때만
+          고를 의미가 있다.
 
-          크레딧이 없는 제공자는 서버도 미리 알 수 없어 고른 뒤에야 503 으로 드러난다.
-          그때는 오류 안내가 "다른 제공자를 골라 다시 보내보세요" 라고 말하는데, 이
-          셀렉트가 그 말이 가리키는 자리다.
+          "기본값" 항목은 두지 않는다 — 비워 보내면 서버가 자기 키로 실행하고 그
+          비용이 운영자에게 간다. 고르지 않은 상태로 보낼 수 있는 길을 남기지 않는다.
+
+          크레딧이 없는 키는 서버도 미리 알 수 없어 보낸 뒤에야 드러난다. 그때는 오류
+          안내가 다른 제공자를 권하는데, 이 셀렉트가 그 말이 가리키는 자리다.
         */}
+        {hasNoByokProvider ? (
+          <div className="mb-2 flex flex-col gap-2 rounded-xl border border-[#fde68a] bg-[#fffbeb] px-3 py-2.5">
+            <p className="text-[12px] leading-relaxed text-[#92400e]">
+              <b className="font-semibold">본인 AI API 키를 등록해야 사용할 수 있습니다.</b>{' '}
+              에이전트는 등록한 키로 실행되고 사용량은 본인 계정으로 청구됩니다.
+            </p>
+            <button
+              type="button"
+              onClick={() =>
+                void navigate({ to: '/settings', search: { section: 'ai-credentials' } })
+              }
+              className="h-8 cursor-pointer self-start rounded-lg bg-[#7c3aed] px-3 text-[12px] font-semibold text-white transition hover:bg-[#6d28d9]"
+            >
+              AI API 키 등록하러 가기
+            </button>
+          </div>
+        ) : null}
         {canChooseProvider ? (
           <label className="mb-2 flex items-center gap-2">
             <span className="text-[12px] text-[#94a3b8]">AI</span>
@@ -1258,7 +1341,6 @@ function AgentConversationPanel({
               onChange={(event) => setSelectedProvider(event.target.value)}
               className="h-7 rounded-lg border border-[#e2e8f0] bg-white px-2 text-[12px] text-[#334155] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <option value="">기본값</option>
               {providerOptions.map((option) => (
                 <option key={option.provider} value={option.provider}>
                   {option.provider}
@@ -1305,6 +1387,18 @@ function AgentConversationPanel({
       <AppAlertDialog
         open={alertMessage != null}
         message={alertMessage ?? ''}
+        action={
+          alertNavigation
+            ? {
+                label: alertNavigation.label,
+                onClick: () =>
+                  void navigate({
+                    to: alertNavigation.to,
+                    search: alertNavigation.search ?? {},
+                  }),
+              }
+            : undefined
+        }
         onOpenChange={handleAlertOpenChange}
       />
     </>

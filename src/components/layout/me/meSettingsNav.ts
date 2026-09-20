@@ -2,6 +2,8 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Cloud,
   Database,
+  KeyRound,
+  Terminal,
   HelpCircle,
   LayoutGrid,
   Link2,
@@ -25,7 +27,9 @@ export type MeSettingsSectionId =
   | 'cloud-browser'
   | 'skills'
   | 'connectors'
-  | 'integrations';
+  | 'integrations'
+  | 'ai-credentials'
+  | 'api-tokens';
 
 export type MeSettingsNavGroupKey = 'account' | 'features';
 
@@ -52,6 +56,8 @@ export const meSettingsNavGroups: MeSettingsNavGroup[] = [
   {
     groupKey: 'features',
     items: [
+      { id: 'ai-credentials', icon: KeyRound },
+      { id: 'api-tokens', icon: Terminal },
       { id: 'mail', icon: Mail },
       { id: 'data-control', icon: Database },
       { id: 'my-computer', icon: Monitor },

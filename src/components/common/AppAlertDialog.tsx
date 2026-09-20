@@ -5,6 +5,11 @@ type AppAlertDialogProps = {
   title?: string;
   message: string;
   confirmLabel?: string;
+  /**
+   * 읽고 나서 할 수 있는 일. 오류가 "어디로 가면 풀린다" 를 아는 경우에만 붙인다 —
+   * 문구로만 안내하면 사용자가 그 화면을 스스로 찾아가야 한다.
+   */
+  action?: { label: string; onClick: () => void };
   onOpenChange: (open: boolean) => void;
 };
 
@@ -13,6 +18,7 @@ function AppAlertDialog({
   title = '알림',
   message,
   confirmLabel = '확인',
+  action,
   onOpenChange,
 }: AppAlertDialogProps) {
   const handleClose = useCallback(() => {
@@ -69,11 +75,27 @@ function AppAlertDialog({
           </p>
         </div>
 
-        <div className="px-6 pb-5">
+        <div className="flex flex-col gap-2 px-6 pb-5">
+          {action ? (
+            <button
+              type="button"
+              onClick={() => {
+                action.onClick();
+                handleClose();
+              }}
+              className="flex w-full items-center justify-center rounded-xl bg-[#7c3aed] py-3 text-[14px] font-semibold text-white transition hover:bg-[#6d28d9]"
+            >
+              {action.label}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={handleClose}
-            className="flex w-full items-center justify-center rounded-xl bg-[#0f172a] py-3 text-[14px] font-semibold text-white transition hover:bg-[#1e293b]"
+            className={
+              action
+                ? 'flex w-full items-center justify-center rounded-xl border border-[#e2e8f0] py-3 text-[14px] font-semibold text-[#64748b] transition hover:bg-[#f8fafc]'
+                : 'flex w-full items-center justify-center rounded-xl bg-[#0f172a] py-3 text-[14px] font-semibold text-white transition hover:bg-[#1e293b]'
+            }
           >
             {confirmLabel}
           </button>

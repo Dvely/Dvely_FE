@@ -26,6 +26,8 @@
         "general": "General",
         "billing": "Usage & billing",
         "personalization": "Personalization",
+        "ai-credentials": "AI API keys",
+        "api-tokens": "Access tokens (MCP)",
         "mail": "Mail",
         "data-control": "Data control",
         "my-computer": "My Computer",
