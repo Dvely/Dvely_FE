@@ -7,7 +7,7 @@ function HighlightSection() {
         src={HighlightSectionBgImg}
         alt=""
         aria-hidden
-        className="pointer-events-none absolute left-0 top-0 z-0 max-w-none select-none"
+        className="pointer-events-none absolute -left-24 -top-10 z-0 w-[260px] max-w-none opacity-30 select-none sm:-left-10 sm:w-[340px] sm:opacity-50 xl:left-0 xl:top-0 xl:w-auto xl:opacity-100"
       />
       <div className="relative z-10 flex flex-col items-center justify-center gap-1 px-5 py-14 md:px-0 md:py-23">
         <p className="text-[#94A3B8] text-md">이제는 결과물로 증명할 시간입니다</p>

@@ -1,10 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
-import {
-  homeTemplates,
-  type HomeTemplateItem,
-} from '@/mocks/home/homeTemplates';
+import { homeTemplates, type HomeTemplateItem } from '@/mocks/home/homeTemplates';
 import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
 import {
   TEMPLATE_INDUSTRY_LABEL,
@@ -42,7 +39,7 @@ type LandingTemplateCardProps = {
 
 function LandingTemplateCard({ template }: LandingTemplateCardProps) {
   return (
-    <article className="group text-left">
+    <article className="group w-[78%] text-left sm:w-[46%] lg:w-[31%] xl:w-auto">
       <Link
         to="/project/new"
         search={{ type: template.startType, templateId: template.id }}
@@ -102,7 +99,7 @@ function OutputShowcase() {
           onIndustryChange={setCategoryFilter}
         />
 
-        <div className="mt-8 grid w-full grid-cols-1 gap-6 sm:mt-10 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mobile-rail mt-8 grid w-full grid-cols-1 gap-6 sm:mt-10 sm:grid-cols-2 lg:grid-cols-3">
           {visibleTemplates.length > 0 ? (
             visibleTemplates.map((template) => (
               <LandingTemplateCard key={template.id} template={template} />

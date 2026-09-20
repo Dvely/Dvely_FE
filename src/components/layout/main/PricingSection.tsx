@@ -27,7 +27,7 @@ function PricingCard({
   buttonText,
 }: PricingCardProps) {
   return (
-    <div className="flex flex-col justify-between gap-4 py-4.5 px-4 border rounded-3xl border-[#0B0C12]/8 w-full min-h-[300px] xl:gap-0 xl:min-h-0 xl:h-[360px] xl:w-[247.4px] transition-all hover:border-2 hover:border-[rgba(170,59,255,0.45)] hover:shadow-[0_24px_60px_0_rgba(170,59,255,0.18)]">
+    <div className="flex flex-col justify-between gap-4 py-4.5 px-4 border rounded-3xl border-[#0B0C12]/8 w-[80%] sm:w-[46%] lg:w-[31%] min-h-[300px] xl:gap-0 xl:min-h-0 xl:h-[360px] xl:w-[247.4px] transition-all hover:border-2 hover:border-[rgba(170,59,255,0.45)] hover:shadow-[0_24px_60px_0_rgba(170,59,255,0.18)]">
       <div className="flex flex-col gap-2">
         <p className="typo-b3-sb">{planName}</p>
         <p className="typo-h2-bd">
@@ -130,7 +130,7 @@ function PricingSection() {
                 플랜 구성은 출시 전까지 바뀔 수 있습니다.
               </p>
             </div>
-            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="mobile-rail grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
               {pricingCardItems.map((item, index) => (
                 <PricingCard key={index} {...item} />
               ))}

@@ -1,6 +1,7 @@
 import InfoCard from '@/components/common/InfoCard';
 
-const infoCardClassName = 'bg-[linear-gradient(180deg,#F8FAFC_0%,#FFFFFF_100%)]';
+const infoCardClassName =
+  'w-[86%] sm:w-[60%] lg:w-[46%] xl:w-auto bg-[linear-gradient(180deg,#F8FAFC_0%,#FFFFFF_100%)]';
 
 function RoleSpecificUsage() {
   return (
@@ -16,7 +17,7 @@ function RoleSpecificUsage() {
           <br className="hidden xl:inline" />
           아래는 대표적인 사용 시나리오입니다.
         </p>
-        <div className="grid w-full grid-cols-1 gap-4 pt-5 xl:grid-cols-2">
+        <div className="mobile-rail grid w-full grid-cols-1 gap-4 pt-5 xl:grid-cols-2">
           <InfoCard
             title={
               <div className="flex flex-col w-full gap-2.5 xl:w-[504px]">

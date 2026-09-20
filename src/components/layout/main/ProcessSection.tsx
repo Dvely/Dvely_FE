@@ -53,16 +53,17 @@ function ProcessSection() {
         <p className="typo-h2-bd text-[#111827]">이렇게 이어집니다</p>
 
         <div className="mt-5 w-full border-t border-[#E2E8F0]">
-          <div className="grid grid-cols-1 md:grid-cols-3">
+          <div className="mobile-rail grid grid-cols-1 md:grid-cols-3">
             {processCards.map((card, index) => (
               <article
                 key={card.step}
                 className={cn(
-                  'px-5 py-8 md:px-8 md:py-10',
-                  index < processCards.length - 1 && 'border-b border-[#E2E8F0]',
-                  'md:border-b-0',
-                  index < 3 && 'md:border-b md:border-[#E2E8F0]',
-                  index % 3 !== 2 && 'md:border-r md:border-[#E2E8F0]',
+                  'w-[72%] px-5 py-8 sm:w-[44%] lg:w-[30%] xl:w-auto xl:px-8 xl:py-10',
+                  // 레일(<xl): 카드 사이를 세로선으로 나눈다
+                  index < processCards.length - 1 && 'border-r border-[#E2E8F0] xl:border-r-0',
+                  // 그리드(xl+): 원래 3열 경계선 그대로
+                  index < 3 && 'xl:border-b xl:border-[#E2E8F0]',
+                  index % 3 !== 2 && 'xl:border-r xl:border-[#E2E8F0]',
                 )}
               >
                 <span className="inline-flex rounded border border-[#E2E8F0] px-2.5 py-1 text-[12px] font-medium text-[#64748B]">

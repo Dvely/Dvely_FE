@@ -1,7 +1,7 @@
 import InfoCard from '@/components/common/InfoCard';
 
 const infoCardClassName =
-  'w-full shadow-[0_10px_40px_-8px_rgba(15,23,42,0.12)] xl:w-[330px] xl:h-[172px]';
+  'w-[78%] sm:w-[46%] lg:w-[31%] shadow-[0_10px_40px_-8px_rgba(15,23,42,0.12)] xl:w-[330px] xl:h-[172px]';
 const descriptionClassName = 'typo-b5-rg';
 
 function ServiceIntro() {
@@ -18,7 +18,7 @@ function ServiceIntro() {
           <br className="hidden xl:inline" />
           대화를 기본으로 합니다.
         </p>
-        <div className="grid w-full grid-cols-1 items-stretch gap-4 pt-5 sm:grid-cols-2 xl:flex xl:items-center xl:justify-center">
+        <div className="mobile-rail grid w-full grid-cols-1 items-stretch gap-4 pt-5 sm:grid-cols-2 xl:flex xl:items-center xl:justify-center">
           <InfoCard
             title={
               <div className="flex flex-col gap-2.5">
