@@ -26,6 +26,8 @@
         "general": "一般",
         "billing": "使用量と請求",
         "personalization": "パーソナライズ",
+        "ai-credentials": "AI API キー",
+        "api-tokens": "アクセストークン (MCP)",
         "mail": "Mail",
         "data-control": "データ管理",
         "my-computer": "My Computer",

@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import MeAccountSettingsPanel from '@/components/layout/me/MeAccountSettingsPanel';
+import MeAiCredentialsPanel from '@/components/layout/me/MeAiCredentialsPanel';
+import MeApiTokensPanel from '@/components/layout/me/MeApiTokensPanel';
 import MeCloudConnectionsPanel from '@/components/layout/me/MeCloudConnectionsPanel';
 import MeGeneralSettingsPanel from '@/components/layout/me/MeGeneralSettingsPanel';
 import MeSettingsPlaceholderPanel from '@/components/layout/me/MeSettingsPlaceholderPanel';
@@ -21,6 +23,10 @@ function MeSettingsContentPanel({ activeSection }: MeSettingsContentPanelProps) 
     panel = <MeGeneralSettingsPanel />;
   } else if (activeSection === 'cloud-browser') {
     panel = <MeCloudConnectionsPanel />;
+  } else if (activeSection === 'ai-credentials') {
+    panel = <MeAiCredentialsPanel />;
+  } else if (activeSection === 'api-tokens') {
+    panel = <MeApiTokensPanel />;
   }
 
   return (

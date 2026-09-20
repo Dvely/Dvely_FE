@@ -19,8 +19,8 @@ import { extractApiErrorCode, extractApiErrorMessage } from '@/utils/response';
 type ApiErrorAction =
   /** GitHub App 재인증·권한 부여 진입점을 띄운다 */
   | { kind: 'github-app'; label: string }
-  /** 앱 안의 다른 화면으로 보낸다 */
-  | { kind: 'navigate'; to: string; label: string }
+  /** 앱 안의 다른 화면으로 보낸다. search 는 그 화면이 어느 절을 열지 같은 것 */
+  | { kind: 'navigate'; to: string; label: string; search?: Record<string, string> }
   /** 같은 요청을 다시 시도하게 한다 */
   | { kind: 'retry'; label: string };
 
@@ -39,6 +39,18 @@ type ApiErrorGuide = {
  * 것보다 나쁘기 때문이다.
  */
 const API_ERROR_GUIDE: Record<string, ApiErrorGuide> = {
+  AI_CREDENTIAL_NOT_REGISTERED: {
+    // 코딩 에이전트는 사용자 본인 키로만 돈다. 서버가 운영자 키로 대신 채워 주는
+    // 경로가 없으므로(제공사 약관상 대리 결제·중개 금지) 재시도는 의미가 없다 —
+    // 키를 넣는 화면으로 보내는 것만이 다음 행동이다
+    hint: '설정 > AI API 키에서 본인 키를 등록하면 바로 쓸 수 있습니다. 사용량은 등록한 본인 계정으로 청구됩니다.',
+    action: {
+      kind: 'navigate',
+      to: '/settings',
+      search: { section: 'ai-credentials' },
+      label: 'AI API 키 등록하러 가기',
+    },
+  },
   AI_PROVIDER_UNAVAILABLE: {
     // 크레딧 소진·키 누락·인증 실패가 여기로 온다. 셋 다 기다린다고 풀리지 않는다 —
     // 재시도를 권하면 사용자가 같은 벽에 계속 부딪힌다
