@@ -55,43 +55,36 @@ function ProcessSection() {
         <p className="typo-h2-bd text-[#111827]">이렇게 이어집니다</p>
 
         {/*
-          좁은 화면: 세로 타임라인.
+          좁은 화면: 같은 표를 2열로 줄인다.
 
-          진행 과정은 순서가 곧 내용이다. 옆으로 흐르게 하면 몇 번째인지, 몇 개가
-          남았는지 감이 사라진다. 번호를 줄로 잇는 세로 타임라인이 그 두 가지를
-          한눈에 준다. 접어서 숨기지도 않는다 — 여섯 단계 전부 읽히는 게 맞다.
+          여섯 단계는 순서대로 읽히기만 하면 되고, 데스크탑의 3열 표가 이미 그
+          역할을 한다. 열 수만 3 → 2 로 줄이면 배치는 그대로 두고 화면에만 맞는다
+          (세로로 여섯 번 쌓으면 한 화면에 한 단계밖에 안 들어온다).
         */}
-        <ol className="mt-6 w-full xl:hidden">
-          {processCards.map((card, index) => (
-            <li key={card.step} className="relative flex gap-3.5 pb-4 last:pb-0">
-              {/* 다음 단계로 잇는 선. 마지막에는 긋지 않는다 */}
-              {index < processCards.length - 1 ? (
-                <span
-                  aria-hidden
-                  className="absolute top-9 left-[17px] h-[calc(100%-1.75rem)] w-0.5 rounded bg-[linear-gradient(180deg,#DDD6FE_0%,#EEF2F7_100%)]"
-                />
-              ) : null}
-              <span className="relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full bg-[#7C3AED] text-[13px] font-bold text-white shadow-[0_4px_10px_rgba(124,58,237,0.3)]">
-                {card.step}
-              </span>
-              <div className="relative min-w-0 flex-1 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                {/* 큰 반투명 숫자. 단계감을 카드 안에서도 한 번 더 준다 */}
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute -top-2 right-1 text-[54px] leading-none font-extrabold text-[#7C3AED]/6 select-none"
-                >
-                  {card.step}
+        <div className="mt-5 w-full border-t border-[#E2E8F0] xl:hidden">
+          <div className="grid grid-cols-2">
+            {processCards.map((card, index) => (
+              <article
+                key={card.step}
+                className={cn(
+                  'px-4 py-5',
+                  index < processCards.length - 2 && 'border-b border-[#E2E8F0]',
+                  index % 2 === 0 && 'border-r border-[#E2E8F0]',
+                )}
+              >
+                <span className="inline-flex rounded border border-[#E2E8F0] px-2 py-0.5 text-[11px] font-medium text-[#64748B]">
+                  Step {card.step}
                 </span>
-                <h3 className="relative text-[16px] font-bold text-[#111827]">{card.title}</h3>
-                <ul className="relative mt-2 space-y-1 text-[13px] leading-relaxed text-[#64748B]">
+                <h3 className="mt-2.5 text-[15px] font-bold text-[#111827]">{card.title}</h3>
+                <ul className="mt-2 space-y-1 text-[12px] leading-relaxed text-[#64748B]">
                   {card.items.map((item) => (
                     <li key={item}>- {item}</li>
                   ))}
                 </ul>
-              </div>
-            </li>
-          ))}
-        </ol>
+              </article>
+            ))}
+          </div>
+        </div>
 
         {/* xl 이상: 기존 3열 표 그대로 */}
         <div className="mt-5 hidden w-full border-t border-[#E2E8F0] xl:block">
