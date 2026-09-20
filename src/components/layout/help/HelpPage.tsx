@@ -183,13 +183,15 @@ function HelpPage() {
                 </p>
               </div>
             </div>
-            <a
-              href="mailto:support@devely.ai"
-              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0f172a] px-4 text-[13px] font-semibold text-white transition hover:bg-[#1e293b]"
+            {/* 아직 운영하는 문의 주소가 없다. 열리지 않는 메일 창으로 보내지 않는다 */}
+            <span
+              aria-disabled="true"
+              title="문의 채널은 준비 중입니다"
+              className="inline-flex h-10 shrink-0 cursor-default items-center justify-center gap-2 rounded-xl border border-[#e2e8f0] bg-white px-4 text-[13px] font-semibold text-[#94a3b8] select-none"
             >
               <Mail className="size-4" strokeWidth={1.75} />
               {t('help.contact.action')}
-            </a>
+            </span>
           </div>
         </section>
       </div>

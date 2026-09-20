@@ -1,6 +1,8 @@
 import { Bell } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import profile from '@/assets/icons/profile.svg';
+import qeployLogo from '@/assets/images/qeploy-logo-primary.svg';
 import { useUserInfoQuery } from '@/api/user';
 import MeSettingsDialog from '@/components/layout/me/MeSettingsDialog';
 import NotificationsDialog from '@/components/layout/notifications/NotificationsDialog';
@@ -15,13 +17,13 @@ function AppHeader() {
   return (
     <>
       <header className="flex items-center justify-between px-[18px] py-3.5">
-        <button
-          type="button"
-          className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[14px] font-bold tracking-[-0.14px] text-[#0f172a] transition hover:bg-[#f8fafc]"
-          style={{ fontFamily: 'system-ui, Roboto, sans-serif' }}
+        <Link
+          to="/"
+          className="flex items-center rounded-lg px-2 py-1.5 transition hover:bg-[#f8fafc]"
+          aria-label="Qeploy 홈"
         >
-          Devely 1.0 Lite
-        </button>
+          <img src={qeployLogo} alt="Qeploy" width={81} height={22} className="h-[22px] w-auto" />
+        </Link>
 
         <div className="flex items-center gap-2">
           <button

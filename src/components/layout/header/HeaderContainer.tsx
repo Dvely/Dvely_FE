@@ -1,17 +1,17 @@
 import { useCallback, useState } from 'react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import { ArrowRight, X } from 'lucide-react';
+import qeployLogo from '@/assets/images/qeploy-logo-primary.svg';
 import { useGitHubLogin } from '@/hooks/useGitHubLogin';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 
 const NAV_ITEMS = [
   { label: '서비스 소개', id: 'intro' },
   { label: '템플릿', id: 'templates' },
+  { label: '제작 사례', id: 'showcase' },
+  { label: '이용 후기', id: 'reviews' },
+  { label: '진행 과정', id: 'process' },
   { label: '요금제', id: 'pricing' },
-  { label: '도움말', id: 'process' },
-  { label: '공지/소식', id: 'reviews' },
-  { label: '이벤트', id: 'showcase' },
-  { label: '블로그', id: 'footer' },
 ] as const;
 
 function scrollToSection(sectionId: string) {
@@ -45,8 +45,8 @@ function HeaderContainer() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 bg-white">
       <div className="relative mx-auto flex h-[72px] w-full max-w-[1280px] items-center justify-between px-4 md:px-6">
-        <Link to="/" className="relative z-10 text-[22px] font-extrabold tracking-tight text-black">
-          Qeploy
+        <Link to="/" className="relative z-10 flex items-center" aria-label="Qeploy 홈">
+          <img src={qeployLogo} alt="Qeploy" width={110} height={30} className="h-[30px] w-auto" />
         </Link>
 
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 text-[14px] font-medium text-[#4B5563] md:flex">
@@ -107,7 +107,7 @@ function HeaderContainer() {
             disabled={isLoggingIn}
             className="shrink-0 rounded-md border border-white/70 px-3 py-1 text-[12px] font-semibold disabled:opacity-60 md:ml-3"
           >
-            연결 방법 보기
+            GitHub 연결하기
           </button>
           <button
             type="button"

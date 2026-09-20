@@ -543,10 +543,23 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               <ChevronLeft className="size-4" />
             </Link>
             <div className="flex min-w-0 items-center gap-1 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-1">
-              <button type="button" className="rounded p-1.5 text-[#94a3b8] hover:bg-white">
+              {/* 히스토리 이동은 아직 붙지 않았다 */}
+              <button
+                type="button"
+                disabled
+                title="준비 중입니다"
+                aria-label="뒤로 (준비 중)"
+                className="cursor-default rounded p-1.5 text-[#cbd5e1]"
+              >
                 <ChevronLeft className="size-3.5" />
               </button>
-              <button type="button" className="rounded p-1.5 text-[#94a3b8] hover:bg-white">
+              <button
+                type="button"
+                disabled
+                title="준비 중입니다"
+                aria-label="앞으로 (준비 중)"
+                className="cursor-default rounded p-1.5 text-[#cbd5e1]"
+              >
                 <ChevronRight className="size-3.5" />
               </button>
               <button
@@ -596,16 +609,21 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
               onCreate={handleCreateRepository}
               onDisconnect={handleDisconnectRepository}
             />
+            {/* 공유·직접 편집은 아직 없다 */}
             <button
               type="button"
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-2.5 text-[12px] font-semibold text-[#334155] sm:px-3"
+              disabled
+              title="공유는 준비 중입니다"
+              className="inline-flex h-8 cursor-default items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-2.5 text-[12px] font-semibold text-[#cbd5e1] sm:px-3"
             >
               <Share2 className="size-3.5" />
               <span className="hidden sm:inline">Share</span>
             </button>
             <button
               type="button"
-              className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#e2e8f0] bg-white px-2.5 text-[12px] font-semibold text-[#334155] sm:px-3"
+              disabled
+              title="직접 편집은 준비 중입니다"
+              className="inline-flex h-8 cursor-default items-center gap-1 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-2.5 text-[12px] font-semibold text-[#cbd5e1] sm:px-3"
             >
               <Pencil className="size-3.5" />
               <span className="hidden sm:inline">편집</span>

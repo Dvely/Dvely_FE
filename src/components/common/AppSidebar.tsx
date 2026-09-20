@@ -2,6 +2,8 @@ import { FolderKanban, Home, PanelLeft, PanelRight, Trash2 } from 'lucide-react'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Fragment, useState } from 'react';
 
+import qeployLogo from '@/assets/images/qeploy-logo-primary.svg';
+import qeploySymbol from '@/assets/images/qeploy-symbol-violet.svg';
 import type { AppShellPath } from '@/lib/appRoutes';
 
 const navItems: {
@@ -36,15 +38,21 @@ export default function AppSidebar() {
       >
         <div className={`flex items-center ${collapsed ? 'flex-col gap-1' : 'gap-3'}`}>
           {!collapsed ? (
-            <div className="flex min-w-0 flex-col">
-              <span
-                className="truncate text-[15px] font-semibold tracking-tight text-[#0B0C12] cursor-pointer"
-                onClick={() => navigate({ to: '/', replace: true })}
-              >
-                Devely
-              </span>
+            <button
+              type="button"
+              onClick={() => navigate({ to: '/', replace: true })}
+              className="flex min-w-0 cursor-pointer flex-col items-start gap-1"
+              aria-label="Qeploy 홈"
+            >
+              <img
+                src={qeployLogo}
+                alt="Qeploy"
+                width={92}
+                height={25}
+                className="h-[25px] w-auto"
+              />
               <span className="truncate text-[12px] text-[#64748B]">AI 웹 자동 생성</span>
-            </div>
+            </button>
           ) : null}
         </div>
         <button
@@ -61,6 +69,17 @@ export default function AppSidebar() {
           )}
         </button>
       </div>
+
+      {collapsed ? (
+        <button
+          type="button"
+          onClick={() => navigate({ to: '/', replace: true })}
+          className="hidden cursor-pointer items-center justify-center pb-2 lg:flex"
+          aria-label="Qeploy 홈"
+        >
+          <img src={qeploySymbol} alt="Qeploy" width={22} height={22} className="size-[22px]" />
+        </button>
+      ) : null}
 
       <nav
         className={`flex flex-1 flex-row items-stretch gap-1 px-2 py-1.5 lg:min-h-0 lg:flex-col lg:overflow-y-auto lg:py-0 ${
