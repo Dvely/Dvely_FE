@@ -63,20 +63,27 @@ function ProcessSection() {
         */}
         <ol className="mt-6 w-full xl:hidden">
           {processCards.map((card, index) => (
-            <li key={card.step} className="relative flex gap-4 pb-7 last:pb-0">
+            <li key={card.step} className="relative flex gap-3.5 pb-4 last:pb-0">
               {/* 다음 단계로 잇는 선. 마지막에는 긋지 않는다 */}
               {index < processCards.length - 1 ? (
                 <span
                   aria-hidden
-                  className="absolute top-8 left-[15px] h-[calc(100%-1.5rem)] w-px bg-[#E2E8F0]"
+                  className="absolute top-9 left-[17px] h-[calc(100%-1.75rem)] w-0.5 rounded bg-[linear-gradient(180deg,#DDD6FE_0%,#EEF2F7_100%)]"
                 />
               ) : null}
-              <span className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-[#7C3AED] text-[13px] font-bold text-white">
+              <span className="relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full bg-[#7C3AED] text-[13px] font-bold text-white shadow-[0_4px_10px_rgba(124,58,237,0.3)]">
                 {card.step}
               </span>
-              <div className="min-w-0 flex-1 pt-0.5">
-                <h3 className="text-[17px] font-bold text-[#111827]">{card.title}</h3>
-                <ul className="mt-2 space-y-1 text-[13px] leading-relaxed text-[#64748B]">
+              <div className="relative min-w-0 flex-1 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                {/* 큰 반투명 숫자. 단계감을 카드 안에서도 한 번 더 준다 */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -top-2 right-1 text-[54px] leading-none font-extrabold text-[#7C3AED]/6 select-none"
+                >
+                  {card.step}
+                </span>
+                <h3 className="relative text-[16px] font-bold text-[#111827]">{card.title}</h3>
+                <ul className="relative mt-2 space-y-1 text-[13px] leading-relaxed text-[#64748B]">
                   {card.items.map((item) => (
                     <li key={item}>- {item}</li>
                   ))}

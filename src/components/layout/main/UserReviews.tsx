@@ -36,7 +36,22 @@ const reviews = [
   },
 ] as const;
 
-function ReviewCard({ name, role, initials, body, detail }: Omit<(typeof reviews)[number], 'id'>) {
+/*
+  좁은 화면에서 똑같은 흰 박스 셋이 이어지면 "후기가 있다" 는 사실만 보이고
+  무슨 말인지는 읽히지 않는다. 카드가 아니라 인용문으로 세운다 — 따옴표를 앞에
+  두고 말 자체를 먼저, 누가 말했는지는 아래 한 줄로 받는다. 첫 장은 보라 톤을
+  입혀 셋이 같은 무게로 반복되지 않게 한다.
+
+  xl 이상은 기존 3열 카드 그대로다.
+*/
+function ReviewCard({
+  name,
+  role,
+  initials,
+  body,
+  detail,
+  featured,
+}: Omit<(typeof reviews)[number], 'id'> & { featured: boolean }) {
   const [expanded, setExpanded] = useState(false);
 
   const handleToggle = useCallback(() => {
@@ -44,39 +59,72 @@ function ReviewCard({ name, role, initials, body, detail }: Omit<(typeof reviews
   }, []);
 
   return (
-    <article className="flex h-full flex-col rounded-3xl border border-[#0F172A]/8 bg-white p-5 sm:p-6">
-      <div className="flex items-center gap-3">
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#E2E8F0] text-[15px] font-semibold text-[#475569]">
-          {initials}
-        </span>
-        <div>
-          <p className="text-[16px] font-semibold text-[#111827]">{name}</p>
-          <p className="mt-0.5 text-[13px] text-[#64748B]">{role}</p>
-        </div>
-      </div>
-
-      <div className="mt-4 flex gap-0.5" aria-label="별점 5점">
-        {Array.from({ length: 5 }, (_, index) => (
-          <Star key={index} className="size-5 fill-[#FACC15] text-[#FACC15]" />
-        ))}
-      </div>
+    <article
+      className={cn(
+        'relative flex h-full flex-col overflow-hidden rounded-3xl p-5 sm:p-6',
+        'xl:border xl:border-[#0F172A]/8 xl:bg-white',
+        featured
+          ? 'border border-[#7C3AED]/25 bg-[linear-gradient(160deg,#F5F0FF_0%,#FFFFFF_70%)]'
+          : 'border border-[#0F172A]/8 bg-white',
+      )}
+    >
+      {/* 장식용 따옴표. 데스크탑 카드에는 없던 요소라 좁은 화면에서만 띄운다 */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -top-3 right-3 font-serif text-[80px] leading-none text-[#7C3AED]/10 select-none xl:hidden"
+      >
+        &rdquo;
+      </span>
 
       <p
         className={cn(
-          'mt-3 text-[15px] leading-relaxed text-[#334155]',
-          !expanded && 'line-clamp-3',
+          'relative text-[15px] leading-relaxed text-[#334155] xl:order-3 xl:mt-3',
+          featured && 'sm:text-[16px] xl:text-[15px]',
+          !expanded && 'line-clamp-4 xl:line-clamp-3',
         )}
       >
         {body}
       </p>
       {expanded ? (
-        <p className="mt-3 text-[15px] leading-relaxed text-[#334155]">{detail}</p>
+        <p className="relative mt-3 text-[15px] leading-relaxed text-[#334155] xl:order-4">
+          {detail}
+        </p>
       ) : null}
+
+      <div className="relative mt-4 flex items-center gap-3 xl:order-1 xl:mt-0">
+        <span
+          className={cn(
+            'flex size-10 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold xl:size-12 xl:bg-[#E2E8F0] xl:text-[15px] xl:text-[#475569]',
+            featured ? 'bg-[#7C3AED] text-white' : 'bg-[#E2E8F0] text-[#475569]',
+          )}
+        >
+          {initials}
+        </span>
+        <div className="min-w-0 flex-1 xl:min-w-auto xl:flex-initial">
+          <p className="text-[15px] font-semibold text-[#111827] xl:text-[16px]">
+            {name}
+            <span className="ml-1.5 text-[13px] font-normal text-[#64748B] xl:hidden">{role}</span>
+          </p>
+          <p className="mt-0.5 hidden text-[13px] text-[#64748B] xl:block">{role}</p>
+          <div className="mt-0.5 flex gap-0.5 xl:hidden" aria-label="별점 5점">
+            {Array.from({ length: 5 }, (_, index) => (
+              <Star key={index} className="size-3.5 fill-[#FACC15] text-[#FACC15]" />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="relative mt-4 hidden gap-0.5 xl:order-2 xl:flex" aria-label="별점 5점">
+        {Array.from({ length: 5 }, (_, index) => (
+          <Star key={index} className="size-5 fill-[#FACC15] text-[#FACC15]" />
+        ))}
+      </div>
+
       <button
         type="button"
         aria-expanded={expanded}
         onClick={handleToggle}
-        className="mt-auto cursor-pointer pt-3 text-left text-[14px] font-medium text-[#7C3AED] transition hover:text-[#6D28D9]"
+        className="relative mt-auto cursor-pointer pt-3 text-left text-[14px] font-medium text-[#7C3AED] transition hover:text-[#6D28D9] xl:order-5"
       >
         {expanded ? '접기' : '더 보기'}
       </button>
@@ -102,8 +150,8 @@ function UserReviews() {
         </p>
 
         <div className="grid w-full grid-cols-1 gap-4 pt-5 md:grid-cols-3">
-          {reviews.map((review) => (
-            <ReviewCard key={review.id} {...review} />
+          {reviews.map((review, index) => (
+            <ReviewCard key={review.id} {...review} featured={index === 0} />
           ))}
         </div>
       </div>

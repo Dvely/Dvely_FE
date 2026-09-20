@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
 
 type PricingCardProps = {
   planName: string;
+  /** 좁은 화면에서 셋을 세로로 쌓으면 다 똑같아 보인다. 하나는 기준점이 되어야 한다 */
+  recommended?: boolean;
   price: string;
   periodText: string;
   description: string;
@@ -29,9 +31,25 @@ function PricingCard({
   description,
   features,
   buttonText,
+  recommended = false,
 }: PricingCardProps) {
   return (
-    <div className="flex flex-col justify-between gap-4 py-4.5 px-4 border rounded-3xl border-[#0B0C12]/8 w-full xl:gap-0 xl:min-h-0 xl:h-[360px] xl:w-[247.4px] transition-all hover:border-2 hover:border-[rgba(170,59,255,0.45)] hover:shadow-[0_24px_60px_0_rgba(170,59,255,0.18)]">
+    <div
+      className={cn(
+        'relative flex w-full flex-col justify-between gap-4 rounded-3xl px-4 py-4.5 transition-all',
+        'xl:h-[360px] xl:w-[247.4px] xl:min-h-0 xl:gap-0',
+        'hover:border-2 hover:border-[rgba(170,59,255,0.45)] hover:shadow-[0_24px_60px_0_rgba(170,59,255,0.18)]',
+        // 추천 플랜만 좁은 화면에서 테두리·그림자를 올린다. xl 에서는 셋이 다시 같아진다
+        recommended
+          ? 'border-2 border-[#7C3AED]/45 shadow-[0_16px_40px_rgba(124,58,237,0.14)] xl:border xl:border-[#0B0C12]/8 xl:shadow-none'
+          : 'border border-[#0B0C12]/8',
+      )}
+    >
+      {recommended ? (
+        <span className="absolute -top-2.5 left-4 rounded-full bg-[#7C3AED] px-2.5 py-0.5 text-[11px] font-bold text-white xl:hidden">
+          추천
+        </span>
+      ) : null}
       <div className="flex flex-col gap-2">
         <p className="typo-b3-sb">{planName}</p>
         <p className="typo-h2-bd">
@@ -75,6 +93,7 @@ const pricingCardItems: PricingCardProps[] = [
   },
   {
     planName: 'Pro',
+    recommended: true,
     price: '미정',
     periodText: ' /월',
     description: '팀으로 반복 제작하고 내 저장소·도메인까지 붙이는 구간입니다.',
