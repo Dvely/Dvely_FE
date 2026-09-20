@@ -54,18 +54,48 @@ function ProcessSection() {
         </p>
         <p className="typo-h2-bd text-[#111827]">이렇게 이어집니다</p>
 
-        <div className="mt-5 w-full xl:border-t xl:border-[#E2E8F0]">
-          <div className="mobile-rail grid grid-cols-1 gap-3 md:grid-cols-3 xl:gap-0">
+        {/*
+          좁은 화면: 세로 타임라인.
+
+          진행 과정은 순서가 곧 내용이다. 옆으로 흐르게 하면 몇 번째인지, 몇 개가
+          남았는지 감이 사라진다. 번호를 줄로 잇는 세로 타임라인이 그 두 가지를
+          한눈에 준다. 접어서 숨기지도 않는다 — 여섯 단계 전부 읽히는 게 맞다.
+        */}
+        <ol className="mt-6 w-full xl:hidden">
+          {processCards.map((card, index) => (
+            <li key={card.step} className="relative flex gap-4 pb-7 last:pb-0">
+              {/* 다음 단계로 잇는 선. 마지막에는 긋지 않는다 */}
+              {index < processCards.length - 1 ? (
+                <span
+                  aria-hidden
+                  className="absolute top-8 left-[15px] h-[calc(100%-1.5rem)] w-px bg-[#E2E8F0]"
+                />
+              ) : null}
+              <span className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-[#7C3AED] text-[13px] font-bold text-white">
+                {card.step}
+              </span>
+              <div className="min-w-0 flex-1 pt-0.5">
+                <h3 className="text-[17px] font-bold text-[#111827]">{card.title}</h3>
+                <ul className="mt-2 space-y-1 text-[13px] leading-relaxed text-[#64748B]">
+                  {card.items.map((item) => (
+                    <li key={item}>- {item}</li>
+                  ))}
+                </ul>
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        {/* xl 이상: 기존 3열 표 그대로 */}
+        <div className="mt-5 hidden w-full border-t border-[#E2E8F0] xl:block">
+          <div className="grid grid-cols-3">
             {processCards.map((card, index) => (
               <article
                 key={card.step}
                 className={cn(
-                  // 레일(<xl): 단계 하나가 카드 한 장
-                  'w-[76%] rounded-2xl border border-[#E2E8F0] bg-white px-5 py-6 sm:w-[46%] lg:w-[32%]',
-                  // 그리드(xl+): 카드 테두리를 걷고 원래 표 경계선으로 돌아간다
-                  'xl:w-auto xl:rounded-none xl:border-0 xl:bg-transparent xl:px-8 xl:py-10',
-                  index < 3 && 'xl:border-b xl:border-[#E2E8F0]',
-                  index % 3 !== 2 && 'xl:border-r xl:border-[#E2E8F0]',
+                  'px-8 py-10',
+                  index < 3 && 'border-b border-[#E2E8F0]',
+                  index % 3 !== 2 && 'border-r border-[#E2E8F0]',
                 )}
               >
                 <span className="inline-flex rounded border border-[#E2E8F0] px-2.5 py-1 text-[12px] font-medium text-[#64748B]">

@@ -1,8 +1,8 @@
 import InfoCard from '@/components/common/InfoCard';
 
 const infoCardClassName =
-  'w-[78%] sm:w-[46%] lg:w-[31%] shadow-[0_10px_40px_-8px_rgba(15,23,42,0.12)] xl:w-[330px] xl:h-[172px]';
-const descriptionClassName = 'typo-b5-rg';
+  'w-full p-4 gap-1.5 sm:p-5 shadow-[0_10px_40px_-8px_rgba(15,23,42,0.12)] xl:w-[330px] xl:h-[172px] xl:p-6 xl:gap-2.5';
+const descriptionClassName = 'text-[12px] leading-[1.5] sm:text-[13px] xl:typo-b5-rg';
 
 function ServiceIntro() {
   return (
@@ -21,12 +21,12 @@ function ServiceIntro() {
           <br className="hidden xl:inline" />
           대화를 기본으로 합니다.
         </p>
-        <div className="mobile-rail grid w-full grid-cols-1 items-stretch gap-4 pt-5 sm:grid-cols-2 xl:flex xl:items-center xl:justify-center">
+        <div className="grid w-full grid-cols-2 items-stretch gap-3 pt-5 sm:gap-4 xl:flex xl:items-center xl:justify-center">
           <InfoCard
             title={
               <div className="flex flex-col gap-2.5">
-                <p className="text-[#7C3AED] text-[16px] font-extrabold md:text-lg">Launch</p>
-                <p className="text-[#111827] text-[16px] font-extrabold md:text-lg">빠른 첫 화면</p>
+                <p className="text-[#7C3AED] text-[15px] font-extrabold md:text-lg">Launch</p>
+                <p className="text-[#111827] text-[15px] font-extrabold md:text-lg">빠른 첫 화면</p>
               </div>
             }
             description="히어로·기능·후기·CTA까지 한 번에 구성해 바로 미리보기 합니다."
@@ -36,8 +36,8 @@ function ServiceIntro() {
           <InfoCard
             title={
               <div className="flex flex-col gap-2.5">
-                <p className="text-[#7C3AED] text-[16px] font-extrabold md:text-lg">Online</p>
-                <p className="text-[#111827] text-[16px] font-extrabold md:text-lg">
+                <p className="text-[#7C3AED] text-[15px] font-extrabold md:text-lg">Online</p>
+                <p className="text-[#111827] text-[15px] font-extrabold md:text-lg">
                   브라우저에서 끝까지
                 </p>
               </div>
@@ -49,8 +49,8 @@ function ServiceIntro() {
           <InfoCard
             title={
               <div className="flex flex-col gap-2.5">
-                <p className="text-[#7C3AED] text-[16px] font-extrabold md:text-lg">Flow</p>
-                <p className="text-[#111827] text-[16px] font-extrabold md:text-lg">
+                <p className="text-[#7C3AED] text-[15px] font-extrabold md:text-lg">Flow</p>
+                <p className="text-[#111827] text-[15px] font-extrabold md:text-lg">
                   가져오기 {'->'} 빌드
                 </p>
               </div>
@@ -62,8 +62,8 @@ function ServiceIntro() {
           <InfoCard
             title={
               <div className="flex flex-col gap-2.5">
-                <p className="text-[#7C3AED] text-[16px] font-extrabold md:text-lg">Portfolio</p>
-                <p className="text-[#111827] text-[16px] font-extrabold md:text-lg">
+                <p className="text-[#7C3AED] text-[15px] font-extrabold md:text-lg">Portfolio</p>
+                <p className="text-[#111827] text-[15px] font-extrabold md:text-lg">
                   보여줄 결과물
                 </p>
               </div>
@@ -75,8 +75,8 @@ function ServiceIntro() {
         </div>
         <InfoCard
           title={
-            <p className="text-[#475569] font-medium">
-              <span className="font-semibold ">워크플로 예시:</span>새 프로젝트 생성 {'-> '}
+            <p className="text-[13px] leading-relaxed font-medium text-[#475569] md:text-[15px] xl:text-lg xl:leading-7">
+              <span className="font-semibold">워크플로 예시:</span> 새 프로젝트 생성 {'-> '}
               템플릿(랜딩·포트폴리오 등) 선택 {'-> '}
               세부 테마 지정 {'-> '}
               에이전트에서 문구·섹션 조정 {'-> '}

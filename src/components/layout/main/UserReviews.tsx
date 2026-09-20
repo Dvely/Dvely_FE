@@ -44,7 +44,7 @@ function ReviewCard({ name, role, initials, body, detail }: Omit<(typeof reviews
   }, []);
 
   return (
-    <article className="flex h-full w-[86%] flex-col rounded-3xl border border-[#0F172A]/8 bg-white p-5 sm:w-[60%] sm:p-6 lg:w-[46%] xl:w-auto">
+    <article className="flex h-full flex-col rounded-3xl border border-[#0F172A]/8 bg-white p-5 sm:p-6">
       <div className="flex items-center gap-3">
         <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#E2E8F0] text-[15px] font-semibold text-[#475569]">
           {initials}
@@ -101,7 +101,7 @@ function UserReviews() {
           아래 후기는 화면 구성을 보여주기 위한 예시이며, 실제 이용자의 평가가 아닙니다.
         </p>
 
-        <div className="mobile-rail grid w-full grid-cols-1 gap-4 pt-5 md:grid-cols-3">
+        <div className="grid w-full grid-cols-1 gap-4 pt-5 md:grid-cols-3">
           {reviews.map((review) => (
             <ReviewCard key={review.id} {...review} />
           ))}

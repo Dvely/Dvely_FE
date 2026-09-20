@@ -9,6 +9,10 @@
   먼저 말한다. CTA 는 누를 수 없게 둔다 — 눌러서 갈 곳이 없다.
 */
 
+import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
 type PricingCardProps = {
   planName: string;
   price: string;
@@ -27,7 +31,7 @@ function PricingCard({
   buttonText,
 }: PricingCardProps) {
   return (
-    <div className="flex flex-col justify-between gap-4 py-4.5 px-4 border rounded-3xl border-[#0B0C12]/8 w-[80%] sm:w-[46%] lg:w-[31%] min-h-[300px] xl:gap-0 xl:min-h-0 xl:h-[360px] xl:w-[247.4px] transition-all hover:border-2 hover:border-[rgba(170,59,255,0.45)] hover:shadow-[0_24px_60px_0_rgba(170,59,255,0.18)]">
+    <div className="flex flex-col justify-between gap-4 py-4.5 px-4 border rounded-3xl border-[#0B0C12]/8 w-full xl:gap-0 xl:min-h-0 xl:h-[360px] xl:w-[247.4px] transition-all hover:border-2 hover:border-[rgba(170,59,255,0.45)] hover:shadow-[0_24px_60px_0_rgba(170,59,255,0.18)]">
       <div className="flex flex-col gap-2">
         <p className="typo-b3-sb">{planName}</p>
         <p className="typo-h2-bd">
@@ -95,6 +99,13 @@ const comparisonRows: { label: string; values: [string, string, string] }[] = [
 ];
 
 function PricingSection() {
+  /*
+    전체 기능 비교표는 넷을 가로로 늘어놓는 표라 좁은 화면에서 가로 스크롤 없이는
+    담기지 않는다. 대부분은 플랜 카드의 요약만 보고 판단하므로, 표는 기본으로
+    접어 두고 필요한 사람만 펼치게 한다(xl 이상은 지금처럼 항상 펼쳐져 있다).
+  */
+  const [tableOpen, setTableOpen] = useState(false);
+
   return (
     <section
       id="pricing"
@@ -132,14 +143,32 @@ function PricingSection() {
                 플랜 구성은 출시 전까지 바뀔 수 있습니다.
               </p>
             </div>
-            <div className="mobile-rail grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
               {pricingCardItems.map((item, index) => (
                 <PricingCard key={index} {...item} />
               ))}
             </div>
           </div>
 
-          <div className="rounded-2xl overflow-x-auto border border-[#0B0C12]/8">
+          <button
+            type="button"
+            aria-expanded={tableOpen}
+            onClick={() => setTableOpen((open) => !open)}
+            className="flex w-full cursor-pointer items-center justify-between rounded-xl border border-[#0B0C12]/8 bg-[#F8FAFC] px-4 py-3 text-left xl:hidden"
+          >
+            <span className="typo-b5-sb text-[#111827]">전체 기능 비교</span>
+            <ChevronDown
+              className={cn('size-4 text-[#64748B] transition', tableOpen && 'rotate-180')}
+              aria-hidden
+            />
+          </button>
+
+          <div
+            className={cn(
+              'overflow-x-auto rounded-2xl border border-[#0B0C12]/8 xl:block',
+              !tableOpen && 'hidden',
+            )}
+          >
             <table className="w-full min-w-[540px] table-fixed border-collapse">
               <thead>
                 <tr className="bg-[#F8FAFC]">
