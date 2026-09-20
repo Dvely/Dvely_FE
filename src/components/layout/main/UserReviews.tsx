@@ -88,7 +88,9 @@ function UserReviews() {
   return (
     <section id="reviews" className="w-full scroll-mt-4 border-t border-[#E2E8F0] bg-white">
       <div className="flex flex-col items-start justify-center gap-2 px-5 py-12 md:px-10 md:py-14 xl:px-52 xl:py-16">
-        <p className="text-lg font-extrabold text-[#7C3AED]">이용 후기</p>
+        <p className="text-[13px] font-extrabold tracking-wide md:text-lg md:tracking-normal text-[#7C3AED]">
+          이용 후기
+        </p>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <p className="typo-h2-bd text-[#111827]">팀에서 남긴 한 줄 평가</p>
           <span className="rounded-full bg-[#F1F5F9] px-2.5 py-1 text-[12px] font-semibold text-[#64748B]">

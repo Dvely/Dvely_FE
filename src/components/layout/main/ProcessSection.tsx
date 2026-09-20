@@ -49,19 +49,21 @@ function ProcessSection() {
   return (
     <section id="process" className="w-full scroll-mt-4 bg-white">
       <div className="flex flex-col items-start justify-center gap-2 px-5 py-12 md:px-10 md:py-14 xl:px-52 xl:py-16">
-        <p className="text-lg font-extrabold text-[#7C3AED]">프로그램 진행 과정</p>
+        <p className="text-[13px] font-extrabold tracking-wide md:text-lg md:tracking-normal text-[#7C3AED]">
+          프로그램 진행 과정
+        </p>
         <p className="typo-h2-bd text-[#111827]">이렇게 이어집니다</p>
 
-        <div className="mt-5 w-full border-t border-[#E2E8F0]">
-          <div className="mobile-rail grid grid-cols-1 md:grid-cols-3">
+        <div className="mt-5 w-full xl:border-t xl:border-[#E2E8F0]">
+          <div className="mobile-rail grid grid-cols-1 gap-3 md:grid-cols-3 xl:gap-0">
             {processCards.map((card, index) => (
               <article
                 key={card.step}
                 className={cn(
-                  'w-[72%] px-5 py-8 sm:w-[44%] lg:w-[30%] xl:w-auto xl:px-8 xl:py-10',
-                  // 레일(<xl): 카드 사이를 세로선으로 나눈다
-                  index < processCards.length - 1 && 'border-r border-[#E2E8F0] xl:border-r-0',
-                  // 그리드(xl+): 원래 3열 경계선 그대로
+                  // 레일(<xl): 단계 하나가 카드 한 장
+                  'w-[76%] rounded-2xl border border-[#E2E8F0] bg-white px-5 py-6 sm:w-[46%] lg:w-[32%]',
+                  // 그리드(xl+): 카드 테두리를 걷고 원래 표 경계선으로 돌아간다
+                  'xl:w-auto xl:rounded-none xl:border-0 xl:bg-transparent xl:px-8 xl:py-10',
                   index < 3 && 'xl:border-b xl:border-[#E2E8F0]',
                   index % 3 !== 2 && 'xl:border-r xl:border-[#E2E8F0]',
                 )}

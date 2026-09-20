@@ -10,9 +10,11 @@ function RoleSpecificUsage() {
       className="w-full scroll-mt-4 bg-[linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]"
     >
       <div className="flex flex-col gap-2 items-start justify-center px-5 py-12 md:px-10 md:py-14 xl:px-52 xl:py-16">
-        <p className="text-[#7C3AED] text-lg font-extrabold">이런 분들에게</p>
+        <p className="text-[#7C3AED] text-[13px] font-extrabold tracking-wide md:text-lg md:tracking-normal">
+          이런 분들에게
+        </p>
         <p className="text-[#111827] typo-h2-bd">직군별로 이렇게 씁니다</p>
-        <p className="text-[#64748B] text-lg font-medium">
+        <p className="text-[#64748B] text-[15px] font-medium md:text-lg">
           팀 구성이 달라도 같은 워크스페이스에서 역할만 나누면 됩니다.{' '}
           <br className="hidden xl:inline" />
           아래는 대표적인 사용 시나리오입니다.
@@ -21,7 +23,7 @@ function RoleSpecificUsage() {
           <InfoCard
             title={
               <div className="flex flex-col w-full gap-2.5 xl:w-[504px]">
-                <p className="text-[#7C3AED] text-lg font-extrabold">기획 · PM</p>
+                <p className="text-[#7C3AED] text-[16px] font-extrabold md:text-lg">기획 · PM</p>
                 <p className="text-[#475569] text-sm font-semibold">
                   IA 없이도 섹션 순서를 대화로 바꾸고, CTA 문구·가격 표현을 A/B 느낌/
                   <br className="hidden xl:inline" />
@@ -40,7 +42,9 @@ function RoleSpecificUsage() {
           <InfoCard
             title={
               <div className="flex flex-col gap-2.5">
-                <p className="text-[#7C3AED] text-lg font-extrabold">UI/UX · 브랜드</p>
+                <p className="text-[#7C3AED] text-[16px] font-extrabold md:text-lg">
+                  UI/UX · 브랜드
+                </p>
                 <p className="text-[#475569] text-sm font-semibold">
                   랜딩 전용 테마(SaaS/로컬 등)로 톤을 맞추고, 미리보기에서 색·타이
                   <br className="hidden xl:inline" />포 방향을 빠르게 맞춥니다.
@@ -58,7 +62,7 @@ function RoleSpecificUsage() {
           <InfoCard
             title={
               <div className="flex flex-col gap-2.5">
-                <p className="text-[#7C3AED] text-lg font-extrabold">개발</p>
+                <p className="text-[#7C3AED] text-[16px] font-extrabold md:text-lg">개발</p>
                 <p className="text-[#475569] text-sm font-semibold">
                   Code 탭에서 폴더 구조를 보고, GitHub·ZIP으로 기존 레포를 끌어온{' '}
                   <br className="hidden xl:inline" />뒤 파이프라인 로그로 빌드 상태를 확인합니다.
@@ -76,7 +80,9 @@ function RoleSpecificUsage() {
           <InfoCard
             title={
               <div className="flex flex-col gap-2.5">
-                <p className="text-[#7C3AED] text-lg font-extrabold">취준 · 부트캠프</p>
+                <p className="text-[#7C3AED] text-[16px] font-extrabold md:text-lg">
+                  취준 · 부트캠프
+                </p>
                 <p className="text-[#475569] text-sm font-semibold">
                   포트폴리오용 프로젝트 카드와 설명 문구를 정리하고, 배포 URL을 한{' '}
                   <br className="hidden xl:inline" />

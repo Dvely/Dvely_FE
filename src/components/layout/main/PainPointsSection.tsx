@@ -9,7 +9,9 @@ function PainPointsSection() {
       className="w-full scroll-mt-4 bg-[linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]"
     >
       <div className="flex flex-col gap-2 items-start justify-center px-5 py-12 md:px-10 md:py-14 xl:px-52 xl:py-16">
-        <p className="text-[#7C3AED] text-lg font-extrabold">이런 고민 없으신가요?</p>
+        <p className="text-[#7C3AED] text-[13px] font-extrabold tracking-wide md:text-lg md:tracking-normal">
+          이런 고민 없으신가요?
+        </p>
         <p className="text-[#111827] typo-h2-bd">혼자 만들기엔 막막한 순간들</p>
         <div className="flex w-full flex-col items-stretch justify-between gap-4 xl:flex-row xl:items-center xl:gap-0">
           <InfoCard
