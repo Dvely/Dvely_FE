@@ -31,28 +31,31 @@ function PricingCard({
   buttonText,
 }: PricingCardProps) {
   return (
-    <div className="flex w-full flex-col justify-between gap-3 rounded-3xl border border-[#0B0C12]/8 px-4 py-4 transition-all xl:h-[360px] xl:w-[247.4px] xl:gap-0 xl:py-4.5">
-      <div className="flex flex-col gap-2">
-        {/*
-          데스크탑은 플랜명과 금액을 세로로 쌓는다. 좁은 화면에서는 한 줄로 합쳐
-          카드 머리를 줄인다 — 셋을 비교하려면 스크롤이 짧아야 한다.
-        */}
-        <div className="flex items-baseline justify-between gap-2 xl:flex-col xl:items-stretch xl:gap-2">
-          <p className="typo-b3-sb">{planName}</p>
-          <p className="typo-h2-bd">
-            {price}
-            <span className="typo-b3-rg text-[#64748B]">{periodText}</span>
-          </p>
-        </div>
-        <p className="typo-b3-rg text-[#64748B] pb-1 xl:pb-2">{description}</p>
+    <div className="flex w-full flex-col justify-between gap-2 rounded-2xl border border-[#0B0C12]/8 px-2.5 py-3 transition-all xl:h-[360px] xl:w-[247.4px] xl:gap-0 xl:rounded-3xl xl:px-4 xl:py-4.5">
+      <div className="flex flex-col gap-1.5 xl:gap-2">
+        <p className="text-[11px] leading-snug font-semibold xl:text-[15px] xl:leading-[1.5]">
+          {planName}
+        </p>
+        <p className="text-[18px] leading-tight font-bold xl:text-[40px] xl:leading-[1.5]">
+          {price}
+          <span className="text-[10px] font-normal text-[#64748B] xl:text-[15px] xl:leading-[1.5]">
+            {periodText}
+          </span>
+        </p>
+        <p className="text-[11px] leading-snug font-normal text-[#64748B] xl:pb-2 xl:text-[15px] xl:leading-[1.5]">
+          {description}
+        </p>
         {features.map((feature) => (
           <p
             key={feature}
-            className="typo-b5-rg flex gap-4 items-center"
+            className="flex items-start gap-1.5 text-[10px] leading-snug font-normal xl:items-center xl:gap-4 xl:text-[13px] xl:leading-[1.5]"
             style={{ color: 'rgba(11, 12, 18, 0.82)' }}
           >
             ✓{' '}
-            <span className="typo-b3-rg" style={{ color: 'rgba(11, 12, 18, 0.72)' }}>
+            <span
+              className="text-[10px] leading-snug font-normal xl:text-[15px] xl:leading-[1.5]"
+              style={{ color: 'rgba(11, 12, 18, 0.72)' }}
+            >
               {feature}
             </span>
           </p>
@@ -62,7 +65,7 @@ function PricingCard({
       <span
         aria-disabled="true"
         title="결제는 준비 중입니다"
-        className="typo-b5-sb flex w-full cursor-default items-center justify-center rounded-xl border border-[#0B0C12]/10 bg-[#F1F5F9] py-3 text-[#94A3B8] select-none"
+        className="flex w-full cursor-default items-center justify-center rounded-lg border border-[#0B0C12]/10 bg-[#F1F5F9] py-2 text-[10px] font-semibold text-[#94A3B8] select-none xl:rounded-xl xl:py-3 xl:text-[13px] xl:leading-[1.5]"
       >
         {buttonText}
       </span>
@@ -149,7 +152,7 @@ function PricingSection() {
                 플랜 구성은 출시 전까지 바뀔 수 있습니다.
               </p>
             </div>
-            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 xl:gap-3.5">
               {pricingCardItems.map((item, index) => (
                 <PricingCard key={index} {...item} />
               ))}

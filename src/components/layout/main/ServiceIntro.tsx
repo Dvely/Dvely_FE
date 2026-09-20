@@ -2,7 +2,7 @@ import InfoCard from '@/components/common/InfoCard';
 
 const infoCardClassName =
   'w-full p-4 gap-1.5 sm:p-5 shadow-[0_10px_40px_-8px_rgba(15,23,42,0.12)] xl:w-[330px] xl:h-[172px] xl:p-6 xl:gap-2.5';
-const descriptionClassName = 'text-[12px] leading-[1.5] sm:text-[13px] xl:typo-b5-rg';
+const descriptionClassName = 'text-[12px] leading-[1.5] font-normal sm:text-[13px]';
 
 function ServiceIntro() {
   return (

@@ -55,28 +55,29 @@ function ProcessSection() {
         <p className="typo-h2-bd text-[#111827]">이렇게 이어집니다</p>
 
         {/*
-          좁은 화면: 같은 표를 2열로 줄인다.
+          좁은 화면: 데스크탑과 같은 3열 2행을 그대로 줄인다.
 
-          여섯 단계는 순서대로 읽히기만 하면 되고, 데스크탑의 3열 표가 이미 그
-          역할을 한다. 열 수만 3 → 2 로 줄이면 배치는 그대로 두고 화면에만 맞는다
-          (세로로 여섯 번 쌓으면 한 화면에 한 단계밖에 안 들어온다).
+          배치를 바꾸지 않고 치수만 내린다 — 여섯 단계가 한 화면에 들어오고,
+          가로로 세 개씩 두 줄이라는 형태도 PC 와 같게 읽힌다.
         */}
-        <div className="mt-5 w-full border-t border-[#E2E8F0] xl:hidden">
-          <div className="grid grid-cols-2">
+        <div className="mt-4 w-full border-t border-[#E2E8F0] xl:hidden">
+          <div className="grid grid-cols-3">
             {processCards.map((card, index) => (
               <article
                 key={card.step}
                 className={cn(
-                  'px-4 py-5',
-                  index < processCards.length - 2 && 'border-b border-[#E2E8F0]',
-                  index % 2 === 0 && 'border-r border-[#E2E8F0]',
+                  'px-2.5 py-4',
+                  index < 3 && 'border-b border-[#E2E8F0]',
+                  index % 3 !== 2 && 'border-r border-[#E2E8F0]',
                 )}
               >
-                <span className="inline-flex rounded border border-[#E2E8F0] px-2 py-0.5 text-[11px] font-medium text-[#64748B]">
+                <span className="inline-flex rounded border border-[#E2E8F0] px-1.5 py-0.5 text-[10px] font-medium text-[#64748B]">
                   Step {card.step}
                 </span>
-                <h3 className="mt-2.5 text-[15px] font-bold text-[#111827]">{card.title}</h3>
-                <ul className="mt-2 space-y-1 text-[12px] leading-relaxed text-[#64748B]">
+                <h3 className="mt-2 text-[13px] leading-snug font-bold text-[#111827]">
+                  {card.title}
+                </h3>
+                <ul className="mt-1.5 space-y-1 text-[11px] leading-snug text-[#64748B]">
                   {card.items.map((item) => (
                     <li key={item}>- {item}</li>
                   ))}
