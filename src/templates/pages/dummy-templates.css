@@ -142,7 +142,14 @@
   color: #2f4638;
 }
 
-.mr-cta {
+/*
+  선택자를 .mr-page a.mr-cta 로 올린다.
+
+  .mr-cta 는 <a> 라서 위쪽 `.mr-page a { color: inherit }`(특이도 0,1,1)에 걸리는데,
+  .mr-cta(0,1,0)는 그보다 약해서 여기 적은 글자색이 통째로 무시됐다. 상속된 색이
+  배경과 같은 #1a1612 라 버튼이 검은 사각형으로만 보였다.
+*/
+.mr-page a.mr-cta {
   display: inline-flex;
   align-items: center;
   width: fit-content;
