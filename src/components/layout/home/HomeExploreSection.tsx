@@ -128,7 +128,7 @@ function HomeExploreSection() {
         ))}
       </div>
 
-      <div className="relative z-20 mt-4 flex items-center justify-between gap-3">
+      <div className="relative z-20 mt-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
         <TemplateBrowseFilters
           typeValue={themeFilter}
           industryValue={styleFilter}

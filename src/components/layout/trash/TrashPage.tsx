@@ -73,7 +73,9 @@ function TrashPage() {
     <div className="min-h-full bg-white px-4 py-6 sm:px-6">
       <div className="mx-auto flex max-w-[960px] flex-col gap-4">
         <header>
-          <h1 className="text-[28px] font-bold tracking-tight text-[#0f172a]">휴지통</h1>
+          <h1 className="text-[24px] font-bold tracking-tight text-[#0f172a] sm:text-[28px]">
+            휴지통
+          </h1>
           <p className="mt-1 text-[14px] text-[#64748b]">
             삭제한 에이전트 대화를 확인하고 복구할 수 있습니다.
           </p>

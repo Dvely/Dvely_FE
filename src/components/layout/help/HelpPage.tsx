@@ -59,7 +59,7 @@ function HelpPage() {
       <div className="mx-auto flex max-w-[960px] flex-col gap-8">
         <header className="flex flex-col gap-4">
           <div>
-            <h1 className="text-[28px] font-bold tracking-tight text-[#0f172a]">
+            <h1 className="text-[24px] font-bold tracking-tight text-[#0f172a] sm:text-[28px]">
               {t('help.title')}
             </h1>
             <p className="mt-1 text-[14px] leading-relaxed text-[#64748b]">

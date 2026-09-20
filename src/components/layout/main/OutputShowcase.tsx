@@ -83,7 +83,7 @@ function OutputShowcase() {
 
   return (
     <section id="showcase" className="w-full scroll-mt-4 bg-white">
-      <div className="mx-auto flex max-w-[1080px] flex-col items-center px-6 py-20">
+      <div className="mx-auto flex max-w-[1080px] flex-col items-center px-5 py-14 sm:px-6 sm:py-20">
         <header className="flex flex-col items-center gap-3 text-center">
           <h2 className="text-[32px] font-bold tracking-tight text-[#0f172a] sm:text-[36px]">
             무료로 바로 시작해보세요
@@ -102,7 +102,7 @@ function OutputShowcase() {
           onIndustryChange={setCategoryFilter}
         />
 
-        <div className="mt-10 grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid w-full grid-cols-1 gap-6 sm:mt-10 sm:grid-cols-2 lg:grid-cols-3">
           {visibleTemplates.length > 0 ? (
             visibleTemplates.map((template) => (
               <LandingTemplateCard key={template.id} template={template} />

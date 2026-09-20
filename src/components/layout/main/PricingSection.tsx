@@ -18,7 +18,7 @@ function PricingCard({
   buttonText,
 }: PricingCardProps) {
   return (
-    <div className="flex flex-col justify-between py-4.5 px-4 border rounded-3xl border-[#0B0C12]/8 h-[360px] w-[247.4px] transition-all hover:border-2 hover:border-[rgba(170,59,255,0.45)] hover:shadow-[0_24px_60px_0_rgba(170,59,255,0.18)]">
+    <div className="flex flex-col justify-between gap-4 py-4.5 px-4 border rounded-3xl border-[#0B0C12]/8 w-full min-h-[300px] xl:gap-0 xl:min-h-0 xl:h-[360px] xl:w-[247.4px] transition-all hover:border-2 hover:border-[rgba(170,59,255,0.45)] hover:shadow-[0_24px_60px_0_rgba(170,59,255,0.18)]">
       <div className="flex flex-col gap-2">
         <p className="typo-b3-sb">{planName}</p>
         <p className="typo-h2-bd">
@@ -79,18 +79,18 @@ function PricingSection() {
       id="pricing"
       className="w-full scroll-mt-4 bg-[linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]"
     >
-      <div className="flex flex-col gap-2 items-start justify-center py-16 px-52">
+      <div className="flex flex-col gap-2 items-start justify-center px-5 py-12 md:px-10 md:py-14 xl:px-52 xl:py-16">
         <p className="text-[#7C3AED] text-lg font-extrabold">요금 안내</p>
         <p className="text-[#111827] typo-h2-bd">팀 규모에 맞는 플랜</p>
         <div
-          className="p-6.5 rounded-2xl bg-white flex flex-col gap-4.5 w-full"
+          className="p-4 sm:p-6 xl:p-6.5 rounded-2xl bg-white flex flex-col gap-4.5 w-full"
           style={{ boxShadow: '0 28px 70px 0 rgba(0, 0, 0, 0.18)' }}
         >
-          <div className="flex justify-between w-full">
+          <div className="flex w-full flex-col gap-6 xl:flex-row xl:justify-between xl:gap-0">
             <div className="flex flex-col">
               <p className="typo-h4-bd">
                 한눈에
-                <br />
+                <br className="hidden xl:inline" />
                 비교해 보세요
               </p>
               <p
@@ -100,15 +100,15 @@ function PricingSection() {
                 솔루션 선택이 어려우신가요?
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-3.5">
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
               {pricingCardItems.map((item, index) => (
                 <PricingCard key={index} {...item} />
               ))}
             </div>
           </div>
 
-          <div className="rounded-2xl overflow-hidden border border-[#0B0C12]/8">
-            <table className="w-full table-fixed border-collapse">
+          <div className="rounded-2xl overflow-x-auto border border-[#0B0C12]/8">
+            <table className="w-full min-w-[540px] table-fixed border-collapse">
               <thead>
                 <tr className="bg-[#F8FAFC]">
                   <th className="py-3 px-4 text-left typo-b5-sb text-[#64748B] border-b border-[#0B0C12]/8">

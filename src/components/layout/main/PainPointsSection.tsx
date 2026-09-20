@@ -1,6 +1,6 @@
 import InfoCard from '@/components/common/InfoCard';
 
-const infoCardClassName = 'w-[330px] shadow-[0_10px_40px_-8px_rgba(15,23,42,0.12)]';
+const infoCardClassName = 'w-full shadow-[0_10px_40px_-8px_rgba(15,23,42,0.12)] xl:w-[330px]';
 
 function PainPointsSection() {
   return (
@@ -8,10 +8,10 @@ function PainPointsSection() {
       id="pain"
       className="w-full scroll-mt-4 bg-[linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]"
     >
-      <div className="flex flex-col gap-2 items-start justify-center py-16 px-52">
+      <div className="flex flex-col gap-2 items-start justify-center px-5 py-12 md:px-10 md:py-14 xl:px-52 xl:py-16">
         <p className="text-[#7C3AED] text-lg font-extrabold">이런 고민 없으신가요?</p>
         <p className="text-[#111827] typo-h2-bd">혼자 만들기엔 막막한 순간들</p>
-        <div className="flex items-center justify-between w-full">
+        <div className="flex w-full flex-col items-stretch justify-between gap-4 xl:flex-row xl:items-center xl:gap-0">
           <InfoCard
             title="강의만 듣다가... 막상 랜딩을 만드려니 어디서부터 할지 모르겠어요"
             description="프롬프트 한 줄이면 섹션 구조와 톤이 잡히고, 수정은 대화로 이어갑니다."

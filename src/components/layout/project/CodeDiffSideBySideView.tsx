@@ -64,7 +64,7 @@ function DiffHunkBlock({ hunk }: { hunk: SideBySideHunk }) {
       <div className="bg-[#ddf4ff] px-4 py-1.5 font-mono text-[11px] text-[#0969da]">
         {hunk.header}
       </div>
-      <div className="grid grid-cols-2 divide-x divide-[#d0d7de]">
+      <div className="grid min-w-[640px] grid-cols-2 divide-x divide-[#d0d7de]">
         <div className="min-w-0">
           {hunk.rows.map((row, index) => (
             <DiffCell key={`left-${index}`} cell={row.left} side="left" />
@@ -84,7 +84,7 @@ function CodeDiffSideBySideView({ file }: CodeDiffSideBySideViewProps) {
   const hunks = hunksToSideBySide(file.hunks);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[#d0d7de]">
+    <div className="overflow-x-auto rounded-lg border border-[#d0d7de]">
       {hunks.map((hunk, index) => (
         <DiffHunkBlock key={`${hunk.header}-${index}`} hunk={hunk} />
       ))}

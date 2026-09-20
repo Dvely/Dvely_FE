@@ -26,8 +26,8 @@ const footerColumns = [
 export default function Footer() {
   return (
     <footer id="footer" className="w-full border-t border-[#0B0C12]/8 bg-white">
-      <div className="mx-auto w-[1120px] pt-[52px] pb-[34px]">
-        <div className="flex items-center justify-between pb-[30px]">
+      <div className="mx-auto w-full max-w-[1120px] px-5 pt-10 pb-8 xl:px-0 xl:pt-[52px] xl:pb-[34px]">
+        <div className="flex flex-col items-start gap-5 pb-[30px] lg:flex-row lg:items-center lg:justify-between lg:gap-0">
           <div className="flex items-center gap-[10px]">
             <div className="size-8 rounded-[10px] border border-[#7C3AED]/20 bg-[linear-gradient(135deg,rgba(192,132,252,0.95)_0%,rgba(109,40,217,0.75)_100%)] shadow-[0_8px_20px_0_rgba(124,58,237,0.2)]" />
             <p
@@ -38,7 +38,7 @@ export default function Footer() {
             </p>
           </div>
 
-          <ul className="flex items-center gap-[14px]">
+          <ul className="flex flex-wrap items-center gap-x-[14px] gap-y-2">
             {quickLinks.map((link, index) => (
               <li key={link} className="flex items-center gap-[12px]">
                 <button className="typo-b5-rg text-[#5C576F] hover:text-[#0B0C12] cursor-pointer">
@@ -52,7 +52,7 @@ export default function Footer() {
           </ul>
         </div>
 
-        <div className="grid grid-cols-4 gap-x-7 pb-7">
+        <div className="grid grid-cols-2 gap-x-7 gap-y-6 pb-7 md:grid-cols-4 md:gap-y-0">
           {footerColumns.map((column) => (
             <div key={column.title} className="flex flex-col gap-[11px]">
               <h3 className="typo-b5-sb text-[#0B0C12]">{column.title}</h3>
@@ -74,14 +74,14 @@ export default function Footer() {
             (주)데블리 · 대표이사 홍길동 · 개인정보보호책임자 privacy@devely.ai · 고객센터 1588-0000
             · 서울특별시 강남구 테헤란로 000
           </p>
-          <div className="mt-3 flex items-center gap-4">
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
             <button className="typo-b5-rg text-[#5C576F] hover:text-[#0B0C12]">이용약관</button>
             <button className="typo-b5-sb text-[#0B0C12] hover:opacity-80">개인정보처리방침</button>
             <button className="typo-b5-rg text-[#5C576F] hover:text-[#0B0C12]">쿠키 정책</button>
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-between border-t border-[#0B0C12]/10 pt-[21px]">
+        <div className="mt-6 flex flex-col items-start gap-4 border-t border-[#0B0C12]/10 pt-[21px] sm:flex-row sm:items-center sm:justify-between sm:gap-0">
           <p className="typo-b5-rg text-[#6B6578]">© Qeploy Demo. All rights reserved.</p>
           <div className="flex items-center gap-[18px] text-[#1A1A1A]/70">
             <button aria-label="회사">

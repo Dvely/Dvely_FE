@@ -8,6 +8,11 @@
   --color-primary-foreground: #0b0c12;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 html,
 body {
   font-family:
@@ -178,6 +183,47 @@ body {
     line-height: 150%;
     letter-spacing: 0;
     font-weight: 500;
+  }
+}
+
+/*
+  모바일 전용 타이포 스케일.
+
+  PC 값(위 @layer utilities)은 그대로 두고, md(768px) 미만에서만 한 단계씩 줄인다.
+  랜딩의 56px/40px 헤드라인이 좁은 화면에서 줄바꿈으로 무너지는 것을 막는 용도다.
+*/
+@layer utilities {
+  @media (max-width: 767.98px) {
+    .typo-h1-bd {
+      font-size: 30px;
+    }
+    .typo-h2-bd {
+      font-size: 26px;
+    }
+    .typo-h3-md {
+      font-size: 24px;
+    }
+    .typo-h4-bd,
+    .typo-h4-sb {
+      font-size: 22px;
+    }
+    .typo-h5-sb,
+    .typo-h5-md,
+    .typo-h5-rg {
+      font-size: 19px;
+    }
+    .typo-b0-bd,
+    .typo-b0-sb,
+    .typo-b0-md,
+    .typo-b0-rg {
+      font-size: 17px;
+    }
+    .typo-b1-eb,
+    .typo-b1-sb,
+    .typo-b1-md,
+    .typo-b1-rg {
+      font-size: 16px;
+    }
   }
 }
 

@@ -1,6 +1,7 @@
 import InfoCard from '@/components/common/InfoCard';
 
-const infoCardClassName = 'w-[330px] shadow-[0_10px_40px_-8px_rgba(15,23,42,0.12)] h-[172px]';
+const infoCardClassName =
+  'w-full shadow-[0_10px_40px_-8px_rgba(15,23,42,0.12)] xl:w-[330px] xl:h-[172px]';
 const descriptionClassName = 'typo-b5-rg';
 
 function ServiceIntro() {
@@ -9,15 +10,15 @@ function ServiceIntro() {
       id="intro"
       className="w-full scroll-mt-4 bg-[linear-gradient(180deg,#FDFBFF_0%,#F3EEFF_100%)]"
     >
-      <div className="flex flex-col gap-2 items-start justify-center py-16 px-52">
+      <div className="flex flex-col gap-2 items-start justify-center px-5 py-12 md:px-10 md:py-14 xl:px-52 xl:py-16">
         <p className="text-[#7C3AED] text-lg font-extrabold"> Qeploy란?</p>
         <p className="text-[#111827] typo-h2-bd">아이디어부터 출시까지, AI와 함께하는 웹 제작</p>
         <p className="text-[#64748B] text-lg font-medium">
           짧은 주기로 초안을 만들고 검수·배포까지 잇는 도구입니다. 팀 단위 워크스페이스와 에이전트
-          <br />
+          <br className="hidden xl:inline" />
           대화를 기본으로 합니다.
         </p>
-        <div className="flex items-center justify-center gap-4 w-full pt-5">
+        <div className="grid w-full grid-cols-1 items-stretch gap-4 pt-5 sm:grid-cols-2 xl:flex xl:items-center xl:justify-center">
           <InfoCard
             title={
               <div className="flex flex-col gap-2.5">

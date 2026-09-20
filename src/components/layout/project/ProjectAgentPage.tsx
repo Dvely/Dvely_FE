@@ -64,6 +64,11 @@ const AGENT_CHAT_PANEL_DEFAULT_WIDTH = 380;
 
 type AgentSidebarTab = 'list' | 'conversation';
 type RightPanelView = 'preview' | 'code';
+/*
+  lg 미만에서는 대화·프리뷰를 나란히 둘 폭이 없다. 두 패널 중 하나만 띄우고
+  상단 전환 바로 오간다. lg 이상은 기존 좌우 분할 그대로다.
+*/
+type MobilePane = 'chat' | 'preview';
 
 type ProjectAgentPageProps = {
   projectId: number;
@@ -79,6 +84,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
   const [connectedRepo, setConnectedRepo] = useState<GithubRepository | null>(null);
   const [hasDisconnectedRepository, setHasDisconnectedRepository] = useState(false);
   const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
+  const [mobilePane, setMobilePane] = useState<MobilePane>('chat');
   const [previewFrameKey, setPreviewFrameKey] = useState(0);
   /*
     클라우드 연결이 없어서 멈춘 배포.
@@ -391,10 +397,44 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     }`;
 
   return (
-    <div className="flex h-[calc(100vh)] min-h-0 w-full overflow-hidden bg-[#f4f5f7]">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#f4f5f7] lg:h-[calc(100vh)] lg:flex-row">
+      {/* 모바일 전용 패널 전환 바 */}
+      <div
+        role="tablist"
+        aria-label="작업 화면 전환"
+        className="flex shrink-0 items-center gap-1 border-b border-[#e2e8f0] bg-white p-1.5 lg:hidden"
+      >
+        {(
+          [
+            { id: 'chat' as const, label: '대화' },
+            { id: 'preview' as const, label: rightPanelView === 'code' ? '코드' : '미리보기' },
+          ] as const
+        ).map((pane) => (
+          <button
+            key={pane.id}
+            type="button"
+            role="tab"
+            aria-selected={mobilePane === pane.id}
+            onClick={() => setMobilePane(pane.id)}
+            className={cn(
+              'flex-1 rounded-lg px-3 py-2 text-[13px] font-semibold transition',
+              mobilePane === pane.id
+                ? 'bg-[#f1f5f9] text-[#0f172a]'
+                : 'text-[#94a3b8] hover:text-[#64748b]',
+            )}
+          >
+            {pane.label}
+          </button>
+        ))}
+      </div>
+
       <section
-        className="relative flex shrink-0 flex-col border-r border-[#e2e8f0] bg-white"
-        style={{ width: chatPanelWidth }}
+        className={cn(
+          'relative min-h-0 w-full min-w-0 flex-1 flex-col border-r border-[#e2e8f0] bg-white',
+          'lg:flex lg:w-[var(--agent-chat-width)] lg:flex-none lg:shrink-0',
+          mobilePane === 'chat' ? 'flex' : 'hidden',
+        )}
+        style={{ '--agent-chat-width': `${chatPanelWidth}px` } as React.CSSProperties}
       >
         <header className="flex items-center justify-between border-b border-[#f1f5f9] px-4 py-3">
           <h1 className="text-[14px] font-bold text-[#0f172a]">SYS.AI Agent</h1>
@@ -479,15 +519,20 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           aria-label="채팅 패널 너비 조절"
           onPointerDown={handleChatPanelResizeStart}
           className={cn(
-            'absolute -right-1 top-0 z-20 h-full w-2 touch-none',
+            'absolute -right-1 top-0 z-20 hidden h-full w-2 touch-none lg:block',
             'cursor-col-resize bg-transparent',
             'hover:bg-[#7c3aed]/15 active:bg-[#7c3aed]/25',
           )}
         />
       </section>
 
-      <section className="relative flex min-w-0 flex-1 flex-col bg-[#ececee]">
-        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e2e8f0] bg-white px-4 py-2.5">
+      <section
+        className={cn(
+          'relative min-h-0 min-w-0 flex-1 flex-col bg-[#ececee] lg:flex',
+          mobilePane === 'preview' ? 'flex' : 'hidden',
+        )}
+      >
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e2e8f0] bg-white px-3 py-2.5 sm:px-4">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <Link
               to="/project/$slug"
@@ -553,17 +598,17 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             />
             <button
               type="button"
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 text-[12px] font-semibold text-[#334155]"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-2.5 text-[12px] font-semibold text-[#334155] sm:px-3"
             >
               <Share2 className="size-3.5" />
-              Share
+              <span className="hidden sm:inline">Share</span>
             </button>
             <button
               type="button"
-              className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#e2e8f0] bg-white px-3 text-[12px] font-semibold text-[#334155]"
+              className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#e2e8f0] bg-white px-2.5 text-[12px] font-semibold text-[#334155] sm:px-3"
             >
               <Pencil className="size-3.5" />
-              편집
+              <span className="hidden sm:inline">편집</span>
             </button>
             {/*
               프레임을 다시 그릴 뿐 컨테이너를 띄우지는 않는다. 라벨이 "미리보기 불러오기"

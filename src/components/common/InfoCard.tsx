@@ -19,7 +19,7 @@ export default function InfoCard({
   return (
     <div
       className={cn(
-        'p-6 flex flex-col gap-2.5 border border-[#0F172A]/8 rounded-3xl bg-white',
+        'p-5 sm:p-6 flex flex-col gap-2.5 border border-[#0F172A]/8 rounded-3xl bg-white',
         className,
       )}
     >

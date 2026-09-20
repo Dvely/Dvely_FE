@@ -27,7 +27,7 @@ function ProjectWorkspaceNav({ projectId, active }: ProjectWorkspaceNavProps) {
   const slug = String(projectId);
 
   return (
-    <nav className="mt-5 flex flex-wrap gap-1 border-b border-[#e2e8f0] pb-px">
+    <nav className="mt-5 flex gap-1 overflow-x-auto border-b border-[#e2e8f0] pb-px [-ms-overflow-style:none] [scrollbar-width:none] lg:flex-wrap lg:overflow-x-visible [&::-webkit-scrollbar]:hidden">
       {tabs.map((tab) => {
         const isActive = tab.id === active;
 
@@ -37,7 +37,7 @@ function ProjectWorkspaceNav({ projectId, active }: ProjectWorkspaceNavProps) {
             to={tab.to}
             params={{ slug }}
             className={cn(
-              '-mb-px border-b-2 px-3 py-2 text-[13px] font-semibold transition',
+              '-mb-px shrink-0 border-b-2 px-3 py-2 text-[13px] font-semibold whitespace-nowrap transition',
               isActive
                 ? 'border-[#7c3aed] text-[#7c3aed]'
                 : 'border-transparent text-[#64748b] hover:text-[#0f172a]',

@@ -89,7 +89,7 @@ function ReviewCard({
 function UserReviews() {
   return (
     <section id="reviews" className="w-full scroll-mt-4 border-t border-[#E2E8F0] bg-white">
-      <div className="flex flex-col items-start justify-center gap-2 px-52 py-16">
+      <div className="flex flex-col items-start justify-center gap-2 px-5 py-12 md:px-10 md:py-14 xl:px-52 xl:py-16">
         <p className="text-lg font-extrabold text-[#7C3AED]">이용 후기</p>
         <p className="typo-h2-bd text-[#111827]">팀에서 남긴 한 줄 평가</p>
 

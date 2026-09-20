@@ -48,7 +48,7 @@ const processCards = [
 function ProcessSection() {
   return (
     <section id="process" className="w-full scroll-mt-4 bg-white">
-      <div className="flex flex-col items-start justify-center gap-2 px-52 py-16">
+      <div className="flex flex-col items-start justify-center gap-2 px-5 py-12 md:px-10 md:py-14 xl:px-52 xl:py-16">
         <p className="text-lg font-extrabold text-[#7C3AED]">프로그램 진행 과정</p>
         <p className="typo-h2-bd text-[#111827]">이렇게 이어집니다</p>
 
@@ -58,7 +58,7 @@ function ProcessSection() {
               <article
                 key={card.step}
                 className={cn(
-                  'px-8 py-10',
+                  'px-5 py-8 md:px-8 md:py-10',
                   index < processCards.length - 1 && 'border-b border-[#E2E8F0]',
                   'md:border-b-0',
                   index < 3 && 'md:border-b md:border-[#E2E8F0]',
