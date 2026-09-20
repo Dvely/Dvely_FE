@@ -48,21 +48,55 @@ const processCards = [
 function ProcessSection() {
   return (
     <section id="process" className="w-full scroll-mt-4 bg-white">
-      <div className="flex flex-col items-start justify-center gap-2 px-52 py-16">
-        <p className="text-lg font-extrabold text-[#7C3AED]">프로그램 진행 과정</p>
+      <div className="flex flex-col items-start justify-center gap-2 px-5 py-12 md:px-10 md:py-14 xl:px-52 xl:py-16">
+        <p className="text-[13px] font-extrabold tracking-wide md:text-lg md:tracking-normal text-[#7C3AED]">
+          프로그램 진행 과정
+        </p>
         <p className="typo-h2-bd text-[#111827]">이렇게 이어집니다</p>
 
-        <div className="mt-5 w-full border-t border-[#E2E8F0]">
-          <div className="grid grid-cols-1 md:grid-cols-3">
+        {/*
+          좁은 화면: 데스크탑과 같은 3열 2행을 그대로 줄인다.
+
+          배치를 바꾸지 않고 치수만 내린다 — 여섯 단계가 한 화면에 들어오고,
+          가로로 세 개씩 두 줄이라는 형태도 PC 와 같게 읽힌다.
+        */}
+        <div className="mt-4 w-full border-t border-[#E2E8F0] xl:hidden">
+          <div className="grid grid-cols-3">
+            {processCards.map((card, index) => (
+              <article
+                key={card.step}
+                className={cn(
+                  'px-2.5 py-4',
+                  index < 3 && 'border-b border-[#E2E8F0]',
+                  index % 3 !== 2 && 'border-r border-[#E2E8F0]',
+                )}
+              >
+                <span className="inline-flex rounded border border-[#E2E8F0] px-1.5 py-0.5 text-[10px] font-medium text-[#64748B]">
+                  Step {card.step}
+                </span>
+                <h3 className="mt-2 text-[13px] leading-snug font-bold text-[#111827]">
+                  {card.title}
+                </h3>
+                <ul className="mt-1.5 space-y-1 text-[11px] leading-snug text-[#64748B]">
+                  {card.items.map((item) => (
+                    <li key={item}>- {item}</li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        {/* xl 이상: 기존 3열 표 그대로 */}
+        <div className="mt-5 hidden w-full border-t border-[#E2E8F0] xl:block">
+          <div className="grid grid-cols-3">
             {processCards.map((card, index) => (
               <article
                 key={card.step}
                 className={cn(
                   'px-8 py-10',
-                  index < processCards.length - 1 && 'border-b border-[#E2E8F0]',
-                  'md:border-b-0',
-                  index < 3 && 'md:border-b md:border-[#E2E8F0]',
-                  index % 3 !== 2 && 'md:border-r md:border-[#E2E8F0]',
+                  index < 3 && 'border-b border-[#E2E8F0]',
+                  index % 3 !== 2 && 'border-r border-[#E2E8F0]',
                 )}
               >
                 <span className="inline-flex rounded border border-[#E2E8F0] px-2.5 py-1 text-[12px] font-medium text-[#64748B]">

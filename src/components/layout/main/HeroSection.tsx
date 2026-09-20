@@ -67,8 +67,7 @@ function scatterOffset(word: string, index: number, slot: string) {
 
 function getPrefersReducedMotion() {
   return (
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
 }
 
@@ -146,7 +145,7 @@ function HeroSection() {
   }, [showHeadline]);
 
   return (
-    <section className="relative h-screen w-full overflow-hidden bg-white text-[#111827]">
+    <section className="relative h-dvh w-full overflow-hidden bg-white text-[#111827]">
       <div className="relative z-10 flex h-full items-center justify-center">
         <div className="pointer-events-none absolute inset-0">
           <span
@@ -175,7 +174,7 @@ function HeroSection() {
             showLogo ? 'scale-100 opacity-100' : 'pointer-events-none scale-75 opacity-0',
           )}
         >
-          <p className="flex overflow-hidden text-[64px] leading-none font-extrabold tracking-tight sm:text-[84px]">
+          <p className="flex overflow-hidden text-[44px] leading-none font-extrabold tracking-tight sm:text-[84px]">
             {LOGO_CHARS.map((char, index) => (
               <span
                 key={`${char}-${index}`}
@@ -186,7 +185,7 @@ function HeroSection() {
               </span>
             ))}
           </p>
-          <div className="mb-1 h-10 w-[8.5rem] overflow-hidden text-[32px] font-bold sm:h-12 sm:w-[11rem] sm:text-[40px]">
+          <div className="mb-1 h-10 w-[6rem] overflow-hidden text-[22px] font-bold sm:h-12 sm:w-[11rem] sm:text-[40px]">
             <div
               className={cn(
                 'transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]',
@@ -217,7 +216,7 @@ function HeroSection() {
             <span className="text-[40px] leading-none font-bold text-white">Q</span>
           ) : null}
           {showPill ? (
-            <p className="w-full px-7 text-left text-[18px] font-medium tracking-tight text-[#111827]">
+            <p className="w-full px-4 text-left text-[14px] font-medium tracking-tight text-[#111827] sm:px-7 sm:text-[18px]">
               {typed}
               {phase === 'type' ? (
                 <span className="hero-caret ml-0.5 inline-block h-[1.05em] w-px bg-[#7C3AED] align-[-2px]" />
@@ -231,11 +230,15 @@ function HeroSection() {
               <p
                 key={item.word}
                 className={cn(
-                  'hero-orbit-word absolute text-[28px] font-semibold tracking-tight text-[#111827]',
-                  item.slot === 'top' && 'top-[calc(50%-132px)] left-1/2 -translate-x-1/2',
-                  item.slot === 'bottom' && 'bottom-[calc(50%-132px)] left-1/2 -translate-x-1/2',
-                  item.slot === 'left' && 'top-1/2 left-[calc(50%-220px)] -translate-y-1/2',
-                  item.slot === 'right' && 'top-1/2 right-[calc(50%-220px)] -translate-y-1/2',
+                  'hero-orbit-word absolute text-[18px] font-semibold tracking-tight text-[#111827] sm:text-[28px]',
+                  item.slot === 'top' &&
+                    'top-[calc(50%-104px)] left-1/2 -translate-x-1/2 sm:top-[calc(50%-132px)]',
+                  item.slot === 'bottom' &&
+                    'bottom-[calc(50%-104px)] left-1/2 -translate-x-1/2 sm:bottom-[calc(50%-132px)]',
+                  item.slot === 'left' &&
+                    'top-1/2 left-[calc(50%-138px)] -translate-y-1/2 sm:left-[calc(50%-220px)]',
+                  item.slot === 'right' &&
+                    'top-1/2 right-[calc(50%-138px)] -translate-y-1/2 sm:right-[calc(50%-220px)]',
                 )}
               >
                 {item.word.split('').map((char, index) => {
@@ -263,7 +266,7 @@ function HeroSection() {
         {showCuts ? (
           <p
             key={CUT_WORDS[cutIndex]}
-            className="hero-cut-word absolute text-[72px] font-extrabold tracking-tight sm:text-[104px]"
+            className="hero-cut-word absolute text-[46px] font-extrabold tracking-tight sm:text-[104px]"
           >
             {CUT_WORDS[cutIndex]}
             <span className="ml-1 inline-block size-[0.18em] translate-y-[-0.12em] rounded-full bg-[#7C3AED]" />
@@ -272,7 +275,7 @@ function HeroSection() {
 
         <div
           className={cn(
-            'relative z-10 flex max-w-[760px] flex-col items-center text-center transition-all duration-700',
+            'relative z-10 flex max-w-[760px] flex-col items-center px-5 text-center transition-all duration-700 sm:px-0',
             showHeadline
               ? 'translate-y-0 opacity-100'
               : 'pointer-events-none translate-y-8 opacity-0',
@@ -299,7 +302,7 @@ function HeroSection() {
           </p>
           <div
             className={cn(
-              'pointer-events-auto mt-8 flex items-center gap-3 transition-all delay-200 duration-700',
+              'pointer-events-auto mt-8 flex flex-wrap items-center justify-center gap-3 transition-all delay-200 duration-700',
               showCopy
                 ? 'translate-y-0 opacity-100'
                 : 'pointer-events-none translate-y-3 opacity-0',
@@ -328,7 +331,7 @@ function HeroSection() {
       <button
         type="button"
         onClick={() => scrollToSection('showcase')}
-        className="absolute bottom-10 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 text-[14px] font-semibold text-[#334155] transition hover:text-[#7C3AED]"
+        className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 px-5 text-center text-[13px] font-semibold whitespace-nowrap text-[#334155] transition hover:text-[#7C3AED] sm:bottom-10 sm:px-0 sm:text-[14px]"
       >
         Qeploy로 만든 제작 사례 보기
         <ChevronDown className="size-4" />

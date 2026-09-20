@@ -18,7 +18,7 @@ function ProjectSectionShell({ projectId, active, children }: ProjectSectionShel
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#f8fafc]">
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
         <div className="mx-auto max-w-[1280px]">
           <Link
             to="/project"
@@ -32,7 +32,7 @@ function ProjectSectionShell({ projectId, active, children }: ProjectSectionShel
             {isLoading ? (
               <div className="h-8 w-48 animate-pulse rounded bg-[#e2e8f0]" />
             ) : (
-              <h1 className="text-[28px] font-bold tracking-tight text-[#0f172a]">
+              <h1 className="text-[22px] font-bold tracking-tight text-[#0f172a] sm:text-[28px]">
                 {project
                   ? formatProjectDisplayName(project.name, project.projectId)
                   : '프로젝트를 찾을 수 없습니다.'}

@@ -92,15 +92,15 @@
         "toggleLabel": "保留タスク開始メール通知"
       },
       "marketingAds": {
-        "title": "Develyに関する広告",
+        "title": "Qeployに関する広告",
         "description": "マーケティング目的でのデータ収集・共有に同意します。",
-        "toggleLabel": "Devely広告を受け取る"
+        "toggleLabel": "Qeploy広告を受け取る"
       }
     }
   },
   "help": {
     "title": "ヘルプセンター",
-    "description": "Develyの使い方とよくある質問を確認できます。",
+    "description": "Qeployの使い方とよくある質問を確認できます。",
     "searchPlaceholder": "ヘルプを検索",
     "quickLinks": {
       "title": "クイックリンク",
@@ -155,8 +155,8 @@
     },
     "contact": {
       "title": "さらにサポートが必要ですか？",
-      "description": "お問い合わせ内容をお送りいただければ、チームが確認してご返信します。",
-      "action": "メールで問い合わせ"
+      "description": "お問い合わせ窓口は準備中です。正式リリースに合わせて開設予定です。",
+      "action": "お問い合わせ準備中"
     }
   }
 }

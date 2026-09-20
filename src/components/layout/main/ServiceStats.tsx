@@ -5,9 +5,11 @@ type StatBlockProps = {
 
 function StatBlock({ emphasis, caption }: StatBlockProps) {
   return (
-    <div className="flex flex-col gap-1 items-center justify-center w-[241px] h-[104px]">
+    <div className="flex flex-col gap-1 items-center justify-center w-[calc(50%-10px)] sm:w-[241px] sm:h-[104px]">
       <p className="typo-h2-bd">{emphasis}</p>
-      <p className="text-[#94A3B8] text-sm font-semibold">{caption}</p>
+      <p className="text-[#94A3B8] text-[13px] leading-snug font-semibold text-center sm:text-sm sm:leading-5">
+        {caption}
+      </p>
     </div>
   );
 }
@@ -22,15 +24,15 @@ const statItems: StatBlockProps[] = [
 function ServiceStats() {
   return (
     <section className="w-full bg-[linear-gradient(135deg,#1E1B4B_0%,#312E81_42%,#1E1B4B_100%)]">
-      <div className="flex flex-col gap-5.5 justify-center items-center text-white py-10">
+      <div className="flex flex-col gap-5.5 justify-center items-center text-white px-5 py-10">
         <div className="flex flex-col gap-2 items-center justify-center">
-          <p className="text-3xl font-bold">숫자로 보는 목표감</p>
+          <p className="text-2xl sm:text-3xl font-bold">숫자로 보는 목표감</p>
           <p className="text-[#94A3B8] text-md font-medium text-center">
             아래 수치는 제품 도입 시 설정 가능한 목표 예시입니다. 팀 규모
-            <br />와 마일스톤에 맞게 조정하세요.
+            <br className="hidden sm:inline" />와 마일스톤에 맞게 조정하세요.
           </p>
         </div>
-        <div className="flex gap-5 items-center justify-center">
+        <div className="flex flex-wrap items-start justify-center gap-x-4 gap-y-7 sm:items-center sm:gap-5">
           {statItems.map((item, i) => (
             <StatBlock key={i} {...item} />
           ))}

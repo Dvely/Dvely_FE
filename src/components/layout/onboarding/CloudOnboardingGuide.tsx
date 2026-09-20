@@ -263,10 +263,10 @@ function Eyebrow({ children }: { children: string }) {
 function CloudOnboardingGuide() {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-[#f8fafc]">
-      <div className="mx-auto w-full max-w-[720px] px-6 py-10">
+      <div className="mx-auto w-full max-w-[720px] px-5 py-8 sm:px-6 sm:py-10">
         <header>
           <Eyebrow>Qeploy 시작하기</Eyebrow>
-          <h1 className="mt-3 text-[32px] font-bold leading-[1.15] tracking-tight text-[#0f172a]">
+          <h1 className="mt-3 text-[26px] font-bold leading-[1.15] tracking-tight text-[#0f172a] sm:text-[32px]">
             내 클라우드에 백엔드를 올리기 위한 딱 한 번의 준비
           </h1>
           <p className="mt-4 max-w-[34rem] text-[15px] leading-relaxed text-[#64748b]">
@@ -281,7 +281,7 @@ function CloudOnboardingGuide() {
 
         <section className="mt-10">
           <Eyebrow>먼저, 왜 필요한가요</Eyebrow>
-          <h2 className="mt-2 text-[22px] font-bold tracking-tight text-[#0f172a]">
+          <h2 className="mt-2 text-[19px] font-bold tracking-tight text-[#0f172a] sm:text-[22px]">
             서버는 &lsquo;당신 것&rsquo;으로 뜹니다
           </h2>
           <p className="mt-3 text-[14px] leading-relaxed text-[#64748b]">

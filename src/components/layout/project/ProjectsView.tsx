@@ -135,7 +135,7 @@ function ProjectsView() {
               <FolderKanban className="size-4" strokeWidth={2} />
               <span className="text-[11px] font-semibold tracking-[0.1em]">WORKSPACE</span>
             </div>
-            <h1 className="mt-2 text-[28px] font-bold tracking-[-0.04em] text-[#0f172a]">
+            <h1 className="mt-2 text-[24px] font-bold tracking-[-0.04em] text-[#0f172a] sm:text-[28px]">
               프로젝트
             </h1>
             <p className="mt-1 text-[13px] text-[#64748b]">
@@ -165,7 +165,7 @@ function ProjectsView() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-2">
-            <label className="flex h-9 min-w-[210px] flex-1 items-center gap-2 rounded-lg border border-transparent bg-white px-3 text-[#94a3b8] shadow-sm  sm:max-w-[340px]">
+            <label className="flex h-9 w-full min-w-0 flex-1 items-center gap-2 rounded-lg border border-transparent bg-white px-3 text-[#94a3b8] shadow-sm sm:min-w-[210px] sm:max-w-[340px]">
               <Search className="size-4" />
               <input
                 value={searchQuery}
@@ -176,7 +176,7 @@ function ProjectsView() {
               />
             </label>
 
-            <div className="ml-auto flex flex-wrap items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
               <FilterSelect
                 value={filter}
                 onChange={(value) => setFilter(value as FilterOption)}

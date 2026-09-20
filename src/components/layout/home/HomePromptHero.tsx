@@ -139,17 +139,22 @@ function HomePromptHero() {
 
           <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-4">
             <div className="flex flex-wrap items-center gap-1.5">
+              {/* 첨부·설정은 아직 동작이 없다. 눌리지 않는 것을 커서로도 알린다 */}
               <button
                 type="button"
-                className="flex size-8 items-center justify-center rounded-lg text-[#64748b] transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
-                aria-label="첨부"
+                disabled
+                title="첨부는 준비 중입니다"
+                className="flex size-8 cursor-default items-center justify-center rounded-lg text-[#cbd5e1]"
+                aria-label="첨부 (준비 중)"
               >
                 <Plus className="size-[18px]" strokeWidth={1.75} />
               </button>
               <button
                 type="button"
-                className="flex size-8 items-center justify-center rounded-lg text-[#64748b] transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
-                aria-label="설정"
+                disabled
+                title="설정은 준비 중입니다"
+                className="flex size-8 cursor-default items-center justify-center rounded-lg text-[#cbd5e1]"
+                aria-label="설정 (준비 중)"
               >
                 <SlidersHorizontal className="size-[18px]" strokeWidth={1.75} />
               </button>
@@ -185,8 +190,10 @@ function HomePromptHero() {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                className="flex size-8 items-center justify-center rounded-lg text-[#64748b] transition hover:bg-[#f1f5f9]"
-                aria-label="음성 입력"
+                disabled
+                title="음성 입력은 준비 중입니다"
+                className="flex size-8 cursor-default items-center justify-center rounded-lg text-[#cbd5e1]"
+                aria-label="음성 입력 (준비 중)"
               >
                 <Mic className="size-[18px]" strokeWidth={1.75} />
               </button>

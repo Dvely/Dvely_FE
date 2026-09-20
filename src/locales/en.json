@@ -92,15 +92,15 @@
         "toggleLabel": "Pending task start email notification"
       },
       "marketingAds": {
-        "title": "Ads about Devely",
+        "title": "Ads about Qeploy",
         "description": "I agree to the collection and sharing of data for marketing purposes.",
-        "toggleLabel": "Receive Devely marketing ads"
+        "toggleLabel": "Receive Qeploy marketing ads"
       }
     }
   },
   "help": {
     "title": "Help center",
-    "description": "Learn how to use Devely and find answers to common questions.",
+    "description": "Learn how to use Qeploy and find answers to common questions.",
     "searchPlaceholder": "Search for help",
     "quickLinks": {
       "title": "Quick links",
@@ -155,8 +155,8 @@
     },
     "contact": {
       "title": "Still need help?",
-      "description": "Send us a message and our team will get back to you.",
-      "action": "Email support"
+      "description": "Our support channel is being set up and will open at launch.",
+      "action": "Support coming soon"
     }
   }
 }

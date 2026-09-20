@@ -142,7 +142,14 @@
   color: #2f4638;
 }
 
-.mr-cta {
+/*
+  선택자를 .mr-page a.mr-cta 로 올린다.
+
+  .mr-cta 는 <a> 라서 위쪽 `.mr-page a { color: inherit }`(특이도 0,1,1)에 걸리는데,
+  .mr-cta(0,1,0)는 그보다 약해서 여기 적은 글자색이 통째로 무시됐다. 상속된 색이
+  배경과 같은 #1a1612 라 버튼이 검은 사각형으로만 보였다.
+*/
+.mr-page a.mr-cta {
   display: inline-flex;
   align-items: center;
   width: fit-content;
@@ -1104,5 +1111,125 @@
 
   .kn-process ol {
     grid-template-columns: 1fr;
+  }
+}
+
+/*
+  휴대폰 폭(600px 이하) 보정.
+
+  위 960px 블록이 큰 그리드는 이미 한 줄로 접는다. 여기서는 그 아래에서만 남는 것들을
+  손본다 — 가로로 늘어놓던 내비·탭·통계 줄, 좌우 7~8% 로 잡혀 있어 본문이 손바닥만
+  해지는 섹션 여백, 그리고 뷰포트 높이에 고정돼 있던 히어로.
+  데스크탑 값은 건드리지 않는다.
+*/
+@media (max-width: 600px) {
+  .mr-nav,
+  .kn-nav,
+  .nc-nav {
+    height: auto;
+    gap: 10px;
+    padding: 12px 5%;
+  }
+
+  /* 내비 링크는 접지 않고 가로로 넘긴다 — 줄바꿈되면 sticky 헤더가 화면을 덮는다 */
+  .mr-nav nav,
+  .kn-nav nav,
+  .nc-nav nav {
+    gap: 16px;
+    max-width: 58vw;
+    overflow-x: auto;
+    scrollbar-width: none;
+    white-space: nowrap;
+  }
+
+  .mr-nav nav::-webkit-scrollbar,
+  .kn-nav nav::-webkit-scrollbar,
+  .nc-nav nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mr-logo {
+    font-size: 21px;
+  }
+
+  .kn-logo {
+    font-size: 22px;
+  }
+
+  .nc-logo {
+    font-size: 17px;
+    letter-spacing: 0.2em;
+  }
+
+  /* 내비 높이가 auto 가 됐으므로 100vh 에서 빼던 계산이 더는 맞지 않는다 */
+  .mr-hero,
+  .kn-hero,
+  .nc-hero {
+    min-height: 0;
+  }
+
+  .mr-hero-copy,
+  .kn-hero-copy,
+  .nc-hero-copy {
+    padding: 44px 6% 40px;
+  }
+
+  .mr-intro,
+  .mr-day,
+  .mr-reserve,
+  .kn-process,
+  .kn-class,
+  .kn-visit,
+  .nc-house,
+  .nc-visit {
+    padding-right: 6%;
+    padding-left: 6%;
+    padding-top: 52px;
+    padding-bottom: 48px;
+  }
+
+  .mr-ticker {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 18px;
+    text-align: center;
+  }
+
+  .kn-stats {
+    flex-wrap: wrap;
+    gap: 20px 28px;
+  }
+
+  .kn-tabs,
+  .nc-days {
+    flex-wrap: wrap;
+  }
+
+  /* 예약 안내표는 두 칸이 붙어 있어 한 칸당 폭이 남지 않는다 */
+  .mr-reserve dl {
+    grid-template-columns: 1fr;
+  }
+
+  .mr-reserve dl div {
+    border-right: 0;
+    padding: 18px 20px;
+  }
+
+  .mr-room-visual {
+    height: 150px;
+  }
+
+  .nc-board-head {
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    padding: 14px 20px;
+  }
+
+  .mr-page footer,
+  .kn-page footer,
+  .nc-page footer {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
   }
 }

@@ -1,10 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
-import {
-  homeTemplates,
-  type HomeTemplateItem,
-} from '@/mocks/home/homeTemplates';
+import { homeTemplates, type HomeTemplateItem } from '@/mocks/home/homeTemplates';
 import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
 import {
   TEMPLATE_INDUSTRY_LABEL,
@@ -42,7 +39,7 @@ type LandingTemplateCardProps = {
 
 function LandingTemplateCard({ template }: LandingTemplateCardProps) {
   return (
-    <article className="group text-left">
+    <article className="group w-[78%] text-left sm:w-[46%] lg:w-[31%] xl:w-auto">
       <Link
         to="/project/new"
         search={{ type: template.startType, templateId: template.id }}
@@ -83,7 +80,7 @@ function OutputShowcase() {
 
   return (
     <section id="showcase" className="w-full scroll-mt-4 bg-white">
-      <div className="mx-auto flex max-w-[1080px] flex-col items-center px-6 py-20">
+      <div className="mx-auto flex max-w-[1080px] flex-col items-center px-5 py-14 sm:px-6 sm:py-20">
         <header className="flex flex-col items-center gap-3 text-center">
           <h2 className="text-[32px] font-bold tracking-tight text-[#0f172a] sm:text-[36px]">
             무료로 바로 시작해보세요
@@ -102,7 +99,7 @@ function OutputShowcase() {
           onIndustryChange={setCategoryFilter}
         />
 
-        <div className="mt-10 grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mobile-rail mt-8 grid w-full grid-cols-1 gap-6 sm:mt-10 sm:grid-cols-2 lg:grid-cols-3">
           {visibleTemplates.length > 0 ? (
             visibleTemplates.map((template) => (
               <LandingTemplateCard key={template.id} template={template} />

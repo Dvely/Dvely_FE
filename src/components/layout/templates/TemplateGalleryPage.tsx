@@ -61,70 +61,75 @@ export default function TemplateGalleryPage() {
         >
           {filtered.length > 0 ? (
             filtered.map((template, index) => (
-            <Dialog.Root key={template.id}>
-              <article className="min-w-0">
-                <Dialog.Trigger asChild>
-                  <button
-                    type="button"
-                    aria-label={`${template.name} 미리보기`}
-                    className="group block w-full cursor-pointer text-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7396d3]"
-                  >
-                    <span className="relative block aspect-[1.75] bg-[#e9e9ef] shadow-[0_0_0_1px_rgba(0,0,0,0.04)]">
-                      <img
-                        src={template.image}
-                        alt={`${template.name} 템플릿 화면`}
-                        loading={index < 6 ? 'eager' : 'lazy'}
-                        decoding="async"
-                        className="h-full w-full object-cover object-top"
-                      />
-                      {template.isNew && (
-                        <span
-                          className="pointer-events-none absolute -left-[7px] top-3 h-14 w-14 overflow-hidden"
-                          aria-label="신규 템플릿"
-                        >
-                          <span className="absolute left-[-20px] top-[12px] w-[82px] -rotate-45 bg-[#e95172] py-0.5 text-xs text-white shadow-sm">
-                            new
+              <Dialog.Root key={template.id}>
+                <article className="min-w-0">
+                  <Dialog.Trigger asChild>
+                    <button
+                      type="button"
+                      aria-label={`${template.name} 미리보기`}
+                      className="group block w-full cursor-pointer text-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7396d3]"
+                    >
+                      <span className="relative block aspect-[1.75] bg-[#e9e9ef] shadow-[0_0_0_1px_rgba(0,0,0,0.04)]">
+                        <img
+                          src={template.image}
+                          alt={`${template.name} 템플릿 화면`}
+                          loading={index < 6 ? 'eager' : 'lazy'}
+                          decoding="async"
+                          className="h-full w-full object-cover object-top"
+                        />
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                          <span className="rounded-full border border-white px-7 py-2.5 text-sm text-white">
+                            미리보기
                           </span>
                         </span>
-                      )}
-                      <span className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                        <span className="rounded-full border border-white px-7 py-2.5 text-sm text-white">
-                          미리보기
-                        </span>
                       </span>
-                    </span>
-                    <span className="mt-3 block text-[14px] leading-6 text-[#888]">
-                      {template.name}
-                    </span>
-                  </button>
-                </Dialog.Trigger>
-              </article>
-              <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm" />
-                <Dialog.Content className="fixed left-1/2 top-1/2 z-[61] max-h-[90dvh] w-[calc(100%-32px)] max-w-[1100px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-white shadow-2xl">
-                  <div className="flex items-center justify-between border-b border-black/10 px-6 py-4">
-                    <div>
-                      <Dialog.Title className="font-semibold">{template.name}</Dialog.Title>
-                      <Dialog.Description className="mt-1 text-sm text-[#888]">
-                        템플릿 디자인 미리보기
-                      </Dialog.Description>
+                      {/*
+                      신규 표시는 썸네일 위 모서리 리본이었다. 카드 왼쪽으로 7px 삐져나오고
+                      위로는 12px 떠 있어 모서리에 붙지도 않았고, 무엇보다 템플릿마다 그
+                      자리에 있는 로고를 덮었다 — 리본을 모서리에 정확히 붙이면 로고를 더
+                      가린다. "신규" 는 템플릿 디자인이 아니라 목록이 붙이는 정보이므로
+                      작품 위가 아니라 이름 옆에 둔다.
+                    */}
+                      <span className="mt-3 flex items-center justify-center gap-1.5 text-[14px] leading-6 text-[#888]">
+                        {template.isNew ? (
+                          <span
+                            title="신규 템플릿"
+                            className="rounded-full bg-[#e95172] px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-wide text-white uppercase"
+                          >
+                            new
+                          </span>
+                        ) : null}
+                        {template.name}
+                      </span>
+                    </button>
+                  </Dialog.Trigger>
+                </article>
+                <Dialog.Portal>
+                  <Dialog.Overlay className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm" />
+                  <Dialog.Content className="fixed left-1/2 top-1/2 z-[61] max-h-[90dvh] w-[calc(100%-32px)] max-w-[1100px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-white shadow-2xl">
+                    <div className="flex items-center justify-between border-b border-black/10 px-6 py-4">
+                      <div>
+                        <Dialog.Title className="font-semibold">{template.name}</Dialog.Title>
+                        <Dialog.Description className="mt-1 text-sm text-[#888]">
+                          템플릿 디자인 미리보기
+                        </Dialog.Description>
+                      </div>
+                      <Dialog.Close
+                        className="rounded-full p-2 hover:bg-gray-100"
+                        aria-label="미리보기 닫기"
+                      >
+                        <X className="size-5" />
+                      </Dialog.Close>
                     </div>
-                    <Dialog.Close
-                      className="rounded-full p-2 hover:bg-gray-100"
-                      aria-label="미리보기 닫기"
-                    >
-                      <X className="size-5" />
-                    </Dialog.Close>
-                  </div>
-                  <img
-                    src={template.image}
-                    alt={`${template.name} 템플릿 디자인 미리보기`}
-                    className="w-full"
-                  />
-                </Dialog.Content>
-              </Dialog.Portal>
-            </Dialog.Root>
-          ))
+                    <img
+                      src={template.image}
+                      alt={`${template.name} 템플릿 디자인 미리보기`}
+                      className="w-full"
+                    />
+                  </Dialog.Content>
+                </Dialog.Portal>
+              </Dialog.Root>
+            ))
           ) : (
             <p className="col-span-full py-16 text-center text-[14px] text-[#94a3b8]">
               해당 조건의 템플릿을 준비 중입니다.

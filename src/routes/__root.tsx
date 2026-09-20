@@ -23,9 +23,16 @@ function RootComponent() {
           <Outlet />
         </div>
       ) : (
-        <div className="flex h-screen w-full overflow-hidden bg-white text-[#0f172a]">
+        /*
+          lg 미만에서는 사이드바가 하단 탭바가 되므로 축을 세로로 눕히고, 본문이 먼저
+          오도록 order 를 뒤집는다. lg 이상은 기존 가로 배치 그대로다.
+        */
+        <div className="flex h-dvh w-full flex-col overflow-hidden bg-white text-[#0f172a] lg:flex-row">
           <AppSidebar />
-          <main id="app-main-scroll" className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+          <main
+            id="app-main-scroll"
+            className="order-first min-h-0 min-w-0 flex-1 overflow-y-auto lg:order-none"
+          >
             {/* <HeaderContainer /> */}
             <Outlet />
           </main>

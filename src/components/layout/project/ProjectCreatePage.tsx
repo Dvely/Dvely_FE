@@ -30,10 +30,10 @@ function ProjectCreatePage() {
   };
 
   return (
-    <div className="flex h-screen min-h-0 flex-col bg-[#f8fafc]">
+    <div className="flex h-full min-h-0 flex-col bg-[#f8fafc] lg:h-screen">
       <div className="flex min-h-0 flex-1">
         <section className="flex min-h-0 w-full shrink-0 flex-col bg-white shadow-sm">
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-[#e2e8f0] px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e2e8f0] px-4 py-3 lg:grid lg:grid-cols-[1fr_auto_1fr]">
             <div className="flex min-w-0 flex-wrap items-center gap-2 justify-self-start">
               <Link
                 to="/home"
@@ -93,7 +93,7 @@ function ProjectCreatePage() {
             <div
               className={`relative size-full min-h-0 ${
                 previewDevice === 'mobile'
-                  ? 'mx-auto h-full w-[390px] border-x border-[#e2e8f0] shadow-[0_0_0_1px_rgba(15,23,42,0.06)]'
+                  ? 'mx-auto h-full w-full max-w-[390px] border-x border-[#e2e8f0] shadow-[0_0_0_1px_rgba(15,23,42,0.06)]'
                   : ''
               }`}
             >

@@ -297,12 +297,12 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
         <p className="mt-1 text-[13px] text-[#64748b]">
           상태 {budget?.budgetStatus ?? '-'} · 예상 비용 {budget?.estimatedMonthlyCost ?? '-'}
         </p>
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           <input
             value={budgetAmount}
             onChange={(event) => setBudgetAmount(event.target.value)}
             placeholder="금액"
-            className="h-9 w-40 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
+            className="h-9 w-full min-w-0 rounded-lg border border-[#e5e7eb] px-3 text-[13px] sm:w-40"
           />
           <button
             type="button"
