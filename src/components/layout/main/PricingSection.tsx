@@ -33,27 +33,23 @@ function PricingCard({
   return (
     <div className="flex w-full flex-col justify-between gap-2 rounded-2xl border border-[#0B0C12]/8 px-2.5 py-3 transition-all xl:h-[360px] xl:w-[247.4px] xl:gap-0 xl:rounded-3xl xl:px-4 xl:py-4.5">
       <div className="flex flex-col gap-1.5 xl:gap-2">
-        <p className="text-[11px] leading-snug font-semibold xl:text-[15px] xl:leading-[1.5]">
-          {planName}
-        </p>
-        <p className="text-[18px] leading-tight font-bold xl:text-[40px] xl:leading-[1.5]">
+        <p className="text-[11px] leading-snug font-semibold xl:typo-b3-sb">{planName}</p>
+        <p className="text-[18px] leading-tight font-bold xl:typo-h2-bd">
           {price}
-          <span className="text-[10px] font-normal text-[#64748B] xl:text-[15px] xl:leading-[1.5]">
-            {periodText}
-          </span>
+          <span className="text-[10px] font-normal text-[#64748B] xl:typo-b3-rg">{periodText}</span>
         </p>
-        <p className="text-[11px] leading-snug font-normal text-[#64748B] xl:pb-2 xl:text-[15px] xl:leading-[1.5]">
+        <p className="text-[11px] leading-snug font-normal text-[#64748B] xl:typo-b3-rg xl:pb-2">
           {description}
         </p>
         {features.map((feature) => (
           <p
             key={feature}
-            className="flex items-start gap-1.5 text-[10px] leading-snug font-normal xl:items-center xl:gap-4 xl:text-[13px] xl:leading-[1.5]"
+            className="flex items-start gap-1.5 text-[10px] leading-snug font-normal xl:typo-b5-rg xl:items-center xl:gap-4"
             style={{ color: 'rgba(11, 12, 18, 0.82)' }}
           >
             ✓{' '}
             <span
-              className="text-[10px] leading-snug font-normal xl:text-[15px] xl:leading-[1.5]"
+              className="text-[10px] leading-snug font-normal xl:typo-b3-rg"
               style={{ color: 'rgba(11, 12, 18, 0.72)' }}
             >
               {feature}
@@ -65,7 +61,7 @@ function PricingCard({
       <span
         aria-disabled="true"
         title="결제는 준비 중입니다"
-        className="flex w-full cursor-default items-center justify-center rounded-lg border border-[#0B0C12]/10 bg-[#F1F5F9] py-2 text-[10px] font-semibold text-[#94A3B8] select-none xl:rounded-xl xl:py-3 xl:text-[13px] xl:leading-[1.5]"
+        className="flex w-full cursor-default items-center justify-center rounded-lg border border-[#0B0C12]/10 bg-[#F1F5F9] py-2 text-[10px] font-semibold text-[#94A3B8] select-none xl:typo-b5-sb xl:rounded-xl xl:py-3"
       >
         {buttonText}
       </span>

@@ -12,7 +12,7 @@ function HighlightSection() {
       <div className="relative z-10 flex flex-col items-center justify-center gap-1 px-5 py-14 md:px-0 md:py-23">
         <p className="text-[#94A3B8] text-md">이제는 결과물로 증명할 시간입니다</p>
         <p className="text-[#7C3AED] text-2xl md:text-3xl font-bold">걱정하지 마세요.</p>
-        <p className="typo-h1-bd leading-tight text-center">
+        <p className="typo-h1-bd text-center">
           말로 설명한 만큼,
           <br />
           웹이 따라옵니다

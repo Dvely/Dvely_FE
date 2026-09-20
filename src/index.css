@@ -25,208 +25,280 @@ body {
   color: #0b0c12;
 }
 
-@layer utilities {
-  .typo-h1-bd {
-    font-size: 56px;
-    line-height: 120%;
-    letter-spacing: 0;
-    font-weight: 700;
-  }
-  .typo-h2-bd {
-    font-size: 40px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 700;
-  }
-  .typo-h3-md {
-    font-size: 36px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 500;
-  }
-  .typo-h4-bd {
-    font-size: 30px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 700;
-  }
-  .typo-h4-sb {
-    font-size: 30px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 600;
-  }
-  .typo-h5-sb {
-    font-size: 24px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 600;
-  }
-  .typo-h5-md {
-    font-size: 24px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 500;
-  }
-  .typo-h5-rg {
-    font-size: 24px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 400;
-  }
-
-  .typo-b0-bd {
-    font-size: 20px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 700;
-  }
-  .typo-b0-sb {
-    font-size: 20px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 600;
-  }
-  .typo-b0-md {
-    font-size: 20px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 500;
-  }
-  .typo-b0-rg {
-    font-size: 20px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 400;
-  }
-  .typo-b1-eb {
-    font-size: 18px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 800;
-  }
-  .typo-b1-sb {
-    font-size: 18px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 600;
-  }
-  .typo-b1-md {
-    font-size: 18px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 500;
-  }
-  .typo-b1-rg {
-    font-size: 18px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 400;
-  }
-  .typo-b2-md {
-    font-size: 16px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 500;
-  }
-  .typo-b2-rg {
-    font-size: 16px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 400;
-  }
-  .typo-b3-sb {
-    font-size: 15px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 600;
-  }
-  .typo-b3-rg {
-    font-size: 15px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 400;
-  }
-  .typo-b4-sb {
-    font-size: 14px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 600;
-  }
-  .typo-b5-sb {
-    font-size: 13px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 600;
-  }
-  .typo-b5-rg {
-    font-size: 13px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 400;
-  }
-
-  .typo-c1-rg {
-    font-size: 10px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 400;
-  }
-  .typo-c2-bd {
-    font-size: 7px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 700;
-  }
-  .typo-c2-md {
-    font-size: 7px;
-    line-height: 150%;
-    letter-spacing: 0;
-    font-weight: 500;
-  }
-}
-
 /*
-  모바일 전용 타이포 스케일.
+  타이포 유틸리티.
 
-  PC 값(위 @layer utilities)은 그대로 두고, md(768px) 미만에서만 한 단계씩 줄인다.
-  랜딩의 56px/40px 헤드라인이 좁은 화면에서 줄바꿈으로 무너지는 것을 막는 용도다.
+  @layer utilities 로 두면 md:typo-h2-bd 같은 브레이크포인트 변형이 생성되지
+  않는다 — 커스텀 클래스는 variant 대상이 아니다. 게다가 CSS 뒤쪽에 놓여 Tailwind
+  유틸리티와 특이도가 같은 채로 이겨 버리니, xl:text-[15px] 같은 것으로 덮어쓸
+  수도 없었다.
+
+  @utility 로 정의하면 Tailwind 가 정식 유틸리티로 다루므로 변형이 생기고 정렬
+  순서도 제자리를 찾는다. 좁은 화면 축소값은 각 유틸리티 안에 넣어, 클래스 하나가
+  제 크기를 스스로 들고 있게 했다.
 */
-@layer utilities {
-  @media (max-width: 767.98px) {
-    .typo-h1-bd {
-      font-size: 30px;
-    }
-    .typo-h2-bd {
-      font-size: 26px;
-    }
-    .typo-h3-md {
-      font-size: 24px;
-    }
-    .typo-h4-bd,
-    .typo-h4-sb {
-      font-size: 22px;
-    }
-    .typo-h5-sb,
-    .typo-h5-md,
-    .typo-h5-rg {
-      font-size: 19px;
-    }
-    .typo-b0-bd,
-    .typo-b0-sb,
-    .typo-b0-md,
-    .typo-b0-rg {
-      font-size: 17px;
-    }
-    .typo-b1-eb,
-    .typo-b1-sb,
-    .typo-b1-md,
-    .typo-b1-rg {
-      font-size: 16px;
-    }
+
+@utility typo-h1-bd {
+  font-size: 56px;
+  line-height: 120%;
+  letter-spacing: 0;
+  font-weight: 700;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 30px;
   }
 }
 
+@utility typo-h2-bd {
+  font-size: 40px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 700;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 26px;
+  }
+}
+
+@utility typo-h3-md {
+  font-size: 36px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 500;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 24px;
+  }
+}
+
+@utility typo-h4-bd {
+  font-size: 30px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 700;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 22px;
+  }
+}
+
+@utility typo-h4-sb {
+  font-size: 30px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 600;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 22px;
+  }
+}
+
+@utility typo-h5-sb {
+  font-size: 24px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 600;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 19px;
+  }
+}
+
+@utility typo-h5-md {
+  font-size: 24px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 500;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 19px;
+  }
+}
+
+@utility typo-h5-rg {
+  font-size: 24px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 400;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 19px;
+  }
+}
+
+@utility typo-b0-bd {
+  font-size: 20px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 700;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 17px;
+  }
+}
+
+@utility typo-b0-sb {
+  font-size: 20px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 600;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 17px;
+  }
+}
+
+@utility typo-b0-md {
+  font-size: 20px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 500;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 17px;
+  }
+}
+
+@utility typo-b0-rg {
+  font-size: 20px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 400;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 17px;
+  }
+}
+
+@utility typo-b1-eb {
+  font-size: 18px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 800;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 16px;
+  }
+}
+
+@utility typo-b1-sb {
+  font-size: 18px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 600;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 16px;
+  }
+}
+
+@utility typo-b1-md {
+  font-size: 18px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 500;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 16px;
+  }
+}
+
+@utility typo-b1-rg {
+  font-size: 18px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 400;
+
+  /* md 미만에서 한 단계 축소 */
+  @media (width < 48rem) {
+    font-size: 16px;
+  }
+}
+
+@utility typo-b2-md {
+  font-size: 16px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+@utility typo-b2-rg {
+  font-size: 16px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+@utility typo-b3-sb {
+  font-size: 15px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+@utility typo-b3-rg {
+  font-size: 15px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+@utility typo-b4-sb {
+  font-size: 14px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+@utility typo-b5-sb {
+  font-size: 13px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+@utility typo-b5-rg {
+  font-size: 13px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+@utility typo-c1-rg {
+  font-size: 10px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+@utility typo-c2-bd {
+  font-size: 7px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 700;
+}
+
+@utility typo-c2-md {
+  font-size: 7px;
+  line-height: 150%;
+  letter-spacing: 0;
+  font-weight: 500;
+}
 /*
   좁은 화면용 가로 레일.
 
