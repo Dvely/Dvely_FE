@@ -47,19 +47,88 @@ async function getConversationDetail(conversationId: number) {
     .catch(errorResponse());
 }
 
-/** 대화 메시지 목록 조회 API GET */
+/**
+ * 서버가 다음 페이지 커서를 싣는 헤더.
+ *
+ * 본문이 아니라 헤더로 오고, 없으면 마지막 페이지다. 백엔드가 CORS
+ * exposedHeaders 에 넣어 두어 브라우저 JS 가 읽을 수 있다.
+ */
+const NEXT_CURSOR_HEADER = 'x-qeploy-next-cursor';
+
+/**
+ * 한 번에 받을 최대 행 수.
+ *
+ * 서버 상한과 같은 값이다. 기본값(500)으로 두고 그냥 부르면 **오래된 것부터 500건만**
+ * 오는데, 메시지는 요청 1회에 5~9행씩 쌓여 사용자 턴 55~100 회면 그 선에 닿는다.
+ * 그 뒤로는 방금 보낸 메시지가 응답에 없어 화면에서 사라진다 — 오류도 로딩도 없이.
+ */
+const MESSAGE_PAGE_SIZE = 1000;
+
+/**
+ * 한 대화가 넘길 수 있는 페이지 수.
+ *
+ * 커서가 끝나지 않는 상황(서버 버그·잘못된 커서 순환)에서 무한 루프로 브라우저를
+ * 멈추게 하지 않기 위한 안전선이다. 1000 × 50 = 50,000 행이면 어떤 대화든 덮는다.
+ */
+const MESSAGE_PAGE_LIMIT = 50;
+
+/**
+ * 응답 헤더 한 줄을 읽는다.
+ *
+ * axios 는 헤더를 AxiosHeaders 로 감싸는데, 버전과 어댑터에 따라 평범한 객체로
+ * 오기도 한다. 둘 다 받아 둔다 — 여기서 못 읽으면 다음 페이지가 있는데도 마지막으로
+ * 판단해 조용히 잘린다.
+ */
+function readHeader(headers: unknown, name: string): string | null {
+  if (!headers || typeof headers !== 'object') return null;
+
+  const bag = headers as Record<string, unknown> & { get?: (key: string) => unknown };
+  const value = typeof bag.get === 'function' ? bag.get(name) : bag[name];
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+/**
+ * 대화 메시지 목록 조회 API GET.
+ *
+ * 커서가 끝날 때까지 이어 받는다. 서버는 오름차순을 유지하므로 받은 순서대로 이으면
+ * 그대로 시간순이고, 화면은 지금까지와 같은 구조를 쓴다 — 이 함수가 하는 일은
+ * "잘린 뒤를 마저 가져오는 것" 뿐이다.
+ */
 async function getConversationMessageList(conversationId: number) {
   const { conversationId: id } = getConversationMessageListParamsSchema.parse({
     conversationId,
   });
 
-  return Http.instance
-    .get<ApiResponse<GetConversationMessageListResType>>(`${conversationsEndpoint}/${id}/messages`)
-    .then((response) => {
-      const body = succesResponse<ApiResponse<GetConversationMessageListResType>>(response);
-      return getConversationMessageListResSchema.parse(body.data);
-    })
-    .catch(errorResponse());
+  const messages: GetConversationMessageListResType = [];
+  let after: string | null = null;
+
+  for (let page = 0; page < MESSAGE_PAGE_LIMIT; page += 1) {
+    // 기존 호출들과 같은 모양으로 둔다 — then 에서 꺼내고 catch 로 ApiError 를 던진다
+    const {
+      rows,
+      nextCursor,
+    }: { rows: GetConversationMessageListResType; nextCursor: string | null } = await Http.instance
+      .get<ApiResponse<GetConversationMessageListResType>>(
+        `${conversationsEndpoint}/${id}/messages`,
+        { params: { limit: MESSAGE_PAGE_SIZE, ...(after ? { after } : {}) } },
+      )
+      .then((response) => {
+        const body = succesResponse<ApiResponse<GetConversationMessageListResType>>(response);
+        return {
+          rows: getConversationMessageListResSchema.parse(body.data),
+          nextCursor: readHeader(response.headers, NEXT_CURSOR_HEADER),
+        };
+      })
+      .catch(errorResponse());
+
+    messages.push(...rows);
+
+    // 헤더가 없으면 마지막 페이지다
+    if (!nextCursor) break;
+    after = nextCursor;
+  }
+
+  return messages;
 }
 
 /** 대화 메시지 생성 API POST */
