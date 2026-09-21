@@ -397,7 +397,7 @@ function AgentConversationPanel({
   /*
     본인 키로 도는 제공자만 남긴다.
 
-    서버 목록에는 **서버 키가 설정된 제공자**(ANTHROPIC·OPENAI·GLM)와 **사용자가
+    운영 서버 목록에는 **서버 키가 설정된 제공자**(ANTHROPIC·OPENAI·GLM)와 **사용자가
     등록한 키로 도는 코딩 에이전트**(CLAUDE_CODE·CODEX)가 섞여 온다. 앞의 것은
     운영자 계정으로 과금되므로 공개 서비스에서 그대로 열어 둘 수 없다.
 
@@ -405,6 +405,17 @@ function AgentConversationPanel({
     `models: []`, `defaultModel: null` 로 오고, 벤더 제공자는 항상 모델을 갖는다
     (FRONTEND_API_GUIDE 제공자 절). 이름을 하드코딩하지 않는 이유는 벤더가 늘 때마다
     배포가 한 번 더 필요해지기 때문이다.
+
+    ── 이 필터를 걷어낼 시점 (#101) ──
+    BE #364(PR #365)가 벤더 제공자도 본인 키 기준으로만 내려주게 바꿨다. 그 뒤로는
+    목록에 온 것이 전부 본인 키라 이 필터가 오히려 해롭다 — 코딩 에이전트가 없는
+    GLM 만 등록한 사용자는 고를 것이 없어진다.
+
+    다만 **그 변경은 아직 develop 에만 있다.** 운영(main)은 `application-prod.yml`
+    에 서버 키가 그대로 있고 `AiProviderQueryService.addIfConfigured` 가 그것을
+    목록에 넣는다. 지금 필터를 걷으면 운영에서 서버 키 GLM 이 다시 선택 가능해진다.
+    **BE 가 develop → main 릴리스된 뒤에 걷을 것.** 그때는 조건을 지우는 대신
+    model·thinking 선택 UI 를 숨기는 데 쓰면 된다(코딩 에이전트에 그 값을 보내면 400).
   */
   const providerOptions = (aiProviders?.providers ?? []).filter(
     (option) => option.models.length === 0 && option.defaultModel === null,
@@ -529,10 +540,20 @@ function AgentConversationPanel({
         targetConversationId = created.conversationId;
       }
 
+      /*
+        제공자 없이는 보내지 않는다.
+
+        비워 보내면 서버가 자기 기본 제공자(= 운영자 키)로 실행한다. 입력 잠금이
+        이미 막고 있지만, 목록이 늦게 오거나 선택이 비는 순간이 한 번이라도 생기면
+        그 요청은 운영자 과금으로 나간다 — 잠금과 별개로 여기서 한 번 더 끊는다.
+      */
+      if (!selectedProvider) {
+        throw new Error('AI 제공자가 선택되지 않았습니다. 본인 AI API 키를 먼저 등록해 주세요.');
+      }
+
       const createdMessage = await postConversationMessageCreate(targetConversationId, {
         content,
-        // 고르지 않았으면 보내지 않는다 — 서버 기본값을 쓰게 둔다
-        ...(selectedProvider ? { aiProvider: selectedProvider } : {}),
+        aiProvider: selectedProvider,
       });
 
       const taskId = createdMessage.taskId?.trim() || '';
