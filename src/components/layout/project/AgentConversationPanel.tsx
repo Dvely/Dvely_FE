@@ -45,6 +45,7 @@ import type {
 import AgentClarificationForm from '@/components/layout/project/AgentClarificationForm';
 import AgentAnsweredClarificationCard from '@/components/layout/project/AgentAnsweredClarificationCard';
 import AgentTaskTimeline from '@/components/layout/project/AgentTaskTimeline';
+import MessageMarkdown from '@/components/layout/project/MessageMarkdown';
 import {
   canRenderAnsweredChoices,
   canRenderAsChoices,
@@ -1541,9 +1542,19 @@ function MessageBubble({ message }: MessageBubbleProps) {
               : 'rounded-xl border border-[#e2e8f0] bg-white px-3.5 py-3 text-[#64748b]'
         }`}
       >
-        <p className="whitespace-pre-wrap">
-          {linkifyMessageContent(message.content, linkClassName)}
-        </p>
+        {/*
+          마크다운은 에이전트 답변에만 쓴다.
+
+          사용자 줄은 적은 그대로 보여준다 — 내가 친 `**` 가 화면에서 사라지면 무엇을
+          보냈는지 확인할 수 없고, 그 줄은 다시 보낼 때 쓰는 원문이기도 하다.
+        */}
+        {isAssistant ? (
+          <MessageMarkdown content={message.content} linkClassName={linkClassName} />
+        ) : (
+          <p className="whitespace-pre-wrap">
+            {linkifyMessageContent(message.content, linkClassName)}
+          </p>
+        )}
       </div>
     </div>
   );
