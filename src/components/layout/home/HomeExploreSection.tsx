@@ -48,8 +48,12 @@ function HomeExploreSection() {
   const [sort, setSort] = useState<SortOption>('popular');
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
-  const { templates: myTemplates, isLoading: isMyTemplatesLoading, addTemplate, removeTemplate } =
-    useMyTemplates();
+  const {
+    templates: myTemplates,
+    isLoading: isMyTemplatesLoading,
+    addTemplate,
+    removeTemplate,
+  } = useMyTemplates();
   const filteredCards = useMemo(() => {
     let items = templateCards;
 
@@ -117,7 +121,7 @@ function HomeExploreSection() {
             type="button"
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'relative pb-3 text-[15px] font-medium transition',
+              'relative pb-3 text-[15px] font-medium transition cursor-pointer',
               activeTab === tab.id
                 ? 'text-[#0f172a] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-[#0f172a]'
                 : 'text-[#94a3b8] hover:text-[#64748b]',
@@ -143,7 +147,9 @@ function HomeExploreSection() {
             aria-label="정렬 기준"
           />
         ) : (
-          <p className="hidden text-[13px] text-[#64748b] sm:block">ZIP을 첨부하고 카테고리를 지정하세요.</p>
+          <p className="hidden text-[13px] text-[#64748b] sm:block">
+            ZIP을 첨부하고 카테고리를 지정하세요.
+          </p>
         )}
       </div>
 
