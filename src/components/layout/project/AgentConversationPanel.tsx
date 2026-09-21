@@ -54,6 +54,7 @@ import {
   toMessageTone,
 } from '@/components/layout/project/chatMessageKind.utils';
 import type { ConversationMessage } from '@/types/chat.type';
+import { aiProviderLabel, isCodingAgentProvider } from '@/types/aiProvider.type';
 import {
   AGENT_CHAT_QUERY_KEY,
   clearHomeAgentPromptSendGuard,
@@ -395,31 +396,18 @@ function AgentConversationPanel({
   const { data: aiProviders, isLoading: isProvidersLoading } =
     useAiProviderListQuery(AGENT_CHAT_QUERY_KEY);
   /*
-    본인 키로 도는 제공자만 남긴다.
+    서버가 내려준 목록을 그대로 쓴다.
 
-    운영 서버 목록에는 **서버 키가 설정된 제공자**(ANTHROPIC·OPENAI·GLM)와 **사용자가
-    등록한 키로 도는 코딩 에이전트**(CLAUDE_CODE·CODEX)가 섞여 온다. 앞의 것은
-    운영자 계정으로 과금되므로 공개 서비스에서 그대로 열어 둘 수 없다.
+    BE #364(운영 릴리스 #366) 이후 이 응답은 **본인이 키를 등록한 제공자만** 담는다.
+    배포에 벤더 키가 없고 키를 읽는 갈래가 UserAiKeyResolver 하나뿐이라, 여기 온 것은
+    전부 본인 키로 돈다 — FE 가 다시 거를 이유가 없다.
 
-    둘을 가르는 신호는 모델 목록이다 — 코딩 에이전트는 벤더 CLI 가 모델을 정하므로
-    `models: []`, `defaultModel: null` 로 오고, 벤더 제공자는 항상 모델을 갖는다
-    (FRONTEND_API_GUIDE 제공자 절). 이름을 하드코딩하지 않는 이유는 벤더가 늘 때마다
-    배포가 한 번 더 필요해지기 때문이다.
-
-    ── 이 필터를 걷어낼 시점 (#101) ──
-    BE #364(PR #365)가 벤더 제공자도 본인 키 기준으로만 내려주게 바꿨다. 그 뒤로는
-    목록에 온 것이 전부 본인 키라 이 필터가 오히려 해롭다 — 코딩 에이전트가 없는
-    GLM 만 등록한 사용자는 고를 것이 없어진다.
-
-    다만 **그 변경은 아직 develop 에만 있다.** 운영(main)은 `application-prod.yml`
-    에 서버 키가 그대로 있고 `AiProviderQueryService.addIfConfigured` 가 그것을
-    목록에 넣는다. 지금 필터를 걷으면 운영에서 서버 키 GLM 이 다시 선택 가능해진다.
-    **BE 가 develop → main 릴리스된 뒤에 걷을 것.** 그때는 조건을 지우는 대신
-    model·thinking 선택 UI 를 숨기는 데 쓰면 된다(코딩 에이전트에 그 값을 보내면 400).
+    예전에는 `models: []` 로 서버 키 벤더를 걸러냈다. 그 조건은 이제 "코드 생성 모델을
+    벤더 CLI 가 정해 고를 것이 없다" 는 뜻일 뿐이라, 목록 필터로 쓰면 코딩 에이전트가
+    없는 GLM 만 등록한 사용자가 아무것도 못 쓴다(#101). 기본 선택에만 쓴다.
   */
-  const providerOptions = (aiProviders?.providers ?? []).filter(
-    (option) => option.models.length === 0 && option.defaultModel === null,
-  );
+  // `?? []` 는 매 렌더 새 배열이라, 아래 기본 선택 이펙트가 끝없이 다시 돈다
+  const providerOptions = useMemo(() => aiProviders?.providers ?? [], [aiProviders]);
   const canChooseProvider = providerOptions.length > 1;
   /** 쓸 수 있는 본인 키 제공자가 하나도 없다. 키를 넣기 전에는 보낼 수 없다 */
   const hasNoByokProvider = !isProvidersLoading && providerOptions.length === 0;
@@ -427,14 +415,21 @@ function AgentConversationPanel({
   /*
     제공자를 비워 보내지 않는다.
 
-    aiProvider 를 생략하면 서버가 자기 기본 제공자(= 서버 키)로 실행한다. 공개
-    서비스에서는 그 경로가 곧 운영자 과금이므로, 화면이 언제나 본인 키 제공자를
-    명시해서 보낸다.
+    aiProvider 를 생략하면 서버가 400 을 낸다(BE #364). 예전에는 그것이 서버 기본
+    제공자 = 운영자 과금으로 이어졌고, 지금은 그 경로 자체가 없어졌다. 어느 쪽이든
+    화면은 언제나 고른 제공자를 명시해서 보낸다.
   */
   useEffect(() => {
     if (providerOptions.length === 0) return;
     if (providerOptions.some((option) => option.provider === selectedProvider)) return;
-    setSelectedProvider(providerOptions[0].provider);
+    /*
+      벤더 키 하나를 등록하면 벤더와 코딩 에이전트가 함께 내려온다(ANTHROPIC →
+      ANTHROPIC + CLAUDE_CODE). 이 패널은 코드를 고쳐 배포까지 가는 자리라 CLI 로 도는
+      쪽을 먼저 고른다 — 서버 순서대로 두면 벤더 채팅 모델이 기본이 되어, 예전부터
+      쓰던 사용자에게는 말없이 실행 방식이 바뀐 것이 된다.
+    */
+    const preferred = providerOptions.find(isCodingAgentProvider) ?? providerOptions[0];
+    setSelectedProvider(preferred.provider);
   }, [providerOptions, selectedProvider]);
 
   const queryClient = useQueryClient();
@@ -1330,8 +1325,12 @@ function AgentConversationPanel({
           본인 키로 도는 제공자만 담긴다(위 providerOptions 참고). 둘 이상일 때만
           고를 의미가 있다.
 
-          "기본값" 항목은 두지 않는다 — 비워 보내면 서버가 자기 키로 실행하고 그
-          비용이 운영자에게 간다. 고르지 않은 상태로 보낼 수 있는 길을 남기지 않는다.
+          같은 키로 도는 실행 방식이 둘 다 온다 — 벤더(Anthropic)는 모델을 직접 부르고,
+          코딩 에이전트(Claude Code)는 벤더 CLI 를 돌린다. 어느 쪽이든 과금은 본인
+          계정이므로 둘 다 열어 두고 고르게 한다(#101).
+
+          "기본값" 항목은 두지 않는다 — 비워 보내면 서버가 400 을 낸다. 예전에는 그것이
+          서버 키 실행으로 이어졌고, 지금은 그 경로 자체가 없다.
 
           크레딧이 없는 키는 서버도 미리 알 수 없어 보낸 뒤에야 드러난다. 그때는 오류
           안내가 다른 제공자를 권하는데, 이 셀렉트가 그 말이 가리키는 자리다.
@@ -1364,7 +1363,7 @@ function AgentConversationPanel({
             >
               {providerOptions.map((option) => (
                 <option key={option.provider} value={option.provider}>
-                  {option.provider}
+                  {aiProviderLabel(option.provider)}
                 </option>
               ))}
             </select>
