@@ -174,7 +174,7 @@ function HomePromptHero() {
                     aria-haspopup="listbox"
                     title={cloudButtonLabel}
                     className={cn(
-                      'inline-flex h-8 max-w-[220px] items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition',
+                      'inline-flex h-8 max-w-[220px] items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition cursor-pointer',
                       projectPickerOpen
                         ? 'border-[#0f172a] bg-white ring-2 ring-[#0f172a]/10 text-[#0f172a]'
                         : 'border-[#e5e7eb] bg-[#f8fafc] text-[#334155] hover:bg-[#f1f5f9]',
@@ -225,7 +225,7 @@ function HomePromptHero() {
             onClick={() =>
               setPrompt((prev) => (prev ? prev : `${action.label} 관련 작업을 도와주세요`))
             }
-            className="inline-flex items-center gap-1.5 rounded-full border border-[#e5e7eb] bg-white px-3.5 py-2 text-[13px] font-medium text-[#334155] shadow-sm transition hover:border-[#cbd5e1] hover:bg-[#f8fafc]"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#e5e7eb] bg-white px-3.5 py-2 text-[13px] font-medium text-[#334155] shadow-sm transition hover:border-[#cbd5e1] hover:bg-[#f8fafc] cursor-pointer"
           >
             {'emoji' in action && action.emoji ? (
               <span className="text-[14px] leading-none" aria-hidden>
