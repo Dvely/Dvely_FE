@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SendHorizontal } from 'lucide-react';
@@ -45,7 +54,7 @@ import type {
 import AgentClarificationForm from '@/components/layout/project/AgentClarificationForm';
 import AgentAnsweredClarificationCard from '@/components/layout/project/AgentAnsweredClarificationCard';
 import AgentTaskTimeline from '@/components/layout/project/AgentTaskTimeline';
-import MessageMarkdown from '@/components/layout/project/MessageMarkdown';
+
 import {
   canRenderAnsweredChoices,
   canRenderAsChoices,
@@ -55,6 +64,17 @@ import {
   toMessageTone,
 } from '@/components/layout/project/chatMessageKind.utils';
 import type { ConversationMessage } from '@/types/chat.type';
+
+/*
+  마크다운 렌더러는 따로 받는다.
+
+  파서가 통째로 들어가 번들이 150KB 가까이 늘었는데, 그 무게를 랜딩 페이지 방문자까지
+  받고 있었다. 이 패널은 로그인하고 프로젝트에 들어와야 열리므로 여기서만 받으면 된다.
+
+  경로 문자열을 아래 preload 와 똑같이 적는 것이 중요하다 — 번들러가 같은 청크로 묶어
+  주어야 미리 받아 둔 것이 그대로 쓰인다.
+*/
+const MessageMarkdown = lazy(() => import('@/components/layout/project/MessageMarkdown'));
 import { aiProviderLabel, isCodingAgentProvider } from '@/types/aiProvider.type';
 import {
   AGENT_CHAT_QUERY_KEY,
@@ -305,6 +325,20 @@ function AgentConversationPanel({
   useEffect(() => {
     onCloudConnectRequired?.(cloudConnectRequest);
   }, [cloudConnectRequest, onCloudConnectRequired]);
+
+  /*
+    마크다운 청크를 패널이 열리는 순간 미리 받는다.
+
+    첫 답변을 그릴 때 받기 시작하면 그동안 원문(`**2**`)이 잠깐 보인다 — 고치려던 화면이
+    한 번 스쳐 지나가는 셈이다. 메시지는 조회가 끝나야 오므로, 그 왕복 동안 같이 받아
+    두면 실제로 기다리는 일이 거의 없다.
+
+    실패해도 삼킨다. 못 받으면 아래 Suspense 폴백이 글자 그대로 보여주고, 그건 이
+    변경 이전의 화면과 같다 — 대화를 못 읽게 되는 것이 아니다.
+  */
+  useEffect(() => {
+    void import('@/components/layout/project/MessageMarkdown').catch(() => {});
+  }, []);
   /*
     상한까지 기다렸는데 아직 도는 중. 실패가 아니라서 오류 알림을 띄우면 안 된다 —
     서버는 계속 돌고 결과는 채팅에 올라온다. 조용한 안내로 남긴다.
@@ -1549,7 +1583,24 @@ function MessageBubble({ message }: MessageBubbleProps) {
           보냈는지 확인할 수 없고, 그 줄은 다시 보낼 때 쓰는 원문이기도 하다.
         */}
         {isAssistant ? (
-          <MessageMarkdown content={message.content} linkClassName={linkClassName} />
+          /*
+            폴백을 빈 자리가 아니라 **글자 그대로**로 둔다.
+
+            청크를 받는 동안 비워 두면 답변이 통째로 깜빡이고, 그 사이 높이가 0 이라
+            스크롤이 튄다. 원문을 그대로 두면 읽을 수는 있는 상태로 기다리게 되고 —
+            이 변경 이전의 화면과 같다 — 준비되는 순간 같은 자리에서 서식만 입는다.
+
+            경계를 줄마다 두는 이유는 목록 전체가 한꺼번에 비는 것을 막기 위해서다.
+          */
+          <Suspense
+            fallback={
+              <p className="whitespace-pre-wrap">
+                {linkifyMessageContent(message.content, linkClassName)}
+              </p>
+            }
+          >
+            <MessageMarkdown content={message.content} linkClassName={linkClassName} />
+          </Suspense>
         ) : (
           <p className="whitespace-pre-wrap">
             {linkifyMessageContent(message.content, linkClassName)}
