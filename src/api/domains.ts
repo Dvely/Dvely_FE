@@ -19,7 +19,6 @@ import {
 } from '@/types/domain.type';
 
 const defaultQueryOptions = {
-  gcTime: 0,
   retry: false,
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,
@@ -56,7 +55,6 @@ function useHostingTargetsQuery(queryKey: unknown) {
   return useQuery({
     queryKey: ['hosting-targets', queryKey],
     queryFn: getHostingTargets,
-    gcTime: 0,
     retry: false,
     refetchOnWindowFocus: false,
   });

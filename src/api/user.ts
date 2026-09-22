@@ -8,7 +8,6 @@ import { useQuery } from '@tanstack/react-query';
 const endpoint = '/users';
 
 const defaultQueryOptions = {
-  gcTime: 0,
   retry: false,
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,

@@ -89,7 +89,6 @@ function useAiProviderListQuery(queryKey: unknown) {
   return useQuery({
     queryKey: ['ai-provider-list', queryKey],
     queryFn: getAiProviderList,
-    gcTime: 0,
     retry: false,
     refetchOnWindowFocus: false,
   });
@@ -419,7 +418,6 @@ function useApprovalTaskWatchQuery(queryKey: unknown, taskId: string | null) {
     queryKey: ['approval-task-watch', queryKey, taskId],
     queryFn: () => getAgentTask(taskId!),
     enabled: typeof taskId === 'string' && taskId.length > 0,
-    gcTime: 0,
     refetchInterval: (query) => {
       const task = query.state.data;
       if (task && WATCH_TERMINAL_STATUSES.has(task.status)) return false;
@@ -436,7 +434,6 @@ function useAgentTaskQuery(queryKey: unknown, taskId: string | null) {
     queryKey: ['agent-task', queryKey, taskId],
     queryFn: () => getAgentTask(taskId!),
     enabled: typeof taskId === 'string' && taskId.length > 0,
-    gcTime: 0,
     refetchInterval: (query) => {
       const task = query.state.data;
       if (task?.previewUrl?.trim()) return false;
@@ -460,7 +457,6 @@ function useAgentTaskEventListQuery(
     queryKey: ['agent-task-events', queryKey, taskId, afterEventId],
     queryFn: () => getAgentTaskEventList(taskId!, afterEventId),
     enabled: typeof taskId === 'string' && taskId.length > 0,
-    gcTime: 0,
   });
 }
 
