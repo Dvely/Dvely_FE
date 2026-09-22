@@ -20,7 +20,6 @@ import {
 
 const endpoint = '/cloud-connections';
 const defaultQueryOptions = {
-  gcTime: 0,
   retry: false,
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,

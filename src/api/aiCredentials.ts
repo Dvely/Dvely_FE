@@ -13,7 +13,6 @@ import {
 const endpoint = '/ai-credentials';
 
 const defaultQueryOptions = {
-  gcTime: 0,
   retry: false,
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,

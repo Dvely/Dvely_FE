@@ -15,7 +15,6 @@ import {
 } from '@/types/server.type';
 
 const defaultQueryOptions = {
-  gcTime: 0,
   retry: false,
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,

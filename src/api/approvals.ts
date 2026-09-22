@@ -19,7 +19,6 @@ function unwrapApiData<T>(body: T | ApiResponse<T>): T {
 }
 
 const defaultQueryOptions = {
-  gcTime: 0,
   retry: false,
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,

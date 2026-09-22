@@ -12,7 +12,6 @@ import {
 } from '@/types/database.type';
 
 const defaultQueryOptions = {
-  gcTime: 0,
   retry: false,
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,

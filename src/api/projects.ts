@@ -57,7 +57,6 @@ import {
 
 const endpoint = '/projects';
 const defaultQueryOptions = {
-  gcTime: 0,
   retry: false,
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,

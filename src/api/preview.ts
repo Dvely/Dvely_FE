@@ -194,7 +194,6 @@ function useProjectPreviewQuery(
     queryKey: ['project-preview-session', queryKey, projectId],
     queryFn: () => getProjectPreviewSession(projectId),
     enabled: Number.isInteger(projectId) && projectId > 0,
-    gcTime: 0,
     refetchOnWindowFocus: true,
     refetchInterval: (query) => {
       const status = query.state.data?.status;

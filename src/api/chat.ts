@@ -242,7 +242,6 @@ function useConversationDetailQuery(queryKey: unknown, conversationId: number) {
     queryKey: ['conversation-detail', queryKey, conversationId],
     queryFn: () => getConversationDetail(conversationId),
     enabled: Number.isInteger(conversationId) && conversationId > 0,
-    gcTime: 0,
   });
 }
 
@@ -274,7 +273,6 @@ function useConversationMessageListQuery(
     queryKey: ['conversation-message-list', queryKey, conversationId],
     queryFn: () => getConversationMessageList(conversationId),
     enabled: Number.isInteger(conversationId) && conversationId > 0,
-    gcTime: 0,
     refetchInterval: isAwaitingServerMessage
       ? AWAITING_SERVER_MESSAGE_POLL_MS
       : BASELINE_MESSAGE_POLL_MS,
@@ -288,7 +286,6 @@ function useProjectConversationListQuery(queryKey: unknown, projectId: number) {
     queryKey: ['project-conversation-list', queryKey, projectId],
     queryFn: () => getProjectConversationList(projectId),
     enabled: Number.isInteger(projectId),
-    gcTime: 0,
   });
 }
 
@@ -299,7 +296,6 @@ function useTrashConversationListQuery(queryKey: unknown, enabled = true) {
     queryKey: ['trash-conversation-list', queryKey],
     queryFn: getTrashConversationList,
     enabled,
-    gcTime: 0,
   });
 }
 
