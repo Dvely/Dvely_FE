@@ -51,21 +51,42 @@ function useAgentTaskEventStream(
   const events = isCurrent ? stream.events : [];
   const isFallback = isCurrent ? stream.isFallback : false;
 
-  // 렌더한 최대 eventId. 재연결 시 이 값 뒤부터 이어받는다
-  const lastEventIdRef = useRef(0);
+  /*
+    받은 최대 eventId. 재연결 시 이 값 뒤부터 이어받는다.
+
+    **taskId 와 짝으로 든다.** 예전에는 숫자만 들고 effect 안에서 0 으로 되돌렸는데,
+    이 effect 는 `enabled` 가 토글될 때도 다시 돈다 — 승인을 누르면 `isAssistantReplying`
+    이 false→true 로 바뀌면서 **같은 태스크인데 커서가 0 이 됐다.** 그러면 서버가 지금까지의
+    이벤트를 처음부터 다시 흘려보낸다.
+
+    화면은 멀쩡해 보였다. appendEvent 의 eventId 중복 제거가 그걸 걸러냈기 때문이다.
+    그래서 결함이 방어에 가려져 서버 로그로만 드러났다 — 같은 크기의 응답이 재연결마다
+    반복되는 형태였다. 긴 태스크일수록 그만큼 다시 받는다.
+
+    커서를 태스크에 묶으면 "태스크가 바뀔 때만 0" 이 된다. 이벤트 목록을 `{ taskId, events }`
+    짝으로 들고 있는 것과 같은 이유이고 같은 방식이다.
+  */
+  const cursorRef = useRef<{ taskId: string | null; lastEventId: number }>({
+    taskId: null,
+    lastEventId: 0,
+  });
 
   useEffect(() => {
     if (!enabled || !taskId) return;
 
-    lastEventIdRef.current = 0;
+    // 다른 태스크로 바뀌었을 때만 되돌린다. 같은 태스크면 멈춘 자리에서 이어받는다
+    if (cursorRef.current.taskId !== taskId) {
+      cursorRef.current = { taskId, lastEventId: 0 };
+    }
+
     const controller = new AbortController();
     let cancelled = false;
     let failures = 0;
 
     /** 같은 이벤트가 두 번 들어와도 한 번만 남긴다 — 재연결 경계에서 겹칠 여지를 막는다 */
     const appendEvent = (event: AgentTaskEvent) => {
-      if (event.eventId > lastEventIdRef.current) {
-        lastEventIdRef.current = event.eventId;
+      if (event.eventId > cursorRef.current.lastEventId) {
+        cursorRef.current = { taskId, lastEventId: event.eventId };
       }
       setStream((prev) => {
         // 태스크가 바뀌었으면 앞선 목록을 잇지 않고 새로 시작한다
@@ -103,7 +124,7 @@ function useAgentTaskEventStream(
 
       while (!cancelled && !controller.signal.aborted) {
         try {
-          const list = await getAgentTaskEventList(taskId, lastEventIdRef.current);
+          const list = await getAgentTaskEventList(taskId, cursorRef.current.lastEventId);
           list.forEach(appendEvent);
 
           if (list.some((event) => STREAM_TERMINAL_STATUSES.has(event.status))) return;
@@ -121,7 +142,7 @@ function useAgentTaskEventStream(
 
         try {
           await openAgentTaskEventStream(taskId, {
-            afterEventId: lastEventIdRef.current,
+            afterEventId: cursorRef.current.lastEventId,
             signal: controller.signal,
             onEvent: (event) => {
               appendEvent(event);
