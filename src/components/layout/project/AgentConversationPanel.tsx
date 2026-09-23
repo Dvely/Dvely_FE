@@ -1092,17 +1092,88 @@ function AgentConversationPanel({
         setRunningTaskId(task.taskId || null);
         setAwaitingInput(toAwaitingInput(task, task.taskId));
         // 새로고침해도 무엇을 정했는지는 남아 있어야 한다 — 서버가 들고 있는 기록이라
-        // 다시 물으면 그대로 온다. 진행 문구는 세우지 않는다: 여기서 되살리는 것은
-        // 기록이지 "지금 도는 중" 이 아니다
+        // 다시 물으면 그대로 온다
         captureAnsweredClarification(task);
-      } catch {
-        // 못 되살려도 대화는 그대로 쓸 수 있다
+
+        /*
+          아직 도는 중이면 지켜보는 것까지 되살린다.
+
+          예전에는 태스크 ID 와 되묻기만 되살리고 **진행 표시는 안 세웠다.** 그런데
+          진행 스켈레톤도 이벤트 스트림도 `isAssistantReplying` 이 켜져 있어야 뜬다
+          (스트림 훅의 `enabled` 가 그 값이다). 그래서 작업이 도는 중에 새로고침하거나
+          화면을 옮겼다 돌아오면 **단계 막대도 경과 시간도 통째로 사라졌다.**
+
+          "진행 중인지 오류인지 알 수가 없다" 는 것이 이 표시를 만든 이유인데, 화면을
+          한 번 옮기면 그 상태로 되돌아갔다. 게다가 입력창까지 열려 있어서, 도는 작업
+          위에 새 요청을 겹쳐 보낼 수 있었다.
+
+          끝난 것에는 켜지 않는다. 서버가 안 끝난 태스크만 주지만 그중에는 사람 결정을
+          기다리는 것(WAITING_*)도 있고, 그건 "도는 중" 이 아니라 "네 차례" 다 —
+          스켈레톤을 띄우면 기다리라는 뜻이 되어 반대로 읽힌다.
+        */
+        if (SETTLED_AGENT_TASK_STATUSES.has(task.status)) return;
+
+        setIsAssistantReplying(true);
+        captureTaskProgress(task);
+
+        pollAbortRef.current?.abort();
+        const controller = new AbortController();
+        pollAbortRef.current = controller;
+
+        const settled = await pollAgentTask(task.taskId, {
+          signal: controller.signal,
+          onProgress: captureTaskProgress,
+        });
+        if (cancelled) return;
+
+        const pendingApprovalId = await resolvePendingApprovalId(
+          settled,
+          projectId,
+          conversationId,
+        );
+        if (cancelled) return;
+
+        setPendingApprovalId(pendingApprovalId);
+        setAwaitingInput(toAwaitingInput(settled, settled.taskId));
+        setRetryableTask(isRetryableFailure(settled) ? settled : null);
+        setIsAssistantReplying(false);
+        setProgressTask(null);
+        setRunningTaskId(null);
+
+        // 끝나는 사이 서버가 대화에 적은 결과를 가져온다
+        void queryClient.invalidateQueries({
+          queryKey: ['conversation-message-list', AGENT_CHAT_QUERY_KEY, conversationId],
+        });
+        void queryClient.invalidateQueries({ queryKey: ['project-approval-list'] });
+      } catch (error) {
+        // 못 되살려도 대화는 그대로 쓸 수 있다. 다만 켜 둔 진행 표시는 반드시 끈다 —
+        // 안 끄면 끝난 작업이 영영 "작업 중" 으로 남는다
+        setIsAssistantReplying(false);
+        setProgressTask(null);
+
+        /*
+          상한까지 기다렸는데 아직 도는 중이면 실패가 아니다. 결과는 서버가 채팅에 적고
+          메시지 목록 폴링이 가져오므로, 다른 경로와 같은 안내로 넘긴다.
+        */
+        if (error instanceof AgentPollTimeoutError) {
+          setRunningTaskId(null);
+          setLongRunningBaseline(serverMessages?.length ?? 0);
+        }
       }
     })();
 
     return () => {
       cancelled = true;
     };
+    /*
+      대화가 바뀔 때와 바깥이 다시 물어보라고 할 때만 돈다.
+
+      본문이 쓰는 나머지(`captureTaskProgress`·`projectId`·`queryClient`·메시지 수)를
+      의존성에 넣으면 렌더마다 effect 가 다시 돈다 — 특히 메시지 수는 폴링이 2초마다
+      바꾸므로, 그때마다 복원 조회와 폴링이 새로 시작된다. 같은 태스크를 여러 번
+      지켜보게 되고 abort 가 서로를 끊는다.
+    */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, restoreToken]);
 
   const cancelTaskMutation = useMutation({
