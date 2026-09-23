@@ -28,13 +28,8 @@
         "personalization": "Personalization",
         "ai-credentials": "AI API keys",
         "api-tokens": "Access tokens (MCP)",
-        "mail": "Mail",
-        "data-control": "Data control",
         "my-computer": "My Computer",
-        "cloud-browser": "Cloud connections",
-        "skills": "Skills",
-        "connectors": "Connectors",
-        "integrations": "Integrations"
+        "cloud-browser": "Cloud connections"
       }
     },
     "placeholder": {
