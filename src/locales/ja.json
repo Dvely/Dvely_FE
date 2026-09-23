@@ -28,13 +28,8 @@
         "personalization": "パーソナライズ",
         "ai-credentials": "AI API キー",
         "api-tokens": "アクセストークン (MCP)",
-        "mail": "Mail",
-        "data-control": "データ管理",
         "my-computer": "My Computer",
-        "cloud-browser": "クラウド接続",
-        "skills": "スキル",
-        "connectors": "コネクター",
-        "integrations": "連携"
+        "cloud-browser": "クラウド接続"
       }
     },
     "placeholder": {

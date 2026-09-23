@@ -28,13 +28,8 @@
         "personalization": "개인화",
         "ai-credentials": "AI API 키",
         "api-tokens": "액세스 토큰 (MCP)",
-        "mail": "Mail",
-        "data-control": "데이터 제어",
         "my-computer": "My Computer",
-        "cloud-browser": "클라우드 연결",
-        "skills": "스킬",
-        "connectors": "커넥터",
-        "integrations": "통합"
+        "cloud-browser": "클라우드 연결"
       }
     },
     "placeholder": {
