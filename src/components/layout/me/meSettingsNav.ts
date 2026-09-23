@@ -1,19 +1,14 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   Cloud,
-  Database,
   KeyRound,
   Terminal,
   HelpCircle,
   LayoutGrid,
-  Link2,
-  Mail,
   Monitor,
-  Plug,
   Star,
   User,
   SlidersHorizontal,
-  Wand2,
 } from 'lucide-react';
 
 export type MeSettingsSectionId =
@@ -21,13 +16,8 @@ export type MeSettingsSectionId =
   | 'general'
   | 'billing'
   | 'personalization'
-  | 'mail'
-  | 'data-control'
   | 'my-computer'
   | 'cloud-browser'
-  | 'skills'
-  | 'connectors'
-  | 'integrations'
   | 'ai-credentials'
   | 'api-tokens';
 
@@ -58,13 +48,8 @@ export const meSettingsNavGroups: MeSettingsNavGroup[] = [
     items: [
       { id: 'ai-credentials', icon: KeyRound },
       { id: 'api-tokens', icon: Terminal },
-      { id: 'mail', icon: Mail },
-      { id: 'data-control', icon: Database },
       { id: 'my-computer', icon: Monitor },
       { id: 'cloud-browser', icon: Cloud },
-      { id: 'skills', icon: Wand2 },
-      { id: 'connectors', icon: Plug },
-      { id: 'integrations', icon: Link2 },
     ],
   },
 ];
