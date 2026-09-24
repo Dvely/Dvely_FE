@@ -53,11 +53,14 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-      # 현재 main에는 lint 에러가 17건 남아 있다(대부분 react-refresh/only-export-components).
-      # 배포를 막을 성질의 문제가 아니라서 지금은 실패해도 진행시키되, 결과는 보이게 둔다.
-      # 재고 정리가 끝나면 이 줄만 지우면 곧바로 차단 검사가 된다.
+      # 재고가 0이 되어 차단 검사로 올린다.
+      #
+      # 원래는 17건이 남아 있어 continue-on-error로 통과시키되 결과만 보이게 두었고,
+      # "재고 정리가 끝나면 이 줄만 지우면 된다"고 적어두었다. 그 조건이 충족됐다.
+      #
+      # 유예하는 동안 새 위반이 계속 들어왔다 — CI가 안 막으니 통과한 채로 병합됐고,
+      # 그때마다 사람이 알아채야 했다. 막아두면 들어오는 시점에 걸린다.
       - name: Lint
-        continue-on-error: true
         run: bun run lint
 
       # 여기서 굽는 값은 검증용 더미다. 실제 프로덕션 값은 deploy-ec2.yml이 주입한다.
