@@ -42,6 +42,7 @@ import {
 } from '@/lib/apiErrorGuide';
 import { refreshUserInfoInBackground } from '@/api/user';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
+import { ChunkErrorBoundary } from '@/components/common/ChunkErrorBoundary';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
 import AgentRetryCard from '@/components/layout/project/AgentRetryCard';
 import { useAgentTaskEventStream } from '@/hooks/useAgentTaskEventStream';
@@ -333,8 +334,8 @@ function AgentConversationPanel({
     한 번 스쳐 지나가는 셈이다. 메시지는 조회가 끝나야 오므로, 그 왕복 동안 같이 받아
     두면 실제로 기다리는 일이 거의 없다.
 
-    실패해도 삼킨다. 못 받으면 아래 Suspense 폴백이 글자 그대로 보여주고, 그건 이
-    변경 이전의 화면과 같다 — 대화를 못 읽게 되는 것이 아니다.
+    실패해도 대화는 읽을 수 있다 — 아래 경계가 원문을 그대로 그린다. 사용자에게 알리는
+    일은 여기서 하지 않는다. Vite 가 window 로 쏘는 신호를 앱 전체가 하나로 본다.
   */
   useEffect(() => {
     void import('@/components/layout/project/MessageMarkdown').catch(() => {});
@@ -1636,6 +1637,14 @@ function MessageBubble({ message }: MessageBubbleProps) {
       ? 'underline underline-offset-2 hover:text-[#7f1d1d]'
       : 'text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]';
 
+  /*
+    서식 없이 원문만 그린 것. 세 자리에서 같은 것을 쓴다 — 사용자 말풍선, 조각을
+    기다리는 동안, 그리고 끝내 못 받았을 때. 한 번만 만들어야 셋이 어긋나지 않는다.
+  */
+  const plainText = (
+    <p className="whitespace-pre-wrap">{linkifyMessageContent(message.content, linkClassName)}</p>
+  );
+
   return (
     <div className={isUser ? 'ml-6' : undefined}>
       <div
@@ -1655,27 +1664,23 @@ function MessageBubble({ message }: MessageBubbleProps) {
         */}
         {isAssistant ? (
           /*
-            폴백을 빈 자리가 아니라 **글자 그대로**로 둔다.
+            기다리는 동안과 끝내 못 받았을 때 보여줄 것이 같다 — 원문 그대로다. 그래서
+            한 번만 만들어 둘 다에 넘긴다(plainText). 빈 자리로 두면 답변이 통째로
+            깜빡이고 높이가 0 이라 스크롤이 튄다.
 
-            청크를 받는 동안 비워 두면 답변이 통째로 깜빡이고, 그 사이 높이가 0 이라
-            스크롤이 튄다. 원문을 그대로 두면 읽을 수는 있는 상태로 기다리게 되고 —
-            이 변경 이전의 화면과 같다 — 준비되는 순간 같은 자리에서 서식만 입는다.
+            **경계가 Suspense 바깥에 있어야 한다.** Suspense 는 기다리는 것만 다루고,
+            조각을 못 받은 것은 렌더 중 throw 라 경계가 받는다. 이게 없으면 React 가
+            트리를 통째로 버려서 대화가 빈 화면이 된다.
 
             경계를 줄마다 두는 이유는 목록 전체가 한꺼번에 비는 것을 막기 위해서다.
           */
-          <Suspense
-            fallback={
-              <p className="whitespace-pre-wrap">
-                {linkifyMessageContent(message.content, linkClassName)}
-              </p>
-            }
-          >
-            <MessageMarkdown content={message.content} linkClassName={linkClassName} />
-          </Suspense>
+          <ChunkErrorBoundary fallback={plainText} resetKey={message.content}>
+            <Suspense fallback={plainText}>
+              <MessageMarkdown content={message.content} linkClassName={linkClassName} />
+            </Suspense>
+          </ChunkErrorBoundary>
         ) : (
-          <p className="whitespace-pre-wrap">
-            {linkifyMessageContent(message.content, linkClassName)}
-          </p>
+          plainText
         )}
       </div>
     </div>
