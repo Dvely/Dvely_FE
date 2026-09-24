@@ -1,21 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Calendar, Sparkles } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import profileFallback from '@/assets/icons/profile.svg';
 import { useUserInfoQuery } from '@/api/user';
 import {
   MeAccountActionRow,
-  MeAccountCreditRow,
   MeAccountSettingsSkeleton,
 } from '@/components/layout/me/MeAccountSettings.shared';
-import { formatDisplayName } from '@/components/layout/me/MeSettingsSidebar';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 import { logoutSession } from '@/lib/logout';
-
-const DEMO_CREDIT_TOTAL = 1000;
-const DEMO_CREDIT_USED = 1000;
-const DEMO_DAILY_REFRESH = 300;
 
 function MeAccountSettingsPanel() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -26,11 +19,16 @@ function MeAccountSettingsPanel() {
   const { data: userResponse, isLoading } = useUserInfoQuery('me-account-settings');
 
   const user = userResponse?.data;
-  const username = user?.username?.trim() || 'user';
-  const displayName = formatDisplayName(username);
+  /*
+    서버가 준 것만 보여준다. 못 받았으면 빈 값으로 두고 아래에서 '—' 로 그린다.
+
+    예전에는 `|| 'user'` 로 채워서, 조회가 실패하면 화면에 `user` 라는 이름이 떴다.
+    이메일을 사용자명으로 지어내던 것과 같은 종류다 — 서버가 모른다고 답한 자리에 우리가
+    만든 값을 놓으면 사용자는 그게 자기 것인 줄 안다.
+  */
+  const username = user?.username?.trim() ?? '';
   const avatarUrl = user?.avatarUrl?.trim() || profileFallback;
   const userId = user?.id != null ? String(user.id) : '';
-  const email = username.includes('@') ? username : `${username}@users.noreply.github.com`;
 
   const handleCopyUserId = useCallback(async () => {
     if (!userId) return;
@@ -70,53 +68,27 @@ function MeAccountSettingsPanel() {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-2">
-        <p className="text-[13px] font-medium text-[#334155]">{t('me.account.fullName')}</p>
+        {/*
+          "전체 이름" 이 아니라 GitHub 계정이다.
+
+          서버는 이름을 안 준다(`userSchema` 에 그런 필드가 없다). 예전에는 사용자명을
+          `formatDisplayName` 으로 다듬어 `john-doe` → `John Doe` 로 만들고 그것을
+          "전체 이름" 이라고 불렀다. 사용자가 적은 적 없는 이름이 진짜처럼 보인다 —
+          이메일을 지어내던 것과 같은 패턴이다.
+        */}
+        <p className="text-[13px] font-medium text-[#334155]">{t('me.account.githubAccount')}</p>
         <div className="flex items-center gap-3">
           <img src={avatarUrl} alt="" className="size-9 shrink-0 rounded-full object-cover" />
-          <div className="flex h-11 min-w-0 flex-1 items-center rounded-xl border border-[#e2e8f0] bg-white px-3.5 text-[14px] text-[#0f172a]">
-            {displayName}
+          <div className="flex h-11 min-w-0 flex-1 items-center rounded-xl border border-[#e2e8f0] bg-white px-3.5 text-[14px] break-all text-[#0f172a]">
+            {username || '—'}
           </div>
         </div>
       </section>
 
-      <section className="rounded-2xl bg-[#f8fafc] p-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[15px] font-semibold text-[#0f172a]">{t('me.account.plan.free')}</p>
-          <button
-            type="button"
-            className="inline-flex h-8 items-center rounded-lg bg-[#0f172a] px-3.5 text-[12px] font-semibold text-white transition hover:bg-[#1e293b]"
-          >
-            {t('me.account.plan.upgrade')}
-          </button>
-        </div>
-
-        <div className="mt-4 divide-y divide-[#e2e8f0] border-t border-[#e2e8f0] pt-2">
-          <MeAccountCreditRow
-            icon={Sparkles}
-            label={t('me.account.credits.title')}
-            value={t('me.account.credits.value', {
-              used: DEMO_CREDIT_USED,
-              total: DEMO_CREDIT_TOTAL,
-            })}
-            helpLabel={t('me.account.credits.help')}
-          />
-          <MeAccountCreditRow
-            icon={Calendar}
-            label={t('me.account.dailyRefresh.title')}
-            value={String(DEMO_DAILY_REFRESH)}
-            description={t('me.account.dailyRefresh.description')}
-            helpLabel={t('me.account.dailyRefresh.help')}
-          />
-        </div>
-      </section>
 
       <section className="flex flex-col gap-4">
         <h3 className="text-[15px] font-semibold text-[#0f172a]">{t('me.account.personalInfo')}</h3>
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <p className="text-[13px] font-medium text-[#64748b]">{t('me.account.email')}</p>
-            <p className="text-[14px] text-[#0f172a]">{email}</p>
-          </div>
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <p className="text-[13px] font-medium text-[#64748b]">{t('me.account.userId')}</p>
