@@ -50,7 +50,6 @@ function HomeExploreSection() {
 
   const {
     templates: myTemplates,
-    isLoading: isMyTemplatesLoading,
     addTemplate,
     removeTemplate,
   } = useMyTemplates();
@@ -86,7 +85,6 @@ function HomeExploreSection() {
 
     return items;
   }, [myTemplates, styleFilter, themeFilter]);
-  const skeletonItems = Array.from({ length: 3 }, (_, idx) => idx);
 
   const handleOpenUpload = useCallback(() => {
     setActiveTab('my-templates');
@@ -168,20 +166,9 @@ function HomeExploreSection() {
       ) : (
         <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <HomeAddTemplateCard label="ZIP 템플릿 추가" onClick={handleOpenUpload} />
-          {isMyTemplatesLoading
-            ? skeletonItems.map((item) => (
-                <div
-                  key={item}
-                  className="aspect-16/10 animate-pulse rounded-2xl border border-[#e2e8f0] bg-[#f8fafc]"
-                />
-              ))
-            : filteredMyTemplates.map((template) => (
-                <MyTemplateFileCard
-                  key={template.id}
-                  template={template}
-                  onRemove={removeTemplate}
-                />
-              ))}
+          {filteredMyTemplates.map((template) => (
+            <MyTemplateFileCard key={template.id} template={template} onRemove={removeTemplate} />
+          ))}
         </div>
       )}
 
