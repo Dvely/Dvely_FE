@@ -24,7 +24,6 @@
       "items": {
         "account": "계정",
         "general": "일반",
-        "billing": "사용량 및 청구",
         "personalization": "개인화",
         "ai-credentials": "AI API 키",
         "api-tokens": "액세스 토큰 (MCP)",
@@ -37,22 +36,8 @@
     },
     "account": {
       "fullName": "전체 이름",
-      "plan": {
-        "free": "무료",
-        "upgrade": "업그레이드"
-      },
-      "credits": {
-        "title": "크레딧",
-        "value": "{{used}} / {{total}}",
-        "help": "크레딧 안내"
-      },
-      "dailyRefresh": {
-        "title": "매일 리프레시 크레딧",
-        "description": "매일 00:00에 300으로 새로고침",
-        "help": "매일 리프레시 크레딧 안내"
-      },
       "personalInfo": "개인 정보",
-      "email": "이메일",
+      "githubAccount": "GitHub 계정",
       "userId": "사용자 ID",
       "copy": "복사",
       "copied": "복사됨",
