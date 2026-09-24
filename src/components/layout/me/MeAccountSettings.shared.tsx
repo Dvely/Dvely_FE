@@ -1,46 +1,5 @@
 import type { ReactNode } from 'react';
-import { CircleHelp, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-type MeAccountCreditRowProps = {
-  icon: typeof Sparkles;
-  label: string;
-  value: string;
-  description?: string;
-  helpLabel: string;
-};
-
-function MeAccountCreditRow({
-  icon: Icon,
-  label,
-  value,
-  description,
-  helpLabel,
-}: MeAccountCreditRowProps) {
-  return (
-    <div className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
-      <div className="flex min-w-0 flex-1 items-start gap-2.5">
-        <Icon className="mt-0.5 size-4 shrink-0 text-[#64748b]" strokeWidth={1.75} />
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <p className="text-[14px] font-medium text-[#0f172a]">{label}</p>
-            <button
-              type="button"
-              aria-label={helpLabel}
-              className="text-[#94a3b8] transition hover:text-[#64748b]"
-            >
-              <CircleHelp className="size-3.5" strokeWidth={1.75} />
-            </button>
-          </div>
-          {description ? (
-            <p className="mt-0.5 text-[12px] leading-relaxed text-[#64748b]">{description}</p>
-          ) : null}
-        </div>
-      </div>
-      <p className="shrink-0 text-[14px] font-medium text-[#0f172a]">{value}</p>
-    </div>
-  );
-}
 
 type MeAccountActionRowProps = {
   title: string;
@@ -101,4 +60,4 @@ function MeAccountSettingsSkeleton() {
   );
 }
 
-export { MeAccountActionRow, MeAccountCreditRow, MeAccountSettingsSkeleton };
+export { MeAccountActionRow, MeAccountSettingsSkeleton };

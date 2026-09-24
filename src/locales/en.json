@@ -37,22 +37,8 @@
     },
     "account": {
       "fullName": "Full name",
-      "plan": {
-        "free": "Free",
-        "upgrade": "Upgrade"
-      },
-      "credits": {
-        "title": "Credits",
-        "value": "{{used}} / {{total}}",
-        "help": "About credits"
-      },
-      "dailyRefresh": {
-        "title": "Daily refresh credits",
-        "description": "Refreshes to 300 every day at 00:00",
-        "help": "About daily refresh credits"
-      },
       "personalInfo": "Personal information",
-      "email": "Email",
+      "githubAccount": "GitHub account",
       "userId": "User ID",
       "copy": "Copy",
       "copied": "Copied",
