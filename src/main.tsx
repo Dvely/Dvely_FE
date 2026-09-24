@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { RouterProvider } from '@tanstack/react-router';
 import './index.css';
 import '@/lib/i18n';
+import { listenForAssetLoadFailure } from '@/lib/assetLoadFailure';
 import { router } from './router';
 
 if (import.meta.env.DEV) {
@@ -30,6 +31,12 @@ if (import.meta.env.DEV) {
   토큰이 회전하는 프리뷰 열람 권한만 예외로 `gcTime: 0` 을 남겼다(usePreviewAccessQuery).
   그건 캐시가 남으면 이미 무효가 된 주소를 다시 쓰게 된다.
 */
+/*
+  나눠 받는 조각을 못 받는 일은 어느 화면에서든 난다. 그래서 신호도 앱 시작 때 한 번
+  걸고 앱 전체가 하나를 본다 — 화면마다 따로 잡으면 그 화면에서만 알리게 된다.
+*/
+listenForAssetLoadFailure();
+
 const CACHE_RETENTION_MS = 5 * 60 * 1000;
 
 const queryClient = new QueryClient({

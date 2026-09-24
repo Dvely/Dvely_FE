@@ -3,6 +3,7 @@ import AppRouterEffects from '@/components/auth/AppRouterEffects';
 import GitHubAppInstallPromptDialog from '@/components/auth/GitHubAppInstallPromptDialog';
 import NotFoundPage from '@/components/layout/NotFoundPage';
 import AppSidebar from '@/components/common/AppSidebar';
+import { AssetLoadFailureNotice } from '@/components/common/AssetLoadFailureNotice';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -16,6 +17,7 @@ function RootComponent() {
   return (
     <>
       <AppRouterEffects />
+      <AssetLoadFailureNotice />
       <GitHubAppInstallPromptDialog />
 
       {!showAppChrome ? (
