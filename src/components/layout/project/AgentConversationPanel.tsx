@@ -42,6 +42,8 @@ import {
 } from '@/lib/apiErrorGuide';
 import { refreshUserInfoInBackground } from '@/api/user';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
+import { ChunkErrorBoundary } from '@/components/common/ChunkErrorBoundary';
+import { looksLikeChunkLoadError } from '@/lib/chunkLoadError';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
 import AgentRetryCard from '@/components/layout/project/AgentRetryCard';
 import { useAgentTaskEventStream } from '@/hooks/useAgentTaskEventStream';
@@ -333,11 +335,16 @@ function AgentConversationPanel({
     한 번 스쳐 지나가는 셈이다. 메시지는 조회가 끝나야 오므로, 그 왕복 동안 같이 받아
     두면 실제로 기다리는 일이 거의 없다.
 
-    실패해도 삼킨다. 못 받으면 아래 Suspense 폴백이 글자 그대로 보여주고, 그건 이
-    변경 이전의 화면과 같다 — 대화를 못 읽게 되는 것이 아니다.
+    실패해도 대화는 읽을 수 있다 — 아래 경계가 원문을 그대로 그린다.
+
+    다만 **삼키지는 않는다.** 배포가 바뀌어 옛 조각이 404 가 된 것이라면 그 사실을 여기서
+    가장 먼저 알 수 있다. 메시지를 그리기도 전이라 사용자가 깨진 화면을 보기 전에 안내를
+    띄울 수 있다.
   */
   useEffect(() => {
-    void import('@/components/layout/project/MessageMarkdown').catch(() => {});
+    void import('@/components/layout/project/MessageMarkdown').catch((error: unknown) => {
+      if (looksLikeChunkLoadError(error)) setIsStaleBuild(true);
+    });
   }, []);
   /*
     상한까지 기다렸는데 아직 도는 중. 실패가 아니라서 오류 알림을 띄우면 안 된다 —
@@ -371,6 +378,14 @@ function AgentConversationPanel({
     고를 게 없는 셀렉트는 자리만 차지하고, 그때 동작은 지금과 똑같다.
   */
   const [selectedProvider, setSelectedProvider] = useState<string>('');
+  /*
+    열어 둔 탭이 들고 있는 빌드가 이미 지워졌다.
+
+    배포가 산출물을 트리째 교체하므로, 그 순간부터 옛 해시 파일은 404 다. 지연 로딩
+    조각을 그때 처음 부르면 못 받는다. 화면은 경계가 받아 버티지만 **그 탭은 계속
+    낡은 채**라, 새로고침을 권해야 회복된다(index.html 은 no-cache 라 늘 최신이 온다).
+  */
+  const [isStaleBuild, setIsStaleBuild] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   /** 오류 안내가 데려다 줄 곳. 없으면 확인 버튼만 나온다 */
   const [alertNavigation, setAlertNavigation] = useState<Extract<
@@ -1314,7 +1329,11 @@ function AgentConversationPanel({
                 <AssistantReplySkeleton key={`message-skeleton-${item}`} />
               ))
             : displayMessages.map((message) => (
-                <MessageBubble key={message.messageId} message={message} />
+                <MessageBubble
+                  key={message.messageId}
+                  message={message}
+                  onChunkLoadError={() => setIsStaleBuild(true)}
+                />
               ))}
           {/*
             무엇을 정했는지. 답하는 폼이 사라진 자리를 대신하는 **읽기 전용** 기록이다.
@@ -1377,6 +1396,27 @@ function AgentConversationPanel({
           지금 적는 말이 새 요청이 아니라 위 질문의 답이라는 것을 알린다. 이 표시가 없으면
           사용자는 평소처럼 말을 걸었다고 생각하는데, 실제로는 멈춰 선 작업이 이어 달린다
         */}
+        {/*
+          이 탭이 들고 있는 빌드가 서버에서 사라졌다.
+
+          알림(모달)이 아니라 조용한 줄로 둔다 — 지금 하던 일을 막을 이유가 없고, 대화는
+          그대로 읽힌다. 다만 **누를 것을 같이 준다.** "새 버전이 있습니다" 라고만 하고
+          방법을 안 주면 사용자가 할 수 있는 게 없다.
+        */}
+        {isStaleBuild ? (
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-[#fde68a] bg-[#fffbeb] px-2.5 py-1.5">
+            <p className="text-[12px] leading-relaxed text-[#92400e]">
+              새 버전이 배포됐습니다. 새로고침하면 최신 화면으로 이어집니다.
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="shrink-0 cursor-pointer rounded-lg bg-[#92400e] px-2.5 py-1 text-[12px] font-semibold text-white transition hover:bg-[#78350f]"
+            >
+              새로고침
+            </button>
+          </div>
+        ) : null}
         {isLongRunning ? (
           /*
             실패 알림(모달)이 아니라 조용한 줄로 둔다. 작업은 돌고 있고 사용자가 할 일도
@@ -1533,6 +1573,8 @@ function AgentConversationPanel({
 
 type MessageBubbleProps = {
   message: ConversationMessage;
+  /** 마크다운 조각을 못 받았을 때. 배포가 바뀐 것으로 보면 새로고침을 권한다 */
+  onChunkLoadError: () => void;
 };
 
 const MESSAGE_URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -1625,7 +1667,7 @@ const ASSISTANT_TONE_CLASS = {
   failed: 'rounded-xl border-l-2 border-[#fca5a5] bg-[#fef2f2] px-3.5 py-3 text-[#b91c1c]',
 } as const;
 
-function MessageBubble({ message }: MessageBubbleProps) {
+function MessageBubble({ message, onChunkLoadError }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
   // 종류는 서버가 알려준 것만 믿는다. 모르는 값이면 지금까지와 똑같이 그려진다
@@ -1663,15 +1705,32 @@ function MessageBubble({ message }: MessageBubbleProps) {
 
             경계를 줄마다 두는 이유는 목록 전체가 한꺼번에 비는 것을 막기 위해서다.
           */
-          <Suspense
+          /*
+            경계가 Suspense 바깥에 있어야 한다. Suspense 는 기다리는 것만 다루고,
+            조각을 **못 받은 것**은 렌더 중 throw 라 경계가 받는다. 이게 없으면 React 가
+            트리를 통째로 버려서 대화가 빈 화면이 된다.
+
+            둘의 폴백이 같은 것은 우연이 아니다 — 기다리는 동안과 끝내 못 받았을 때
+            보여줄 것이 같다. 원문을 그대로 두면 읽을 수는 있는 상태가 된다.
+          */
+          <ChunkErrorBoundary
             fallback={
               <p className="whitespace-pre-wrap">
                 {linkifyMessageContent(message.content, linkClassName)}
               </p>
             }
+            onChunkLoadError={onChunkLoadError}
           >
-            <MessageMarkdown content={message.content} linkClassName={linkClassName} />
-          </Suspense>
+            <Suspense
+              fallback={
+                <p className="whitespace-pre-wrap">
+                  {linkifyMessageContent(message.content, linkClassName)}
+                </p>
+              }
+            >
+              <MessageMarkdown content={message.content} linkClassName={linkClassName} />
+            </Suspense>
+          </ChunkErrorBoundary>
         ) : (
           <p className="whitespace-pre-wrap">
             {linkifyMessageContent(message.content, linkClassName)}
