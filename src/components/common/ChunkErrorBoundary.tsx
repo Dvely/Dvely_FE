@@ -1,5 +1,21 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { looksLikeChunkLoadError } from '@/lib/chunkLoadError';
+
+type ChunkErrorBoundaryProps = {
+  children: ReactNode;
+  /** 대신 보여줄 것. 조각이 하려던 일의 가장 단순한 형태여야 한다 */
+  fallback: ReactNode;
+  /**
+   * 값이 바뀌면 다시 시도한다.
+   *
+   * 한 번 실패하면 영영 대신 보여줄 것만 나오는 상태를 피하려는 것이다. 내용이 바뀐
+   * 메시지는 다시 그려볼 가치가 있다.
+   */
+  resetKey?: unknown;
+};
+
+type ChunkErrorBoundaryState = {
+  hasError: boolean;
+};
 
 /**
  * 지연 로딩한 조각이 안 와도 화면이 살아 있게 한다.
@@ -8,27 +24,14 @@ import { looksLikeChunkLoadError } from '@/lib/chunkLoadError';
  * throw 되고, 그건 Suspense 가 아니라 에러 경계가 받아야 한다. 경계가 없으면 React 가
  * 트리를 통째로 버려서 **빈 화면**이 된다 — 한 줄이 서식을 못 입는 것과는 전혀 다른 결과다.
  *
- * 이 일이 실제로 나는 자리는 배포 직후다. 산출물이 트리째 교체되므로 열어 둔 탭이 들고
- * 있는 옛 해시 파일은 그 순간부터 404 다. 그 탭에서 조각을 처음 불러오는 순간 터진다.
+ * 조각 문제가 아닌 오류도 같이 받는다. 빈 화면보다는 대신 보여줄 것이 낫기 때문인데,
+ * 그러면 진짜 버그가 조용히 묻힌다. 그래서 콘솔에는 반드시 남긴다 — 화면은 버티되
+ * 원인은 드러나야 한다.
  *
- * 그래서 두 가지를 한다 — 대신 보여줄 것을 그리고, 배포가 바뀐 것 같으면 바깥에 알린다.
- * 알리는 쪽은 사용자에게 새로고침을 권하기 위한 것이고, 새로고침하면 회복된다(index.html
- * 은 no-cache 라 항상 최신이 온다).
+ * 사용자에게 알리는 일은 여기서 하지 않는다. 조각을 못 받았다는 신호는 Vite 가 window 로
+ * 쏘고(`vite:preloadError`), 그걸 앱 전체가 하나로 본다(`lib/assetLoadFailure`). 경계마다
+ * 알리면 메시지 수만큼 중복으로 불린다.
  */
-
-
-type ChunkErrorBoundaryProps = {
-  children: ReactNode;
-  /** 조각 대신 보여줄 것. 조각이 하려던 일의 가장 단순한 형태여야 한다 */
-  fallback: ReactNode;
-  /** 배포가 바뀐 것으로 보일 때 한 번 부른다. 새로고침을 권하는 데 쓴다 */
-  onChunkLoadError?: () => void;
-};
-
-type ChunkErrorBoundaryState = {
-  hasError: boolean;
-};
-
 class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, ChunkErrorBoundaryState> {
   state: ChunkErrorBoundaryState = { hasError: false };
 
@@ -36,16 +39,13 @@ class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, ChunkErrorBo
     return { hasError: true };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    if (looksLikeChunkLoadError(error)) {
-      this.props.onChunkLoadError?.();
-      return;
+  componentDidUpdate(prev: ChunkErrorBoundaryProps) {
+    if (this.state.hasError && prev.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false });
     }
+  }
 
-    /*
-      조각 문제가 아닌 오류는 삼키지 않는다. 화면은 fallback 으로 버티지만, 원인을 모르면
-      아무도 못 고친다 — 콘솔에는 남겨야 한다.
-    */
+  componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('[chunk-boundary] 렌더 중 오류', error, info.componentStack);
   }
 
