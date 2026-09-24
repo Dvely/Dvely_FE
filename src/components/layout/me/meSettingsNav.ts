@@ -6,7 +6,6 @@ import {
   HelpCircle,
   LayoutGrid,
   Monitor,
-  Star,
   User,
   SlidersHorizontal,
 } from 'lucide-react';
@@ -14,7 +13,6 @@ import {
 export type MeSettingsSectionId =
   | 'account'
   | 'general'
-  | 'billing'
   | 'personalization'
   | 'my-computer'
   | 'cloud-browser'
@@ -39,7 +37,6 @@ export const meSettingsNavGroups: MeSettingsNavGroup[] = [
     items: [
       { id: 'account', icon: User },
       { id: 'general', icon: SlidersHorizontal },
-      { id: 'billing', icon: Star },
       { id: 'personalization', icon: LayoutGrid },
     ],
   },

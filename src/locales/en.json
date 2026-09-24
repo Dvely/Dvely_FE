@@ -24,7 +24,6 @@
       "items": {
         "account": "Account",
         "general": "General",
-        "billing": "Usage & billing",
         "personalization": "Personalization",
         "ai-credentials": "AI API keys",
         "api-tokens": "Access tokens (MCP)",
@@ -50,7 +49,6 @@
       }
     },
     "general": {
-      "appearance": "Appearance",
       "language": "Language",
       "languages": {
         "ko": "한국어",

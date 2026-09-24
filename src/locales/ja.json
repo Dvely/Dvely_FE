@@ -24,7 +24,6 @@
       "items": {
         "account": "アカウント",
         "general": "一般",
-        "billing": "使用量と請求",
         "personalization": "パーソナライズ",
         "ai-credentials": "AI API キー",
         "api-tokens": "アクセストークン (MCP)",
@@ -50,7 +49,6 @@
       }
     },
     "general": {
-      "appearance": "外観",
       "language": "言語",
       "languages": {
         "ko": "한국어",

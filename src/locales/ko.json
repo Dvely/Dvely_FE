@@ -24,7 +24,6 @@
       "items": {
         "account": "계정",
         "general": "일반",
-        "billing": "사용량 및 청구",
         "personalization": "개인화",
         "ai-credentials": "AI API 키",
         "api-tokens": "액세스 토큰 (MCP)",

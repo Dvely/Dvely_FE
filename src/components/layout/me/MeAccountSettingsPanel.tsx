@@ -7,7 +7,6 @@ import {
   MeAccountActionRow,
   MeAccountSettingsSkeleton,
 } from '@/components/layout/me/MeAccountSettings.shared';
-import { formatDisplayName } from '@/components/layout/me/MeSettingsSidebar';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 import { logoutSession } from '@/lib/logout';
 
@@ -20,19 +19,16 @@ function MeAccountSettingsPanel() {
   const { data: userResponse, isLoading } = useUserInfoQuery('me-account-settings');
 
   const user = userResponse?.data;
-  const username = user?.username?.trim() || 'user';
-  const displayName = formatDisplayName(username);
+  /*
+    서버가 준 것만 보여준다. 못 받았으면 빈 값으로 두고 아래에서 '—' 로 그린다.
+
+    예전에는 `|| 'user'` 로 채워서, 조회가 실패하면 화면에 `user` 라는 이름이 떴다.
+    이메일을 사용자명으로 지어내던 것과 같은 종류다 — 서버가 모른다고 답한 자리에 우리가
+    만든 값을 놓으면 사용자는 그게 자기 것인 줄 안다.
+  */
+  const username = user?.username?.trim() ?? '';
   const avatarUrl = user?.avatarUrl?.trim() || profileFallback;
   const userId = user?.id != null ? String(user.id) : '';
-  /*
-    서버가 이메일을 안 준다.
-
-    예전에는 GitHub 사용자명에 `@users.noreply.github.com` 을 붙여 **주소를 지어냈다.**
-    그건 사용자의 이메일이 아니고, "개인 정보 > 이메일" 자리에 놓이면 사용자는 그게
-    자기 주소인 줄 안다. 없는 것을 있는 것처럼 보여주는 쪽이 비어 있는 것보다 나쁘다.
-
-    지금 확실히 아는 것은 GitHub 계정뿐이라 그것을 그 이름으로 보여준다.
-  */
 
   const handleCopyUserId = useCallback(async () => {
     if (!userId) return;
@@ -72,38 +68,27 @@ function MeAccountSettingsPanel() {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-2">
-        <p className="text-[13px] font-medium text-[#334155]">{t('me.account.fullName')}</p>
+        {/*
+          "전체 이름" 이 아니라 GitHub 계정이다.
+
+          서버는 이름을 안 준다(`userSchema` 에 그런 필드가 없다). 예전에는 사용자명을
+          `formatDisplayName` 으로 다듬어 `john-doe` → `John Doe` 로 만들고 그것을
+          "전체 이름" 이라고 불렀다. 사용자가 적은 적 없는 이름이 진짜처럼 보인다 —
+          이메일을 지어내던 것과 같은 패턴이다.
+        */}
+        <p className="text-[13px] font-medium text-[#334155]">{t('me.account.githubAccount')}</p>
         <div className="flex items-center gap-3">
           <img src={avatarUrl} alt="" className="size-9 shrink-0 rounded-full object-cover" />
-          <div className="flex h-11 min-w-0 flex-1 items-center rounded-xl border border-[#e2e8f0] bg-white px-3.5 text-[14px] text-[#0f172a]">
-            {displayName}
+          <div className="flex h-11 min-w-0 flex-1 items-center rounded-xl border border-[#e2e8f0] bg-white px-3.5 text-[14px] break-all text-[#0f172a]">
+            {username || '—'}
           </div>
         </div>
       </section>
 
-      {/*
-        요금제·크레딧 블록을 걷어냈다.
-
-        "무료 / 크레딧 1000 중 1000 / 매일 00:00에 300으로 새로고침" 이 전부 화면에
-        박아둔 상수였다. 서버에는 그런 값을 주는 API 가 없고(`GET /users/me` 는 GitHub
-        정보만 준다), "업그레이드" 버튼에는 onClick 조차 없었다.
-
-        게다가 지금은 **사용량이 사용자 본인 AI 제공자 계정으로 청구된다**(BYOK). 우리가
-        세는 크레딧이라는 개념 자체가 없다. "준비 중" 으로 남겨두는 것도 맞지 않는다 —
-        준비 중인 기능이 아니라 이 제품에 없는 개념이다.
-
-        사용량을 보여줄 일이 생기면 그때는 서버가 주는 값으로 다시 세운다.
-      */}
 
       <section className="flex flex-col gap-4">
         <h3 className="text-[15px] font-semibold text-[#0f172a]">{t('me.account.personalInfo')}</h3>
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <p className="text-[13px] font-medium text-[#64748b]">
-              {t('me.account.githubAccount')}
-            </p>
-            <p className="text-[14px] text-[#0f172a]">{username}</p>
-          </div>
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <p className="text-[13px] font-medium text-[#64748b]">{t('me.account.userId')}</p>
