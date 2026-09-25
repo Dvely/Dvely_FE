@@ -99,7 +99,7 @@ function HomePromptHero() {
 
   const handleSubmit = () => {
     const trimmed = prompt.trim();
-    if (!trimmed || isProjectsLoading) return;
+    if (!trimmed) return;
 
     setSubmitError(null);
 
@@ -109,11 +109,17 @@ function HomePromptHero() {
       서버가 `templateType` 을 `POST /projects` 에서만 받는다. 이미 있는 프로젝트에
       템플릿을 얹을 길이 없어서, 여기서 기존 프로젝트로 보내면 템플릿이 조용히 빠진
       채로 대화만 시작된다. 이름만 받고 바로 만든다.
+
+      프로젝트 목록은 보지 않는다 — 어차피 새로 만들 것이라, 목록이 오는 동안 눌린
+      보내기가 아무 반응 없이 사라질 이유가 없다.
     */
     if (attachedTemplate) {
       setIsNamingProject(true);
       return;
     }
+
+    // 여기부터는 기존 프로젝트로 보내는 길이라 목록이 필요하다
+    if (isProjectsLoading) return;
 
     if (targetProjectId == null) {
       setSubmitError('먼저 프로젝트를 생성해 주세요.');
