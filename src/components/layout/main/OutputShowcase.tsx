@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
 import { TEMPLATE_CATALOG_QUERY_KEY, useTemplateListQuery } from '@/api/templates';
 import { toTemplateCard, type TemplateCardItem } from '@/lib/templateCatalog';
+import { TemplateCatalogError } from '@/components/common/TemplateCatalogError';
 import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
 import {
   TEMPLATE_INDUSTRY_LABEL,
@@ -113,7 +114,12 @@ function OutputShowcase() {
     화면 안에 더미를 두면 **여기 걸린 템플릿을 눌렀을 때 만들어지지 않는다** — 카드의
     id 가 곧 생성 요청의 `templateType` 이라 서버가 아는 값이어야 한다.
   */
-  const { data: catalog, isLoading } = useTemplateListQuery(TEMPLATE_CATALOG_QUERY_KEY);
+  const {
+    data: catalog,
+    isLoading,
+    isError,
+    refetch,
+  } = useTemplateListQuery(TEMPLATE_CATALOG_QUERY_KEY);
 
   const visibleTemplates = useMemo(() => {
     const cards = (catalog ?? []).map(toTemplateCard);
@@ -141,19 +147,32 @@ function OutputShowcase() {
           onIndustryChange={setCategoryFilter}
         />
 
-        <div className="mobile-rail mt-8 grid w-full grid-cols-1 gap-6 sm:mt-10 sm:grid-cols-2 lg:grid-cols-3">
-          {isLoading ? (
-            [0, 1, 2].map((item) => <LandingTemplateCardSkeleton key={`skeleton-${item}`} />)
-          ) : visibleTemplates.length > 0 ? (
-            visibleTemplates.map((template) => (
-              <LandingTemplateCard key={template.templateId} template={template} />
-            ))
-          ) : (
-            <p className="col-span-full py-16 text-center text-[14px] text-[#94a3b8]">
-              해당 업종의 템플릿을 준비 중입니다.
-            </p>
-          )}
-        </div>
+        {/*
+          못 받은 것을 "없다" 고 말하지 않는다. 아래 빈 상태 문구는 조건에 맞는 것이
+          없다는 뜻인데, 조회가 실패한 것을 그렇게 적으면 사용자는 다시 시도할 생각을
+          못 한다 — 여기는 더미 폴백이 없어서 실패가 곧 빈 자리다.
+        */}
+        {isError ? (
+          <TemplateCatalogError
+            className="w-full"
+            onRetry={() => void refetch()}
+            description="잠시 후 다시 시도해 주세요. 템플릿은 그대로 있습니다."
+          />
+        ) : (
+          <div className="mobile-rail mt-8 grid w-full grid-cols-1 gap-6 sm:mt-10 sm:grid-cols-2 lg:grid-cols-3">
+            {isLoading ? (
+              [0, 1, 2].map((item) => <LandingTemplateCardSkeleton key={`skeleton-${item}`} />)
+            ) : visibleTemplates.length > 0 ? (
+              visibleTemplates.map((template) => (
+                <LandingTemplateCard key={template.templateId} template={template} />
+              ))
+            ) : (
+              <p className="col-span-full py-16 text-center text-[14px] text-[#94a3b8]">
+                해당 업종의 템플릿을 준비 중입니다.
+              </p>
+            )}
+          </div>
+        )}
 
         <Link
           to="/home"

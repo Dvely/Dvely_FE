@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { ChevronLeft, ExternalLink, Monitor, Smartphone } from 'lucide-react';
 import { setHomePromptTemplate, toHomePromptAttachedTemplate } from '@/lib/homePromptTemplate';
 import { toSafeHttpUrl } from '@/lib/safeUrl';
+import { TemplateCatalogError } from '@/components/common/TemplateCatalogError';
 
 import { TEMPLATE_CATALOG_QUERY_KEY, useTemplateListQuery } from '@/api/templates';
 
@@ -11,7 +12,12 @@ function ProjectCreatePage() {
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
 
   const search = useSearch({ from: '/_authenticated/project/new' });
-  const { data: catalog, isLoading } = useTemplateListQuery(TEMPLATE_CATALOG_QUERY_KEY);
+  const {
+    data: catalog,
+    isLoading,
+    isError,
+    refetch,
+  } = useTemplateListQuery(TEMPLATE_CATALOG_QUERY_KEY);
 
   /*
     주소로 들어온 id 를 카탈로그에서 찾는다. 목록에 이미 같은 값이 다 들어 있어서
@@ -36,6 +42,22 @@ function ProjectCreatePage() {
     return (
       <div className="flex h-full min-h-0 items-center justify-center bg-[#f8fafc]">
         <div className="h-4 w-40 animate-pulse rounded bg-[#e2e8f0]" />
+      </div>
+    );
+  }
+
+  /*
+    목록을 못 받았다. 이 경우를 아래 "찾을 수 없습니다" 로 묶으면 **없는 템플릿이라고
+    단언하게 된다** — 멀쩡히 있는 템플릿인데 사용자는 내려간 줄 알고 돌아간다.
+    못 받은 것은 못 받았다고 말하고 다시 받을 길을 준다.
+  */
+  if (isError) {
+    return (
+      <div className="flex h-full min-h-0 items-center justify-center bg-[#f8fafc] px-6">
+        <TemplateCatalogError
+          onRetry={() => void refetch()}
+          description="잠시 후 다시 시도해 주세요. 템플릿이 사라진 것은 아닙니다."
+        />
       </div>
     );
   }
