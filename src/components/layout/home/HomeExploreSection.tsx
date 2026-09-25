@@ -7,7 +7,8 @@ import MyTemplateFileCard from '@/components/layout/home/MyTemplateFileCard';
 import MyTemplateUploadDialog from '@/components/layout/home/MyTemplateUploadDialog';
 import { FilterSelect } from '@/components/ui/Filter';
 import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
-import { homeTemplates } from '@/mocks/home/homeTemplates';
+import { useTemplateListQuery } from '@/api/templates';
+import { toTemplateCard } from '@/lib/templateCatalog';
 import { useMyTemplates } from '@/hooks/useMyTemplates';
 import {
   templateHasIndustry,
@@ -22,18 +23,8 @@ type ThemeFilter = 'all' | TemplateSiteType;
 type SortOption = 'popular' | 'newest';
 
 type TemplateCard = HomeTemplateCardData & {
-  categories: (typeof homeTemplates)[number]['categories'];
+  categories: TemplateIndustryCategory[];
 };
-
-const templateCards: TemplateCard[] = homeTemplates.map((item) => ({
-  id: item.id,
-  title: item.title,
-  tags: item.tags,
-  image: item.image,
-  startType: item.startType,
-  categories: item.categories,
-  thumbnailPreviewUrl: item.thumbnailPreviewUrl,
-}));
 
 const sortOptions: { value: SortOption; label: string }[] = [
   { value: 'popular', label: '인기순' },
@@ -42,7 +33,33 @@ const sortOptions: { value: SortOption; label: string }[] = [
 
 function HomeExploreSection() {
   const [activeTab, setActiveTab] = useState<HomeTab>('explore');
-  const [selectedId, setSelectedId] = useState(templateCards[0]?.id ?? '');
+  const [selectedId, setSelectedId] = useState('');
+
+  /*
+    템플릿은 서버 카탈로그에서 온다.
+
+    예전에는 화면 안에 더미 12종을 들고 있었다. 그것들은 프로젝트를 만들 때 쓰는
+    `templateType` 에 해당하는 값이 아니라, 골라도 씨딩되지 않았다 — 서버가 아는
+    id 를 보내야 한다(없는 값은 400).
+  */
+  const { data: catalog, isLoading: isCatalogLoading } = useTemplateListQuery('home-explore');
+
+  const templateCards: TemplateCard[] = useMemo(
+    () =>
+      (catalog ?? []).map((template) => {
+        const card = toTemplateCard(template);
+        return {
+          id: card.templateId,
+          title: card.name,
+          tags: card.tags,
+          image: card.thumbnailUrl,
+          startType: card.siteType,
+          categories: card.industries,
+          thumbnailPreviewUrl: undefined,
+        };
+      }),
+    [catalog],
+  );
   const [styleFilter, setStyleFilter] = useState<StyleFilter>('all');
   const [themeFilter, setThemeFilter] = useState<ThemeFilter>('all');
   const [sort, setSort] = useState<SortOption>('popular');
@@ -71,7 +88,7 @@ function HomeExploreSection() {
     }
 
     return items;
-  }, [sort, styleFilter, themeFilter]);
+  }, [templateCards, sort, styleFilter, themeFilter]);
   const filteredMyTemplates = useMemo(() => {
     let items = myTemplates;
 
@@ -154,14 +171,30 @@ function HomeExploreSection() {
       {activeTab === 'explore' ? (
         <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <HomeAddTemplateCard onClick={handleOpenUpload} />
-          {filteredCards.map((card) => (
-            <HomeTemplateCard
-              key={card.id}
-              card={card}
-              selected={selectedId === card.id}
-              onSelect={() => setSelectedId(card.id)}
-            />
-          ))}
+          {/*
+            여기는 진짜로 기다린다 — 카탈로그가 서버에서 온다. 내 템플릿 탭과 다르다
+            (그쪽은 localStorage 라 기다릴 것이 없어 스켈레톤을 걷어냈다).
+          */}
+          {isCatalogLoading
+            ? [0, 1, 2, 3].map((item) => (
+                <div
+                  key={`template-skeleton-${item}`}
+                  className="aspect-16/10 animate-pulse rounded-2xl border border-[#e2e8f0] bg-[#f8fafc]"
+                />
+              ))
+            : filteredCards.map((card) => (
+                <HomeTemplateCard
+                  key={card.id}
+                  card={card}
+                  selected={selectedId === card.id}
+                  onSelect={() => setSelectedId(card.id)}
+                />
+              ))}
+          {!isCatalogLoading && filteredCards.length === 0 ? (
+            <p className="col-span-full py-10 text-center text-[13px] text-[#94a3b8]">
+              조건에 맞는 템플릿이 없습니다.
+            </p>
+          ) : null}
         </div>
       ) : (
         <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
