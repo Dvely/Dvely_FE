@@ -7,7 +7,7 @@ import MyTemplateFileCard from '@/components/layout/home/MyTemplateFileCard';
 import MyTemplateUploadDialog from '@/components/layout/home/MyTemplateUploadDialog';
 import { FilterSelect } from '@/components/ui/Filter';
 import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
-import { useTemplateListQuery } from '@/api/templates';
+import { TEMPLATE_CATALOG_QUERY_KEY, useTemplateListQuery } from '@/api/templates';
 import { toTemplateCard } from '@/lib/templateCatalog';
 import { useMyTemplates } from '@/hooks/useMyTemplates';
 import {
@@ -42,7 +42,7 @@ function HomeExploreSection() {
     `templateType` 에 해당하는 값이 아니라, 골라도 씨딩되지 않았다 — 서버가 아는
     id 를 보내야 한다(없는 값은 400).
   */
-  const { data: catalog, isLoading: isCatalogLoading } = useTemplateListQuery('home-explore');
+  const { data: catalog, isLoading: isCatalogLoading } = useTemplateListQuery(TEMPLATE_CATALOG_QUERY_KEY);
 
   const templateCards: TemplateCard[] = useMemo(
     () =>

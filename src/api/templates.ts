@@ -18,6 +18,15 @@ const endpoint = '/templates';
  */
 const CATALOG_STALE_MS = 60 * 60 * 1000;
 
+/**
+ * 카탈로그를 읽는 화면들이 함께 쓰는 키 조각.
+ *
+ * 이 저장소의 훅은 호출부가 `queryKey` 조각을 넘기는 규칙인데, 화면마다 다른 값을 넘기면
+ * **같은 카탈로그가 캐시에 여러 벌** 생기고 화면을 옮길 때마다 한 번씩 다시 받는다.
+ * 카탈로그는 배포해야 바뀌는 값이라 화면별로 나눠 둘 이유가 없다 — 한 벌만 둔다.
+ */
+const TEMPLATE_CATALOG_QUERY_KEY = 'template-catalog';
+
 const defaultQueryOptions = {
   staleTime: CATALOG_STALE_MS,
   retry: false,
@@ -74,4 +83,10 @@ function useTemplateDetailQuery(queryKey: unknown, templateId: string | null) {
   });
 }
 
-export { getTemplateList, getTemplateDetail, useTemplateListQuery, useTemplateDetailQuery };
+export {
+  getTemplateList,
+  getTemplateDetail,
+  useTemplateListQuery,
+  useTemplateDetailQuery,
+  TEMPLATE_CATALOG_QUERY_KEY,
+};
