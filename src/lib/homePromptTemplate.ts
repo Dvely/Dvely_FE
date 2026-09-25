@@ -31,8 +31,23 @@ export function toHomePromptAttachedTemplate(template: Template): HomePromptAtta
   };
 }
 
+/**
+ * 얹은 템플릿을 맡겨 둔다.
+ *
+ * **실패해도 던지지 않는다.** 읽는 쪽(`readHomePromptTemplate`)은 이미 try/catch 로
+ * 감싸 두었는데 쓰는 쪽만 맨몸이었다. 저장이 막힌 브라우저에서는 `setItem` 이 던지고,
+ * 호출부는 그 다음 줄에서 화면을 옮기거나(미리보기의 "템플릿 사용하기") 렌더 중인
+ * 이펙트 안에 있다 — 앞에서는 버튼이 아무 일도 안 하고, 뒤에서는 화면이 통째로 죽는다.
+ *
+ * 맡기기는 편의다. 주소의 `templateId` 가 진짜 출처이고 이건 화면을 떠났다 돌아올 때를
+ * 위한 사본이라, 못 맡겨도 흐름 자체는 그대로 굴러간다.
+ */
 export function setHomePromptTemplate(template: HomePromptAttachedTemplate) {
-  sessionStorage.setItem(HOME_PROMPT_TEMPLATE_KEY, JSON.stringify(template));
+  try {
+    sessionStorage.setItem(HOME_PROMPT_TEMPLATE_KEY, JSON.stringify(template));
+  } catch {
+    // 못 맡겼다. 주소에 templateId 가 남아 있으므로 이번 화면에서는 그대로 얹힌다
+  }
 }
 
 export function readHomePromptTemplate(): HomePromptAttachedTemplate | null {
@@ -61,5 +76,9 @@ export function readHomePromptTemplate(): HomePromptAttachedTemplate | null {
 }
 
 export function clearHomePromptTemplate() {
-  sessionStorage.removeItem(HOME_PROMPT_TEMPLATE_KEY);
+  try {
+    sessionStorage.removeItem(HOME_PROMPT_TEMPLATE_KEY);
+  } catch {
+    // 지우지 못했다. 맡긴 적이 없으면 지울 것도 없다
+  }
 }
