@@ -7,6 +7,7 @@ import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseF
 import { TEMPLATE_CATALOG_QUERY_KEY, useTemplateListQuery } from '@/api/templates';
 import { toTemplateCard } from '@/lib/templateCatalog';
 import { toSafeHttpUrl } from '@/lib/safeUrl';
+import { TemplateCatalogError } from '@/components/common/TemplateCatalogError';
 import {
   templateHasIndustry,
   type TemplateIndustryCategory,
@@ -24,7 +25,12 @@ export default function TemplateGalleryPage() {
     있었다. 카탈로그에 신규 개념이 없으므로 그 표시는 걷어냈다 — 서버가 모르는 것을
     화면이 지어내면, 읽는 사람은 그것이 사실인 줄 안다.
   */
-  const { data: catalog, isLoading } = useTemplateListQuery(TEMPLATE_CATALOG_QUERY_KEY);
+  const {
+    data: catalog,
+    isLoading,
+    isError,
+    refetch,
+  } = useTemplateListQuery(TEMPLATE_CATALOG_QUERY_KEY);
 
   const filtered = useMemo(() => {
     const cards = (catalog ?? []).map(toTemplateCard);
@@ -68,13 +74,20 @@ export default function TemplateGalleryPage() {
         </div>
 
         <p role="status" className="sr-only">
-          {isLoading ? '템플릿을 불러오는 중입니다' : `템플릿 ${filtered.length}개`}
+          {isError
+            ? '템플릿 목록을 불러오지 못했습니다'
+            : isLoading
+              ? '템플릿을 불러오는 중입니다'
+              : `템플릿 ${filtered.length}개`}
         </p>
         <section
           aria-label="템플릿 목록"
           className="mx-auto grid max-w-[1600px] grid-cols-1 gap-x-[30px] gap-y-10 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {isLoading ? (
+          {/* 못 받은 것을 "조건에 맞는 게 없다" 고 적으면 다시 시도할 생각을 못 한다 */}
+          {isError ? (
+            <TemplateCatalogError className="col-span-full" onRetry={() => void refetch()} />
+          ) : isLoading ? (
             [0, 1, 2, 3, 4, 5].map((item) => (
               <div
                 key={`template-skeleton-${item}`}
