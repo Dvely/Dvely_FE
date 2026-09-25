@@ -3,31 +3,55 @@ import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { ChevronLeft, ExternalLink, Monitor, Smartphone } from 'lucide-react';
 import { setHomePromptTemplate, toHomePromptAttachedTemplate } from '@/lib/homePromptTemplate';
 
-import {
-  DEFAULT_TEMPLATE_ID,
-  getHomeTemplateById,
-  homeTemplates,
-  resolveHomeTemplatePreviewUrl,
-} from '@/mocks/home/homeTemplates';
+import { TEMPLATE_CATALOG_QUERY_KEY, useTemplateListQuery } from '@/api/templates';
 
 function ProjectCreatePage() {
   const navigate = useNavigate();
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
 
   const search = useSearch({ from: '/_authenticated/project/new' });
-  const templateId = search.templateId ?? DEFAULT_TEMPLATE_ID;
-  const template =
-    getHomeTemplateById(templateId) ?? getHomeTemplateById(DEFAULT_TEMPLATE_ID) ?? homeTemplates[0];
-  const previewUrl = resolveHomeTemplatePreviewUrl(template);
+  const { data: catalog, isLoading } = useTemplateListQuery(TEMPLATE_CATALOG_QUERY_KEY);
+
+  /*
+    주소로 들어온 id 를 카탈로그에서 찾는다. 목록에 이미 같은 값이 다 들어 있어서
+    단건 조회를 따로 하지 않는다 — 한 번 덜 묻는다.
+  */
+  const template = (catalog ?? []).find((item) => item.templateId === search.templateId) ?? null;
 
   const handleUseTemplate = () => {
-    const attached = toHomePromptAttachedTemplate(template);
-    setHomePromptTemplate(attached);
-    void navigate({
-      to: '/home',
-      search: { templateId: template.id },
-    });
+    if (!template) return;
+    setHomePromptTemplate(toHomePromptAttachedTemplate(template));
+    void navigate({ to: '/home', search: { templateId: template.templateId } });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full min-h-0 items-center justify-center bg-[#f8fafc]">
+        <div className="h-4 w-40 animate-pulse rounded bg-[#e2e8f0]" />
+      </div>
+    );
+  }
+
+  /*
+    카탈로그에 없는 id 로 들어왔다. 주소를 직접 친 경우이거나 템플릿이 내려간 경우다.
+    빈 iframe 을 띄우느니 왜 못 보여주는지 말하고 돌아갈 길을 준다.
+  */
+  if (!template) {
+    return (
+      <div className="flex h-full min-h-0 flex-col items-center justify-center gap-3 bg-[#f8fafc] px-6 text-center">
+        <p className="text-[15px] font-semibold text-[#0f172a]">템플릿을 찾을 수 없습니다.</p>
+        <p className="text-[13px] text-[#64748b]">
+          주소가 바뀌었거나 더 이상 제공되지 않는 템플릿입니다.
+        </p>
+        <Link
+          to="/home"
+          className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-[#0f172a] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#1e293b]"
+        >
+          템플릿 목록으로
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-[#f8fafc] lg:h-screen">
@@ -44,7 +68,7 @@ function ProjectCreatePage() {
               </Link>
               <button
                 type="button"
-                onClick={() => window.open(previewUrl, '_blank', 'noopener,noreferrer')}
+                onClick={() => window.open(template.demoUrl, '_blank', 'noopener,noreferrer')}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[13px] font-medium text-[#334155] transition hover:bg-[#f8fafc]"
               >
                 <ExternalLink className="size-3.5" />새 탭에서 보기
@@ -97,9 +121,14 @@ function ProjectCreatePage() {
                   : ''
               }`}
             >
+              {/*
+                실제로 도는 데모다. 사용자가 클릭·스크롤로 직접 만져볼 수 있어야 한다는
+                요구사항이 여기서 충족된다 — 목록에서는 썸네일만 받고 이 한 자리에서만
+                띄운다. 데모는 스크립트가 도는 진짜 페이지라 여럿을 동시에 띄우면 무겁다.
+              */}
               <iframe
-                src={previewUrl}
-                title={`${template.title} 미리보기`}
+                src={template.demoUrl}
+                title={`${template.name} 미리보기`}
                 className="absolute inset-0 block size-full border-0 bg-white"
                 loading="lazy"
               />
