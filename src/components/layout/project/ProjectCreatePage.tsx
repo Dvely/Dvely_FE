@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { ChevronLeft, ExternalLink, Monitor, Smartphone } from 'lucide-react';
 import { setHomePromptTemplate, toHomePromptAttachedTemplate } from '@/lib/homePromptTemplate';
+import { toSafeHttpUrl } from '@/lib/safeUrl';
 
 import { TEMPLATE_CATALOG_QUERY_KEY, useTemplateListQuery } from '@/api/templates';
 
@@ -17,6 +18,13 @@ function ProjectCreatePage() {
     단건 조회를 따로 하지 않는다 — 한 번 덜 묻는다.
   */
   const template = (catalog ?? []).find((item) => item.templateId === search.templateId) ?? null;
+
+  /*
+    `demoUrl` 은 서버가 GH Pages 카탈로그를 그대로 통과시킨 값이다. 우리 서버가 조립한
+    주소가 아니라 템플릿 저장소의 JSON 에 적힌 문자열이라, http(s) 인지 여기서 확인한다 —
+    `javascript:` 가 섞이면 iframe 도 `window.open` 도 이 문서의 권한으로 실행한다.
+  */
+  const demoHref = toSafeHttpUrl(template?.demoUrl);
 
   const handleUseTemplate = () => {
     if (!template) return;
@@ -66,13 +74,16 @@ function ProjectCreatePage() {
                 <ChevronLeft className="size-3.5" strokeWidth={2} />
                 템플릿 뒤로가기
               </Link>
-              <button
-                type="button"
-                onClick={() => window.open(template.demoUrl, '_blank', 'noopener,noreferrer')}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[13px] font-medium text-[#334155] transition hover:bg-[#f8fafc]"
-              >
-                <ExternalLink className="size-3.5" />새 탭에서 보기
-              </button>
+              {demoHref ? (
+                <a
+                  href={demoHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[13px] font-medium text-[#334155] transition hover:bg-[#f8fafc]"
+                >
+                  <ExternalLink className="size-3.5" />새 탭에서 보기
+                </a>
+              ) : null}
             </div>
 
             <div className="inline-flex justify-self-center rounded-lg border border-[#e2e8f0] bg-[#f1f5f9] p-0.5">
@@ -126,12 +137,25 @@ function ProjectCreatePage() {
                 요구사항이 여기서 충족된다 — 목록에서는 썸네일만 받고 이 한 자리에서만
                 띄운다. 데모는 스크립트가 도는 진짜 페이지라 여럿을 동시에 띄우면 무겁다.
               */}
-              <iframe
-                src={template.demoUrl}
-                title={`${template.name} 미리보기`}
-                className="absolute inset-0 block size-full border-0 bg-white"
-                loading="lazy"
-              />
+              {demoHref ? (
+                <iframe
+                  src={demoHref}
+                  title={`${template.name} 미리보기`}
+                  /*
+                    다른 오리진이라 `allow-same-origin` 이 이 앱에 대한 권한을 주지 않는다 —
+                    데모가 자기 오리진으로 동작하게 할 뿐이다. 대신 상단 이동(데모가 이 창을
+                    딴 데로 보내는 것) · 폼 전송 · 팝업이 막힌다.
+                  */
+                  sandbox="allow-scripts allow-same-origin"
+                  referrerPolicy="no-referrer"
+                  className="absolute inset-0 block size-full border-0 bg-white"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center px-6 text-center">
+                  <p className="text-[14px] text-[#94a3b8]">이 템플릿은 미리 볼 주소가 없습니다.</p>
+                </div>
+              )}
             </div>
           </div>
         </section>

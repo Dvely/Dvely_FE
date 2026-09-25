@@ -6,6 +6,7 @@ import HeaderContainer from '@/components/layout/header/HeaderContainer';
 import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
 import { TEMPLATE_CATALOG_QUERY_KEY, useTemplateListQuery } from '@/api/templates';
 import { toTemplateCard } from '@/lib/templateCatalog';
+import { toSafeHttpUrl } from '@/lib/safeUrl';
 import {
   templateHasIndustry,
   type TemplateIndustryCategory,
@@ -81,71 +82,80 @@ export default function TemplateGalleryPage() {
               />
             ))
           ) : filtered.length > 0 ? (
-            filtered.map((template, index) => (
-              <Dialog.Root key={template.templateId}>
-                <article className="min-w-0">
-                  <Dialog.Trigger asChild>
-                    <button
-                      type="button"
-                      aria-label={`${template.name} 미리보기`}
-                      className="group block w-full cursor-pointer text-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7396d3]"
-                    >
-                      <span className="relative block aspect-16/10 bg-[#e9e9ef] shadow-[0_0_0_1px_rgba(0,0,0,0.04)]">
-                        {template.thumbnailUrl ? (
-                          <img
-                            src={template.thumbnailUrl}
-                            alt={`${template.name} 템플릿 화면`}
-                            loading={index < 6 ? 'eager' : 'lazy'}
-                            decoding="async"
-                            className="h-full w-full object-cover object-top"
-                          />
-                        ) : (
-                          /* 템플릿 저장소 발행 전에는 서버가 그림을 안 준다. 이름만으로 그린다 */
-                          <span className="flex h-full w-full items-center justify-center bg-linear-to-br from-[#ede9fe] to-[#f1f5f9] px-4">
-                            <span className="text-center text-[15px] font-semibold text-[#6d28d9]">
-                              {template.name}
+            filtered.map((template, index) => {
+              /*
+                `demoUrl` 은 서버가 GH Pages 카탈로그를 그대로 통과시킨 값이다. 우리 서버가
+                조립한 주소가 아니라 템플릿 저장소의 JSON 에 적힌 문자열이라, http(s) 인지
+                여기서 확인한다 — `javascript:` 가 섞이면 iframe 이 부모 문서의 권한으로
+                실행한다.
+              */
+              const demoHref = toSafeHttpUrl(template.demoUrl);
+
+              return (
+                <Dialog.Root key={template.templateId}>
+                  <article className="min-w-0">
+                    <Dialog.Trigger asChild>
+                      <button
+                        type="button"
+                        aria-label={`${template.name} 미리보기`}
+                        className="group block w-full cursor-pointer text-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7396d3]"
+                      >
+                        <span className="relative block aspect-16/10 bg-[#e9e9ef] shadow-[0_0_0_1px_rgba(0,0,0,0.04)]">
+                          {template.thumbnailUrl ? (
+                            <img
+                              src={template.thumbnailUrl}
+                              alt={`${template.name} 템플릿 화면`}
+                              loading={index < 6 ? 'eager' : 'lazy'}
+                              decoding="async"
+                              className="h-full w-full object-cover object-top"
+                            />
+                          ) : (
+                            /* 템플릿 저장소 발행 전에는 서버가 그림을 안 준다. 이름만으로 그린다 */
+                            <span className="flex h-full w-full items-center justify-center bg-linear-to-br from-[#ede9fe] to-[#f1f5f9] px-4">
+                              <span className="text-center text-[15px] font-semibold text-[#6d28d9]">
+                                {template.name}
+                              </span>
+                            </span>
+                          )}
+                          <span className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                            <span className="rounded-full border border-white px-7 py-2.5 text-sm text-white">
+                              미리보기
                             </span>
                           </span>
-                        )}
-                        <span className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                          <span className="rounded-full border border-white px-7 py-2.5 text-sm text-white">
-                            미리보기
-                          </span>
                         </span>
-                      </span>
-                      <span className="mt-3 flex items-center justify-center gap-1.5 text-[14px] leading-6 text-[#888]">
-                        {template.name}
-                      </span>
-                    </button>
-                  </Dialog.Trigger>
-                </article>
-                <Dialog.Portal>
-                  <Dialog.Overlay className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm" />
-                  <Dialog.Content className="fixed left-1/2 top-1/2 z-[61] flex h-[90dvh] w-[calc(100%-32px)] max-w-[1100px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
-                    <div className="flex shrink-0 items-center justify-between border-b border-black/10 px-6 py-4">
-                      <div className="min-w-0">
-                        <Dialog.Title className="font-semibold">{template.name}</Dialog.Title>
-                        <Dialog.Description className="mt-1 truncate text-sm text-[#888]">
-                          {template.description || '템플릿 미리보기'}
-                        </Dialog.Description>
+                        <span className="mt-3 flex items-center justify-center gap-1.5 text-[14px] leading-6 text-[#888]">
+                          {template.name}
+                        </span>
+                      </button>
+                    </Dialog.Trigger>
+                  </article>
+                  <Dialog.Portal>
+                    <Dialog.Overlay className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm" />
+                    <Dialog.Content className="fixed left-1/2 top-1/2 z-[61] flex h-[90dvh] w-[calc(100%-32px)] max-w-[1100px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+                      <div className="flex shrink-0 items-center justify-between border-b border-black/10 px-6 py-4">
+                        <div className="min-w-0">
+                          <Dialog.Title className="font-semibold">{template.name}</Dialog.Title>
+                          <Dialog.Description className="mt-1 truncate text-sm text-[#888]">
+                            {template.description || '템플릿 미리보기'}
+                          </Dialog.Description>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <Link
+                            to="/project/new"
+                            search={{ type: template.siteType, templateId: template.templateId }}
+                            className="rounded-lg bg-[#7c3aed] px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-[#6d28d9]"
+                          >
+                            이 템플릿 쓰기
+                          </Link>
+                          <Dialog.Close
+                            className="rounded-full p-2 hover:bg-gray-100"
+                            aria-label="미리보기 닫기"
+                          >
+                            <X className="size-5" />
+                          </Dialog.Close>
+                        </div>
                       </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <Link
-                          to="/project/new"
-                          search={{ type: template.siteType, templateId: template.templateId }}
-                          className="rounded-lg bg-[#7c3aed] px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-[#6d28d9]"
-                        >
-                          이 템플릿 쓰기
-                        </Link>
-                        <Dialog.Close
-                          className="rounded-full p-2 hover:bg-gray-100"
-                          aria-label="미리보기 닫기"
-                        >
-                          <X className="size-5" />
-                        </Dialog.Close>
-                      </div>
-                    </div>
-                    {/*
+                      {/*
                       그림이 아니라 실제로 도는 데모를 띄운다. 예전에는 카드에 쓴 썸네일을
                       그대로 한 번 더 보여줬는데, 그러면 열어 볼 이유가 없었다 — 방금 누른
                       그림이 크게 나올 뿐이었다.
@@ -153,16 +163,33 @@ export default function TemplateGalleryPage() {
                       데모는 스크립트가 도는 진짜 페이지라 목록에서 여럿 띄우면 무겁다.
                       그래서 열린 하나에서만 띄운다(Dialog 가 닫히면 DOM 에서 빠진다).
                     */}
-                    <iframe
-                      src={template.demoUrl}
-                      title={`${template.name} 미리보기`}
-                      className="min-h-0 flex-1 border-0 bg-white"
-                      loading="lazy"
-                    />
-                  </Dialog.Content>
-                </Dialog.Portal>
-              </Dialog.Root>
-            ))
+                      {demoHref ? (
+                        <iframe
+                          src={demoHref}
+                          title={`${template.name} 미리보기`}
+                          /*
+                          다른 오리진이라 `allow-same-origin` 이 이 앱에 대한 권한을 주지
+                          않는다 — 데모가 자기 오리진으로 동작하게 할 뿐이다. 대신 이 목록이
+                          주지 않는 것이 중요하다: 상단 이동(데모가 부모 창을 딴 데로 보내는
+                          것) · 폼 전송 · 팝업이 전부 막힌다.
+                        */
+                          sandbox="allow-scripts allow-same-origin"
+                          referrerPolicy="no-referrer"
+                          className="min-h-0 flex-1 border-0 bg-white"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="flex min-h-0 flex-1 items-center justify-center px-6 text-center">
+                          <p className="text-[14px] text-[#94a3b8]">
+                            이 템플릿은 미리 볼 주소가 없습니다.
+                          </p>
+                        </div>
+                      )}
+                    </Dialog.Content>
+                  </Dialog.Portal>
+                </Dialog.Root>
+              );
+            })
           ) : (
             <p className="col-span-full py-16 text-center text-[14px] text-[#94a3b8]">
               해당 조건의 템플릿을 준비 중입니다.
