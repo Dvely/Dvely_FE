@@ -270,7 +270,14 @@ function AgentConversationPanel({
   onCloudConnectRequired,
   restoreToken = 0,
 }: AgentConversationPanelProps) {
-  const [input, setInput] = useState('');
+  /*
+    홈에서 넘어온 요청은 입력창에 먼저 담아 둔다.
+
+    아래 이펙트가 제공자가 정해지는 대로 자동으로 보내고, 보낼 때 `onMutate` 가 입력창을
+    비운다. 보낼 수 없는 경우(등록한 키가 하나도 없을 때)에는 그대로 남아 있어서,
+    키를 등록하고 돌아오면 쓰던 문장을 다시 치지 않아도 된다.
+  */
+  const [input, setInput] = useState(() => initialPrompt?.trim() ?? '');
   const [overlayMessages, setOverlayMessages] = useState<ConversationMessage[]>([]);
   const [isAssistantReplying, setIsAssistantReplying] = useState(false);
   // 폴링이 읽어오는 태스크. 진행 문구를 만드는 데만 쓴다
@@ -1285,14 +1292,28 @@ function AgentConversationPanel({
 
   useEffect(() => {
     const content = initialPrompt?.trim();
-    if (!content || !shouldSendHomeAgentPromptOnce(content)) return;
+    if (!content) return;
+
+    /*
+      제공자가 정해지기 전에는 보내지 않는다.
+
+      이 이펙트는 마운트 직후에 도는데 그때 `/ai-credentials` 는 아직 오는 중이라
+      `selectedProvider` 가 비어 있다. 그대로 보내면 mutation 이 "AI 제공자가 선택되지
+      않았습니다" 로 끊고, 홈에서 넘어온 요청은 말없이 사라진다. 특히 **방금 만든
+      프로젝트로 넘어오는 길은 언제나 이 상태다** — 목록이 캐시에 있을 리 없다.
+
+      목록이 도착할 때까지 기다린다. 쓸 수 있는 키가 하나도 없어서 끝내 안 정해지면
+      보내지 않는다 — 그 문장은 입력창에 남아 있고, 옆에 키를 등록하라는 안내가 뜬다.
+    */
+    if (isProvidersLoading || !selectedProvider) return;
+    if (!shouldSendHomeAgentPromptOnce(content)) return;
 
     sendMessageMutation.mutate(content, {
       onError: () => clearHomeAgentPromptSendGuard(content),
     });
-    // 홈에서 넘어온 프롬프트는 마운트 시 한 번만 전송한다.
+    // 홈에서 넘어온 프롬프트는 한 번만 전송한다(보낼 수 있게 된 순간에).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialPrompt]);
+  }, [initialPrompt, isProvidersLoading, selectedProvider]);
 
   useEffect(() => {
     return () => {
