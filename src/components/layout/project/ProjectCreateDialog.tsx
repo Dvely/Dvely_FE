@@ -1,15 +1,33 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { FolderPlus, X } from 'lucide-react';
+import { FolderPlus, Layers, X } from 'lucide-react';
 import { postProjectCreate } from '@/api/projects';
+import type { HomePromptAttachedTemplate } from '@/lib/homePromptTemplate';
+import type { PostProjectCreateResType } from '@/types/projects.type';
 import { cn } from '@/lib/utils';
 
 type ProjectCreateDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /**
+   * 얹힌 템플릿. 있으면 이 템플릿을 깔고 시작하는 프로젝트로 만든다.
+   *
+   * 템플릿은 **만들 때 한 번만** 정할 수 있다. 서버가 `templateType` 을 `POST /projects`
+   * 에서만 받고, 첫 CODE 스텝에서 컨테이너가 비어 있을 때 그 템플릿을 깐다. 이미 있는
+   * 프로젝트에 나중에 얹을 길이 없다 — 그래서 템플릿을 고른 사용자는 반드시 이 화면을
+   * 지난다.
+   */
+  template?: HomePromptAttachedTemplate | null;
+  /** 만든 뒤 할 일. 없으면 목록만 갱신하고 닫는다 */
+  onCreated?: (created: PostProjectCreateResType) => void;
 };
 
-function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogProps) {
+function ProjectCreateDialog({
+  open,
+  onOpenChange,
+  template = null,
+  onCreated,
+}: ProjectCreateDialogProps) {
   const titleFieldId = useId();
   const queryClient = useQueryClient();
 
@@ -32,16 +50,24 @@ function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogProps) {
     setIsSubmitting(true);
 
     try {
-      // 프로젝트 생성은 프로젝트 행만 만든다 — 코드 생성은 사용자가 대화로 첫 요청을 보낼 때 시작한다
-      await postProjectCreate({
+      /*
+        생성은 프로젝트 행만 만든다. 코드 생성은 사용자가 대화로 첫 요청을 보낼 때
+        시작하고, 템플릿도 그때(첫 CODE 스텝) 깔린다 — 여기서는 어떤 템플릿인지만 적어 둔다.
+
+        `startMode` 와 `templateType` 은 **반드시 같이** 나가야 한다. `blank` 로 보내면
+        서버가 `templateType` 을 조용히 null 로 버린다 — 오류가 없어서 화면에서는
+        만들어진 것처럼 보이고, 템플릿만 안 깔린다.
+      */
+      const created = await postProjectCreate({
         name: trimmedName,
-        startMode: 'blank',
-        templateType: null,
+        startMode: template ? 'template' : 'blank',
+        templateType: template ? template.id : null,
         draftMode: 'fast',
       });
 
       await queryClient.invalidateQueries({ queryKey: ['project-list'] });
       onOpenChange(false);
+      onCreated?.(created);
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -55,9 +81,10 @@ function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogProps) {
 
   useEffect(() => {
     if (!open) return;
-    setName('');
+    // 템플릿 이름을 먼저 넣어 둔다. 대개 그대로 쓰고, 고치고 싶으면 고치면 된다
+    setName(template?.title ?? '');
     setErrorMessage(null);
-  }, [open]);
+  }, [open, template?.title]);
 
   useEffect(() => {
     if (!open) return;
@@ -113,8 +140,17 @@ function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogProps) {
             새 프로젝트 만들기
           </h2>
           <p className="mt-1.5 text-[14px] leading-relaxed text-[#64748b]">
-            프로젝트 이름을 정하면 에이전트에서 바로 작업을 시작할 수 있어요.
+            {template
+              ? '이름을 정하면 이 템플릿을 깔고 요청한 작업을 시작합니다.'
+              : '프로젝트 이름을 정하면 에이전트에서 바로 작업을 시작할 수 있어요.'}
           </p>
+
+          {template ? (
+            <p className="mt-3 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-[#e9d5ff] bg-[#faf5ff] px-2.5 py-1.5 text-[12px] font-medium text-[#6d28d9]">
+              <Layers className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+              <span className="truncate">{template.title}</span>
+            </p>
+          ) : null}
         </div>
 
         <form
@@ -180,7 +216,7 @@ function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogProps) {
                   : 'cursor-not-allowed bg-[#e2e8f0] text-[#94a3b8]',
               )}
             >
-              {isSubmitting ? '생성 중…' : '프로젝트 생성'}
+              {isSubmitting ? '생성 중…' : template ? '이 템플릿으로 만들기' : '프로젝트 생성'}
             </button>
           </div>
         </form>

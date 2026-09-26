@@ -10,10 +10,15 @@ function HomePromptTemplateChip({ template, onRemove }: HomePromptTemplateChipPr
   return (
     <div className="relative inline-flex max-w-[min(100%,300px)]">
       <div className="flex min-w-0 items-stretch overflow-hidden rounded-xl border border-[#e2e8f0] bg-[#f8fafc] shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
-        <img
-          src={template.image}
-          className="h-[58px] w-[76px] shrink-0 border-r border-[#e2e8f0] object-cover object-top"
-        />
+        {template.image ? (
+          <img
+            src={template.image}
+            alt=""
+            className="h-[58px] w-[76px] shrink-0 border-r border-[#e2e8f0] object-cover object-top"
+          />
+        ) : (
+          <div className="flex h-[58px] w-[76px] shrink-0 items-center justify-center border-r border-[#e2e8f0] bg-linear-to-br from-[#ede9fe] to-[#f1f5f9]" />
+        )}
         <div className="flex min-w-0 flex-col justify-center py-2 pl-3 pr-4">
           <p className="truncate text-[13px] font-semibold leading-tight text-[#0f172a]">
             {template.title}
