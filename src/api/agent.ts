@@ -2,10 +2,7 @@ import Http from '@/utils/httpClients';
 import { useQuery } from '@tanstack/react-query';
 import { errorResponse, succesResponse } from '@/utils/response';
 import type { ApiResponse } from '@/types/response.type';
-import {
-  getAiProviderListResSchema,
-  type GetAiProviderListResType,
-} from '@/types/aiProvider.type';
+import { getAiProviderListResSchema, type GetAiProviderListResType } from '@/types/aiProvider.type';
 import {
   agentTaskEventSchema,
   getAgentTaskEventListParamsSchema,
@@ -436,7 +433,8 @@ function useAgentTaskQuery(queryKey: unknown, taskId: string | null) {
     enabled: typeof taskId === 'string' && taskId.length > 0,
     refetchInterval: (query) => {
       const task = query.state.data;
-      if (task?.previewUrl?.trim()) return false;
+      // 공백 판정은 서버가 한다 — 주소가 비어 있으면 이 값이 거짓으로 온다
+      if (task?.previewCreated) return false;
       if (task?.status === 'DONE' || task?.status === 'FAILED' || task?.status === 'CANCELLED') {
         return false;
       }

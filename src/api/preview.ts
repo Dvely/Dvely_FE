@@ -46,7 +46,6 @@ function emptyProjectPreviewSession(projectId: number): GetProjectPreviewSession
     projectId,
     taskId: null,
     status: null,
-    previewUrl: '',
     expiresAt: '',
     failureReason: '',
   });
@@ -106,7 +105,11 @@ async function getProjectPreviewSession(projectId: number) {
       validateStatus: (status) => status === 200 || status === 204,
     })
     .then((response) => {
-      const body = response.data as ApiResponse<GetProjectPreviewSessionResType> | '' | null | undefined;
+      const body = response.data as
+        | ApiResponse<GetProjectPreviewSessionResType>
+        | ''
+        | null
+        | undefined;
       if (response.status === 204 || body == null || body === '') {
         return emptyProjectPreviewSession(id);
       }
@@ -139,11 +142,15 @@ async function postProjectPreviewSession(projectId: number, { force = false } = 
   const { projectId: id } = getProjectPreviewSessionParamsSchema.parse({ projectId });
 
   return Http.instance
-    .post<ApiResponse<PostProjectPreviewSessionResType>>(`/projects/${id}/preview-session`, undefined, {
-      // 켤 때만 붙인다 — 기본 요청은 지금까지와 한 글자도 다르지 않게 둔다
-      params: force ? { force: true } : undefined,
-      validateStatus: (status) => status === 200 || status === 202,
-    })
+    .post<ApiResponse<PostProjectPreviewSessionResType>>(
+      `/projects/${id}/preview-session`,
+      undefined,
+      {
+        // 켤 때만 붙인다 — 기본 요청은 지금까지와 한 글자도 다르지 않게 둔다
+        params: force ? { force: true } : undefined,
+        validateStatus: (status) => status === 200 || status === 202,
+      },
+    )
     .then((response) => {
       const body = succesResponse<ApiResponse<PostProjectPreviewSessionResType>>(response);
       return {
@@ -183,11 +190,7 @@ function usePreviewAccessQuery(queryKey: unknown, sessionId: string | null, fram
  * 프로젝트의 현재 프리뷰 세션 쿼리.
  * isAgentTaskActive는 Agent 작업이 도는 중인지 — 세션이 아직 없어도 폴링을 유지할지 결정한다.
  */
-function useProjectPreviewQuery(
-  queryKey: unknown,
-  projectId: number,
-  isAgentTaskActive = false,
-) {
+function useProjectPreviewQuery(queryKey: unknown, projectId: number, isAgentTaskActive = false) {
   if (!queryKey) throw new Error('queryKey is required');
 
   return useQuery({
