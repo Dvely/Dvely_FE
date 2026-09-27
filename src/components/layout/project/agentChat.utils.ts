@@ -117,16 +117,36 @@ export function migrateSessionMessages(fromConversationId: number, toConversatio
 
 const PENDING_HOME_AGENT_PROMPT_KEY = 'dvely:pending-home-agent-prompt';
 
+/**
+ * 홈에서 쓴 문장을 다음 화면까지 들고 간다.
+ *
+ * **실패해도 던지지 않는다.** 저장이 막힌 브라우저(프라이빗 모드 · 사이트 데이터 차단)
+ * 에서 `setItem` 은 던지는데, 호출부는 이 다음 줄에서 **화면을 옮긴다.** 여기서 던지면
+ * 그 이동이 통째로 사라진다 — 특히 프로젝트를 만든 직후 호출하는 자리에서는 서버에
+ * 프로젝트가 이미 생긴 뒤라, 사용자는 아무 반응 없는 화면을 보고 같은 버튼을 다시 눌러
+ * **프로젝트를 하나 더 만든다.**
+ *
+ * 문장을 못 옮기는 것과 이동이 사라지는 것 중에는 앞이 낫다. 문장은 다시 쓰면 되지만
+ * 만들어진 프로젝트로 못 가는 것은 되돌릴 방법이 없다.
+ */
 export function setPendingHomeAgentPrompt(prompt: string) {
-  sessionStorage.setItem(PENDING_HOME_AGENT_PROMPT_KEY, prompt.trim());
+  try {
+    sessionStorage.setItem(PENDING_HOME_AGENT_PROMPT_KEY, prompt.trim());
+  } catch {
+    // 못 맡겼다. 이동은 그대로 진행되고, 사용자는 대화창에 다시 쓰면 된다
+  }
 }
 
 export function consumePendingHomeAgentPrompt(): string | null {
-  const value = sessionStorage.getItem(PENDING_HOME_AGENT_PROMPT_KEY);
-  if (value) {
-    sessionStorage.removeItem(PENDING_HOME_AGENT_PROMPT_KEY);
+  try {
+    const value = sessionStorage.getItem(PENDING_HOME_AGENT_PROMPT_KEY);
+    if (value) {
+      sessionStorage.removeItem(PENDING_HOME_AGENT_PROMPT_KEY);
+    }
+    return value;
+  } catch {
+    return null;
   }
-  return value;
 }
 
 const sentHomeAgentPrompts = new Set<string>();

@@ -9,6 +9,7 @@ import { FilterSelect } from '@/components/ui/Filter';
 import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
 import { TEMPLATE_CATALOG_QUERY_KEY, useTemplateListQuery } from '@/api/templates';
 import { toTemplateCard } from '@/lib/templateCatalog';
+import { TemplateCatalogError } from '@/components/common/TemplateCatalogError';
 import { useMyTemplates } from '@/hooks/useMyTemplates';
 import {
   templateHasIndustry,
@@ -42,7 +43,12 @@ function HomeExploreSection() {
     `templateType` 에 해당하는 값이 아니라, 골라도 씨딩되지 않았다 — 서버가 아는
     id 를 보내야 한다(없는 값은 400).
   */
-  const { data: catalog, isLoading: isCatalogLoading } = useTemplateListQuery(TEMPLATE_CATALOG_QUERY_KEY);
+  const {
+    data: catalog,
+    isLoading: isCatalogLoading,
+    isError: isCatalogError,
+    refetch: refetchCatalog,
+  } = useTemplateListQuery(TEMPLATE_CATALOG_QUERY_KEY);
 
   const templateCards: TemplateCard[] = useMemo(
     () =>
@@ -65,11 +71,7 @@ function HomeExploreSection() {
   const [sort, setSort] = useState<SortOption>('popular');
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
-  const {
-    templates: myTemplates,
-    addTemplate,
-    removeTemplate,
-  } = useMyTemplates();
+  const { templates: myTemplates, addTemplate, removeTemplate } = useMyTemplates();
   const filteredCards = useMemo(() => {
     let items = templateCards;
 
@@ -190,7 +192,10 @@ function HomeExploreSection() {
                   onSelect={() => setSelectedId(card.id)}
                 />
               ))}
-          {!isCatalogLoading && filteredCards.length === 0 ? (
+          {/* 못 받은 것과 없는 것을 구분한다 — 사용자가 할 일이 정반대다 */}
+          {isCatalogError ? (
+            <TemplateCatalogError className="col-span-full" onRetry={() => void refetchCatalog()} />
+          ) : !isCatalogLoading && filteredCards.length === 0 ? (
             <p className="col-span-full py-10 text-center text-[13px] text-[#94a3b8]">
               조건에 맞는 템플릿이 없습니다.
             </p>

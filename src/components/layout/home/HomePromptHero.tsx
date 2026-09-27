@@ -48,7 +48,9 @@ function HomePromptHero() {
   const [isNamingProject, setIsNamingProject] = useState(false);
 
   const { data: projects = [], isLoading: isProjectsLoading } = useProjectListQuery('home-prompt');
-  const { data: catalog } = useTemplateListQuery(TEMPLATE_CATALOG_QUERY_KEY);
+  const { data: catalog, isError: isCatalogError } = useTemplateListQuery(
+    TEMPLATE_CATALOG_QUERY_KEY,
+  );
 
   /*
     주소로 들어온 템플릿.
@@ -64,6 +66,16 @@ function HomePromptHero() {
   }, [catalog, templateIdFromSearch]);
 
   const attachedTemplate = templateFromSearch ?? storedTemplate;
+
+  /*
+    템플릿을 고르고 넘어왔는데 목록을 못 받아서 얹지 못한 상태.
+
+    이 말을 안 하면 **"템플릿 사용하기" 를 누른 것이 조용히 없던 일이 된다** — 화면은
+    평범한 프롬프트 창이라 사용자는 자기가 잘못 눌렀다고 생각한다. 얹히지 않았다는
+    사실 자체를 말한다.
+  */
+  const didTemplateAttachFail =
+    Boolean(templateIdFromSearch) && isCatalogError && !attachedTemplate;
 
   /*
     주소로 얹힌 것을 맡겨 둔다. 상태를 건드리지 않고 저장소만 갱신한다 — 화면이 읽는 값은
@@ -287,6 +299,12 @@ function HomePromptHero() {
       {submitError ? (
         <p className="mt-3 text-center text-[13px] text-red-600" role="alert">
           {submitError}
+        </p>
+      ) : null}
+
+      {didTemplateAttachFail ? (
+        <p className="mt-3 text-center text-[13px] text-[#92400e]" role="status">
+          템플릿을 불러오지 못해 얹지 못했습니다. 아래 목록에서 다시 골라 주세요.
         </p>
       ) : null}
 
