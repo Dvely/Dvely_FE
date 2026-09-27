@@ -75,8 +75,14 @@ const getProjectPreviewSessionResSchema = z.object({
   taskId: z.string().nullable().prefault(''),
   /** ACTIVE | PROVISIONING | FAILED. 세션이 없으면 null */
   status: projectPreviewSessionStatusSchema.nullable().prefault(null),
-  /** 프리뷰 주소. status=ACTIVE 일 때만 값이 있음 */
-  previewUrl: z.string().nullable().prefault(''),
+  /*
+    프리뷰 주소는 여기서 받지 않는다.
+
+    이 응답에도 같은 이름의 필드가 있었지만 **그 주소만으로는 열리지 않는다** — 문서
+    탐색은 접근 쿠키를 요구해서, 쿠키 없이 들어가면 401 이다. 열 수 있는 주소는
+    `POST /preview-sessions/{id}/access` 응답 하나뿐이고 쿠키도 그때 같이 내려온다.
+    같은 이름이 세 곳에 있고 계약이 서로 달라서 생긴 혼선이라, 안 쓰는 쪽을 지운다(BE #392).
+  */
   /** 컨테이너 회수 시각. 없으면 null */
   expiresAt: z.string().nullable().prefault(''),
   /** status=FAILED 일 때의 실패 사유. 없으면 null */

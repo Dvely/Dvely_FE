@@ -130,8 +130,21 @@ const getAgentTaskResSchema = z.object({
   taskId: z.string().prefault(''),
   /** 태스크 상태 */
   status: agentTaskStatusSchema,
-  /** 토큰 기반 프리뷰 gateway URL. CODE 스텝 완료 시에만 설정됨 */
-  previewUrl: z.string().nullable().prefault(''),
+  /**
+   * 이 작업에 프리뷰가 만들어졌는가. CODE 스텝을 지나면 참이 된다.
+   *
+   * **지금 볼 수 있다는 뜻이 아니다.** 서버가 이 값의 근거로 쓰는 컬럼을 지우는 코드가
+   * 없어서, 프리뷰가 회수된 뒤에도 참으로 남는다. 그래서 이름이 `ready` 가 아니다.
+   * 지금 상태는 `GET /projects/{id}/preview-session` 의 `status`, 열 수 있는 주소는
+   * `POST /preview-sessions/{id}/access` 응답 하나뿐이다.
+   *
+   * 예전에는 같은 자리에 `previewUrl` 이 있었다. 이름이 access 응답의 것과 같은데
+   * **열리지 않는 낡은 스냅샷**이라, 그 이름을 믿고 iframe 에 넣으면 404 가 났다(BE #392).
+   *
+   * 없으면 거짓으로 본다. 서버가 되돌려져 이 필드가 사라져도 폴링이 종료 상태까지
+   * 이어질 뿐 깨지지는 않는다.
+   */
+  previewCreated: z.boolean().prefault(false),
   /** 작업 완료 요약. 배포 URL, 도메인 연결 결과 등 포함 */
   summary: z.string().nullable().prefault(''),
   /** 실패 원인 메시지. status가 FAILED일 때 설정됨 */
