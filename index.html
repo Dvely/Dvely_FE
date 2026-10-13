@@ -2,9 +2,18 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      검색 결과의 사이트 아이콘은 Google 이 48px 배수의 정사각 아이콘을 요구한다. SVG 는
+      다크 모드에 반응하는 투명 심볼이라 흰 원 위에서 흐리게 보이므로, 배경이 있는 앱
+      아이콘 PNG 를 크기별로 먼저 선언한다. 브라우저 탭은 그대로 SVG·ICO 를 쓴다.
+    -->
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#7C3AED" />
     <title>Qeploy — 대화형 AI 웹서비스 빌드·배포 자동화 플랫폼</title>
