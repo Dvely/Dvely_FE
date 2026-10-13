@@ -4,6 +4,7 @@ import GitHubAppInstallPromptDialog from '@/components/auth/GitHubAppInstallProm
 import NotFoundPage from '@/components/layout/NotFoundPage';
 import AppSidebar from '@/components/common/AppSidebar';
 import { AssetLoadFailureNotice } from '@/components/common/AssetLoadFailureNotice';
+import SeoHead from '@/components/common/SeoHead';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -17,6 +18,7 @@ function RootComponent() {
   return (
     <>
       <AppRouterEffects />
+      <SeoHead />
       <AssetLoadFailureNotice />
       <GitHubAppInstallPromptDialog />
 
