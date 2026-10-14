@@ -1,0 +1,19 @@
+# Qeploy — https://qeploy.com
+# 공개 페이지(랜딩·템플릿 갤러리)만 수집 대상이다. 로그인 뒤 화면과 API·OAuth 콜백은 막는다.
+# 검색엔진과 AI 답변 엔진(GPTBot·ClaudeBot·PerplexityBot·Google-Extended 등) 모두 같은 규칙을 따른다.
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /callback
+Disallow: /home
+Disallow: /project
+Disallow: /templates
+Disallow: /settings
+Disallow: /analytics
+Disallow: /trash
+Disallow: /help
+Disallow: /onboarding
+
+Sitemap: https://qeploy.com/sitemap.xml
