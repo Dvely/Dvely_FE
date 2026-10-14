@@ -336,8 +336,7 @@ claude mcp add qeploy -- npx -y @qeploy/mcp
 # Codex
 codex mcp add qeploy -- npx -y @qeploy/mcp
 
-export QEPLOY_TOKEN=qp_...
-export QEPLOY_API_URL=https://qeploy.com/api/v1`}
+export QEPLOY_TOKEN=qp_...`}
         </pre>
         <p className="mt-3 text-[12px] leading-relaxed text-[#64748b]">
           <b className="font-semibold text-[#0f172a]">쓰기 도구는 기본으로 꺼져 있습니다.</b> 켜려면{' '}
@@ -356,8 +355,17 @@ export QEPLOY_API_URL=https://qeploy.com/api/v1`}
         <ApiTokenRevealDialog
           token={issuedToken.token}
           label={issuedToken.label}
-          // 닫는 순간 평문을 버린다. 언마운트되므로 트리에도 남지 않는다
-          onClose={() => setIssuedToken(null)}
+          /*
+            닫는 순간 평문을 버린다. 언마운트되므로 트리에도 남지 않는다.
+
+            `reset()` 도 같이 부른다 — 화면이 `issueMutation.data` 를 읽지 않아 다시
+            보이지는 않지만, 그 안에 평문이 담긴 채로 mutation 캐시에 몇 분 남는다.
+            한 번만 보여주기로 한 값이라 안 읽는 것으로는 부족하고, 들고 있지 않아야 한다.
+          */
+          onClose={() => {
+            setIssuedToken(null);
+            issueMutation.reset();
+          }}
         />
       ) : null}
     </div>
