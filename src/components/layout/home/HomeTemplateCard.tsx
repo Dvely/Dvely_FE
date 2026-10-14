@@ -80,7 +80,15 @@ function HomeTemplateCard({ card, onSelect }: HomeTemplateCardProps) {
       </div>
 
       <p className="mt-2 text-[22px] font-semibold tracking-tight text-[#0f172a]">{card.title}</p>
-      <p className="mt-0.5 text-[13px] text-[#64748b]">{card.tags.join(' ')}</p>
+      {card.tags.length > 0 && (
+        <div aria-label="템플릿 태그" className="mt-2 flex flex-wrap gap-1.5">
+          {card.tags.map((tag) => (
+            <p key={tag} className="text-[13px] font-medium text-[#334155]">
+              # {tag}
+            </p>
+          ))}
+        </div>
+      )}
     </article>
   );
 }
