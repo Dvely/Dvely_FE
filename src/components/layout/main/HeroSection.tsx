@@ -321,7 +321,7 @@ function HeroSection() {
               onClick={handleAuth}
               className="inline-flex h-12 items-center gap-1 rounded-full bg-[#7C3AED] px-6 text-[14px] font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#6D28D9] disabled:opacity-60"
             >
-              무료로 시작하기
+              {isLoggedIn ? '대시보드' : '무료로 시작하기'}
               <ArrowRight className="size-4" />
             </button>
           </div>
