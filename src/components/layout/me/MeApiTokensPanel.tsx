@@ -338,6 +338,11 @@ function MeApiTokensPanel() {
           2. 에이전트에 MCP 서버를 등록한다 (토큰을 명령 인자로 끼우지 않는다)
           3. 환경변수는 CI·덮어쓰기용 보조 수단으로만 안내한다
         실제 명령은 agent-tools 쪽 패키지가 기준이다.
+
+        그때 쓰기 권한을 설명하게 되면 **"WRITE = 모든 작업" 으로 적지 않는다.** PAT 의
+        쓰기는 에이전트용 다섯 개(배포 생성·재시도, 환경변수 추가·수정, 도메인 추가)로
+        좁혀져 있다 — BE #454, develop f3a4428. 운영 반영은 릴리스 때라, 걷을 시점에
+        범위가 그대로인지 한 번 확인하고 적는다.
       */}
       <section className="rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] p-5">
         <h3 className="flex flex-wrap items-center gap-2 text-[14px] font-bold text-[#0f172a]">
