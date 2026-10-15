@@ -35,8 +35,20 @@ function scrollToSection(sectionId: string) {
 
   md 이상은 기존 구성 그대로다.
 */
+/** 배너를 닫은 적이 있는지. 닫기가 그 세션 안에서만 듣지 않게 남겨 둔다 */
+const BANNER_DISMISSED_KEY = 'dvely:landing-banner-dismissed';
+
+function readBannerOpen(): boolean {
+  try {
+    return localStorage.getItem(BANNER_DISMISSED_KEY) !== '1';
+  } catch {
+    // 저장이 막힌 브라우저면 그냥 띄운다 — 못 읽는 것이 안 띄울 이유는 아니다
+    return true;
+  }
+}
+
 function HeaderContainer() {
-  const [bannerOpen, setBannerOpen] = useState(true);
+  const [bannerOpen, setBannerOpen] = useState(readBannerOpen);
   const [menuOpen, setMenuOpen] = useState(false);
   const isTemplatePage = useRouterState({
     select: (state) => state.location.pathname === '/template',
@@ -126,7 +138,7 @@ function HeaderContainer() {
               onClick={handleAuth}
               className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[#7C3AED] px-4 text-[13px] font-semibold text-white shadow-[0_6px_16px_rgba(124,58,237,0.28)] transition hover:bg-[#6D28D9] disabled:opacity-60 md:h-10 md:px-5 md:text-[14px]"
             >
-              시작하기
+              {isLoggedIn ? '대시보드' : '시작하기'}
               <ArrowRight className="size-4" />
             </button>
             {/* 좁은 화면에서 가로 내비가 들어갈 자리가 없다. 같은 항목을 이 안에 담는다 */}
@@ -142,7 +154,16 @@ function HeaderContainer() {
           </div>
         </div>
 
-        {bannerOpen && !isTemplatePage ? (
+        {/*
+          로그인한 사람에게는 띄우지 않는다.
+
+          이 앱의 로그인은 GitHub OAuth 하나뿐이라, **로그인했다는 것이 곧 GitHub 을
+          연결했다는 뜻**이다. 그 사람에게 "GitHub 을 연결하세요" 는 이미 한 일을 하라는
+          말이다. 게다가 이 배너의 버튼은 로그인 상태에서 `/home` 으로 보낼 뿐 연결을
+          하지 않아서, 라벨이 하는 일과 어긋나 있었다 — 안 띄우는 것보다 띄우고
+          거짓말하는 쪽이 나쁘다.
+        */}
+        {bannerOpen && !isTemplatePage && !isLoggedIn ? (
           <div className="relative flex w-full items-center justify-center bg-[#1e1b4b] px-10 py-1.5 text-white md:px-12 md:py-2.5">
             <p className="truncate text-[12px] md:text-[13px]">
               <b>쓰던 GitHub에 Qeploy를 연결하세요.</b>
@@ -160,7 +181,14 @@ function HeaderContainer() {
             <button
               type="button"
               aria-label="안내 닫기"
-              onClick={() => setBannerOpen(false)}
+              onClick={() => {
+                setBannerOpen(false);
+                try {
+                  localStorage.setItem(BANNER_DISMISSED_KEY, '1');
+                } catch {
+                  // 못 남겼으면 이번 세션만 닫힌다. 닫기 자체를 막을 이유는 아니다
+                }
+              }}
               className="absolute right-3 text-white/80 hover:text-white md:right-4"
             >
               <X className="size-4" />

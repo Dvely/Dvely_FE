@@ -4,6 +4,17 @@
  * 채팅의 승인 카드와 승인 탭이 같은 승인을 서로 다른 화면에서 보여준다. 문구를
  * 각자 들고 있으면 한쪽만 고쳐진 채 같은 승인이 화면마다 다르게 읽힌다 — 실제로
  * 승인 탭은 `SERVER_PROVISION` 같은 원시 값을 그대로 보여주고 있었다.
+ *
+ * **title 을 고치면 BE 도 같이 고쳐야 한다.** 채팅 본문은 서버가 쓰는데, 거기 적히는
+ * 승인 이름이 아래 title 과 같은 값을 따로 들고 있다 — BE 의
+ * `approval/domain/value/ApprovalTypeLabel.java`(BE #458). 한쪽만 바꾸면 같은 승인이
+ * 채팅에서는 옛 이름, 카드에서는 새 이름으로 읽힌다. 바로 위에서 합쳐 둔 것과 같은
+ * 모양이 저장소를 건너서 다시 생긴 자리다 — 합칠 수는 없다. 채팅 문구는 서버가
+ * 소유하기로 한 것이라서다.
+ *
+ * 새 유형이 생길 때 **BE 는 컴파일에서 걸리지만 여기는 안 걸린다.** 모르는 유형이면
+ * FALLBACK_APPROVAL_COPY 로 떨어뜨려 카드는 뜨게 해 뒀기 때문이다(아래 참고). 그래서
+ * 유형 추가는 BE 쪽에서 먼저 알려 주기로 했다.
  */
 
 /** 승인 유형별 제목과 설명. 무엇을 승인하는지 버튼 바로 옆에서 읽히게 한다 */
@@ -76,9 +87,4 @@ function describeApprovalType(type: string): string {
   return APPROVAL_COPY[type]?.title ?? type;
 }
 
-export {
-  APPROVAL_COPY,
-  APPROVAL_STATUS_LABEL,
-  FALLBACK_APPROVAL_COPY,
-  describeApprovalType,
-};
+export { APPROVAL_COPY, APPROVAL_STATUS_LABEL, FALLBACK_APPROVAL_COPY, describeApprovalType };

@@ -321,34 +321,58 @@ function MeApiTokensPanel() {
         )}
       </ul>
 
+      {/*
+        연결 명령을 적지 않는다. **아직 npm 에 우리 패키지가 없다.**
+
+        스코프가 비어 있는 동안 화면이 설치 명령을 그대로 보여주면, 남이 그 이름을 먼저
+        올렸을 때 **우리 화면이 남의 코드를 설치하라고 안내하는** 셈이 된다. 설치 명령은
+        확인을 묻지 않고 받은 것을 그대로 실행한다.
+
+        흐리게 덮는 것으로는 부족하다 — 선택·복사·검색·스크래핑으로 그대로 새어나간다.
+        그래서 덮인 동안에는 명령 문자열을 **DOM 에 두지 않는다**(아래에 코드 블록이 없는
+        이유다). 주석에도 적지 않는다. 순서만 글로 남겨 둔다.
+
+        걷는 조건: 패키지가 npm 에 **우리 것으로** 공개된 뒤. 그때 이 자리에 들어갈
+        내용의 순서는 고정이다 —
+          1. 로그인으로 토큰을 기기에 저장한다
+          2. 에이전트에 MCP 서버를 등록한다 (토큰을 명령 인자로 끼우지 않는다)
+          3. 환경변수는 CI·덮어쓰기용 보조 수단으로만 안내한다
+        실제 명령은 agent-tools 쪽 패키지가 기준이다.
+
+        그때 쓰기 권한을 설명하게 되면 **"WRITE = 모든 작업" 으로 적지 않는다.** PAT 의
+        쓰기는 에이전트용 다섯 개(배포 생성·재시도, 환경변수 추가·수정, 도메인 추가)로
+        좁혀져 있다 — BE #454, 운영 반영 #455(main aeea6a6). 걷는 시점이 npm 공개 뒤라
+        한참 머니, 적기 전에 범위가 그대로인지 한 번 확인한다.
+      */}
       <section className="rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] p-5">
-        <h3 className="flex items-center gap-2 text-[14px] font-bold text-[#0f172a]">
+        <h3 className="flex flex-wrap items-center gap-2 text-[14px] font-bold text-[#0f172a]">
           <Terminal className="size-4 text-[#64748b]" aria-hidden />
           에이전트에 연결하기
+          <span className="rounded-full bg-[#e2e8f0] px-2 py-0.5 text-[11px] font-semibold text-[#475569]">
+            준비 중
+          </span>
         </h3>
         <p className="mt-2 text-[12px] leading-relaxed text-[#64748b]">
-          발급한 토큰을 아래 환경변수로 넘기면 에이전트가 Qeploy 를 도구로 씁니다.
+          연결에 쓰는 패키지가 아직 공개 전입니다. 공개되면 이 자리에 명령을 올립니다. 그때 거치게
+          되는 순서는 이렇습니다.
         </p>
-        <pre className="mt-3 overflow-x-auto rounded-lg bg-[#0f172a] px-3 py-2.5 font-mono text-[11px] leading-relaxed text-[#e2e8f0]">
-          {`# Claude Code
-claude mcp add qeploy -- npx -y @qeploy/mcp
-
-# Codex
-codex mcp add qeploy -- npx -y @qeploy/mcp
-
-export QEPLOY_TOKEN=qp_...
-export QEPLOY_API_URL=https://qeploy.com/api/v1`}
-        </pre>
-        <p className="mt-3 text-[12px] leading-relaxed text-[#64748b]">
-          <b className="font-semibold text-[#0f172a]">쓰기 도구는 기본으로 꺼져 있습니다.</b> 켜려면{' '}
-          <code className="rounded bg-white px-1 py-0.5 font-mono text-[11px]">
-            QEPLOY_ENABLE_WRITES=true
-          </code>{' '}
-          가 추가로 필요하고, 그때도 WRITE 스코프 토큰이어야 합니다. 두 가지는 별개의 층입니다.
-        </p>
-        <p className="mt-2 text-[12px] leading-relaxed text-[#94a3b8]">
-          토큰이 만료되면 연결이 끊깁니다. 새로 발급해 환경변수를 갱신하세요. npm 패키지는 아직 공개
-          전이라 위 명령은 배포 후에 동작합니다.
+        <ol className="mt-3 flex flex-col gap-2 text-[12px] leading-relaxed text-[#64748b]">
+          {[
+            'Qeploy 에 로그인해 토큰을 기기에 저장합니다.',
+            '에이전트에 Qeploy 를 MCP 서버로 등록합니다. 토큰은 명령에 직접 적지 않습니다.',
+            '환경변수는 CI 처럼 로그인을 못 하는 환경에서만 보조로 씁니다.',
+          ].map((step, index) => (
+            <li key={step} className="flex gap-2">
+              <span className="mt-px flex size-[18px] shrink-0 items-center justify-center rounded-full bg-[#e2e8f0] text-[11px] font-semibold text-[#475569]">
+                {index + 1}
+              </span>
+              <span className="min-w-0">{step}</span>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-3 text-[12px] leading-relaxed text-[#94a3b8]">
+          토큰은 지금 발급해 둘 수 있습니다. 쓰기 도구는 공개 뒤에도 기본으로 꺼져 있고, 켜려면
+          WRITE 스코프 토큰과 별도 설정이 함께 필요합니다 — 두 가지는 별개의 층입니다.
         </p>
       </section>
 
@@ -356,8 +380,17 @@ export QEPLOY_API_URL=https://qeploy.com/api/v1`}
         <ApiTokenRevealDialog
           token={issuedToken.token}
           label={issuedToken.label}
-          // 닫는 순간 평문을 버린다. 언마운트되므로 트리에도 남지 않는다
-          onClose={() => setIssuedToken(null)}
+          /*
+            닫는 순간 평문을 버린다. 언마운트되므로 트리에도 남지 않는다.
+
+            `reset()` 도 같이 부른다 — 화면이 `issueMutation.data` 를 읽지 않아 다시
+            보이지는 않지만, 그 안에 평문이 담긴 채로 mutation 캐시에 몇 분 남는다.
+            한 번만 보여주기로 한 값이라 안 읽는 것으로는 부족하고, 들고 있지 않아야 한다.
+          */
+          onClose={() => {
+            setIssuedToken(null);
+            issueMutation.reset();
+          }}
         />
       ) : null}
     </div>
