@@ -44,7 +44,7 @@ function StartNowSection() {
           disabled={isLoggingIn}
           className="w-full shrink-0 rounded-xl border-[#7C3AED] bg-[#7C3AED] bg-none text-white hover:bg-[#6D28D9] hover:opacity-100 md:w-auto md:border-[#C084FC]/45 md:bg-gradient-to-b md:from-[#C084FC]/22 md:to-[#C084FC]/10 md:text-[#0B0C12] md:hover:bg-transparent md:hover:opacity-80"
         >
-          <p className="typo-b1-eb">{isLoggedIn ? '워크스페이스로 이동' : '무료로 시작하기'}</p>
+          <p className="typo-b1-eb">{isLoggedIn ? '대시보드' : '무료로 시작하기'}</p>
         </Button>
       </div>
     </section>
