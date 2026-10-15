@@ -13,6 +13,7 @@ import {
   type TemplateIndustryCategory,
   type TemplateSiteType,
 } from '@/lib/templateCategories';
+import Footer from '@/components/layout/footer/Footer';
 
 export default function TemplateGalleryPage() {
   const [category, setCategory] = useState<'all' | TemplateIndustryCategory>('all');
@@ -210,14 +211,7 @@ export default function TemplateGalleryPage() {
           )}
         </section>
       </main>
-      <footer className="border-t border-black/5 bg-white px-6 py-10">
-        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-4">
-          <Link to="/" className="text-[22px] font-extrabold tracking-tight text-black">
-            Qeploy
-          </Link>
-          <p className="text-xs text-[#999]">© Qeploy. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
       <button
         type="button"
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
