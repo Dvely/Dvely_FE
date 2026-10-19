@@ -25,6 +25,35 @@ const SCOPE_COPY: Record<ApiTokenScope, { title: string; detail: string }> = {
   },
 };
 
+/**
+ * 연결 순서. **순서가 곧 안전장치다** — 토큰을 먼저 기기에 저장해야 2번 명령에 토큰을
+ * 적지 않을 수 있고, 환경변수는 로그인을 못 하는 환경용 보조로 뒤에 온다. 순서를 바꾸면
+ * 토큰이 셸 기록과 에이전트 설정 파일로 퍼진다.
+ */
+const CONNECT_STEPS = [
+  {
+    title: '토큰을 기기에 저장합니다',
+    command: 'npx @qeploy/cli login',
+    detail:
+      '명령이 브라우저 로그인 토큰을 한 번 물어봅니다. 붙여넣을 것은 명령이 화면에 안내합니다. 받은 토큰은 설정 파일에 소유자만 읽을 수 있게 저장됩니다. 쓰기까지 필요하면 --scope WRITE 를 붙입니다.',
+  },
+  {
+    title: '에이전트에 MCP 서버로 등록합니다',
+    command: `# Claude Code
+claude mcp add qeploy -- npx -y @qeploy/mcp
+
+# Codex
+codex mcp add qeploy -- npx -y @qeploy/mcp`,
+    detail: '토큰은 이 명령에 적지 않습니다. 1번에서 저장한 것을 그대로 읽습니다.',
+  },
+  {
+    title: 'CI 에서는 환경변수로 넘깁니다',
+    command: 'export QEPLOY_TOKEN=qp_...',
+    detail:
+      '로그인을 못 하는 환경에서만 씁니다. 환경변수가 저장된 토큰을 이깁니다. 주소는 따로 적지 않아도 기본값으로 붙습니다.',
+  },
+] as const;
+
 function formatDate(value: string | null) {
   if (!value) return null;
   const date = new Date(value);
@@ -322,57 +351,54 @@ function MeApiTokensPanel() {
       </ul>
 
       {/*
-        연결 명령을 적지 않는다. **아직 npm 에 우리 패키지가 없다.**
+        덮개를 걷었다. 패키지가 **우리 스코프로** 공개됐다 — @qeploy/mcp · @qeploy/cli ·
+        @qeploy/client 0.1.0(BE #451). 레지스트리에서 직접 본 것: 세 패키지 모두 maintainer 가
+        우리 쪽 한 명이고 repository 가 Dvely 저장소를 가리키며, **설치 스크립트(postinstall
+        따위)가 없다.** 스코프 없는 `qeploy` 는 남의 패키지라 안내에 쓰지 않는다.
 
-        스코프가 비어 있는 동안 화면이 설치 명령을 그대로 보여주면, 남이 그 이름을 먼저
-        올렸을 때 **우리 화면이 남의 코드를 설치하라고 안내하는** 셈이 된다. 설치 명령은
-        확인을 묻지 않고 받은 것을 그대로 실행한다.
+        **주소는 안내하지 않는다.** 클라이언트가 `/api/v1` 을 스스로 붙이고 기본값이
+        https://qeploy.com 이다. 덮기 전 이 자리에 있던 `QEPLOY_API_URL=https://qeploy.com/api/v1`
+        을 그대로 되살리면 경로가 두 번 붙는다 — af4006b 에서 고친 것이 바로 그것이다.
 
-        흐리게 덮는 것으로는 부족하다 — 선택·복사·검색·스크래핑으로 그대로 새어나간다.
-        그래서 덮인 동안에는 명령 문자열을 **DOM 에 두지 않는다**(아래에 코드 블록이 없는
-        이유다). 주석에도 적지 않는다. 순서만 글로 남겨 둔다.
-
-        걷는 조건: 패키지가 npm 에 **우리 것으로** 공개된 뒤. 그때 이 자리에 들어갈
-        내용의 순서는 고정이다 —
-          1. 로그인으로 토큰을 기기에 저장한다
-          2. 에이전트에 MCP 서버를 등록한다 (토큰을 명령 인자로 끼우지 않는다)
-          3. 환경변수는 CI·덮어쓰기용 보조 수단으로만 안내한다
-        실제 명령은 agent-tools 쪽 패키지가 기준이다.
-
-        그때 쓰기 권한을 설명하게 되면 **"WRITE = 모든 작업" 으로 적지 않는다.** PAT 의
-        쓰기는 에이전트용 다섯 개(배포 생성·재시도, 환경변수 추가·수정, 도메인 추가)로
-        좁혀져 있다 — BE #454, 운영 반영 #455(main aeea6a6). 걷는 시점이 npm 공개 뒤라
-        한참 머니, 적기 전에 범위가 그대로인지 한 번 확인한다.
+        **토큰을 등록 명령에 끼우지 않는다.** `qeploy login` 이 저장한 설정 파일(0600)을 MCP
+        서버가 같은 함수로 읽는다. 환경변수는 그 파일을 이기므로 CI·일회성 덮어쓰기용으로만
+        적는다.
       */}
       <section className="rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] p-5">
-        <h3 className="flex flex-wrap items-center gap-2 text-[14px] font-bold text-[#0f172a]">
+        <h3 className="flex items-center gap-2 text-[14px] font-bold text-[#0f172a]">
           <Terminal className="size-4 text-[#64748b]" aria-hidden />
           에이전트에 연결하기
-          <span className="rounded-full bg-[#e2e8f0] px-2 py-0.5 text-[11px] font-semibold text-[#475569]">
-            준비 중
-          </span>
         </h3>
         <p className="mt-2 text-[12px] leading-relaxed text-[#64748b]">
-          연결에 쓰는 패키지가 아직 공개 전입니다. 공개되면 이 자리에 명령을 올립니다. 그때 거치게
-          되는 순서는 이렇습니다.
+          발급한 토큰으로 Claude Code·Codex 가 Qeploy 를 도구로 씁니다.
         </p>
-        <ol className="mt-3 flex flex-col gap-2 text-[12px] leading-relaxed text-[#64748b]">
-          {[
-            'Qeploy 에 로그인해 토큰을 기기에 저장합니다.',
-            '에이전트에 Qeploy 를 MCP 서버로 등록합니다. 토큰은 명령에 직접 적지 않습니다.',
-            '환경변수는 CI 처럼 로그인을 못 하는 환경에서만 보조로 씁니다.',
-          ].map((step, index) => (
-            <li key={step} className="flex gap-2">
+        <ol className="mt-3 flex flex-col gap-3">
+          {CONNECT_STEPS.map((step, index) => (
+            <li key={step.title} className="flex gap-2">
               <span className="mt-px flex size-[18px] shrink-0 items-center justify-center rounded-full bg-[#e2e8f0] text-[11px] font-semibold text-[#475569]">
                 {index + 1}
               </span>
-              <span className="min-w-0">{step}</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] font-semibold text-[#0f172a]">{step.title}</p>
+                <pre className="mt-1.5 overflow-x-auto rounded-lg bg-[#0f172a] px-3 py-2.5 font-mono text-[11px] leading-relaxed text-[#e2e8f0]">
+                  {step.command}
+                </pre>
+                <p className="mt-1.5 text-[12px] leading-relaxed text-[#64748b]">{step.detail}</p>
+              </div>
             </li>
           ))}
         </ol>
-        <p className="mt-3 text-[12px] leading-relaxed text-[#94a3b8]">
-          토큰은 지금 발급해 둘 수 있습니다. 쓰기 도구는 공개 뒤에도 기본으로 꺼져 있고, 켜려면
-          WRITE 스코프 토큰과 별도 설정이 함께 필요합니다 — 두 가지는 별개의 층입니다.
+        <p className="mt-4 text-[12px] leading-relaxed text-[#64748b]">
+          <b className="font-semibold text-[#0f172a]">쓰기 도구는 기본으로 꺼져 있습니다.</b> 켜려면{' '}
+          <code className="rounded bg-white px-1 py-0.5 font-mono text-[11px]">
+            QEPLOY_ENABLE_WRITES=true
+          </code>{' '}
+          가 추가로 필요하고, 그때도 WRITE 스코프 토큰이어야 합니다 — 두 가지는 별개의 층입니다.
+          켜도 늘어나는 것은 다섯 개(배포 실행·재시도, 환경변수 추가·수정, 도메인 연결)뿐이고,
+          프로젝트·서버 삭제나 승인 결정처럼 되돌릴 수 없는 것은 애초에 들어 있지 않습니다.
+        </p>
+        <p className="mt-2 text-[12px] leading-relaxed text-[#94a3b8]">
+          토큰이 만료되면 연결이 끊깁니다. 새로 발급한 뒤 1번을 다시 실행하세요.
         </p>
       </section>
 
