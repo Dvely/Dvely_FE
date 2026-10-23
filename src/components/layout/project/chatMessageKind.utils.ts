@@ -34,6 +34,17 @@ const MESSAGE_KIND_TONE: Record<string, MessageTone> = {
   CLARIFICATION_ANSWER: 'muted',
   /** 접힌 작업. 지나간 일이라 흐리게 둔다 */
   TASK_CANCELLED: 'muted',
+  /*
+    시스템이 마무리한 작업(BE #461·#462). **표에 빠져서 default 인 게 아니라, default 가
+    맞다고 확인한 것이다.**
+
+    바로 위 TASK_CANCELLED 옆에 있으니 흐리게 두고 싶어지는데, BE 가 이 값을 따로 만든
+    이유가 "취소처럼 흐리게 그리지 않는다" 였다. 작업은 DONE 이고 사용자가 고르지 않은
+    채 시스템이 닫았다는 통지라서, 흐리게 두면 끝났다는 사실 자체가 안 읽힌다.
+
+    중립 통지 톤이 따로 생기면 그때는 그쪽이 맞다. 지금 있는 셋 중에서는 default 다.
+  */
+  TASK_CLOSED: 'default',
   /** 끝내 실패한 작업. 이것만 눈에 띄어야 한다 */
   TASK_FAILED: 'failed',
 };
