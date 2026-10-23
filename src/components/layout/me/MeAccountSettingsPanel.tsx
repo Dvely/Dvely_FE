@@ -85,7 +85,6 @@ function MeAccountSettingsPanel() {
         </div>
       </section>
 
-
       <section className="flex flex-col gap-4">
         <h3 className="text-[15px] font-semibold text-[#0f172a]">{t('me.account.personalInfo')}</h3>
         <div className="flex flex-col gap-4">

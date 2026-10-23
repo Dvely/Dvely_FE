@@ -106,8 +106,8 @@ function MaruTemplate() {
             이미 있던 집의 결을 천천히 닦았을 뿐입니다.
           </blockquote>
           <p>
-            안동 풍산의 낮은 언덕. 대문은 작고, 마당은 넓습니다. 계절에 따라 그림자가 옮겨 가는 자리를
-            그대로 두었습니다.
+            안동 풍산의 낮은 언덕. 대문은 작고, 마당은 넓습니다. 계절에 따라 그림자가 옮겨 가는
+            자리를 그대로 두었습니다.
           </p>
         </section>
 
@@ -115,7 +115,11 @@ function MaruTemplate() {
           {rooms.map((room) => (
             <article key={room.name} className={stay === room.name ? 'mr-room is-on' : 'mr-room'}>
               <div className="mr-room-visual" data-room={room.name} />
-              <button type="button" onClick={() => setStay(room.name)} aria-pressed={stay === room.name}>
+              <button
+                type="button"
+                onClick={() => setStay(room.name)}
+                aria-pressed={stay === room.name}
+              >
                 {room.code} · {stay === room.name ? '오늘 머무는 곳' : '둘러보기'}
               </button>
               <strong>{room.name}</strong>
@@ -136,7 +140,8 @@ function MaruTemplate() {
               하루의 리듬.
             </h2>
             <p>
-              {selected.name}에 묵는 동안, 시간은 방의 온도를 따라 움직입니다. 일정표는 제안일 뿐입니다.
+              {selected.name}에 묵는 동안, 시간은 방의 온도를 따라 움직입니다. 일정표는 제안일
+              뿐입니다.
             </p>
           </div>
           <ol>

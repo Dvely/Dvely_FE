@@ -94,14 +94,22 @@ function NoctuaTemplate() {
               이야기가 켜진다.
             </h1>
             <p>
-              한 스크린, 마흔여덟 좌석. 오늘 밤에만 열리는 독립 영화관입니다. 예고편 대신 짧은 정적을
-              둡니다.
+              한 스크린, 마흔여덟 좌석. 오늘 밤에만 열리는 독립 영화관입니다. 예고편 대신 짧은
+              정적을 둡니다.
             </p>
             <div className="nc-days" aria-label="상영일">
-              <button type="button" aria-pressed={day === 'today'} onClick={() => handleDay('today')}>
+              <button
+                type="button"
+                aria-pressed={day === 'today'}
+                onClick={() => handleDay('today')}
+              >
                 오늘
               </button>
-              <button type="button" aria-pressed={day === 'tomorrow'} onClick={() => handleDay('tomorrow')}>
+              <button
+                type="button"
+                aria-pressed={day === 'tomorrow'}
+                onClick={() => handleDay('tomorrow')}
+              >
                 내일
               </button>
             </div>

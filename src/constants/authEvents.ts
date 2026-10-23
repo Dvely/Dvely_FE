@@ -16,7 +16,8 @@ export function dispatchGitHubAppInstallRequired() {
  * 설치는 돼 있는데 User Token 이 끊겨 재인증이 필요할 때 발행.
  * 설치 요구와 다르다 — 권한은 그대로고 토큰만 다시 받으면 된다.
  */
-export const GITHUB_APP_REAUTHORIZATION_REQUIRED_EVENT = 'dvely:github-app-reauthorization-required';
+export const GITHUB_APP_REAUTHORIZATION_REQUIRED_EVENT =
+  'dvely:github-app-reauthorization-required';
 
 export function dispatchGitHubAppReauthorizationRequired() {
   window.dispatchEvent(new Event(GITHUB_APP_REAUTHORIZATION_REQUIRED_EVENT));

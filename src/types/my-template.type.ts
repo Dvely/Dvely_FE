@@ -1,8 +1,5 @@
 import { z } from 'zod';
-import {
-  TEMPLATE_INDUSTRY_CATEGORIES,
-  TEMPLATE_SITE_TYPES,
-} from '@/lib/templateCategories';
+import { TEMPLATE_INDUSTRY_CATEGORIES, TEMPLATE_SITE_TYPES } from '@/lib/templateCategories';
 
 const myTemplateIndustrySchema = z.enum(
   TEMPLATE_INDUSTRY_CATEGORIES.map((item) => item.id) as [
