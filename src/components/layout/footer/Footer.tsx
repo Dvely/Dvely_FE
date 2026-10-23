@@ -162,7 +162,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-6 flex flex-col items-start gap-4 border-t border-[#0B0C12]/10 pt-[21px] sm:flex-row sm:items-center sm:justify-between sm:gap-0">
-          <p className="typo-b5-rg text-[#6B6578]">© Qeploy Demo. All rights reserved.</p>
+          <p className="typo-b5-rg text-[#6B6578]">© Qeploy. All rights reserved.</p>
           {/*
             아직 운영하는 채널이 없다. 아이콘은 남기되 버튼이 아니라 이미지로 두어
             누를 수 있는 것처럼 보이지 않게 한다.
