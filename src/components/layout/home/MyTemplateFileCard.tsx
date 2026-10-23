@@ -1,10 +1,7 @@
 import { useCallback } from 'react';
 import { FileArchive, Trash2 } from 'lucide-react';
 import { formatFileSize } from '@/lib/zipFile';
-import {
-  TEMPLATE_INDUSTRY_LABEL,
-  TEMPLATE_SITE_TYPES,
-} from '@/lib/templateCategories';
+import { TEMPLATE_INDUSTRY_LABEL, TEMPLATE_SITE_TYPES } from '@/lib/templateCategories';
 import type { MyTemplateItem } from '@/types/my-template.type';
 
 type MyTemplateFileCardProps = {

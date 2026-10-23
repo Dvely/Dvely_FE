@@ -2,16 +2,51 @@ import { useMemo, useState } from 'react';
 
 const collections = {
   bowl: [
-    { name: '아침 공기', glaze: '황토 유약', price: '48,000', note: '얇은 굽. 밥을 담기 좋은 공기.' },
-    { name: '손자국 접시', glaze: '분청', price: '62,000', note: '물레 자국을 남긴 접시. 반찬이 천천히 식습니다.' },
-    { name: '두 사람 볼', glaze: '회청', price: '78,000', note: '조금 큰 볼. 면을 나눠 먹기 좋습니다.' },
+    {
+      name: '아침 공기',
+      glaze: '황토 유약',
+      price: '48,000',
+      note: '얇은 굽. 밥을 담기 좋은 공기.',
+    },
+    {
+      name: '손자국 접시',
+      glaze: '분청',
+      price: '62,000',
+      note: '물레 자국을 남긴 접시. 반찬이 천천히 식습니다.',
+    },
+    {
+      name: '두 사람 볼',
+      glaze: '회청',
+      price: '78,000',
+      note: '조금 큰 볼. 면을 나눠 먹기 좋습니다.',
+    },
     { name: '저녁 종지', glaze: '철유', price: '28,000', note: '간장과 소스를 위한 작은 종지.' },
   ],
   vase: [
-    { name: '창가 화병', glaze: '백자', price: '96,000', note: '좁은 입. 한두 줄기의 꽃이 서기에 충분합니다.' },
-    { name: '비온 뒤 항아리', glaze: '회청색', price: '180,000', note: '비를 머금은 흙의 색입니다.' },
-    { name: '낮은 단지', glaze: '재유', price: '72,000', note: '뚜껑 있는 단지. 차 잎을 두기에 좋습니다.' },
-    { name: '한 줄기 병', glaze: '청자', price: '54,000', note: '가늘고 긴 병. 책상 모서리에 둡니다.' },
+    {
+      name: '창가 화병',
+      glaze: '백자',
+      price: '96,000',
+      note: '좁은 입. 한두 줄기의 꽃이 서기에 충분합니다.',
+    },
+    {
+      name: '비온 뒤 항아리',
+      glaze: '회청색',
+      price: '180,000',
+      note: '비를 머금은 흙의 색입니다.',
+    },
+    {
+      name: '낮은 단지',
+      glaze: '재유',
+      price: '72,000',
+      note: '뚜껑 있는 단지. 차 잎을 두기에 좋습니다.',
+    },
+    {
+      name: '한 줄기 병',
+      glaze: '청자',
+      price: '54,000',
+      note: '가늘고 긴 병. 책상 모서리에 둡니다.',
+    },
   ],
 } as const;
 
@@ -57,8 +92,8 @@ function KilnTemplate() {
               되는 곳.
             </h1>
             <p>
-              물레와 가마 사이, 손으로 하루를 굽습니다. 작은 공방에서 실제로 쓰는 그릇을 만들고, 남는
-              자리를 수업에 엽니다.
+              물레와 가마 사이, 손으로 하루를 굽습니다. 작은 공방에서 실제로 쓰는 그릇을 만들고,
+              남는 자리를 수업에 엽니다.
             </p>
             <div className="kn-stats">
               <div>
@@ -87,8 +122,7 @@ function KilnTemplate() {
             <p className="kn-label">01 / PROCESS</p>
             <h2>
               서두르지 않는
-              <br />
-              세 번의 손.
+              <br />세 번의 손.
             </h2>
             <p>성수동 골목의 1층. 창은 북향이고, 가마는 안쪽에 있습니다.</p>
           </div>
@@ -110,10 +144,18 @@ function KilnTemplate() {
               <h2>이번 가마에서 나온 것들.</h2>
             </div>
             <div className="kn-tabs" aria-label="작품 분류">
-              <button type="button" aria-pressed={collection === 'bowl'} onClick={() => setCollection('bowl')}>
+              <button
+                type="button"
+                aria-pressed={collection === 'bowl'}
+                onClick={() => setCollection('bowl')}
+              >
                 식기
               </button>
-              <button type="button" aria-pressed={collection === 'vase'} onClick={() => setCollection('vase')}>
+              <button
+                type="button"
+                aria-pressed={collection === 'vase'}
+                onClick={() => setCollection('vase')}
+              >
                 화기
               </button>
             </div>

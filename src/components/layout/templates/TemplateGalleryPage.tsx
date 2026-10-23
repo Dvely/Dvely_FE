@@ -3,21 +3,16 @@ import { Link } from '@tanstack/react-router';
 import { Dialog } from 'radix-ui';
 import { ArrowUp, X } from 'lucide-react';
 import HeaderContainer from '@/components/layout/header/HeaderContainer';
-import TemplateBrowseFilters from '@/components/layout/templates/TemplateBrowseFilters';
+import TemplateCategoryFilters from '@/components/layout/templates/TemplateCategoryFilters';
 import { TEMPLATE_CATALOG_QUERY_KEY, useTemplateListQuery } from '@/api/templates';
 import { toTemplateCard } from '@/lib/templateCatalog';
 import { toSafeHttpUrl } from '@/lib/safeUrl';
 import { TemplateCatalogError } from '@/components/common/TemplateCatalogError';
-import {
-  templateHasIndustry,
-  type TemplateIndustryCategory,
-  type TemplateSiteType,
-} from '@/lib/templateCategories';
+import { templateHasIndustry, type TemplateIndustryCategory } from '@/lib/templateCategories';
 import Footer from '@/components/layout/footer/Footer';
 
 export default function TemplateGalleryPage() {
   const [category, setCategory] = useState<'all' | TemplateIndustryCategory>('all');
-  const [siteType, setSiteType] = useState<'all' | TemplateSiteType>('all');
 
   /*
     로그인 전에도 열리는 화면이다. `GET /templates` 는 인증을 타지 않아서 그대로 쓴다.
@@ -33,20 +28,26 @@ export default function TemplateGalleryPage() {
     refetch,
   } = useTemplateListQuery(TEMPLATE_CATALOG_QUERY_KEY);
 
-  const filtered = useMemo(() => {
-    const cards = (catalog ?? []).map(toTemplateCard);
-    return cards.filter((template) => {
-      const matchesIndustry =
-        category === 'all' || templateHasIndustry(template.industries, category);
-      const matchesType = siteType === 'all' || template.siteType === siteType;
-      return matchesIndustry && matchesType;
-    });
-  }, [catalog, category, siteType]);
+  const cards = useMemo(() => (catalog ?? []).map(toTemplateCard), [catalog]);
+  const availableCategories = useMemo(
+    () => [...new Set(cards.flatMap((template) => template.industries))],
+    [cards],
+  );
+  const activeCategory =
+    category === 'all' || availableCategories.includes(category) ? category : 'all';
+  const filtered = useMemo(
+    () =>
+      cards.filter(
+        (template) =>
+          activeCategory === 'all' || templateHasIndustry(template.industries, activeCategory),
+      ),
+    [cards, activeCategory],
+  );
 
   return (
     <div className="min-h-screen bg-[#f5f5fa] text-[#333]">
       <HeaderContainer />
-      <main className="px-5 pb-24 pt-[130px] sm:px-8 lg:px-[5%]">
+      <main className="px-5 pb-24 pt-[120px] sm:px-8 sm:pt-[152px] lg:px-[5%]">
         <section aria-labelledby="template-heading" className="text-center">
           <h1
             id="template-heading"
@@ -54,23 +55,20 @@ export default function TemplateGalleryPage() {
           >
             템플릿을 선택하여 사이트를 제작하세요!
           </h1>
-          <p className="mt-6 text-[14px] leading-[25px] text-[#888]">
-            모든 템플릿들은 20여 개 블럭들의 조합으로 구성되어 있습니다.
-            <br />
-            원하는 스타일의 템플릿을 선택하신 후, 필요 없는 블럭들은 삭제하고 다른 디자인의 블럭들을
-            추가하면서
+          <p className="mx-auto mt-6 max-w-[720px] text-[14px] leading-[25px] text-[#929299]">
+            모든 템플릿들은 20여 개 블럭들의 조합으로 구성되어 있습니다.{' '}
             <br className="hidden sm:block" />
+            원하는 스타일의 템플릿을 선택하신 후, 필요 없는 블럭들은 삭제하고 다른 디자인의 블럭들을
+            추가하면서 <br className="hidden sm:block" />
             자신만의 개성 있는 사이트를 만들어보세요!
           </p>
         </section>
 
-        <div className="relative z-20 mx-auto mb-[70px] mt-[50px] flex justify-center">
-          <TemplateBrowseFilters
-            align="center"
-            typeValue={siteType}
-            industryValue={category}
-            onTypeChange={setSiteType}
-            onIndustryChange={setCategory}
+        <div className="mx-auto mb-[60px] mt-9 max-w-[880px] sm:mb-[70px] sm:mt-[52px]">
+          <TemplateCategoryFilters
+            value={activeCategory}
+            onChange={setCategory}
+            availableCategories={availableCategories}
           />
         </div>
 

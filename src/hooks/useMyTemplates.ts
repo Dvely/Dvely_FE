@@ -1,8 +1,5 @@
 import { useCallback, useState } from 'react';
-import {
-  myTemplateListSchema,
-  type MyTemplateItem,
-} from '@/types/my-template.type';
+import { myTemplateListSchema, type MyTemplateItem } from '@/types/my-template.type';
 
 const STORAGE_KEY = 'qeploy.my-templates';
 
@@ -74,7 +71,6 @@ export function useMyTemplates() {
       return next;
     });
   }, []);
-
 
   return { templates, addTemplate, removeTemplate };
 }

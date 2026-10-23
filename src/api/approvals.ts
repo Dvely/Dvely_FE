@@ -107,7 +107,13 @@ function useConversationPendingApprovalQuery(
   if (!queryKey) throw new Error('queryKey is required');
   return useQuery({
     // 접두사를 맞춰 둔다 — 승인을 결정할 때 도는 무효화가 이 조회도 같이 걷어간다
-    queryKey: ['project-approval-list', 'conversation-pending', queryKey, projectId, conversationId],
+    queryKey: [
+      'project-approval-list',
+      'conversation-pending',
+      queryKey,
+      projectId,
+      conversationId,
+    ],
     queryFn: async () => {
       const approvals = await getProjectApprovalList(projectId);
       const pending = approvals.find(
