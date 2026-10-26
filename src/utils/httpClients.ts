@@ -27,6 +27,9 @@ type AuthRefreshResponse = {
 
 type RetriableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
+/** 오리진 안의 모든 탭이 같은 이름을 봐야 줄이 하나가 된다 */
+const REFRESH_LOCK_NAME = 'qeploy.auth.refresh';
+
 class Http {
   public readonly instance: AxiosInstance;
   private readonly baseUrl = import.meta.env.VITE_API_URL;
@@ -134,9 +137,46 @@ class Http {
     return { ...config, headers };
   }
 
+  /** 이 요청이 **실제로 써서 401 을 받은** 토큰. 저장소의 현재 값과 다를 수 있다. */
+  private readAuthHeaderToken(config: RetriableRequestConfig): string | null {
+    const raw = new AxiosHeaders(config.headers).get('Authorization');
+    if (typeof raw !== 'string') return null;
+    return raw.startsWith('Bearer ') ? raw.slice('Bearer '.length) : null;
+  }
+
   // =========================
   // refresh flow (ONLY 1-step)
   // =========================
+  /**
+   * 탭이 여럿이어도 **refresh 는 한 번만** 돈다.
+   *
+   * 서버는 refresh 할 때마다 토큰을 회전시킨다. 두 탭이 동시에 401 을 받으면 둘 다 같은
+   * refresh 토큰으로 `/auth/refresh` 를 부르고, 먼저 닿은 쪽만 성공한다. 진 쪽은 401 을
+   * 받아 로그인으로 가면서 저장소를 지우고 — **방금 이긴 탭이 저장한 새 토큰까지 지운다.**
+   * `isRefreshing` 은 인스턴스 필드라 한 탭 안에서만 막아 준다.
+   *
+   * `navigator.locks` 로 오리진 전체에서 줄을 세운다. 그런데 줄만 세우면 모자라다 —
+   * 기다리던 탭이 제 차례에 그대로 refresh 를 부르면, 이미 회전돼 무효가 된 토큰으로
+   * 부르는 꼴이라 결국 같은 401 이다. 그래서 **자물쇠를 잡은 뒤 저장소를 다시 읽는다.**
+   * 내가 쓰다 실패한 토큰과 지금 저장소의 값이 다르면, 다른 탭이 이미 갱신해 둔 것이므로
+   * 그 값을 그대로 쓰고 서버를 부르지 않는다.
+   *
+   * `navigator.locks` 가 없는 환경(구형 브라우저·비보안 컨텍스트)에서는 자물쇠 없이
+   * 같은 절차를 돈다. 예전 동작으로 돌아갈 뿐 더 나빠지지는 않는다.
+   */
+  private async refreshAccessToken(staleToken: string | null): Promise<string> {
+    const run = async () => {
+      const current = this.getAccessToken();
+      if (current && current !== staleToken) return current;
+      return this.accessByRefresh();
+    };
+
+    if (typeof navigator !== 'undefined' && navigator.locks) {
+      return navigator.locks.request(REFRESH_LOCK_NAME, run);
+    }
+    return run();
+  }
+
   /**
    * refreshToken으로 accessToken만 재발급
    * refreshToken이 만료/무효(401/403)면 재발급 시도하지 않고 즉시 로그인 이동 + 로컬스토리지 clear
@@ -201,6 +241,9 @@ class Http {
     if (config._retry) return Promise.reject(error);
     config._retry = true;
 
+    // 헤더를 갈아끼우기 전에 읽어 둔다
+    const staleToken = this.readAuthHeaderToken(config);
+
     // 이미 refresh 중이면 큐에 등록 후 토큰 받으면 재시도
     if (this.isRefreshing) {
       return new Promise((resolve, reject) => {
@@ -214,7 +257,7 @@ class Http {
     this.isRefreshing = true;
 
     try {
-      const newAccessToken = await this.accessByRefresh();
+      const newAccessToken = await this.refreshAccessToken(staleToken);
 
       // 대기 요청들 처리
       this.flushQueue(newAccessToken);
