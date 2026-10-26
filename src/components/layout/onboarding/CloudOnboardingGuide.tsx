@@ -1,8 +1,8 @@
 /**
  * 자기 AWS 계정을 처음 연결하는 사용자를 위한 안내.
  *
- * 순수 정적 콘텐츠다 — API 를 부르지 않는다. 백엔드가 준 확정 카피를 이 저장소의
- * 색·타이포로 옮겼다.
+ * 글은 정적이지만 **권한 정책만은 서버에서 받아 온다.** 그 하나가 낡으면 사용자가
+ * 모자란 권한을 자기 계정에 등록하고, 그 사실을 한참 뒤 배포가 막힐 때 알게 된다.
  *
  * 비용 숫자와 보안 문구는 백엔드가 C2 구현 코드로 하나씩 검증한 값이다(SSH 키 미생성 ·
  * SSM SecureString 암호화 · t3.micro 기준 비용 · EIP 미할당이라 terminate 로 청구 정지).
@@ -11,6 +11,9 @@
  */
 
 import { useState } from 'react';
+import { useCloudRequirementsQuery } from '@/api/cloudConnections';
+import { stringifyPolicy } from '@/lib/cloudPolicyModules';
+import { extractApiErrorMessage } from '@/utils/response';
 
 const COST_ROWS = [
   { label: '서버(EC2)', sub: '가장 작은 기본형 · 24시간 가동', amount: '월 ~$8–19' },
@@ -18,142 +21,22 @@ const COST_ROWS = [
   { label: '저장소·비밀보관', sub: '빌드 결과물·환경변수', amount: '거의 $0' },
 ];
 
-/**
- * Qeploy 가 사용자 AWS 계정에서 필요로 하는 최소 권한.
- *
- * 출처는 백엔드 `docs/aws-byoc-permissions.md` 다 — 실제 호출부(Ec2Provisioner ·
- * S3ArtifactStore · SsmParameterStore · Ec2InstanceRoleProvisioner · RdsProvisioner)와
- * 1:1 대조해 확정한 값이다. **구현이 바뀌면 여기도 함께 고쳐야 한다.**
- *
- * 문서 원본은 jsonc 라 주석이 달려 있는데 여기서는 걷어냈다 — AWS 정책 편집기가 주석이
- * 있는 JSON 을 거부해서, 그대로 복사하면 붙여넣기가 실패한다.
- *
- * IAM 리소스가 경로(`role/qeploy/*`)가 아니라 **이름 접두사**(`role/qeploy-instance-*`)인
- * 것은 실수가 아니다. 프로비저너가 생성 전에 존재확인용 `getRole(name)` 을 먼저 부르는데,
- * **아직 없는 역할을 AWS 는 경로 없는 평면 ARN 으로 권한평가한다.** 경로로 좁히면 그
- * 호출이 거부되어 배포가 IAM 단계에서 멈춘다 — 실계정 검증에서 실제로 그렇게 막혔다.
- * 되돌리지 말 것.
- *
- * `SsmPublicAmiRead` 의 리소스에서 계정 자리가 비어 있는 것(`ssm:*::parameter/...`)도
- * 실수가 아니다. 최신 AL2023 AMI 는 **AWS 가 소유한 공개 파라미터**라 계정 세그먼트가
- * 없다 — 거기에 계정을 채우면 매칭되지 않아 AMI 조회가 거부되고 인스턴스를 띄우지
- * 못한다. 이것도 실계정 검증에서 실제로 막혔다.
- *
- * RDS 두 문장(Rds*)도 함께 넣는다. 지금 DB 를 안 쓰더라도 나중에 쓰게 되면 키를 다시
- * 만들어야 하는데, 처음 한 번에 넣어두면 그 일이 없다.
- *
- * `RdsServiceLinkedRole` 은 **RDS 를 처음 쓰는 계정에만** 필요하다. 첫 CreateDBInstance 가
- * 서비스 연결 역할(AWSServiceRoleForRDS)을 자동 생성하는데, 그 권한이 없으면 400 으로
- * 막힌다. 이미 RDS 를 써본 계정은 역할이 있어 이 액션이 호출되지 않는다 — 그래서
- * **테스트 계정에서는 구조적으로 안 걸리고, 온보딩을 보고 처음 키를 만든 사람만 막힌다.**
- * 이 안내가 대상으로 하는 게 바로 그 사람이라 빠뜨리면 안 된다.
- *
- * `ec2:DescribeAddresses` 는 고아 EIP 자동청소 워커가 쓴다. 종료가 실패하거나 배포가
- * 중간에 깨져 연결되지 않은 EIP 가 남으면, 워커가 주기적으로 찾아 회수한다 — 그게 없으면
- * 사용자가 AWS 콘솔을 직접 열어 지워야 하고, 애초에 남았다는 것조차 알 수 없다.
- *
- * `ec2:ReleaseAddress` 는 종료 경로에서만 쓰이지만 빠뜨리면 안 된다. 없으면 서버를 꺼도
- * **고정 IP(EIP)가 유휴 상태로 남아 계속 과금된다** — 인스턴스를 껐으니 청구가 멈췄으리라
- * 여기게 되는데 실제로는 안 멈춘다.
- *
- * 검증 상태(2026-09-03):
- * - **EC2·IAM·SSM·S3 경로는 개인 실계정에서 전 주기 검증 완료.** 역할 자동생성부터
- *   launch·헬스체크·종료 정리(getParametersByPath 로 파라미터 훑어 삭제)까지 이 정책
- *   그대로 돌았다. 그 과정에서 세 개가 모자라 하나씩 채웠다 — 위 두 주석이 그 흔적이다.
- * - **EIP 세 액션도 검증 완료.** allocate → associate → 그 주소로 서빙 → 종료 시 release
- *   까지 실계정에서 돌렸다. release 는 로그뿐 아니라 주소가 실제로 응답하지 않는 것까지
- *   확인했다 — 로그에 released 가 찍혀도 남아 있을 수 있어서다.
- * - **RDS 도 실계정에서 검증했다.** 검증 과정에서 두 가지가 모자랐고 둘 다 채웠다 —
- *   서비스 연결 역할 생성 권한(위 참고), 그리고 BE 쪽 RDS 전용 보안그룹.
- */
-const IAM_POLICY_JSON = `{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "Ec2LifecycleReadOnlyDescribe",
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DescribeInstances", "ec2:DescribeImages", "ec2:DescribeSubnets",
-        "ec2:DescribeVpcs", "ec2:DescribeSecurityGroups", "ec2:DescribeAddresses"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "Ec2RunTerminateTagged",
-      "Effect": "Allow",
-      "Action": [
-        "ec2:RunInstances", "ec2:TerminateInstances", "ec2:CreateTags",
-        "ec2:CreateSecurityGroup", "ec2:AuthorizeSecurityGroupIngress",
-        "ec2:AllocateAddress", "ec2:AssociateAddress", "ec2:ReleaseAddress"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "PassOnlyQeployInstanceRole",
-      "Effect": "Allow",
-      "Action": "iam:PassRole",
-      "Resource": "arn:aws:iam::*:role/qeploy-instance-*"
-    },
-    {
-      "Sid": "CreateQeployInstanceRoleScoped",
-      "Effect": "Allow",
-      "Action": [
-        "iam:CreateRole", "iam:PutRolePolicy", "iam:CreateInstanceProfile",
-        "iam:AddRoleToInstanceProfile", "iam:GetRole", "iam:GetInstanceProfile"
-      ],
-      "Resource": [
-        "arn:aws:iam::*:role/qeploy-instance-*",
-        "arn:aws:iam::*:instance-profile/qeploy-instance-*"
-      ]
-    },
-    {
-      "Sid": "SsmProjectParamsOnly",
-      "Effect": "Allow",
-      "Action": [
-        "ssm:PutParameter", "ssm:GetParameter", "ssm:GetParameters",
-        "ssm:GetParametersByPath", "ssm:DeleteParameter", "ssm:DeleteParameters"
-      ],
-      "Resource": "arn:aws:ssm:*:*:parameter/qeploy/*"
-    },
-    {
-      "Sid": "SsmPublicAmiRead",
-      "Effect": "Allow",
-      "Action": "ssm:GetParameter",
-      "Resource": "arn:aws:ssm:*::parameter/aws/service/ami-amazon-linux-latest/*"
-    },
-    {
-      "Sid": "S3ArtifactsOnly",
-      "Effect": "Allow",
-      "Action": [
-        "s3:CreateBucket", "s3:PutObject", "s3:GetObject",
-        "s3:DeleteObject", "s3:ListBucket"
-      ],
-      "Resource": [
-        "arn:aws:s3:::qeploy-artifacts-*",
-        "arn:aws:s3:::qeploy-artifacts-*/*"
-      ]
-    },
-    {
-      "Sid": "RdsCreateDeleteQeployScoped",
-      "Effect": "Allow",
-      "Action": ["rds:CreateDBInstance", "rds:DeleteDBInstance"],
-      "Resource": "arn:aws:rds:*:*:db:qeploy-*"
-    },
-    {
-      "Sid": "RdsDescribe",
-      "Effect": "Allow",
-      "Action": "rds:DescribeDBInstances",
-      "Resource": "*"
-    },
-    {
-      "Sid": "RdsServiceLinkedRole",
-      "Effect": "Allow",
-      "Action": "iam:CreateServiceLinkedRole",
-      "Resource": "arn:aws:iam::*:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS",
-      "Condition": { "StringEquals": { "iam:AWSServiceName": "rds.amazonaws.com" } }
-    }
-  ]
-}`;
+/*
+  **정책을 여기에 적지 않는다.**
+
+  예전에는 이 자리에 IAM 정책 전문이 문자열로 박혀 있었다. "구현이 바뀌면 여기도 함께
+  고쳐야 한다" 고 적어 두었지만 그 일은 일어나지 않았고, 2026-10-26 에 대조해 보니
+  서버가 쓰는 Action 48개 중 **17개가 이 화면에 없었다** — CloudFront·ACM 전부,
+  ssm:SendCommand, s3:PutBucketPolicy·DeleteBucket 같은 것들이다.
+
+  그래서 사용자는 "연결됨" 을 보고도 정적 사이트 배포에서 403 을 만나고, 자원을 지우려
+  할 때 실패해 AWS 에 과금 자원이 남았다. 검증 단계에서 안 걸린 이유는 서버의 연결
+  검증이 sts:GetCallerIdentity 하나인데 그건 IAM 권한이 필요 없는 호출이기 때문이다.
+
+  정책이 왜 그렇게 생겼는지(역할을 경로가 아니라 이름 접두사로 좁히는 이유, 공개 AMI
+  파라미터 ARN, RDS 서비스 연결 역할 등)는 BE 의 aws/qeploy-aws-deploy-policy.json 과
+  docs/aws-byoc-permissions.md 에 있다. 그 지식은 정책과 같은 곳에 있어야 한다.
+*/
 
 const STEPS = [
   {
@@ -217,10 +100,23 @@ const SAFETY_POINTS = [
  */
 function PolicyBlock() {
   const [isCopied, setIsCopied] = useState(false);
+  const { data, isLoading, error } = useCloudRequirementsQuery(
+    'cloud-onboarding',
+    'AWS',
+    null,
+    true,
+  );
+  const policy = stringifyPolicy(data?.recommendedPolicy);
+
+  /*
+    "RDS 까지 포함했다" 는 안내는 **정책을 보고 말한다.** 예전에는 문장으로 적혀 있었는데,
+    정책이 서버에서 오는 지금 그렇게 두면 서버가 RDS 를 빼는 날 화면만 거짓말을 한다.
+  */
+  const includesRds = policy.includes('rds:');
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(IAM_POLICY_JSON);
+      await navigator.clipboard.writeText(policy);
       setIsCopied(true);
       window.setTimeout(() => setIsCopied(false), 2000);
     } catch {
@@ -229,10 +125,32 @@ function PolicyBlock() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="mt-3 h-40 animate-pulse rounded-xl border border-[#e2e8f0] bg-[#f8fafc]" />
+    );
+  }
+
+  /*
+    못 받으면 **아무 정책도 보여주지 않는다.** 이 화면이 하는 일이 정책을 건네주는
+    것이라서 비워 두는 게 뼈아프지만, 낡은 값을 들고 있다가 건네주는 것이 바로 지금
+    고치고 있는 사고다. 틀린 정책을 주느니 못 준다고 말하는 쪽이 낫다.
+  */
+  if (error || !policy) {
+    return (
+      <p className="mt-3 rounded-xl bg-[#fef2f2] px-4 py-3 text-[12px] leading-relaxed text-[#b91c1c]">
+        {extractApiErrorMessage(error) ?? '권한 정책을 불러오지 못했습니다.'} 잠시 뒤 새로고침해
+        주세요. 정책은 서버가 주는 값이라, 예전에 받아 둔 것을 쓰면 권한이 모자랄 수 있습니다.
+      </p>
+    );
+  }
+
   return (
     <div className="mt-3 overflow-hidden rounded-xl border border-[#e2e8f0]">
       <div className="flex items-center justify-between gap-2 border-b border-[#e2e8f0] bg-[#f8fafc] px-3 py-2">
-        <p className="text-[12px] font-semibold text-[#334155]">붙여넣을 권한(JSON)</p>
+        <p className="text-[12px] font-semibold text-[#334155]">
+          붙여넣을 권한(JSON){data?.policyName ? ` · ${data.policyName}` : ''}
+        </p>
         <button
           type="button"
           onClick={() => void handleCopy()}
@@ -242,12 +160,14 @@ function PolicyBlock() {
         </button>
       </div>
       <pre className="max-h-72 overflow-auto bg-white px-3 py-2.5 font-mono text-[11px] leading-relaxed text-[#334155]">
-        {IAM_POLICY_JSON}
+        {policy}
       </pre>
-      <p className="border-t border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 text-[12px] leading-relaxed text-[#64748b]">
-        데이터베이스(RDS)까지 미리 포함했습니다. 지금 안 쓰더라도 나중에 쓰게 되면 키를 다시
-        만들어야 하는데, 한 번에 넣어두면 그 일이 없습니다.
-      </p>
+      {includesRds ? (
+        <p className="border-t border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 text-[12px] leading-relaxed text-[#64748b]">
+          데이터베이스(RDS)까지 미리 포함했습니다. 지금 안 쓰더라도 나중에 쓰게 되면 키를 다시
+          만들어야 하는데, 한 번에 넣어두면 그 일이 없습니다.
+        </p>
+      ) : null}
     </div>
   );
 }

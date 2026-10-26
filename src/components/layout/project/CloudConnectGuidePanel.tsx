@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Check, Copy, X } from 'lucide-react';
 import { useCloudRequirementsQuery } from '@/api/cloudConnections';
-import { combinePolicyModules } from '@/lib/cloudPolicyModules';
+import { combinePolicyModules, stringifyPolicy } from '@/lib/cloudPolicyModules';
 import { extractApiErrorMessage } from '@/utils/response';
 import type {
   CredentialCase,
@@ -26,16 +26,6 @@ const CONNECT_STEPS = [
   '계정에 클라우드 연결을 등록합니다.',
   '이 프로젝트에서 그 연결을 선택합니다.',
 ];
-
-function stringifyPolicy(policy: unknown): string {
-  if (policy == null) return '';
-  if (typeof policy === 'string') return policy;
-  try {
-    return JSON.stringify(policy, null, 2);
-  } catch {
-    return '';
-  }
-}
 
 type CopyBlockProps = {
   title: string;
