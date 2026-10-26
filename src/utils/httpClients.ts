@@ -80,8 +80,12 @@ class Http {
     clearAppLocalStorage();
   }
 
-  private goLogin(reason: string) {
-    console.log('[AUTH_FLOW] goLogin:', reason);
+  /**
+   * 예전에는 여기서 `console.log('[AUTH_FLOW] goLogin:', reason)` 를 찍었다. 디버깅용으로
+   * 넣은 줄이 배포까지 따라와, 운영 콘솔에 로그아웃 사유가 그대로 남았다. 사유는 호출부
+   * 주석으로 옮기고 인자는 없앴다.
+   */
+  private goLogin() {
     this.clearTokens();
     dispatchAuthRedirectHome();
   }
@@ -181,7 +185,8 @@ class Http {
     const refreshToken = this.getRefreshToken();
 
     if (!refreshToken) {
-      this.goLogin('no refresh token');
+      // refresh 토큰이 아예 없다
+      this.goLogin();
       throw new Error('No refresh token available');
     }
 
@@ -211,7 +216,7 @@ class Http {
 
       // refreshToken 만료/무효 => 재발급 X, 로그인 이동
       if (status === 401 || status === 403) {
-        this.goLogin(`refresh token expired/invalid (status ${status})`);
+        this.goLogin();
       }
 
       throw e;
