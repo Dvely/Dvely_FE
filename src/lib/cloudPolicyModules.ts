@@ -81,4 +81,20 @@ function combinePolicyModules(modules: PolicyModule[]): CombinedPolicy {
   };
 }
 
-export { combinePolicyModules, type CombinedPolicy };
+/**
+ * 정책 객체를 복사해 붙일 수 있는 문자열로.
+ *
+ * 서버가 임의 구조로 주므로 그대로 받아 여기서 문자열로 만든다. 두 화면(연결 가이드 ·
+ * 온보딩)이 같은 일을 하므로 한 곳에 둔다.
+ */
+function stringifyPolicy(policy: unknown): string {
+  if (policy == null) return '';
+  if (typeof policy === 'string') return policy;
+  try {
+    return JSON.stringify(policy, null, 2);
+  } catch {
+    return '';
+  }
+}
+
+export { combinePolicyModules, stringifyPolicy, type CombinedPolicy };
