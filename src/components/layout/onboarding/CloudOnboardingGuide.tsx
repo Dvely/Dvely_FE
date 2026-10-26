@@ -15,11 +15,24 @@ import { useCloudRequirementsQuery } from '@/api/cloudConnections';
 import { stringifyPolicy } from '@/lib/cloudPolicyModules';
 import { extractApiErrorMessage } from '@/utils/response';
 
+/*
+  서버가 실제로 띄우는 것은 **t3.micro** 다(BE ServerProvisioningCommandService 기본값).
+  서울 리전 온디맨드 $0.013/시간 × 730 = 월 ~$9.5 이고, 여기에 EBS 8GB 가 붙는다.
+
+  전에는 서버가 `월 ~$8–19`, 합계가 `월 $12–23` 이었다. 상한이 t3.small 수준이라
+  기본값으로는 나올 수 없는 숫자였다 — 사용자가 이 화면을 보고 자기 카드로 결제하므로,
+  실제보다 크게 적어 겁주는 것도 작게 적어 속이는 것만큼 나쁘다.
+
+  **고칠 때는 합계도 같이 본다.** 지난번에 줄 숫자만 고치고 합계를 두면 둘이 어긋난다.
+*/
 const COST_ROWS = [
-  { label: '서버(EC2)', sub: '가장 작은 기본형 · 24시간 가동', amount: '월 ~$8–19' },
+  { label: '서버(EC2)', sub: '가장 작은 기본형 · 24시간 가동', amount: '월 ~$9–11' },
   { label: '공인 IP 주소', sub: '인터넷에서 접속되게', amount: '월 ~$3.6' },
   { label: '저장소·비밀보관', sub: '빌드 결과물·환경변수', amount: '거의 $0' },
 ];
+
+/** COST_ROWS 를 더한 값. 줄 숫자를 고치면 여기도 같이 고친다 */
+const COST_TOTAL = '월 ~$13–15';
 
 /*
   **정책을 여기에 적지 않는다.**
@@ -251,7 +264,7 @@ function CloudOnboardingGuide() {
             <div className="flex items-baseline justify-between gap-4 pt-3">
               <dt className="text-[15px] font-bold text-[#0f172a]">대략</dt>
               <dd className="whitespace-nowrap text-[16px] font-bold tabular-nums text-[#b45309]">
-                월 $12–23
+                {COST_TOTAL}
               </dd>
             </div>
           </dl>
