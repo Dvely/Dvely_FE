@@ -8,13 +8,25 @@
 
   그래서 목록을 명시한다. **여기에 없는 키는 건드리지 않는다.**
 
-  다만 "토큰만" 은 아니다. `userInfo`·`userProjects` 는 로그인한 사람의 것이라, 남겨 두면
-  같은 브라우저를 쓰는 다음 사람이 앞사람의 프로필과 프로젝트 목록을 본다.
+  다만 "토큰만" 은 아니다. `userInfo`·`userProjects`·`qeploy.my-templates` 는 로그인한
+  사람의 것이라, 남겨 두면 같은 브라우저를 쓰는 다음 사람이 앞사람의 프로필·프로젝트
+  목록·템플릿 이름을 본다.
 
-  남기는 것: 언어 설정(`dvely.locale`), 내 템플릿(`qeploy.my-templates`), 배너를 닫아 둔
-  상태. 로그아웃으로 사라질 이유가 없는 것들이다.
+  내 템플릿은 **키가 사용자별로 나뉘어 있지 않아서** 지운다. 한동안은 `clear()` 가 매번
+  지워 와서 이 문제가 드러나지 않았는데, 지울 키를 좁히는 순간 드러난다 — 좁히면서 같이
+  닫는다. 사용자별로 나누는 것(키에 userId 접두사)이 제대로 된 해결이고, 그렇게 되면
+  이 목록에서 빼면 된다.
+
+  남기는 것: 언어 설정(`dvely.locale`), 배너를 닫아 둔 상태. 누구의 것도 아니고
+  로그아웃으로 사라질 이유가 없다.
 */
-const CLEARED_ON_LOGOUT = ['accessToken', 'refreshToken', 'userInfo', 'userProjects'] as const;
+const CLEARED_ON_LOGOUT = [
+  'accessToken',
+  'refreshToken',
+  'userInfo',
+  'userProjects',
+  'qeploy.my-templates',
+] as const;
 
 export function clearAppLocalStorage() {
   for (const key of CLEARED_ON_LOGOUT) {
