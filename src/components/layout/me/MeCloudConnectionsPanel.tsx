@@ -1,16 +1,34 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   deleteCloudConnection,
   getCloudConnectionHealth,
   postCloudConnectionCreate,
   postCloudConnectionVerificationJob,
+  putCloudConnectionCredentials,
   useCloudConnectionListQuery,
+  useCloudConnectionVerificationJobQuery,
 } from '@/api/cloudConnections';
 import { composeApiErrorMessage } from '@/lib/apiErrorGuide';
 import type { CloudProvider } from '@/types/common.enum';
 
 const skeletonItems = Array.from({ length: 3 }, (_, index) => `cloud-skeleton-${index}`);
+
+/**
+ * 상태를 사람 말로. **목록을 닫지 않는다** — 서버가 상태를 늘려도 모르는 값은 그대로
+ * 보여주면 되지, 화면에서 사라지면 안 된다.
+ */
+const STATUS_LABEL: Record<string, string> = {
+  VALIDATED: '검증됨',
+  VERIFYING: '검증 중',
+  CHECKING: '확인 중',
+  CONNECTED: '연결됨',
+  PERMISSION_MISSING: '권한 부족',
+  BILLING_DISABLED: '결제 비활성',
+  REGION_UNSUPPORTED: '미지원 리전',
+  INVALID_CREDENTIAL: '자격 만료·오류',
+  UNKNOWN_ERROR: '알 수 없는 오류',
+};
 
 /** 서버가 막아 주지 않는 경우에 대비한 기본 경고. 409 message 가 오면 그쪽이 더 정확하다 */
 const RELEASE_WARNING =
@@ -32,12 +50,45 @@ function MeCloudConnectionsPanel() {
    * 올려 보내면 어느 연결 이야기인지가 사라진다.
    */
   const [releaseError, setReleaseError] = useState<string | null>(null);
+  /*
+    자격 교체를 열어 둔 연결. 한 번에 하나만 연다 — 검증 Job 폴링이 하나라서,
+    여러 행을 동시에 열면 어느 행의 결과인지 화면이 말할 수 없다.
+  */
+  const [replaceTarget, setReplaceTarget] = useState<number | null>(null);
+  const [replaceKeyId, setReplaceKeyId] = useState('');
+  const [replaceSecret, setReplaceSecret] = useState('');
+  const [replaceError, setReplaceError] = useState<string | null>(null);
+  const [verifyingJobId, setVerifyingJobId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
   const { data: connections = [], isLoading } = useCloudConnectionListQuery('me-cloud-connections');
+  /*
+    자격을 바꿨다고 끝이 아니다. 맞는 자격인지는 서버가 검증 Job 을 돌려 봐야 알고,
+    그동안 연결 상태는 그대로다. 끝날 때까지 읽는다.
+  */
+  const { data: verificationJob } = useCloudConnectionVerificationJobQuery(
+    'me-cloud-credentials',
+    verifyingJobId,
+  );
+  const verificationDone =
+    verificationJob?.status === 'SUCCEEDED' || verificationJob?.status === 'FAILED';
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ['cloud-connection-list'] });
+  };
+
+  // 검증이 끝나면 목록의 상태도 바뀌어 있다
+  useEffect(() => {
+    if (!verificationDone) return;
+    void queryClient.invalidateQueries({ queryKey: ['cloud-connection-list'] });
+  }, [verificationDone, queryClient]);
+
+  const closeReplace = () => {
+    setReplaceTarget(null);
+    setReplaceKeyId('');
+    setReplaceSecret('');
+    setReplaceError(null);
+    setVerifyingJobId(null);
   };
 
   const createMutation = useMutation({
@@ -66,6 +117,34 @@ function MeCloudConnectionsPanel() {
       invalidate();
     },
   });
+  /*
+    자격 교체. **새 연결을 만드는 길과 다르다** — 자격이 만료됐을 때 새로 만들면 기존
+    연결로 만든 DB·서버·CDN 을 지울 자격이 사라져 AWS 에 과금 자원으로 남는다. 연결
+    id 와 리전은 그대로 두고 자격만 갈아 끼운다.
+
+    역할 ARN 은 여기서 받지 않는다. 이 패널은 액세스 키로만 연결을 만들고, 위임 설정은
+    콘솔에서 따로 밟아야 하는 일이라 교체 한 칸으로 끝나지 않는다.
+  */
+  const replaceMutation = useMutation({
+    mutationFn: (cloudConnectionId: number) =>
+      putCloudConnectionCredentials(cloudConnectionId, {
+        awsCredentialType: 'ACCESS_KEY',
+        accountId: '',
+        roleArn: '',
+        accessKeyId: replaceKeyId.trim(),
+        secretAccessKey: replaceSecret.trim(),
+      }),
+    onSuccess: (job) => {
+      setReplaceError(null);
+      setReplaceKeyId('');
+      setReplaceSecret('');
+      setVerifyingJobId(job.jobId);
+    },
+    onError: (error) => {
+      setReplaceError(composeApiErrorMessage(error, '자격을 교체하지 못했습니다.'));
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: deleteCloudConnection,
     onSuccess: () => {
@@ -209,7 +288,8 @@ function MeCloudConnectionsPanel() {
                     {connection.displayName}
                   </p>
                   <p className="text-[11px] text-[#94a3b8]">
-                    {connection.provider} · {connection.region} · {connection.status}
+                    {connection.provider} · {connection.region} ·{' '}
+                    {STATUS_LABEL[connection.status] ?? connection.status}
                   </p>
                 </div>
                 {/*
@@ -223,7 +303,78 @@ function MeCloudConnectionsPanel() {
                   를 그대로 보여주는 자리로 바꾸면 된다(그때는 몇 개가 남았는지까지 말해
                   줄 수 있다). 지금은 FE 가 자원 개수를 모르므로 결과만 말한다.
                 */}
-                {pendingRelease === connection.cloudConnectionId ? (
+                {replaceTarget === connection.cloudConnectionId ? (
+                  <div className="flex w-full flex-col gap-2 rounded-xl bg-[#f8fafc] px-3 py-2.5">
+                    {verifyingJobId ? (
+                      /* 보낸 뒤. 맞는 자격인지는 서버가 검증을 끝내야 안다 */
+                      <>
+                        <p className="text-[12px] leading-relaxed whitespace-pre-line text-[#334155]">
+                          {verificationDone
+                            ? (verificationJob?.message ??
+                              (verificationJob?.status === 'SUCCEEDED'
+                                ? '새 자격으로 연결했습니다.'
+                                : '새 자격으로 연결하지 못했습니다.'))
+                            : '새 자격을 확인하는 중입니다. 잠시 걸립니다.'}
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={closeReplace}
+                            className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
+                          >
+                            {verificationDone ? '닫기' : '숨기기'}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-[12px] leading-relaxed text-[#334155]">
+                          새 Access Key 를 넣으면 이 연결의 자격만 바뀝니다. 연결과 리전은 그대로라,
+                          이 연결로 만든 DB·서버·CDN 을 계속 관리할 수 있습니다.
+                        </p>
+                        <input
+                          value={replaceKeyId}
+                          onChange={(event) => setReplaceKeyId(event.target.value)}
+                          placeholder="새 Access Key ID (AKIA…)"
+                          className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-3 text-[13px]"
+                        />
+                        <input
+                          type="password"
+                          value={replaceSecret}
+                          onChange={(event) => setReplaceSecret(event.target.value)}
+                          placeholder="새 Secret Access Key"
+                          className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-3 text-[13px]"
+                        />
+                        {replaceError ? (
+                          <p className="text-[12px] leading-relaxed whitespace-pre-line text-[#b91c1c]">
+                            {replaceError}
+                          </p>
+                        ) : null}
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={
+                              replaceMutation.isPending ||
+                              !replaceKeyId.trim() ||
+                              !replaceSecret.trim()
+                            }
+                            onClick={() => replaceMutation.mutate(connection.cloudConnectionId)}
+                            className="h-8 rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white disabled:opacity-50"
+                          >
+                            {replaceMutation.isPending ? '보내는 중' : '자격 교체'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={closeReplace}
+                            className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold"
+                          >
+                            취소
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : pendingRelease === connection.cloudConnectionId ? (
                   <div className="flex w-full flex-col gap-2 rounded-xl bg-[#fef2f2] px-3 py-2">
                     <p className="text-[12px] leading-relaxed whitespace-pre-line text-[#b91c1c]">
                       {releaseError ?? RELEASE_WARNING}
@@ -250,7 +401,28 @@ function MeCloudConnectionsPanel() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    {/*
+                      자격이 깨진 연결에만 내놓는다. 이 자리에 "새로 등록" 으로 가는 길을
+                      두면 안 된다 — 새 연결을 만들면 이 연결로 만든 DB·서버·CDN 을 지울
+                      자격이 사라져 AWS 에 과금 자원으로 남는다.
+                    */}
+                    {connection.provider === 'AWS' && connection.status === 'INVALID_CREDENTIAL' ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormError(null);
+                          setReleaseError(null);
+                          setPendingRelease(null);
+                          setReplaceError(null);
+                          setVerifyingJobId(null);
+                          setReplaceTarget(connection.cloudConnectionId);
+                        }}
+                        className="h-8 rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white"
+                      >
+                        자격 교체
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => void handleHealth(connection.cloudConnectionId)}

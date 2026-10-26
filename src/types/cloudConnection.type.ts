@@ -39,6 +39,25 @@ const postCloudConnectionCreateReqSchema = z.object({
 });
 
 /**
+ * PUT /cloud-connections/{id}/credentials 자격 교체 요청.
+ *
+ * **새 연결을 만드는 길과 혼동하면 안 된다.** 자격이 만료됐을 때 새 연결을 만들면,
+ * 기존 연결로 만든 DB·서버·CDN 을 지울 자격이 사라져 AWS 에 과금 자원으로 남는다.
+ * 이 API 는 연결 id 와 리전을 그대로 두고 자격만 갈아 끼운다.
+ *
+ * sessionToken 이 없다 — 서버가 임시 자격을 받지 않는다. 생략한 필드는 "지금 방식
+ * 그대로" 를 뜻하므로, 빈 문자열을 채워 보내지 않고 **아예 빼서** 보낸다.
+ */
+const putCloudConnectionCredentialsReqSchema = z.object({
+  /** 생략하면 현재 방식을 유지한다 */
+  awsCredentialType: awsCredentialTypeSchema.nullable().prefault(null),
+  accountId: z.string().nullable().prefault(''),
+  roleArn: z.string().nullable().prefault(''),
+  accessKeyId: z.string().nullable().prefault(''),
+  secretAccessKey: z.string().nullable().prefault(''),
+});
+
+/**
  * POST /cloud-connections 클라우드 연결 등록 응답
  */
 const postCloudConnectionCreateResSchema = z.object({
@@ -135,6 +154,7 @@ const getCloudConnectionVerificationJobResSchema = z.object({
 });
 
 type PostCloudConnectionCreateReqType = z.infer<typeof postCloudConnectionCreateReqSchema>;
+type PutCloudConnectionCredentialsReqType = z.infer<typeof putCloudConnectionCredentialsReqSchema>;
 type PostCloudConnectionCreateResType = z.infer<typeof postCloudConnectionCreateResSchema>;
 type CloudConnection = z.infer<typeof cloudConnectionSchema>;
 type GetCloudConnectionListResType = z.infer<typeof getCloudConnectionListResSchema>;
@@ -146,6 +166,7 @@ type GetCloudConnectionVerificationJobResType = z.infer<
 
 export {
   postCloudConnectionCreateReqSchema,
+  putCloudConnectionCredentialsReqSchema,
   postCloudConnectionCreateResSchema,
   cloudConnectionSchema,
   getCloudConnectionListResSchema,
@@ -153,6 +174,7 @@ export {
   getCloudConnectionHealthResSchema,
   getCloudConnectionVerificationJobResSchema,
   type PostCloudConnectionCreateReqType,
+  type PutCloudConnectionCredentialsReqType,
   type PostCloudConnectionCreateResType,
   type CloudConnection,
   type GetCloudConnectionListResType,
@@ -201,6 +223,45 @@ const requirementStepSchema = z.object({
 });
 
 /**
+ * 자격 종류 카드 하나.
+ *
+ * `type` 은 **enum 이 아니라 문자열**이다 — 운영 OpenAPI 에서도 그렇다. 그래서 값 목록을
+ * 화면에 적어 두지 않는다. 모르는 값이 와도 카드는 그대로 그려진다. 값 목록을 닫아 두면
+ * BE 가 종류를 늘릴 때마다 FE 를 배포해야 하고, 잊으면 **화면에서 그 종류가 사라진다.**
+ */
+const credentialCaseSchema = z.object({
+  type: z.string().prefault(''),
+  label: z.string().prefault(''),
+  /** "12시간" 처럼 수명을 사람 말로 적은 것 */
+  lifetime: z.string().nullable().prefault(''),
+  /** 받지 않는 종류는 false 로 온다 — 임시 자격이 그렇다 */
+  supported: z.boolean().nullable().prefault(false),
+  /** 정확히 하나만 true 이고, 그것은 항상 supported 다 */
+  recommended: z.boolean().nullable().prefault(false),
+  summary: z.string().nullable().prefault(''),
+  howToGet: z.array(z.string()).prefault([]),
+  /** 안 받는 이유나 대안 */
+  caution: z.string().nullable().prefault(''),
+});
+
+/**
+ * 권한 묶음 하나. 체크박스 한 칸이 된다.
+ *
+ * `statements` 는 IAM 문장이라 **그대로 받아 그대로 합친다.** 내용을 화면에 적어 두면
+ * 서버가 요구하는 권한이 바뀔 때마다 배포해야 하고, 잊으면 낡은 정책을 안내한다 —
+ * 이 파일 아래 주석이 말하는 그 사고가 정확히 그것이었다.
+ */
+const policyModuleSchema = z.object({
+  key: z.string().prefault(''),
+  label: z.string().prefault(''),
+  description: z.string().nullable().prefault(''),
+  /** 해제할 수 없는 묶음 */
+  required: z.boolean().nullable().prefault(false),
+  defaultSelected: z.boolean().nullable().prefault(false),
+  statements: z.array(z.unknown()).prefault([]),
+});
+
+/**
  * GET /cloud-connections/requirements 응답.
  *
  * 정책은 **전체본**으로 온다. 조각으로 나눠 보여주면 사용자가 이어 붙이다 틀리고, 그
@@ -221,18 +282,28 @@ const getCloudRequirementsResSchema = z.object({
   trustPolicy: z.unknown().nullable().prefault(null),
   /** 주의 사항. "검증은 권한을 확인하지 않는다" 같은 것이 여기 온다 */
   notes: z.array(z.string()).prefault([]),
+  /** 자격 종류 카드. 서버가 이 목록을 안 주면 아래 credentialOptions 로 돌아간다 */
+  credentialCases: z.array(credentialCaseSchema).prefault([]),
+  /** 권한 체크박스. 안 주면 recommendedPolicy 전체본을 그대로 보여준다 */
+  policyModules: z.array(policyModuleSchema).prefault([]),
 });
 
+type CredentialCase = z.infer<typeof credentialCaseSchema>;
+type PolicyModule = z.infer<typeof policyModuleSchema>;
 type CredentialOption = z.infer<typeof credentialOptionSchema>;
 type RequirementField = z.infer<typeof requirementFieldSchema>;
 type RequirementStep = z.infer<typeof requirementStepSchema>;
 type GetCloudRequirementsResType = z.infer<typeof getCloudRequirementsResSchema>;
 
 export {
+  credentialCaseSchema,
+  policyModuleSchema,
   credentialOptionSchema,
   requirementFieldSchema,
   requirementStepSchema,
   getCloudRequirementsResSchema,
+  type CredentialCase,
+  type PolicyModule,
   type CredentialOption,
   type RequirementField,
   type RequirementStep,
