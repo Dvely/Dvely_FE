@@ -189,40 +189,82 @@ function MeCloudConnectionsPanel() {
         {formError ? (
           <p className="mt-3 text-[12px] whitespace-pre-line text-[#7c3aed]">{formError}</p>
         ) : null}
+        {/*
+          칸마다 보이는 label 을 둔다.
+
+          전에는 placeholder 하나로 칸을 설명했다. placeholder 는 **값을 넣는 순간
+          사라지므로**, Access Key ID 칸과 계정 ID 칸처럼 생김새가 같은 자리에서 무엇을
+          넣었는지 되짚을 방법이 없었다. 스크린리더는 애초에 읽지 못한다.
+        */}
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <select
-            value={provider}
-            onChange={(event) => setProvider(event.target.value as CloudProvider)}
-            className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
-          >
-            <option value="AWS">AWS</option>
-            <option value="GCP">GCP</option>
-          </select>
-          <input
-            value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
-            placeholder="표시 이름"
-            className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
-          />
-          <input
-            value={region}
-            onChange={(event) => setRegion(event.target.value)}
-            placeholder="리전"
-            className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
-          />
-          <input
-            value={accessKeyId}
-            onChange={(event) => setAccessKeyId(event.target.value)}
-            placeholder={provider === 'AWS' ? 'Access Key ID' : '프로젝트/계정 ID'}
-            className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
-          />
-          <input
-            type="password"
-            value={secretAccessKey}
-            onChange={(event) => setSecretAccessKey(event.target.value)}
-            placeholder={provider === 'AWS' ? 'Secret Access Key' : 'Service Account JSON'}
-            className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px] sm:col-span-2"
-          />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="cloud-provider" className="text-[12px] font-medium text-[#475569]">
+              클라우드
+            </label>
+            <select
+              id="cloud-provider"
+              value={provider}
+              onChange={(event) => setProvider(event.target.value as CloudProvider)}
+              className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
+            >
+              <option value="AWS">AWS</option>
+              <option value="GCP">GCP</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="cloud-display-name" className="text-[12px] font-medium text-[#475569]">
+              표시 이름
+            </label>
+            <input
+              id="cloud-display-name"
+              value={displayName}
+              onChange={(event) => setDisplayName(event.target.value)}
+              placeholder="예: 내 AWS 계정"
+              className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="cloud-region" className="text-[12px] font-medium text-[#475569]">
+              리전
+            </label>
+            <input
+              id="cloud-region"
+              value={region}
+              onChange={(event) => setRegion(event.target.value)}
+              className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="cloud-access-key-id" className="text-[12px] font-medium text-[#475569]">
+              {provider === 'AWS' ? 'Access Key ID' : '프로젝트/계정 ID'}
+            </label>
+            <input
+              id="cloud-access-key-id"
+              value={accessKeyId}
+              onChange={(event) => setAccessKeyId(event.target.value)}
+              placeholder={provider === 'AWS' ? 'AKIA…' : undefined}
+              className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <label htmlFor="cloud-secret" className="text-[12px] font-medium text-[#475569]">
+              {provider === 'AWS' ? 'Secret Access Key' : 'Service Account JSON'}
+            </label>
+            {/*
+              `autoComplete="new-password"` 는 브라우저가 이 값을 **저장된 비밀번호로 채우거나
+              저장 제안하지 않게** 한다. Chrome 은 비밀번호 칸에서 `off` 를 무시하므로 이 값이어야
+              한다. 클라우드 시크릿은 사이트 비밀번호가 아니라 자격 증명이고, 브라우저 금고에
+              "qeploy.com 비밀번호" 로 들어가면 지울 생각조차 못 하게 된다.
+            */}
+            <input
+              id="cloud-secret"
+              type="password"
+              autoComplete="new-password"
+              value={secretAccessKey}
+              onChange={(event) => setSecretAccessKey(event.target.value)}
+              className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
+            />
+          </div>
           {/*
             AWS 전용 칸. GCP 는 계정 ID 를 키 JSON 에서 뽑는다.
 
@@ -240,13 +282,19 @@ function MeCloudConnectionsPanel() {
             "값이 있는" 경우이고, 필드 자체는 이미 저장된 임시 자격 때문에 서버에 남아 있다.
           */}
           {provider === 'AWS' ? (
-            <input
-              value={accountId}
-              onChange={(event) => setAccountId(event.target.value)}
-              inputMode="numeric"
-              placeholder="AWS 계정 ID (12자리)"
-              className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
-            />
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="cloud-account-id" className="text-[12px] font-medium text-[#475569]">
+                AWS 계정 ID
+              </label>
+              <input
+                id="cloud-account-id"
+                value={accountId}
+                onChange={(event) => setAccountId(event.target.value)}
+                inputMode="numeric"
+                placeholder="12자리 숫자"
+                className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
+              />
+            </div>
           ) : null}
         </div>
         {provider === 'AWS' ? (
@@ -332,19 +380,38 @@ function MeCloudConnectionsPanel() {
                           새 Access Key 를 넣으면 이 연결의 자격만 바뀝니다. 연결과 리전은 그대로라,
                           이 연결로 만든 DB·서버·CDN 을 계속 관리할 수 있습니다.
                         </p>
-                        <input
-                          value={replaceKeyId}
-                          onChange={(event) => setReplaceKeyId(event.target.value)}
-                          placeholder="새 Access Key ID (AKIA…)"
-                          className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-3 text-[13px]"
-                        />
-                        <input
-                          type="password"
-                          value={replaceSecret}
-                          onChange={(event) => setReplaceSecret(event.target.value)}
-                          placeholder="새 Secret Access Key"
-                          className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-3 text-[13px]"
-                        />
+                        {/* 목록 안이라 id 가 겹치지 않게 연결 id 를 붙인다 */}
+                        <div className="flex flex-col gap-1.5">
+                          <label
+                            htmlFor={`replace-key-id-${connection.cloudConnectionId}`}
+                            className="text-[12px] font-medium text-[#475569]"
+                          >
+                            새 Access Key ID
+                          </label>
+                          <input
+                            id={`replace-key-id-${connection.cloudConnectionId}`}
+                            value={replaceKeyId}
+                            onChange={(event) => setReplaceKeyId(event.target.value)}
+                            placeholder="AKIA…"
+                            className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-3 text-[13px]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label
+                            htmlFor={`replace-secret-${connection.cloudConnectionId}`}
+                            className="text-[12px] font-medium text-[#475569]"
+                          >
+                            새 Secret Access Key
+                          </label>
+                          <input
+                            id={`replace-secret-${connection.cloudConnectionId}`}
+                            type="password"
+                            autoComplete="new-password"
+                            value={replaceSecret}
+                            onChange={(event) => setReplaceSecret(event.target.value)}
+                            className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-3 text-[13px]"
+                          />
+                        </div>
                         {replaceError ? (
                           <p className="text-[12px] leading-relaxed whitespace-pre-line text-[#b91c1c]">
                             {replaceError}

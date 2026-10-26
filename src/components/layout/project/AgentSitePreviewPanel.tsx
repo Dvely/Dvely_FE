@@ -114,10 +114,24 @@ function AgentSitePreviewPanel({
             </button>
           </div>
         ) : null}
+        {/*
+          주소에 **회전 accessToken 이 경로로 들어 있다**(`/previews/{sessionId}/{accessToken}/`).
+          프리뷰 문서가 외부 리소스를 하나라도 부르면 그 주소가 Referer 로 따라 나간다.
+
+          `sandbox` 속성은 **일부러 넣지 않는다.** 게이트웨이가 이미 같은 플래그를 응답
+          헤더로 강제하고 있고(`Content-Security-Policy: sandbox allow-scripts allow-forms
+          allow-popups allow-modals`, allow-same-origin 없음), 같은 플래그라도 자리가 다르면
+          결과가 다르다 — CSP 는 응답이 온 **뒤** 적용돼 문서 요청에 소유권 쿠키가 실리지만,
+          속성은 요청 **전** 프레임에 적용돼 그 탐색이 cross-site 로 계산된다. 쿠키가
+          `SameSite=Lax` 라 거기서 빠지고, 게이트웨이는 문서 탐색에만 쿠키를 요구하므로
+          401 → 빈 화면이 된다. 불투명 오리진이라 **그 실패를 여기서 감지할 수도 없다.**
+          근본 해소는 프리뷰 전용 오리진 분리이고 서버 쪽 백로그다.
+        */}
         <iframe
           key={frameKey}
           src={previewUrl}
           title="사이트 미리보기"
+          referrerPolicy="no-referrer"
           className="min-h-0 flex-1 border-0 bg-white"
         />
       </div>
