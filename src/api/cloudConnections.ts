@@ -7,18 +7,22 @@ import {
   getCloudConnectionListResSchema,
   getCloudConnectionVerificationJobResSchema,
   postCloudConnectionCreateReqSchema,
+  putCloudConnectionCredentialsReqSchema,
   postCloudConnectionCreateResSchema,
   type GetCloudConnectionDetailResType,
   type GetCloudConnectionHealthResType,
   type GetCloudConnectionListResType,
   type GetCloudConnectionVerificationJobResType,
   type PostCloudConnectionCreateReqType,
+  type PutCloudConnectionCredentialsReqType,
   type PostCloudConnectionCreateResType,
   getCloudRequirementsResSchema,
   type GetCloudRequirementsResType,
 } from '@/types/cloudConnection.type';
 
 const endpoint = '/cloud-connections';
+/** 검증 Job 이 끝날 때까지만 두드린다 */
+const VERIFICATION_JOB_POLL_MS = 2000;
 const defaultQueryOptions = {
   retry: false,
   refetchOnWindowFocus: false,
@@ -45,6 +49,39 @@ async function postCloudConnectionCreate(params: PostCloudConnectionCreateReqTyp
     .then((response) => {
       const body = succesResponse<PostCloudConnectionCreateResType>(response);
       return postCloudConnectionCreateResSchema.parse(unwrapApiData(body));
+    })
+    .catch(errorResponse());
+}
+
+/**
+ * 클라우드 연결 자격 교체 API PUT.
+ *
+ * 자격이 만료된 연결을 **새로 만들지 않고** 고치는 길이다. 새 연결을 만들면 기존
+ * 연결로 만든 DB·서버·CDN 을 지울 자격이 사라져 AWS 에 과금 자원으로 남는다.
+ *
+ * **빈 값은 보내지 않는다.** 생략은 "지금 방식 그대로" 라는 뜻인데, 빈 문자열을 채워
+ * 보내면 서버가 그걸 "이 값으로 바꾸라" 로 읽는다 — 연결에 accountId 가 있는데 '' 를
+ * 보내면 계정이 다르다며 400 이 날 수 있다.
+ *
+ * 202 로 검증 Job 을 돌려준다. 자격이 맞는지는 그 Job 이 끝나야 안다.
+ */
+async function putCloudConnectionCredentials(
+  cloudConnectionId: number,
+  params: PutCloudConnectionCredentialsReqType,
+) {
+  const parsed = putCloudConnectionCredentialsReqSchema.parse(params);
+  const payload = Object.fromEntries(
+    Object.entries(parsed).filter(([, value]) => value !== null && value !== ''),
+  );
+
+  return Http.instance
+    .put<GetCloudConnectionVerificationJobResType>(
+      `${endpoint}/${cloudConnectionId}/credentials`,
+      payload,
+    )
+    .then((response) => {
+      const body = succesResponse<GetCloudConnectionVerificationJobResType>(response);
+      return getCloudConnectionVerificationJobResSchema.parse(unwrapApiData(body));
     })
     .catch(errorResponse());
 }
@@ -150,14 +187,42 @@ function useCloudRequirementsQuery(
   });
 }
 
+/**
+ * 검증 Job 조회 Query Hook.
+ *
+ * 끝나면 멈춘다 — SUCCEEDED/FAILED 가 되면 더 두드릴 것이 없다.
+ *
+ * 탭이 백그라운드면 refetchInterval 이 기본적으로 멈춘다. 그래서 다른 탭을 보다 돌아오면
+ * **진행이 멈춰 있던 것처럼 보이는데, 멈춘 것은 화면이지 서버가 아니다.** 돌아오는 순간
+ * 다시 읽어서 따라잡으므로 그대로 둔다.
+ */
+function useCloudConnectionVerificationJobQuery(queryKey: unknown, jobId: string | null) {
+  if (!queryKey) throw new Error('queryKey is required');
+  return useQuery({
+    queryKey: ['cloud-verification-job', queryKey, jobId],
+    queryFn: () => getCloudConnectionVerificationJob(jobId ?? ''),
+    enabled: !!jobId,
+    ...defaultQueryOptions,
+    refetchInterval: (query) => {
+      const job = query.state.data;
+      if (!job) return VERIFICATION_JOB_POLL_MS;
+      return job.status === 'PENDING' || job.status === 'RUNNING'
+        ? VERIFICATION_JOB_POLL_MS
+        : false;
+    },
+  });
+}
+
 export {
   getCloudConnectionList,
   postCloudConnectionCreate,
+  putCloudConnectionCredentials,
   getCloudConnectionDetail,
   deleteCloudConnection,
   getCloudConnectionHealth,
   postCloudConnectionVerificationJob,
   getCloudConnectionVerificationJob,
+  useCloudConnectionVerificationJobQuery,
   useCloudConnectionListQuery,
   getCloudRequirements,
   useCloudRequirementsQuery,

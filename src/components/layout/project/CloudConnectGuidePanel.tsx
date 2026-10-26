@@ -2,8 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Check, Copy, X } from 'lucide-react';
 import { useCloudRequirementsQuery } from '@/api/cloudConnections';
+import { combinePolicyModules } from '@/lib/cloudPolicyModules';
 import { extractApiErrorMessage } from '@/utils/response';
-import type { GetCloudRequirementsResType } from '@/types/cloudConnection.type';
+import type {
+  CredentialCase,
+  GetCloudRequirementsResType,
+  PolicyModule,
+} from '@/types/cloudConnection.type';
 
 /**
  * 배포하려는데 클라우드 연결이 없을 때 무엇을 해야 하는지 알려 준다.
@@ -77,6 +82,92 @@ function CopyBlock({ title, body }: CopyBlockProps) {
   );
 }
 
+type CredentialCaseCardProps = {
+  credentialCase: CredentialCase;
+  selected: boolean;
+  onSelect: () => void;
+};
+
+/**
+ * 자격 종류 카드 하나.
+ *
+ * 종류마다 "무엇인지 · 얼마나 사는지 · 어디서 받는지" 가 다르다. 칩 하나에 이름만
+ * 적어 두면 사용자가 AWS 콘솔에서 무엇을 눌러야 하는지를 여기서 알 수 없다.
+ */
+function CredentialCaseCard({ credentialCase, selected, onSelect }: CredentialCaseCardProps) {
+  const supported = credentialCase.supported === true;
+
+  const body = (
+    <>
+      <span className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[12px] font-semibold text-[#0f172a]">
+          {credentialCase.label || credentialCase.type}
+        </span>
+        {credentialCase.recommended === true ? (
+          <span className="rounded-full bg-[#ede9fe] px-1.5 py-0.5 text-[10px] font-semibold text-[#6d28d9]">
+            권장
+          </span>
+        ) : null}
+        {supported ? null : (
+          <span className="rounded-full bg-[#e2e8f0] px-1.5 py-0.5 text-[10px] font-semibold text-[#475569]">
+            받지 않음
+          </span>
+        )}
+      </span>
+      {credentialCase.lifetime ? (
+        <span className="mt-0.5 block text-[11px] text-[#94a3b8]">{credentialCase.lifetime}</span>
+      ) : null}
+      {credentialCase.summary ? (
+        <span className="mt-1 block text-[11px] leading-relaxed text-[#64748b]">
+          {credentialCase.summary}
+        </span>
+      ) : null}
+      {credentialCase.howToGet.length > 0 ? (
+        <span className="mt-1.5 block space-y-0.5">
+          {credentialCase.howToGet.map((step, index) => (
+            <span
+              key={`${step}-${index}`}
+              className="block text-[11px] leading-relaxed text-[#475569]"
+            >
+              {index + 1}. {step}
+            </span>
+          ))}
+        </span>
+      ) : null}
+      {credentialCase.caution ? (
+        <span className="mt-1.5 block rounded-lg bg-[#fffbeb] px-2 py-1 text-[11px] leading-relaxed text-[#92400e]">
+          {credentialCase.caution}
+        </span>
+      ) : null}
+    </>
+  );
+
+  /*
+    받지 않는 종류는 **버튼이 아니라 글씨로** 둔다. 누를 수 있게 두면 눌러 보고 아무 일도
+    일어나지 않는 길이 생긴다. 왜 안 받는지와 대신 무엇을 쓰면 되는지는 caution 이 말한다.
+  */
+  if (!supported) {
+    return (
+      <div className="rounded-xl border border-dashed border-[#e2e8f0] bg-[#f8fafc] px-3 py-2.5">
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={`cursor-pointer rounded-xl border px-3 py-2.5 text-left ${
+        selected ? 'border-[#0f172a] bg-[#f8fafc]' : 'border-[#e2e8f0] bg-white hover:bg-[#f8fafc]'
+      }`}
+    >
+      {body}
+    </button>
+  );
+}
+
 type CloudConnectGuidePanelProps = {
   /** 서버가 보낸 안내 문구. 왜 멈췄는지는 서버가 가장 정확히 안다 */
   question: string;
@@ -101,6 +192,19 @@ function CloudConnectGuidePanel({
     준비가 안 됐다든지) 화면만 그걸 계속 가리키게 된다. 무엇을 권할지 아는 쪽은 서버다.
   */
   const [chosenType, setChosenType] = useState<string | null>(null);
+  /*
+    체크박스에서 사용자가 **기본값과 다르게 바꾼 것만** 담는다.
+
+    선택 전부를 담아 두면 서버가 묶음을 더하거나 뺄 때 화면이 옛 목록을 들고 있게 된다.
+    기본값은 서버가 매번 같이 보내므로, 바꾼 것만 덮어쓰면 목록이 바뀌어도 따라간다.
+  */
+  const [moduleOverrides, setModuleOverrides] = useState<Record<string, boolean>>({});
+
+  /** 자격 종류를 바꾸면 권한 묶음도 달라진다. 고르던 것을 들고 가지 않는다 */
+  const chooseCredentialType = (type: string) => {
+    setChosenType(type);
+    setModuleOverrides({});
+  };
 
   const { data, isLoading, error } = useCloudRequirementsQuery(
     'cloud-connect-guide',
@@ -118,6 +222,11 @@ function CloudConnectGuidePanel({
     방식이 어긋난다.
   */
   const credentialType = requirements?.credentialType || chosenType;
+  const policyModules = requirements?.policyModules ?? [];
+  const isModuleSelected = (module: PolicyModule) =>
+    module.required === true || (moduleOverrides[module.key] ?? module.defaultSelected === true);
+  const selectedModules = policyModules.filter(isModuleSelected);
+  const combinedPolicy = policyModules.length > 0 ? combinePolicyModules(selectedModules) : null;
   const recommendedPolicy = stringifyPolicy(requirements?.recommendedPolicy);
   const trustPolicy = stringifyPolicy(requirements?.trustPolicy);
 
@@ -169,13 +278,31 @@ function CloudConnectGuidePanel({
           </p>
         ) : requirements ? (
           <>
-            {requirements.credentialOptions.length > 1 ? (
+            {/*
+              서버가 카드를 주면 카드로 고르게 한다. 칩은 이름만 보여줘서, 어떤 자격을
+              어디서 받아야 하는지를 사용자가 이 화면에서 알 수 없었다.
+
+              카드가 없는 서버(옛 배포)면 칩으로 되돌아간다 — 둘 다 같은 credentialType
+              을 고르는 일을 한다.
+            */}
+            {requirements.credentialCases.length > 0 ? (
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {requirements.credentialCases.map((credentialCase) => (
+                  <CredentialCaseCard
+                    key={credentialCase.type}
+                    credentialCase={credentialCase}
+                    selected={credentialCase.type === credentialType}
+                    onSelect={() => chooseCredentialType(credentialCase.type)}
+                  />
+                ))}
+              </div>
+            ) : requirements.credentialOptions.length > 1 ? (
               <div className="mt-4 flex flex-wrap gap-2">
                 {requirements.credentialOptions.map((option) => (
                   <button
                     key={option.type}
                     type="button"
-                    onClick={() => setChosenType(option.type)}
+                    onClick={() => chooseCredentialType(option.type)}
                     aria-pressed={option.type === credentialType}
                     className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold ${
                       option.type === credentialType
@@ -194,7 +321,8 @@ function CloudConnectGuidePanel({
               </div>
             ) : null}
 
-            {requirements.credentialOptions.find((option) => option.type === credentialType)
+            {requirements.credentialCases.length === 0 &&
+            requirements.credentialOptions.find((option) => option.type === credentialType)
               ?.summary ? (
               <p className="mt-2 text-[12px] leading-relaxed text-[#64748b]">
                 {
@@ -256,7 +384,87 @@ function CloudConnectGuidePanel({
               </div>
             ) : null}
 
-            {recommendedPolicy ? (
+            {/*
+              쓰지 않을 기능의 권한까지 한 장으로 주면, 사용자는 필요 이상으로 넓은
+              권한을 자기 계정에 등록한다. 묶음을 고르게 하고 고른 것만 합친다.
+
+              문장 내용은 서버가 준 것을 그대로 쓴다 — 여기서 손대면 권한이 바뀔 때마다
+              화면을 다시 배포해야 하고, 잊으면 낡은 정책을 안내하게 된다.
+            */}
+            {policyModules.length > 0 ? (
+              <div className="mt-4">
+                <p className="text-[12px] font-semibold text-[#334155]">필요한 권한 고르기</p>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-[#64748b]">
+                  기본값 그대로 두면 서버가 권하는 정책과 같습니다. 쓰지 않을 기능을 빼면 그만큼
+                  권한이 좁아집니다.
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {policyModules.map((module) => {
+                    const locked = module.required === true;
+                    return (
+                      <li key={module.key}>
+                        <label
+                          className={`flex gap-2 rounded-lg px-3 py-2 ${
+                            locked ? 'bg-[#f1f5f9]' : 'cursor-pointer bg-[#f8fafc]'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isModuleSelected(module)}
+                            disabled={locked}
+                            onChange={(event) =>
+                              setModuleOverrides((previous) => ({
+                                ...previous,
+                                [module.key]: event.target.checked,
+                              }))
+                            }
+                            className="mt-0.5 size-3.5 shrink-0 accent-[#0f172a] disabled:opacity-60"
+                          />
+                          <span className="min-w-0">
+                            <span className="flex flex-wrap items-center gap-1.5 text-[12px] font-medium text-[#0f172a]">
+                              {module.label || module.key}
+                              {locked ? (
+                                <span className="rounded-full bg-[#e2e8f0] px-1.5 py-0.5 text-[10px] font-semibold text-[#475569]">
+                                  필수
+                                </span>
+                              ) : null}
+                            </span>
+                            {module.description ? (
+                              <span className="mt-0.5 block text-[11px] leading-relaxed text-[#64748b]">
+                                {module.description}
+                              </span>
+                            ) : null}
+                          </span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                {selectedModules.length === 0 ? (
+                  <p className="mt-3 rounded-xl bg-[#f8fafc] px-4 py-3 text-[12px] leading-relaxed text-[#64748b]">
+                    적어도 하나는 골라야 정책이 만들어집니다.
+                  </p>
+                ) : combinedPolicy && combinedPolicy.conflictingSids.length > 0 ? (
+                  /*
+                    같은 이름의 문장이 묶음마다 다른 내용으로 들어 있는 경우. 합쳐서 주면
+                    한쪽 권한이 조용히 빠지고, 둘 다 남기면 IAM 이 거절한다. 여기서 멈춘다.
+                  */
+                  <p className="mt-3 rounded-xl bg-[#fef2f2] px-4 py-3 text-[12px] leading-relaxed text-[#b91c1c]">
+                    고른 묶음에 같은 이름(
+                    <span className="font-mono">{combinedPolicy.conflictingSids.join(', ')}</span>)
+                    인데 내용이 다른 권한 문장이 있어 한 장으로 합치지 못했습니다. 합쳐 드리면
+                    권한이 조용히 빠질 수 있어 멈춥니다. 묶음을 줄여 보시거나 연결 화면의 전체
+                    정책을 쓰세요.
+                  </p>
+                ) : combinedPolicy ? (
+                  <CopyBlock
+                    title={`권한 정책${requirements.policyName ? ` · ${requirements.policyName}` : ''}`}
+                    body={combinedPolicy.body}
+                  />
+                ) : null}
+              </div>
+            ) : recommendedPolicy ? (
               <CopyBlock
                 title={`권한 정책${requirements.policyName ? ` · ${requirements.policyName}` : ''}`}
                 body={recommendedPolicy}
