@@ -82,7 +82,7 @@ function MyTemplateUploadDialog({ open, onOpenChange, onSubmit }: MyTemplateUplo
                 ZIP으로 내 템플릿 추가
               </Dialog.Title>
               <Dialog.Description className="mt-1 text-[13px] leading-5 text-[#64748b]">
-                사이트 템플릿 ZIP 파일을 첨부하면 내 템플릿 목록에서 바로 확인할 수 있습니다.
+                사이트 템플릿 ZIP 파일을 첨부하면 내 템플릿 목록에 추가됩니다.
               </Dialog.Description>
             </div>
             <Dialog.Close
@@ -92,6 +92,18 @@ function MyTemplateUploadDialog({ open, onOpenChange, onSubmit }: MyTemplateUplo
               <X className="size-4" />
             </Dialog.Close>
           </div>
+
+          {/*
+            파일이 서버로 가지 않는다는 사실을 **고르기 전에** 알려준다.
+
+            지금 이 다이얼로그가 하는 일은 이름·크기·분류를 브라우저에 적어 두는 것뿐이다
+            (`useMyTemplates`). 올라간 줄 알고 브라우저를 바꾸거나 로그아웃하면 목록이
+            비어 있고, 그때는 되돌릴 파일도 없다.
+          */}
+          <p className="mt-4 rounded-xl border border-[#fde68a] bg-[#fffbeb] px-3.5 py-3 text-[13px] leading-5 text-[#92400e]">
+            지금은 <strong className="font-semibold">목록에만 저장됩니다.</strong> 파일은 서버로
+            올라가지 않고 이 브라우저에만 남습니다.
+          </p>
 
           <div className="mt-5">
             <MyTemplateZipDropzone file={file} error={error} onFileChange={handleFileChange} />
