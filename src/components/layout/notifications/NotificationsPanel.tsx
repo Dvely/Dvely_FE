@@ -1,53 +1,38 @@
 import { useMemo, useState } from 'react';
-import { Play, Sparkles, Wand2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import {
-  notificationItems,
-  type NotificationItem,
-  type NotificationMedia,
-} from '@/mocks/notifications/notifications';
 import { cn } from '@/lib/utils';
 
-type NotificationFilter = 'all' | 'updates' | 'messages';
+/*
+  알림은 **아직 서버가 없다.** 그래서 목록은 비어 있고, 화면은 항상 빈 상태를 보여준다.
 
-function NotificationMediaBlock({ media }: { media: NotificationMedia }) {
-  if (media === 'feature-demo') {
-    return (
-      <div className="aspect-video w-full overflow-hidden rounded-2xl bg-[#7c3aed]">
-        <div className="flex h-full items-center justify-center gap-6 px-6">
-          <div className="flex size-14 items-center justify-center rounded-xl bg-white/90">
-            <Wand2 className="size-7 text-[#7c3aed]" strokeWidth={1.75} aria-hidden />
-          </div>
-          <div className="flex size-20 items-center justify-center rounded-full bg-[#5b21b6]">
-            <Play className="ml-1 size-10 text-white" strokeWidth={2} fill="white" aria-hidden />
-          </div>
-          <div className="flex size-14 items-center justify-center rounded-xl bg-white/90">
-            <Sparkles className="size-7 text-[#7c3aed]" strokeWidth={1.75} aria-hidden />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  예전에는 `@/mocks` 의 네 건을 그대로 그렸다. 그중 하나가 "NEW: 분석 대시보드에서
+  프로젝트 성과를 확인하세요" 였는데, 그 화면은 존재하지 않았다 — 알림을 눌러 찾아간
+  사용자는 빈 페이지를 만났다. 없는 기능을 알림으로 광고하는 쪽이 알림이 하나도 없는
+  쪽보다 나쁘다.
 
-  if (media === 'gradient') {
-    return (
-      <div className="aspect-video w-full overflow-hidden rounded-2xl bg-linear-to-br from-[#93c5fd] via-[#fde68a] to-[#fdba74]" />
-    );
-  }
+  아래 타입과 카드는 남겨 둔다. 서버가 생기면 `notificationItems` 를 질의 결과로
+  바꾸는 것 하나로 끝나도록.
+*/
 
-  return null;
-}
+type NotificationTab = 'updates' | 'messages';
+
+type NotificationItem = {
+  id: string;
+  tab: NotificationTab;
+  title: string;
+  description: string;
+  dateLabel: string;
+};
+
+const notificationItems: NotificationItem[] = [];
+
+type NotificationFilter = 'all' | NotificationTab;
 
 function NotificationCard({ item }: { item: NotificationItem }) {
   return (
     <article className="flex flex-col">
-      <h3 className="text-[16px] font-extrabold leading-snug text-[#0f172a]">{item.title}</h3>
+      <h3 className="text-[16px] leading-snug font-extrabold text-[#0f172a]">{item.title}</h3>
       <p className="mt-2 text-[13px] leading-relaxed text-[#64748b]">{item.description}</p>
-      {item.media !== 'none' ? (
-        <div className="mt-4">
-          <NotificationMediaBlock media={item.media} />
-        </div>
-      ) : null}
       <p className="mt-3 text-[13px] font-medium text-[#94a3b8]">{item.dateLabel}</p>
     </article>
   );

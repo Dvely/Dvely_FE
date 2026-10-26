@@ -23,7 +23,6 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedProjectRouteImport } from './routes/_authenticated/project'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
-import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedProjectIndexRouteImport } from './routes/_authenticated/project.index'
 import { Route as AuthenticatedProjectNewRouteImport } from './routes/_authenticated/project.new'
 import { Route as AuthenticatedProjectSlugRouteImport } from './routes/_authenticated/project.$slug'
@@ -106,11 +105,6 @@ const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
   path: '/help',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedProjectIndexRoute =
   AuthenticatedProjectIndexRouteImport.update({
     id: '/',
@@ -187,7 +181,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
   '/template': typeof TemplateRouteWithChildren
-  '/analytics': typeof AuthenticatedAnalyticsRoute
   '/help': typeof AuthenticatedHelpRoute
   '/home': typeof AuthenticatedHomeRoute
   '/project': typeof AuthenticatedProjectRouteWithChildren
@@ -214,7 +207,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
-  '/analytics': typeof AuthenticatedAnalyticsRoute
   '/help': typeof AuthenticatedHelpRoute
   '/home': typeof AuthenticatedHomeRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -242,7 +234,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/callback': typeof CallbackRoute
   '/template': typeof TemplateRouteWithChildren
-  '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/project': typeof AuthenticatedProjectRouteWithChildren
@@ -272,7 +263,6 @@ export interface FileRouteTypes {
     | '/'
     | '/callback'
     | '/template'
-    | '/analytics'
     | '/help'
     | '/home'
     | '/project'
@@ -299,7 +289,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/callback'
-    | '/analytics'
     | '/help'
     | '/home'
     | '/settings'
@@ -326,7 +315,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/callback'
     | '/template'
-    | '/_authenticated/analytics'
     | '/_authenticated/help'
     | '/_authenticated/home'
     | '/_authenticated/project'
@@ -458,13 +446,6 @@ declare module '@tanstack/react-router' {
       path: '/help'
       fullPath: '/help'
       preLoaderRoute: typeof AuthenticatedHelpRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/analytics': {
-      id: '/_authenticated/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/project/': {
@@ -601,7 +582,6 @@ const AuthenticatedProjectRouteWithChildren =
   AuthenticatedProjectRoute._addFileChildren(AuthenticatedProjectRouteChildren)
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedProjectRoute: typeof AuthenticatedProjectRouteWithChildren
@@ -612,7 +592,6 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedHelpRoute: AuthenticatedHelpRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedProjectRoute: AuthenticatedProjectRouteWithChildren,
