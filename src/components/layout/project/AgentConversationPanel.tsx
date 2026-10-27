@@ -3,6 +3,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -1237,6 +1238,68 @@ function AgentConversationPanel({
   // 작업 중에 패널이 사라지면 부모가 참인 채로 남아 폴링이 멈추지 않는다
   useEffect(() => () => onAgentTaskActiveChange?.(false), [onAgentTaskActiveChange]);
 
+  /*
+    대화를 바닥에 붙여 두되, 사용자가 위로 올라가 있으면 놓아 준다.
+
+    예전에는 목록 끝에 1px 센티널을 두고 `ref={(node) => node?.scrollIntoView(...)}`
+    로 내렸다. 인라인 콜백 ref 는 렌더마다 새 함수라 React 가 매번 떼었다 다시 붙이고,
+    그때마다 scrollIntoView 가 다시 돌았다. 작업 중에는 SSE 이벤트와 진행 폴링으로
+    리렌더가 잦으니 **위로 올라가 읽으려 하면 곧바로 끌려 내려왔다.**
+
+    scrollIntoView 를 버리고 컨테이너의 scrollTop 을 직접 쓴다. scrollIntoView 는
+    스크롤 가능한 조상을 모두 움직일 수 있어서, 바깥 레이아웃까지 따라 움직일 여지가 있다.
+  */
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  /** 바닥 근처인지. state 로 두면 스크롤할 때마다 리렌더가 돌아서 ref 에 담는다 */
+  const isNearBottomRef = useRef(true);
+
+  /** 위로 올라가 있는 동안 새 내용이 생겼다 — 이때만 따라잡기 버튼을 띄운다 */
+  const [hasUnseenBelow, setHasUnseenBelow] = useState(false);
+
+  /** 이만큼 안쪽이면 "바닥에 있다"고 본다. 한 줄 높이로는 모자라 여유를 둔다 */
+  const NEAR_BOTTOM_PX = 80;
+
+  const scrollToBottom = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    container.scrollTop = container.scrollHeight;
+    isNearBottomRef.current = true;
+    setHasUnseenBelow(false);
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    isNearBottomRef.current = distanceFromBottom <= NEAR_BOTTOM_PX;
+
+    // 사용자가 스스로 바닥까지 내려왔으면 따라잡기 버튼은 할 일이 없다
+    if (isNearBottomRef.current) setHasUnseenBelow(false);
+  }, []);
+
+  /*
+    내용이 자랄 때마다 판단한다. 바닥에 있던 사람은 계속 따라 내려가고, 위로 올라가
+    있던 사람은 그 자리에 머문 채 새 내용이 있다는 것만 알게 된다.
+
+    taskEvents 와 진행 라벨까지 의존성에 넣는 이유는, 메시지 수가 그대로인 채로
+    진행 표시만 길어지는 구간이 작업 중 대부분이기 때문이다.
+
+    useEffect 가 아니라 useLayoutEffect 다. useEffect 는 페인트가 끝난 뒤에 돌아서,
+    새 내용이 한 프레임 동안 어긋난 위치로 보였다가 제자리를 찾는다. 자주 갱신되는
+    화면이라 그 깜빡임이 쌓인다.
+  */
+  useLayoutEffect(() => {
+    if (isNearBottomRef.current) {
+      scrollToBottom();
+      return;
+    }
+    setHasUnseenBelow(true);
+  }, [displayMessages.length, taskEvents.length, isAssistantReplying, isSending, scrollToBottom]);
+
   const showMessageSkeletons = isMessagesLoading && displayMessages.length === 0;
   const showWelcome =
     !showMessageSkeletons &&
@@ -1248,6 +1311,10 @@ function AgentConversationPanel({
   const handleSend = () => {
     const content = input.trim();
     if (!content || isInputLocked) return;
+
+    // 내가 방금 보낸 말은 어디에 있었든 보여야 한다. 위로 올라가 읽던 중이었대도
+    // 전송은 "지금 여기로 돌아가겠다"는 뜻이다
+    isNearBottomRef.current = true;
 
     // 에이전트가 되물어 놓은 상태면 이건 새 요청이 아니라 그 질문의 답이다
     if (awaitingInputTaskId) {
@@ -1323,75 +1390,88 @@ function AgentConversationPanel({
 
   return (
     <>
-      <div role="tabpanel" className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-4">
-        <div className="flex flex-col gap-3">
-          {showWelcome ? (
-            <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3.5 py-3 text-[13px] leading-relaxed text-[#475569]">
-              안녕하세요! <span className="font-semibold text-[#0f172a]">{projectName}</span>{' '}
-              워크스페이스입니다. 메시지를 입력하면 대화가 시작됩니다.
-            </div>
-          ) : null}
-          {showMessageSkeletons
-            ? [0, 1, 2, 3].map((item) => (
-                <AssistantReplySkeleton key={`message-skeleton-${item}`} />
-              ))
-            : displayMessages.map((message) => (
-                <MessageBubble key={message.messageId} message={message} />
-              ))}
-          {/*
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div
+          role="tabpanel"
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-4"
+        >
+          <div className="flex flex-col gap-3">
+            {showWelcome ? (
+              <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3.5 py-3 text-[13px] leading-relaxed text-[#475569]">
+                안녕하세요! <span className="font-semibold text-[#0f172a]">{projectName}</span>{' '}
+                워크스페이스입니다. 메시지를 입력하면 대화가 시작됩니다.
+              </div>
+            ) : null}
+            {showMessageSkeletons
+              ? [0, 1, 2, 3].map((item) => (
+                  <AssistantReplySkeleton key={`message-skeleton-${item}`} />
+                ))
+              : displayMessages.map((message) => (
+                  <MessageBubble key={message.messageId} message={message} />
+                ))}
+            {/*
             무엇을 정했는지. 답하는 폼이 사라진 자리를 대신하는 **읽기 전용** 기록이다.
 
             메시지 다음, 결정할 것들(승인·재시도) 앞에 둔다 — 이건 방금 지나온 일이고
             아래 둘은 지금 눌러야 할 일이라, 순서가 곧 읽는 순서가 된다.
           */}
-          {answeredClarification ? (
-            <AgentAnsweredClarificationCard
-              key={answeredClarification.taskId}
-              answered={answeredClarification.answered}
-            />
-          ) : null}
-          {activeApproval ? (
-            <AgentApprovalCard
-              key={activeApproval.approvalId}
-              approval={activeApproval}
-              isBusy={decideApprovalMutation.isPending}
-              onApprove={(payload) => handleDecideApproval('approve', payload)}
-              onReject={() => handleDecideApproval('reject')}
-            />
-          ) : null}
-          {/*
+            {answeredClarification ? (
+              <AgentAnsweredClarificationCard
+                key={answeredClarification.taskId}
+                answered={answeredClarification.answered}
+              />
+            ) : null}
+            {activeApproval ? (
+              <AgentApprovalCard
+                key={activeApproval.approvalId}
+                approval={activeApproval}
+                isBusy={decideApprovalMutation.isPending}
+                onApprove={(payload) => handleDecideApproval('approve', payload)}
+                onReject={() => handleDecideApproval('reject')}
+              />
+            ) : null}
+            {/*
             승인 카드와 같은 자리에 둔다 — 둘 다 "지금 사용자가 결정할 일"이고, 대화의
             마지막에 있어야 실패 메시지 바로 아래에서 읽힌다.
           */}
-          {retryableTask ? (
-            <AgentRetryCard
-              key={retryableTask.taskId}
-              task={retryableTask}
-              isBusy={retryMutation.isPending}
-              onRetry={() => retryMutation.mutate(retryableTask.taskId)}
-              onDismiss={() => setRetryableTask(null)}
-            />
-          ) : null}
-          {isSending || isAssistantReplying ? (
-            <AssistantReplySkeleton
-              progressLabel={describeTaskProgress(progressTask)}
-              events={taskEvents}
-              onCancel={
-                runningTaskId && !cancelTaskMutation.isPending
-                  ? () => cancelTaskMutation.mutate(runningTaskId)
-                  : undefined
-              }
-            />
-          ) : null}
-          <div
-            key={`${displayMessages.length}-${isAssistantReplying ? 'replying' : 'idle'}`}
-            ref={(node) => {
-              node?.scrollIntoView({ block: 'end' });
-            }}
-            aria-hidden="true"
-            className="h-px shrink-0"
-          />
+            {retryableTask ? (
+              <AgentRetryCard
+                key={retryableTask.taskId}
+                task={retryableTask}
+                isBusy={retryMutation.isPending}
+                onRetry={() => retryMutation.mutate(retryableTask.taskId)}
+                onDismiss={() => setRetryableTask(null)}
+              />
+            ) : null}
+            {isSending || isAssistantReplying ? (
+              <AssistantReplySkeleton
+                progressLabel={describeTaskProgress(progressTask)}
+                events={taskEvents}
+                onCancel={
+                  runningTaskId && !cancelTaskMutation.isPending
+                    ? () => cancelTaskMutation.mutate(runningTaskId)
+                    : undefined
+                }
+              />
+            ) : null}
+          </div>
         </div>
+
+        {/*
+          위로 올라가 읽는 동안 작업이 끝나도 모르면, 고쳐 놓은 스크롤이 도리어 불편해진다.
+          따라잡을 길을 하나 둔다 — 누르기 전에는 화면을 건드리지 않는다.
+        */}
+        {hasUnseenBelow ? (
+          <button
+            type="button"
+            onClick={scrollToBottom}
+            className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-[#e2e8f0] bg-white px-3.5 py-1.5 text-[12px] font-medium text-[#0f172a] shadow-[0_4px_12px_rgba(15,23,42,0.12)] transition hover:bg-[#f8fafc]"
+          >
+            ↓ 새 진행 상황
+          </button>
+        ) : null}
       </div>
 
       <footer className="border-t border-[#f1f5f9] p-3">
