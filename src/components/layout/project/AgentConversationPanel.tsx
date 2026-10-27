@@ -1254,6 +1254,9 @@ function AgentConversationPanel({
   /** 바닥 근처인지. state 로 두면 스크롤할 때마다 리렌더가 돌아서 ref 에 담는다 */
   const isNearBottomRef = useRef(true);
 
+  /** 높이 변화를 지켜볼 대상. 컨테이너가 아니라 그 안의 내용이 자란다 */
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
   /** 위로 올라가 있는 동안 새 내용이 생겼다 — 이때만 따라잡기 버튼을 띄운다 */
   const [hasUnseenBelow, setHasUnseenBelow] = useState(false);
 
@@ -1299,6 +1302,33 @@ function AgentConversationPanel({
     }
     setHasUnseenBelow(true);
   }, [displayMessages.length, taskEvents.length, isAssistantReplying, isSending, scrollToBottom]);
+
+  /*
+    개수는 그대로인데 높이만 자라는 경우를 따라간다.
+
+    위 효과는 메시지·이벤트 개수가 바뀔 때만 돈다. 그런데 개수가 그대로인 채 높이만
+    커지는 구간이 있다 — MessageMarkdown 이 lazy 라 Suspense 가 풀린 뒤에야 본문이
+    그려지고, 이미지나 코드 블록도 늦게 올라온다. 대화를 처음 열 때가 대표적이다.
+
+    예전 센티널은 매 렌더마다 다시 내려 줘서 이게 가려져 있었다. 그걸 걷어내자
+    **대화를 새로 열면 마지막 메시지 높이만큼 위에 멈추는** 것이 드러났다(실측 183px).
+
+    높이가 자랄 때 hasUnseenBelow 는 켜지 않는다. 위로 올라가 있는 사람에게 이건
+    새 소식이 아니라 **이미 있던 내용이 뒤늦게 그려진 것**이라, 배지를 띄우면 거짓
+    신호가 된다. 새 내용 알림은 위 효과가 개수로 판단한다.
+  */
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content || typeof ResizeObserver === 'undefined') return;
+
+    const observer = new ResizeObserver(() => {
+      if (!isNearBottomRef.current) return;
+      scrollToBottom();
+    });
+    observer.observe(content);
+
+    return () => observer.disconnect();
+  }, [scrollToBottom]);
 
   const showMessageSkeletons = isMessagesLoading && displayMessages.length === 0;
   const showWelcome =
@@ -1397,7 +1427,7 @@ function AgentConversationPanel({
           onScroll={handleScroll}
           className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-4"
         >
-          <div className="flex flex-col gap-3">
+          <div ref={contentRef} className="flex flex-col gap-3">
             {showWelcome ? (
               <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3.5 py-3 text-[13px] leading-relaxed text-[#475569]">
                 안녕하세요! <span className="font-semibold text-[#0f172a]">{projectName}</span>{' '}
