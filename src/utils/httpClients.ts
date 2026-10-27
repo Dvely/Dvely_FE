@@ -4,8 +4,13 @@ import axios, {
   type AxiosInstance,
   type InternalAxiosRequestConfig,
 } from 'axios';
-import { dispatchAuthRedirectHome } from '@/constants/authEvents';
+import {
+  dispatchAuthRedirectHome,
+  dispatchGitHubAppReauthorizationRequired,
+} from '@/constants/authEvents';
+import { GITHUB_APP_REAUTHORIZATION_REQUIRED_CODE } from '@/lib/apiErrorGuide';
 import { clearAppLocalStorage } from '@/lib/clearAppStorage';
+import { extractApiErrorCode } from '@/utils/response';
 
 type TokenPair = {
   value: string;
@@ -224,12 +229,43 @@ class Http {
   }
 
   // =========================
+  // 403 재인증 신호
+  // =========================
+  /**
+   * GitHub 재인증이 필요하다는 403 이면 진입점만 띄운다.
+   *
+   * 이 신호를 듣는 다이얼로그는 `__root.tsx` 에 걸려 있어 어느 화면에서든 살아 있다.
+   * 그래서 화면마다 `dispatchApiErrorAction` 을 심는 대신 여기서 한 번만 쏜다 —
+   * 지금까지 진입점이 있던 곳은 에이전트 화면 둘뿐이라, 도메인 연결이나 저장소
+   * 생성에서 같은 403 을 받은 사용자는 "다시 인증" 버튼을 볼 길이 아예 없었다.
+   *
+   * **오류 자체는 건드리지 않는다.** 신호만 쏘고 그대로 흘려보내므로, 각 화면이
+   * 지금까지 하던 처리(인라인 문구, 재시도 버튼)는 하나도 달라지지 않는다. 이미
+   * `dispatchApiErrorAction` 을 부르던 화면은 같은 이벤트를 한 번 더 쏘게 되는데,
+   * 다이얼로그를 여는 일은 여러 번 해도 결과가 같다.
+   *
+   * 설치 계열(GITHUB_APP_NOT_INSTALLED, …REPOSITORY_ACCESS_DENIED)은 일부러 뺐다.
+   * 그쪽은 화면마다 이미 인라인으로 다루고 있어, 여기서 모달까지 띄우면 지금 동작이
+   * 바뀐다. 이 PR 이 메우려는 구멍은 재인증 진입점 하나다.
+   */
+  private signalGitHubReauthorizationIfNeeded(error: AxiosError) {
+    if (error.response?.status !== 403) return;
+    if (extractApiErrorCode(error) !== GITHUB_APP_REAUTHORIZATION_REQUIRED_CODE) return;
+
+    dispatchGitHubAppReauthorizationRequired();
+  }
+
+  // =========================
   // 401 handler
   // =========================
   private async handleAuthError(error: AxiosError) {
     const config = error.config as RetriableRequestConfig | undefined;
 
     if (!error.response || !config) return Promise.reject(error);
+
+    // 403 신호는 아래 401 흐름과 무관하다. 먼저 쏘고 원래 가던 길로 간다
+    this.signalGitHubReauthorizationIfNeeded(error);
+
     if (error.response.status !== 401) return Promise.reject(error);
 
     // refresh endpoint 자체가 401이면 이미 accessByRefresh()에서 goLogin 처리됨

@@ -32,6 +32,14 @@ type ApiErrorGuide = {
 };
 
 /**
+ * 권한은 그대로인데 GitHub 인증만 끊겼을 때 서버가 보내는 코드.
+ *
+ * Http 인터셉터도 같은 문자열을 보고 재인증 진입점을 띄운다. 양쪽에 문자열을 따로
+ * 적어 두면 한쪽만 고쳐질 때 조용히 어긋나므로 여기 한 번만 적고 가져다 쓴다.
+ */
+const GITHUB_APP_REAUTHORIZATION_REQUIRED_CODE = 'GITHUB_APP_REAUTHORIZATION_REQUIRED';
+
+/**
  * 코드별 안내.
  *
  * 모르는 코드는 여기 없다 — 그때는 서버 문구만 보여주고 끝낸다. 아는 코드만 손대는
@@ -74,6 +82,14 @@ const API_ERROR_GUIDE: Record<string, ApiErrorGuide> = {
     // 권한 범위를 넓히는 일이라 들어가는 화면이 다르다
     hint: 'App은 설치돼 있지만 이 저장소가 허용 목록에 없습니다.',
     action: { kind: 'github-app', label: 'GitHub App 권한 다시 설정' },
+  },
+  [GITHUB_APP_REAUTHORIZATION_REQUIRED_CODE]: {
+    // 설치도 돼 있고 저장소도 허용돼 있다. 끊긴 건 User Token 뿐이라 권한을 다시
+    // 고르는 게 아니라 인증만 다시 받으면 된다 — 위 두 코드와 가야 할 화면이 다르다.
+    // 이 코드가 없던 동안 같은 403 이 범용 FORBIDDEN 으로 와서, 화면은 "App을
+    // 설치해야 합니다" 라는 틀린 안내를 붙이거나 아무 행동도 주지 못했다
+    hint: '권한은 그대로입니다. GitHub 인증만 다시 받으면 이어서 쓸 수 있습니다.',
+    action: { kind: 'github-app', label: 'GitHub 다시 인증' },
   },
   PREVIEW_ENVIRONMENT_UNAVAILABLE: {
     // 서버 쪽 Docker 문제라 사용자가 고칠 수 있는 게 없다. 재시도 외에는
@@ -126,6 +142,7 @@ function dispatchApiErrorAction(error: unknown): boolean {
 
 export {
   API_ERROR_GUIDE,
+  GITHUB_APP_REAUTHORIZATION_REQUIRED_CODE,
   composeApiErrorMessage,
   dispatchApiErrorAction,
   findApiErrorGuide,
