@@ -25,3 +25,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright MCP 가 검증 중 남기는 스냅샷·스크린샷·콘솔 로그.
+# 저장소에 들어갈 물건이 아닌데 untracked 로 떠서 실수로 커밋될 여지가 있다.
+.playwright-mcp/
