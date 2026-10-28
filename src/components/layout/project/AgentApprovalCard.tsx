@@ -3,7 +3,8 @@ import { useApprovalResultScopeQuery } from '@/api/approvals';
 import RejectOptionChoice from '@/components/layout/project/RejectOptionChoice';
 import ResultScopePanel from '@/components/layout/project/ResultScopePanel';
 import { APPROVAL_COPY, FALLBACK_APPROVAL_COPY } from '@/lib/approvalCopy';
-import { composeApiErrorMessage } from '@/lib/apiErrorGuide';
+import { composeApiErrorMessage, findApiErrorGuide } from '@/lib/apiErrorGuide';
+import { dispatchGitHubAppReauthorizationRequired } from '@/constants/authEvents';
 import type { Approval, ApprovalInput } from '@/types/approval.type';
 import type { RejectOption } from '@/types/resultScope.type';
 
@@ -53,6 +54,9 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
   const { data: scope, error: scopeError } = useApprovalResultScopeQuery(
     isResultApproval ? approval.approvalId : null,
   );
+
+  /** 아는 코드일 때만 서버 문장과 다음 행동을 덧붙인다 */
+  const scopeErrorGuide = scopeError ? findApiErrorGuide(scopeError) : null;
 
   const rejectOptions = scope?.rejectOptions ?? [];
 
@@ -128,12 +132,37 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
           <p className="text-[11px] font-semibold text-[#92400e]">
             반영 범위를 불러오지 못했습니다
           </p>
-          <p className="mt-1 whitespace-pre-line text-[11px] leading-relaxed text-[#92400e]/90">
-            {composeApiErrorMessage(scopeError)}
-          </p>
-          <p className="mt-1 text-[11px] leading-relaxed text-[#92400e]/80">
+          <p className="mt-1 text-[11px] leading-relaxed text-[#92400e]/90">
             지금 승인하면 이번 작업 외의 변경이 함께 반영되는지 확인하지 못한 채 반영됩니다.
           </p>
+
+          {/*
+            서버 문장은 **분류된 오류일 때만** 덧붙인다.
+
+            아는 코드면 그 문장이 완결적이다("GitHub 인증이 만료됐습니다…"). 그런데
+            이 호출은 배포 순서가 어긋나 엔드포인트 자체가 없을 수도 있고, 그때 오는
+            것은 "No static resource." 같은 프레임워크 문구다. 그대로 띄우면 사용자는
+            읽을 수 없는 말을 받고, 우리는 안내한 셈 친다.
+          */}
+          {scopeErrorGuide ? (
+            <p className="mt-1 whitespace-pre-line text-[11px] leading-relaxed text-[#92400e]/90">
+              {composeApiErrorMessage(scopeError)}
+            </p>
+          ) : null}
+
+          {/*
+            재인증이 필요한 경우에만 길을 연다. 전역 모달은 이 호출에서 막아 뒀으므로
+            (닫기가 없어 갇힌다) 사용자가 **스스로 누를 때만** 그 모달로 간다.
+          */}
+          {scopeErrorGuide?.action?.kind === 'github-app' ? (
+            <button
+              type="button"
+              onClick={() => dispatchGitHubAppReauthorizationRequired()}
+              className="mt-2 h-7 rounded-lg border border-[#fcd34d] bg-white px-2.5 text-[11px] font-semibold text-[#92400e]"
+            >
+              {scopeErrorGuide.action.label}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
