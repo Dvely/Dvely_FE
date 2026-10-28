@@ -9,6 +9,7 @@ import {
   dispatchGitHubAppReauthorizationRequired,
 } from '@/constants/authEvents';
 import { GITHUB_APP_REAUTHORIZATION_REQUIRED_CODE } from '@/lib/apiErrorGuide';
+import { canReuseStoredToken, readBearerToken } from '@/lib/authTokenReuse';
 import { clearAppLocalStorage } from '@/lib/clearAppStorage';
 import { extractApiErrorCode } from '@/utils/response';
 
@@ -144,9 +145,7 @@ class Http {
 
   /** 이 요청이 **실제로 써서 401 을 받은** 토큰. 저장소의 현재 값과 다를 수 있다. */
   private readAuthHeaderToken(config: RetriableRequestConfig): string | null {
-    const raw = new AxiosHeaders(config.headers).get('Authorization');
-    if (typeof raw !== 'string') return null;
-    return raw.startsWith('Bearer ') ? raw.slice('Bearer '.length) : null;
+    return readBearerToken(new AxiosHeaders(config.headers).get('Authorization'));
   }
 
   // =========================
@@ -172,7 +171,7 @@ class Http {
   private async refreshAccessToken(staleToken: string | null): Promise<string> {
     const run = async () => {
       const current = this.getAccessToken();
-      if (current && current !== staleToken) return current;
+      if (canReuseStoredToken(current, staleToken)) return current as string;
       return this.accessByRefresh();
     };
 
