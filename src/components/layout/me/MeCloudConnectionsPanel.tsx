@@ -231,6 +231,12 @@ function MeCloudConnectionsPanel() {
               id="cloud-region"
               value={region}
               onChange={(event) => setRegion(event.target.value)}
+              /*
+                다른 입력들은 예시를 주는데(`예: 내 AWS 계정`·`AKIA...`·`12자리 숫자`)
+                리전만 빈칸이었다. 형식을 아는 사람에게는 사소하지만, 처음 연결하는
+                사람은 `서울` 인지 `ap-northeast-2` 인지 짐작해야 했다.
+              */
+              placeholder={provider === 'AWS' ? '예: ap-northeast-2' : '예: asia-northeast3'}
               className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px]"
             />
           </div>
