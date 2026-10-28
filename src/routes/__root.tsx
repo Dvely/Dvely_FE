@@ -2,6 +2,7 @@ import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router'
 import AppRouterEffects from '@/components/auth/AppRouterEffects';
 import GitHubAppInstallPromptDialog from '@/components/auth/GitHubAppInstallPromptDialog';
 import NotFoundPage from '@/components/layout/NotFoundPage';
+import RouteErrorComponent from '@/components/common/RouteErrorComponent';
 import AppSidebar from '@/components/common/AppSidebar';
 import { AssetLoadFailureNotice } from '@/components/common/AssetLoadFailureNotice';
 import SeoHead from '@/components/common/SeoHead';
@@ -9,6 +10,12 @@ import SeoHead from '@/components/common/SeoHead';
 export const Route = createRootRoute({
   component: RootComponent,
   notFoundComponent: () => <NotFoundPage />,
+  /*
+    라우터 설정의 `defaultErrorComponent` 는 **자식 라우트**가 던진 것을 받는다. 루트
+    자신이 던지면 거기까지 안 가므로 여기에도 같은 것을 건다. 둘 다 걸어 두면 어느
+    높이에서 터져도 한국어 화면이 선다.
+  */
+  errorComponent: RouteErrorComponent,
 });
 
 function RootComponent() {

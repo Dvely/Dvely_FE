@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { ErrorComponent, type ErrorComponentProps } from '@tanstack/react-router';
+import type { ErrorComponentProps } from '@tanstack/react-router';
+import AppErrorScreen from '@/components/common/AppErrorScreen';
 import { clearAssetLoadFailure } from '@/lib/assetLoadFailure';
 import { isChunkLoadError, reloadOnceForChunkFailure } from '@/lib/chunkReload';
 
@@ -43,25 +44,41 @@ function RouteErrorComponent(props: ErrorComponentProps) {
   */
   if (isChunk) {
     return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 px-6 text-center">
-        <p className="text-[15px] font-medium text-[#0f172a]">화면을 불러오지 못했습니다.</p>
-        <p className="text-[13px] leading-relaxed text-[#64748b]">
-          연결이 불안정하거나, 방금 새 버전이 배포됐을 수 있습니다.
-          <br />
-          잠시 뒤 새로고침하면 대부분 해결됩니다.
-        </p>
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          className="rounded-xl bg-[#0f172a] px-4 py-2.5 text-[14px] font-semibold text-white transition hover:bg-[#1e293b]"
-        >
-          새로고침
-        </button>
-      </div>
+      <AppErrorScreen
+        title="화면을 불러오지 못했습니다."
+        description={
+          '연결이 불안정하거나, 방금 새 버전이 배포됐을 수 있습니다.\n잠시 뒤 다시 시도하면 대부분 해결됩니다.'
+        }
+        // 이 경우는 reset 으로 안 풀린다. 사라진 조각을 다시 받으려면 새 index.html 이 필요하다
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
-  return <ErrorComponent {...props} />;
+  /*
+    조각 문제가 아닌 오류. **무엇이 잘못됐는지는 여기서 알 수 없다** — 라우트 로더가
+    던졌을 수도, 렌더 중 버그일 수도 있다. 그래서 원인을 짐작해 적지 않고, 대신
+    **나갈 길**을 준다.
+
+    라우터 기본 `ErrorComponent` 를 쓰지 않는 이유는 영문이기 때문만이 아니다. 그
+    화면은 "Something went wrong!" 한 줄과 오류 원문 펼치기뿐이라, 사용자가 할 수
+    있는 일이 없다.
+  */
+  return (
+    <AppErrorScreen
+      title="화면을 여는 중 문제가 생겼습니다."
+      description={'잠시 뒤 다시 시도해 주세요.\n계속된다면 홈으로 돌아간 뒤 다시 들어와 보세요.'}
+      onRetry={props.reset}
+      detail={errorDetail(props.error)}
+    />
+  );
+}
+
+/** 제보 받을 때 쓸 한 줄. 사용자에게는 접힌 채로 둔다 */
+function errorDetail(error: unknown): string | null {
+  if (error instanceof Error) return error.message || error.name;
+  if (typeof error === 'string') return error;
+  return null;
 }
 
 export default RouteErrorComponent;
