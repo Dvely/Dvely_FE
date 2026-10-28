@@ -35,6 +35,7 @@ import {
   useApprovalDetailQuery,
   useConversationPendingApprovalQuery,
 } from '@/api/approvals';
+import { isNearBottom } from '@/lib/scrollAnchor';
 import {
   composeApiErrorMessage,
   dispatchApiErrorAction,
@@ -1260,9 +1261,6 @@ function AgentConversationPanel({
   /** 위로 올라가 있는 동안 새 내용이 생겼다 — 이때만 따라잡기 버튼을 띄운다 */
   const [hasUnseenBelow, setHasUnseenBelow] = useState(false);
 
-  /** 이만큼 안쪽이면 "바닥에 있다"고 본다. 한 줄 높이로는 모자라 여유를 둔다 */
-  const NEAR_BOTTOM_PX = 80;
-
   const scrollToBottom = useCallback(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -1276,9 +1274,7 @@ function AgentConversationPanel({
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    const distanceFromBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight;
-    isNearBottomRef.current = distanceFromBottom <= NEAR_BOTTOM_PX;
+    isNearBottomRef.current = isNearBottom(container);
 
     // 사용자가 스스로 바닥까지 내려왔으면 따라잡기 버튼은 할 일이 없다
     if (isNearBottomRef.current) setHasUnseenBelow(false);
