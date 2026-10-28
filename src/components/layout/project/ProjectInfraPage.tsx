@@ -153,6 +153,7 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
               <button
                 type="button"
                 onClick={() => setIsConnectSheetOpen(true)}
+                data-demo="cloud-register-link"
                 className="cursor-pointer text-[12px] font-semibold text-[#0f172a] underline underline-offset-2"
               >
                 여기서 연결 등록하기
@@ -188,6 +189,7 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
                     type="button"
                     disabled={selected || selectConnectionMutation.isPending}
                     onClick={() => selectConnectionMutation.mutate(connection.cloudConnectionId)}
+                    data-demo="cloud-select"
                     className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold disabled:opacity-50"
                   >
                     {selected ? '선택됨' : '선택'}

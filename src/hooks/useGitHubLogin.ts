@@ -1,6 +1,13 @@
 import { useCallback, useState } from 'react';
-import { fetchGitHubAuthUrl } from '@/api/auth';
-import { GITHUB_OAUTH_POPUP_FEATURES, GITHUB_OAUTH_POPUP_NAME } from '@/constants/githubOAuth';
+import { completeGitHubCallback, fetchGitHubAuthUrl } from '@/api/auth';
+import { fetchAndPersistUserInfo } from '@/api/user';
+import { persistAuthTokens } from '@/lib/persistAuthTokens';
+import { IS_DEMO } from '@/demo/config';
+import {
+  GITHUB_OAUTH_POPUP_FEATURES,
+  GITHUB_OAUTH_POPUP_NAME,
+  GITHUB_OAUTH_SUCCESS_MESSAGE,
+} from '@/constants/githubOAuth';
 import {
   clearOAuthCodeProcessed,
   extractStateFromOAuthUrl,
@@ -16,6 +23,22 @@ export function useGitHubLogin() {
     setErrorMessage(null);
 
     try {
+      /*
+        시연 모드는 팝업을 열지 않는다.
+
+        팝업은 차단당할 수 있고(그러면 시연이 그 자리에서 멈춘다), 열려도 창이 떴다
+        사라지는 장면이 영상에 그대로 남는다. 어차피 교환할 code 가 우리 것이므로
+        같은 처리를 이 창에서 그대로 한다 — 뒤따르는 흐름(사용자 정보 조회 → 홈 이동)은
+        팝업이 보내던 메시지를 그대로 쏘아 이어붙인다.
+      */
+      if (IS_DEMO) {
+        const response = await completeGitHubCallback({ code: 'demo-code', state: 'demo-state' });
+        persistAuthTokens(response);
+        await fetchAndPersistUserInfo();
+        window.postMessage({ type: GITHUB_OAUTH_SUCCESS_MESSAGE }, window.location.origin);
+        return;
+      }
+
       const { data } = await fetchGitHubAuthUrl();
       const url = data?.url;
 

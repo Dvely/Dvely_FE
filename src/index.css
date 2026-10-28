@@ -464,3 +464,10 @@ body {
     transition: none;
   }
 }
+
+/* 움직임을 줄이도록 설정한 사람에게는 시연 자막도 그냥 나타났다 사라진다 */
+@media (prefers-reduced-motion: reduce) {
+  [data-demo-caption] {
+    transition: none !important;
+  }
+}

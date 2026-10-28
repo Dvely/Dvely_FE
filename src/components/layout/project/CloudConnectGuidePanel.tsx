@@ -581,6 +581,7 @@ function CloudConnectGuidePanel({
         <button
           type="button"
           onClick={() => setIsSheetOpen(true)}
+          data-demo="cloud-guide-register"
           className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white"
         >
           여기서 연결 등록하기
@@ -600,6 +601,7 @@ function CloudConnectGuidePanel({
           type="button"
           onClick={onRetry}
           disabled={isRetrying}
+          data-demo="cloud-guide-retry"
           className="ml-auto inline-flex h-9 cursor-pointer items-center rounded-lg border border-[#c4b5fd] bg-white px-4 text-[13px] font-semibold text-[#6d28d9] hover:bg-[#faf5ff] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isRetrying ? '확인하는 중' : '연결했어요 — 다시 시도'}

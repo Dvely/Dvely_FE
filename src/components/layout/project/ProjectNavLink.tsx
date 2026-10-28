@@ -9,7 +9,12 @@ type ProjectNavLinkProps = {
 
 function ProjectNavLink({ projectId, className, children }: ProjectNavLinkProps) {
   return (
-    <Link to="/project/$slug" params={{ slug: String(projectId) }} className={className}>
+    <Link
+      to="/project/$slug"
+      params={{ slug: String(projectId) }}
+      data-demo="project-card"
+      className={className}
+    >
       {children}
     </Link>
   );

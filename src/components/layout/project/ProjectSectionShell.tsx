@@ -41,6 +41,7 @@ function ProjectSectionShell({ projectId, active, children }: ProjectSectionShel
             <Link
               to="/project/$slug/agent"
               params={{ slug: String(projectId) }}
+              data-demo="open-agent"
               className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#7c3aed] px-4 text-[13px] font-semibold text-white shadow-[0_4px_14px_rgba(124,58,237,0.35)] transition hover:bg-[#6d28d9]"
             >
               <Play className="size-4 fill-current" />

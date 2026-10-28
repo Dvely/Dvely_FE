@@ -145,6 +145,7 @@ function ProjectsView() {
           <button
             type="button"
             onClick={() => setIsCreateDialogOpen(true)}
+            data-demo="project-new"
             className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[#7c3aed] px-4 text-[13px] font-semibold text-white shadow-[0_4px_14px_rgba(124,58,237,0.28)] transition hover:bg-[#6d28d9]"
           >
             <Plus className="size-4" strokeWidth={2.25} />

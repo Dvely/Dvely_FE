@@ -207,6 +207,7 @@ function GithubRepositoryPicker({
       <button
         type="button"
         onClick={handleToggleOpen}
+        data-demo="repo-picker"
         disabled={isSubmitting}
         aria-expanded={open}
         aria-haspopup="dialog"
@@ -286,6 +287,7 @@ function GithubRepositoryPicker({
                 role="tab"
                 aria-selected={tab === 'create'}
                 onClick={() => setTab('create')}
+                data-demo="repo-tab-create"
                 className={cn(
                   'inline-flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[12px] font-semibold transition',
                   tab === 'create'
@@ -377,6 +379,7 @@ function GithubRepositoryPicker({
                 id={nameFieldId}
                 type="text"
                 value={createForm.repositoryName}
+                data-demo="repo-name"
                 maxLength={100}
                 autoFocus
                 disabled={isSubmitting}
@@ -438,6 +441,7 @@ function GithubRepositoryPicker({
               <button
                 type="submit"
                 disabled={!canCreate}
+                data-demo="repo-create"
                 className={cn(
                   'mt-3 flex h-9 w-full items-center justify-center rounded-lg text-[13px] font-semibold transition',
                   canCreate

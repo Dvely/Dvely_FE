@@ -100,6 +100,7 @@ import {
   shouldSendHomeAgentPromptOnce,
   writeSessionMessages,
 } from '@/components/layout/project/agentChat.utils';
+import { IS_DEMO } from '@/demo/config';
 
 const suggestedPrompts = [
   {
@@ -1739,6 +1740,7 @@ function AgentConversationPanel({
             <button
               type="button"
               onClick={() => setIsKeySheetOpen(true)}
+              data-demo="ai-key-register-link"
               className="h-8 cursor-pointer self-start rounded-lg bg-[#7c3aed] px-3 text-[12px] font-semibold text-white transition hover:bg-[#6d28d9]"
             >
               AI API 키 등록하러 가기
@@ -1762,7 +1764,8 @@ function AgentConversationPanel({
             </select>
           </label>
         ) : null}
-        <div className="mb-2 flex flex-wrap gap-2">
+        {/* 시연에서는 감춘다 — 제안 문구가 화면에 남으면 시나리오와 다른 것을 읽게 된다 */}
+        <div className={IS_DEMO ? 'hidden' : 'mb-2 flex flex-wrap gap-2'}>
           {suggestedPrompts.map(({ label, prompt }) => (
             <button
               key={label}
@@ -1791,12 +1794,14 @@ function AgentConversationPanel({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={awaitingInputTaskId ? '위 질문에 답해 주세요' : '메시지를 입력하세요'}
+            data-demo="chat-input"
             className="min-h-[40px] flex-1 resize-none bg-transparent text-[13px] text-[#0f172a] outline-none placeholder:text-[#94a3b8] disabled:opacity-60"
           />
           <button
             type="button"
             disabled={!input.trim() || isInputLocked}
             onClick={handleSend}
+            data-demo="chat-send"
             className="mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#7c3aed] text-white transition hover:bg-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="전송"
           >

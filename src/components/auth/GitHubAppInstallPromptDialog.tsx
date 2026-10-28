@@ -12,6 +12,7 @@ import {
   GITHUB_APP_INSTALL_SUCCESS_MESSAGE,
   GITHUB_OAUTH_POPUP_FEATURES,
 } from '@/constants/githubOAuth';
+import { IS_DEMO } from '@/demo/config';
 
 /**
  * 두 모드는 사용자가 처한 상황이 다르다.
@@ -124,6 +125,17 @@ function GitHubAppInstallPromptDialog() {
           : await fetchGitHubAppInstallUrl();
       if (!result?.data?.url) return;
 
+      /*
+        시연에서는 팝업을 열지 않는다. 팝업 차단이면 그 자리에서 멈추고, 열려도 창이
+        떴다 사라지는 장면이 영상에 남는다. 설치는 URL 을 받아 가는 시점에 끝난 것으로
+        두고, 사용자 정보만 다시 읽어 화면을 맞춘다.
+      */
+      if (IS_DEMO) {
+        setOpen(false);
+        await refreshUserInfoInBackground();
+        return;
+      }
+
       window.open(result.data.url, GITHUB_APP_INSTALL_POPUP_NAME, GITHUB_OAUTH_POPUP_FEATURES);
     } finally {
       setIsLoading(false);
@@ -158,6 +170,7 @@ function GitHubAppInstallPromptDialog() {
             type="button"
             onClick={() => void handleConfirm()}
             disabled={isLoading}
+            data-demo="github-app-confirm"
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f172a] py-3 text-[14px] font-semibold text-white transition hover:bg-[#1e293b] disabled:opacity-50"
           >
             <GitBranch className="size-4" strokeWidth={1.75} aria-hidden />
