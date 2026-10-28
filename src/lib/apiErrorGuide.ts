@@ -91,6 +91,15 @@ const API_ERROR_GUIDE: Record<string, ApiErrorGuide> = {
     hint: '권한은 그대로입니다. GitHub 인증만 다시 받으면 이어서 쓸 수 있습니다.',
     action: { kind: 'github-app', label: 'GitHub 다시 인증' },
   },
+  RESULT_REVERT_UNAVAILABLE: {
+    // 서버 git 이 꺼진 환경이다. 기다려도 켜지지 않으므로 다른 선택지로 보낸다
+    hint: '이 환경에서는 되돌리기를 쓸 수 없습니다. "preview 에 남기기"로 거절해 주세요.',
+  },
+  RESULT_REVERT_FAILED: {
+    // 되돌리기가 실패하면 서버가 승인을 PENDING 으로 되돌려 둔다. 다시 눌러도 된다
+    hint: '승인은 그대로 남아 있습니다. 다시 시도하거나 "preview 에 남기기"로 거절해 주세요.',
+    action: { kind: 'retry', label: '다시 시도' },
+  },
   PREVIEW_ENVIRONMENT_UNAVAILABLE: {
     // 서버 쪽 Docker 문제라 사용자가 고칠 수 있는 게 없다. 재시도 외에는
     // 문의밖에 없다는 걸 솔직히 적는다
