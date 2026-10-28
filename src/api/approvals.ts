@@ -3,6 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { errorResponse, succesResponse } from '@/utils/response';
 import type { ApiResponse } from '@/types/response.type';
 import {
+  getResultScopeResSchema,
+  type GetResultScopeResType,
+  type RejectOption,
+} from '@/types/resultScope.type';
+import {
   getApprovalDetailResSchema,
   getProjectApprovalListResSchema,
   postApprovalDecideResSchema,
@@ -61,10 +66,40 @@ async function postApprovalApprove(approvalId: number, payload?: Record<string, 
     .catch(errorResponse());
 }
 
-/** Agent 작업 거절 API POST */
-async function postApprovalReject(approvalId: number) {
+/**
+ * 결과 승인이 main 에 무엇을 반영하는지 묻는다.
+ *
+ * 승인 상세에 붙이지 않고 따로 부르는 이유: 서버가 GitHub 비교를 호출하므로 목록이
+ * 느려진다. 카드를 열 때만 부른다.
+ *
+ * **재인증 모달을 띄우지 않게 막는다.** 이 호출이 403 재인증을 받으면 Http 인터셉터가
+ * 앱 전역 모달을 띄우는데, 그 모달에는 닫기가 없다. 카드를 열었을 뿐인 사용자가 갇히고
+ * 거절조차 못 하게 된다. 재인증 안내는 카드가 제 자리에서 한다.
+ */
+async function getApprovalResultScope(approvalId: number) {
   return Http.instance
-    .post<ApiResponse<PostApprovalDecideResType>>(`/approvals/${approvalId}/reject`)
+    .get<ApiResponse<GetResultScopeResType>>(`/approvals/${approvalId}/result-scope`, {
+      skipReauthPrompt: true,
+    })
+    .then((response) => {
+      const body = succesResponse<ApiResponse<GetResultScopeResType>>(response);
+      return getResultScopeResSchema.parse(unwrapApiData(body));
+    })
+    .catch(errorResponse());
+}
+
+/**
+ * Agent 작업 거절 API POST.
+ *
+ * `option` 은 결과 승인에서만 쓴다. 생략하면 서버가 KEEP 으로 본다 — 기존 호출부가
+ * 그대로 돌아가도록 서버가 그렇게 정했다.
+ */
+async function postApprovalReject(approvalId: number, option?: RejectOption['option']) {
+  return Http.instance
+    .post<ApiResponse<PostApprovalDecideResType>>(
+      `/approvals/${approvalId}/reject`,
+      option ? { option } : undefined,
+    )
     .then((response) => {
       const body = succesResponse<ApiResponse<PostApprovalDecideResType>>(response);
       return postApprovalDecideResSchema.parse(unwrapApiData(body));
@@ -151,10 +186,28 @@ function useApprovalDetailQuery(queryKey: unknown, approvalId: number | null) {
   });
 }
 
+/**
+ * 결과 승인 카드를 열 때 반영 범위를 가져온다.
+ *
+ * `retry: false` — GitHub 비교가 실패하면 서버가 200 + `scopeState: UNAVAILABLE` 로
+ * 내려 주므로, 여기서 재시도할 상황은 403·네트워크 끊김 정도다. 둘 다 다시 물어서
+ * 풀리지 않는다.
+ */
+function useApprovalResultScopeQuery(approvalId: number | null) {
+  return useQuery({
+    queryKey: ['approval-result-scope', approvalId],
+    queryFn: () => getApprovalResultScope(approvalId as number),
+    enabled: Number.isInteger(approvalId) && (approvalId as number) > 0,
+    ...defaultQueryOptions,
+  });
+}
+
 export {
+  getApprovalResultScope,
   getProjectApprovalList,
   getApprovalDetail,
   useApprovalDetailQuery,
+  useApprovalResultScopeQuery,
   postApprovalApprove,
   postApprovalReject,
   useConversationPendingApprovalQuery,

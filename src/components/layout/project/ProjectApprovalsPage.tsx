@@ -10,6 +10,7 @@ import { getChangeDiff, useProjectChangeListQuery } from '@/api/changes';
 import { getPreviewSessionStatus } from '@/api/preview';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
 import { APPROVAL_STATUS_LABEL, describeApprovalType } from '@/lib/approvalCopy';
+import type { RejectOption } from '@/types/resultScope.type';
 
 type ProjectApprovalsPageProps = {
   projectId: number;
@@ -68,7 +69,9 @@ function ProjectApprovalsPage({ projectId }: ProjectApprovalsPageProps) {
     onSuccess: invalidateApprovals,
   });
   const rejectMutation = useMutation({
-    mutationFn: postApprovalReject,
+    // 그대로 넘기면 react-query 가 두 번째 인자로 제 context 를 밀어 넣는다
+    mutationFn: ({ approvalId, option }: { approvalId: number; option?: RejectOption['option'] }) =>
+      postApprovalReject(approvalId, option),
     onSuccess: invalidateApprovals,
   });
 
@@ -76,6 +79,7 @@ function ProjectApprovalsPage({ projectId }: ProjectApprovalsPageProps) {
     approvalId: number,
     action: 'approve' | 'reject',
     payload?: Record<string, string>,
+    rejectOption?: RejectOption['option'],
   ) => {
     if (busyApprovalId !== null) return;
     setBusyApprovalId(approvalId);
@@ -85,7 +89,7 @@ function ProjectApprovalsPage({ projectId }: ProjectApprovalsPageProps) {
       if (action === 'approve') {
         await approveMutation.mutateAsync({ approvalId, payload });
       } else {
-        await rejectMutation.mutateAsync(approvalId);
+        await rejectMutation.mutateAsync({ approvalId, option: rejectOption });
       }
     } catch (error) {
       setActionError(error instanceof Error ? error.message : '승인 처리에 실패했습니다.');
@@ -132,7 +136,9 @@ function ProjectApprovalsPage({ projectId }: ProjectApprovalsPageProps) {
                   onApprove={(payload) =>
                     void handleDecide(approval.approvalId, 'approve', payload)
                   }
-                  onReject={() => void handleDecide(approval.approvalId, 'reject')}
+                  onReject={(option) =>
+                    void handleDecide(approval.approvalId, 'reject', undefined, option)
+                  }
                 />
               </li>
             ))}

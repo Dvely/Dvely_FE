@@ -36,6 +36,7 @@ import {
   useConversationPendingApprovalQuery,
 } from '@/api/approvals';
 import { isNearBottom } from '@/lib/scrollAnchor';
+import type { RejectOption } from '@/types/resultScope.type';
 import {
   composeApiErrorMessage,
   dispatchApiErrorAction,
@@ -757,16 +758,18 @@ function AgentConversationPanel({
       action,
       taskId,
       payload,
+      rejectOption,
     }: {
       approvalId: number;
       action: 'approve' | 'reject';
       taskId: string;
       payload?: Record<string, string>;
+      rejectOption?: RejectOption['option'];
     }) => {
       if (action === 'approve') {
         await postApprovalApprove(approvalId, payload);
       } else {
-        await postApprovalReject(approvalId);
+        await postApprovalReject(approvalId, rejectOption);
       }
 
       pollAbortRef.current?.abort();
@@ -1364,7 +1367,11 @@ function AgentConversationPanel({
     setAlertNavigation(null);
   };
 
-  const handleDecideApproval = (action: 'approve' | 'reject', payload?: Record<string, string>) => {
+  const handleDecideApproval = (
+    action: 'approve' | 'reject',
+    payload?: Record<string, string>,
+    rejectOption?: RejectOption['option'],
+  ) => {
     if (decideApprovalMutation.isPending || isAssistantReplying || !activeApproval) {
       return;
     }
@@ -1378,6 +1385,7 @@ function AgentConversationPanel({
     decideApprovalMutation.mutate({
       approvalId: activeApproval.approvalId,
       action,
+      rejectOption,
       taskId,
       payload,
     });
@@ -1455,7 +1463,7 @@ function AgentConversationPanel({
                 approval={activeApproval}
                 isBusy={decideApprovalMutation.isPending}
                 onApprove={(payload) => handleDecideApproval('approve', payload)}
-                onReject={() => handleDecideApproval('reject')}
+                onReject={(option) => handleDecideApproval('reject', undefined, option)}
               />
             ) : null}
             {/*

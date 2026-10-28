@@ -31,6 +31,17 @@ type AuthRefreshResponse = {
   };
 };
 
+/*
+  호출부가 요청마다 켤 수 있는 표시. axios 설정에 얹어야 인터셉터까지 따라온다.
+  `declare module` 없이 config 에 넣으면 타입이 거절한다.
+*/
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    /** 이 요청의 403 재인증은 전역 모달로 보내지 않는다. 아래 신호 함수 주석 참고 */
+    skipReauthPrompt?: boolean;
+  }
+}
+
 type RetriableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 /** 오리진 안의 모든 탭이 같은 이름을 봐야 줄이 하나가 된다 */
@@ -250,6 +261,17 @@ class Http {
   private signalGitHubReauthorizationIfNeeded(error: AxiosError) {
     if (error.response?.status !== 403) return;
     if (extractApiErrorCode(error) !== GITHUB_APP_REAUTHORIZATION_REQUIRED_CODE) return;
+
+    /*
+      부르는 쪽이 직접 다루겠다고 하면 비켜 준다.
+
+      이 모달에는 **닫기가 없다**. 로그인 직후나 저장소를 다루려는 순간에 뜰 때는 그게
+      말이 됐다 — 재인증 말고는 할 일이 없는 자리였으니까. 그런데 화면을 열기만 해도
+      뜨는 조회(결과 승인의 반영 범위 같은)에까지 붙으면, 사용자가 거절조차 못 하고
+      갇힌다. 그런 호출은 제 화면 안에서 안내하는 편이 낫다.
+    */
+    const config = error.config as RetriableRequestConfig | undefined;
+    if (config?.skipReauthPrompt) return;
 
     dispatchGitHubAppReauthorizationRequired();
   }
