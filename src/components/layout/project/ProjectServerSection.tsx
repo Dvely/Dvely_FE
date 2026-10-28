@@ -8,7 +8,7 @@ import ServerLogViewer from '@/components/layout/project/ServerLogViewer';
 import { describeProvisionFailure } from '@/lib/provisionFailure';
 import { toSafeHttpUrl } from '@/lib/safeUrl';
 import { extractApiErrorMessage } from '@/utils/response';
-import type { ServerLogSource } from '@/types/server.type';
+import type { BundledDbEngine, ServerDeployMode, ServerLogSource } from '@/types/server.type';
 
 const QUERY_KEY = 'project-infra-page';
 
@@ -21,6 +21,34 @@ const INSTANCE_TYPE_OPTIONS = [
   { value: 't3.micro', label: 't3.micro (프리티어 대상)' },
   { value: 't3.small', label: 't3.small' },
   { value: 't3.medium', label: 't3.medium' },
+];
+
+/**
+ * 배포 형태.
+ *
+ * 서버는 `deployMode` 가 없으면 NATIVE 로 만든다. 화면에 선택지가 없던 동안은 **DOCKER 를
+ * 고를 길이 자체가 없었다** — 사용자에게는 그런 기능이 없는 것과 같았다.
+ *
+ * 라벨에 "Dockerfile" 을 적는 이유는 이것이 전제 조건이기 때문이다. 없는 저장소로 DOCKER 를
+ * 고르면 승인까지 통과한 뒤 빌드 단계에서 실패한다 — 고르기 전에 알아야 한다.
+ */
+const DEPLOY_MODE_OPTIONS: { value: ServerDeployMode; label: string }[] = [
+  { value: 'NATIVE', label: 'jar 실행 (기본)' },
+  { value: 'DOCKER', label: 'Dockerfile 로 이미지 빌드' },
+];
+
+/**
+ * 번들 DB — 같은 EC2 안에 함께 뜨는 DB 컨테이너.
+ *
+ * `NONE` 은 서버 계약에 없는 값이다(필드를 비우는 것이 "없음"이다). 화면에서는 "없음"도
+ * 하나의 선택이라 셀렉트의 값이 필요하므로 여기서만 쓰고, 보낼 때 필드를 빼는 것으로 옮긴다.
+ */
+const BUNDLED_DB_NONE = 'NONE';
+
+const BUNDLED_DB_OPTIONS: { value: BundledDbEngine | typeof BUNDLED_DB_NONE; label: string }[] = [
+  { value: BUNDLED_DB_NONE, label: '없음' },
+  { value: 'MYSQL', label: 'MySQL (같은 EC2 안)' },
+  { value: 'POSTGRESQL', label: 'PostgreSQL (같은 EC2 안)' },
 ];
 
 const STATUS_LABEL: Record<string, string> = {
@@ -82,6 +110,10 @@ const HEALTH_HINT: Partial<Record<HealthState, string>> = {
 
 function ProjectServerSection({ projectId }: { projectId: number }) {
   const [instanceType, setInstanceType] = useState(INSTANCE_TYPE_OPTIONS[0].value);
+  const [deployMode, setDeployMode] = useState<ServerDeployMode>('NATIVE');
+  const [bundledDb, setBundledDb] = useState<BundledDbEngine | typeof BUNDLED_DB_NONE>(
+    BUNDLED_DB_NONE,
+  );
   const [createError, setCreateError] = useState<string | null>(null);
   const [awaitingApproval, setAwaitingApproval] = useState(false);
   // 종료 확인을 받는 중인 서버. window.confirm 을 쓰지 않는 이유는 무엇을 잃는지
@@ -116,8 +148,22 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
   const { data: domains = [] } = useProjectDomainListQuery(QUERY_KEY, projectId);
   const awsDomains = domains.filter((domain) => domain.hostingTarget === 'AWS');
 
+  /*
+    번들 DB 는 DOCKER 에서만 유효하다(NATIVE 와 함께 보내면 서버가 거절한다).
+
+    고른 값을 effect 로 되돌리지 않는다 — 그러면 DOCKER 로 바꿨다 NATIVE 로 돌렸다 다시
+    DOCKER 로 올 때 **사용자가 골라둔 엔진이 사라진다.** 대신 보낼 값만 여기서 갈라,
+    화면의 선택은 그대로 두고 NATIVE 일 때는 필드를 빼서 보낸다.
+  */
+  const effectiveBundledDb = deployMode === 'DOCKER' ? bundledDb : BUNDLED_DB_NONE;
+
   const createMutation = useMutation({
-    mutationFn: () => postProjectServer(projectId, { instanceType }),
+    mutationFn: () =>
+      postProjectServer(projectId, {
+        instanceType,
+        deployMode,
+        ...(effectiveBundledDb === BUNDLED_DB_NONE ? {} : { bundledDbEngine: effectiveBundledDb }),
+      }),
     onSuccess: (result) => {
       setCreateError(null);
       // 지금은 서버가 항상 승인을 요구하지만, 그 사실을 화면이 가정하지 않는다
@@ -151,20 +197,82 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
         <b className="font-semibold text-[#475569]">켜져 있는 동안 과금됩니다.</b>
       </p>
 
-      <label className="mt-4 flex max-w-xs flex-col gap-1">
-        <span className="text-[12px] font-medium text-[#475569]">인스턴스 티어</span>
-        <select
-          value={instanceType}
-          onChange={(event) => setInstanceType(event.target.value)}
-          className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
-        >
-          {INSTANCE_TYPE_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="mt-4 grid max-w-2xl gap-3 sm:grid-cols-3">
+        <label className="flex flex-col gap-1">
+          <span className="text-[12px] font-medium text-[#475569]">인스턴스 티어</span>
+          <select
+            value={instanceType}
+            onChange={(event) => setInstanceType(event.target.value)}
+            className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
+          >
+            {INSTANCE_TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-[12px] font-medium text-[#475569]">배포 방식</span>
+          <select
+            value={deployMode}
+            onChange={(event) => setDeployMode(event.target.value as ServerDeployMode)}
+            className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
+          >
+            {DEPLOY_MODE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-[12px] font-medium text-[#475569]">번들 DB</span>
+          <select
+            value={bundledDb}
+            disabled={deployMode !== 'DOCKER'}
+            onChange={(event) =>
+              setBundledDb(event.target.value as BundledDbEngine | typeof BUNDLED_DB_NONE)
+            }
+            className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px] disabled:cursor-not-allowed disabled:bg-[#f8fafc] disabled:text-[#94a3b8]"
+          >
+            {BUNDLED_DB_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {deployMode === 'DOCKER' ? (
+        <p className="mt-3 text-[12px] leading-relaxed text-[#64748b]">
+          저장소 루트에 <code className="font-mono text-[11px]">Dockerfile</code> 이 있어야 합니다.
+          없으면 승인까지는 통과하고 빌드 단계에서 실패합니다.
+        </p>
+      ) : (
+        <p className="mt-3 text-[12px] leading-relaxed text-[#64748b]">
+          번들 DB는 <b className="font-semibold text-[#475569]">Dockerfile 로 이미지 빌드</b>를
+          골라야 쓸 수 있습니다.
+        </p>
+      )}
+
+      {effectiveBundledDb === BUNDLED_DB_NONE ? null : (
+        <p className="mt-2 text-[12px] leading-relaxed text-[#64748b]">
+          DB 컨테이너가 <b className="font-semibold text-[#475569]">이 EC2 안에</b> 함께 뜹니다 —
+          인스턴스는 하나이고 과금도 하나입니다. 아래 데이터베이스 섹션의{' '}
+          <b className="font-semibold text-[#475569]">EC2 컨테이너</b>는 이것과 다릅니다. 그쪽은
+          앱과 떨어진 <b className="font-semibold text-[#475569]">DB 전용 EC2 를 하나 더</b>{' '}
+          만들어서, 인스턴스가 둘이 되고 서버를 끈 뒤에도 데이터가 남습니다.
+        </p>
+      )}
+
+      {effectiveBundledDb !== BUNDLED_DB_NONE && instanceType === 't3.micro' ? (
+        <p className="mt-2 text-[12px] leading-relaxed text-[#b45309]">
+          t3.micro 는 메모리가 1GB 라 앱과 DB 를 함께 올리면 빠듯할 수 있습니다. 빌드나 기동이
+          메모리 부족으로 죽으면 t3.small 로 올려보세요.
+        </p>
+      ) : null}
 
       {isCloudConnected ? null : (
         <p className="mt-3 text-[12px] leading-relaxed text-[#b45309]">

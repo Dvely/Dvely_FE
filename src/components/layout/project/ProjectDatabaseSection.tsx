@@ -16,14 +16,31 @@ import type { CreatedDatabase, DatabaseEngine, DatabaseMethod } from '@/types/da
 const QUERY_KEY = 'project-infra-page';
 
 /**
- * DOCKER 는 서버가 아직 막아둔다. 고를 수 있게 두면 눌러도 오류만 나므로
- * 비활성으로 보여주되 목록에는 남긴다 — 곧 온다는 것 자체가 정보다.
+ * DB 를 마련하는 세 가지 방식.
+ *
+ * DOCKER 는 한동안 `enabled: false` 였다 — 서버가 막아뒀을 때 눌러도 오류만 났기 때문이다.
+ * 지금은 서버가 RDS 와 **같은 모양으로** 열어뒀다(CONNECTED 연결 필요 + 승인 + 과금). 막아둔
+ * 쪽이 낡아서, 사용자가 쓸 수 있는 선택지를 화면이 가리고 있었다.
+ *
+ * `enabled` 를 남겨두는 이유는 다음에 또 막을 일이 생기기 때문이다 — 그때 목록에서 지우면
+ * "그런 선택지가 없다"가 되고, 비활성으로 두면 "곧 온다"가 된다. 둘은 다른 정보다.
+ *
+ * 라벨에 과금을 적는다. 이 둘은 사용자의 AWS 계정에 **실제 자원**을 만든다.
  */
 const METHOD_OPTIONS: { value: DatabaseMethod; label: string; enabled: boolean }[] = [
   { value: 'LOCAL', label: '테스트용 (프리뷰와 함께, 무료)', enabled: true },
   { value: 'RDS', label: 'AWS RDS (과금, 승인 필요)', enabled: true },
-  { value: 'DOCKER', label: 'EC2 컨테이너 (곧 지원)', enabled: false },
+  { value: 'DOCKER', label: 'EC2 컨테이너 (과금, 승인 필요)', enabled: true },
 ];
+
+/**
+ * 사용자 AWS 에 과금 자원을 만드는 방식. 셋 중 둘이다.
+ *
+ * 서버가 둘을 같은 모양으로 다룬다 — CONNECTED 클라우드 연결을 요구하고, 승인을 거치고,
+ * 비밀번호를 승인 뒤에 만든다. 화면이 `method === 'RDS'` 로만 갈라두면 DOCKER 가 열린
+ * 순간 **세 자리에서 조용히 틀린 안내**를 하게 된다(연결 안내 누락 · "과금 없음" · 비밀번호).
+ */
+const BILLED_METHODS = new Set<DatabaseMethod>(['RDS', 'DOCKER']);
 
 const ENGINE_OPTIONS: { value: DatabaseEngine; label: string }[] = [
   { value: 'POSTGRESQL', label: 'PostgreSQL' },
@@ -94,7 +111,7 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
   });
   const isCloudConnected =
     infraSettings?.cloudConnectionId != null && infraSettings.status === 'CONNECTED';
-  const needsCloudConnection = method === 'RDS' && !isCloudConnected;
+  const needsCloudConnection = BILLED_METHODS.has(method) && !isCloudConnected;
 
   const createMutation = useMutation({
     mutationFn: () => postProjectDatabase(projectId, { method, engine }),
@@ -174,8 +191,8 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
           ) : null}
           {needsCloudConnection ? (
             <p className="mt-3 text-[12px] leading-relaxed text-[#b45309]">
-              RDS는 연결된 클라우드 계정이 있어야 만들 수 있습니다. 위 클라우드 연결 선택에서 먼저
-              연결해 주세요.{' '}
+              이 방식은 연결된 클라우드 계정이 있어야 만들 수 있습니다. 위 클라우드 연결 선택에서
+              먼저 연결해 주세요.{' '}
               <Link
                 to="/onboarding/cloud"
                 className="font-semibold underline underline-offset-2 hover:text-[#92400e]"
@@ -188,6 +205,16 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
             <p className="mt-3 text-[12px] leading-relaxed text-[#64748b]">
               RDS는 실제 AWS 자원이라 과금됩니다. 요청하면 승인 절차를 거치고, 승인 후 생성에
               5~10분이 걸립니다.
+            </p>
+          ) : null}
+          {method === 'DOCKER' ? (
+            <p className="mt-3 text-[12px] leading-relaxed text-[#64748b]">
+              DB 전용 EC2 를 <b className="font-semibold text-[#475569]">하나 더</b> 띄워 그 안에 DB
+              컨테이너를 돌립니다 — RDS 보다 싸고, 앱 서버를 끄거나 다시 배포해도 데이터가 남습니다.
+              백엔드 서버의 <b className="font-semibold text-[#475569]">번들 DB</b>와는 다릅니다.
+              그쪽은 앱과 <b className="font-semibold text-[#475569]">같은 EC2 안</b>이라 인스턴스가
+              하나이고, 그 서버를 끄면 DB 도 함께 사라집니다. 이쪽은 요청하면 승인 절차를 거치고,
+              승인 후 준비까지 몇 분 걸립니다.
             </p>
           ) : null}
           {createError ? <p className="mt-3 text-[12px] text-[#dc2626]">{createError}</p> : null}
@@ -254,8 +281,9 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
             // 이미 만료된 것은 지울 게 없다. 실패한 것은 자원이 일부 남아 있을 수 있어
             // 열어둔다 — 서버가 멱등이라 눌러서 손해 볼 일은 없다
             const canDelete = database.status !== 'EXPIRED';
-            // RDS 만 실제로 과금된다. LOCAL 은 무료라 "과금이 멈춘다"고 하면 틀린 안내다
-            const isBilled = database.method === 'RDS';
+            // RDS·DOCKER 는 사용자 AWS 의 실제 자원이라 과금된다. LOCAL 은 무료라
+            // "과금이 멈춘다"고 하면 틀린 안내다
+            const isBilled = BILLED_METHODS.has(database.method);
 
             return (
               <li
@@ -299,13 +327,18 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
                         비밀번호를 볼 기회가 없는 경우가 둘이다.
 
                         하나는 자동 DB(PREVIEW_AUTO) — 사용자가 생성을 요청하지 않았다.
-                        다른 하나는 RDS — 승인을 거치느라 **비밀번호가 승인 뒤에 만들어져서**
-                        생성 응답에 실릴 수가 없고, 이후 조회는 서버가 전부 마스킹한다.
+                        다른 하나는 승인을 거치는 방식(RDS·DOCKER) — **비밀번호가 승인 뒤에
+                        만들어져서** 생성 응답에 실릴 수가 없고, 이후 조회는 서버가 전부
+                        마스킹한다.
 
                         그래서 이 둘에 "생성 시에만 표시" 라고 적으면 거짓말이 된다 — 보여준
                         적이 없다. 대신 어디에 쓰이는지와, 정말 직접 붙어야 할 때의 출구를
-                        적는다. BYOC 라 RDS 는 사용자 소유이므로 콘솔에서 재설정하면 된다 —
-                        비밀번호를 안 주는 것이 영영 못 붙는다는 뜻은 아니다.
+                        적는다. BYOC 라 자원이 사용자 소유이므로 출구가 있다 — 비밀번호를 안
+                        주는 것이 영영 못 붙는다는 뜻은 아니다.
+
+                        **출구는 방식마다 다르다.** RDS 는 콘솔에서 재설정할 수 있지만, DOCKER
+                        는 그 DB 인스턴스의 user-data 에 비밀번호가 들어 있다(계정 소유자만
+                        읽는다). 한쪽 문구를 둘에 같이 쓰면 없는 버튼을 가리키게 된다.
 
                         LOCAL 은 승인이 없어 생성 응답에 실려 오므로 위 패널이 한 번 보여준다.
                       */}
@@ -315,6 +348,14 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
                             환경변수로 자동 주입됨
                             <span className="mt-0.5 block font-sans text-[11px] leading-relaxed text-[#94a3b8]">
                               직접 접속이 필요하면 AWS 콘솔에서 비밀번호를 재설정하세요
+                            </span>
+                          </>
+                        ) : database.method === 'DOCKER' ? (
+                          <>
+                            환경변수로 자동 주입됨
+                            <span className="mt-0.5 block font-sans text-[11px] leading-relaxed text-[#94a3b8]">
+                              직접 접속이 필요하면 이 DB 인스턴스의 user-data 에서 확인하세요 (EC2
+                              콘솔 &gt; 작업 &gt; 인스턴스 설정)
                             </span>
                           </>
                         ) : database.origin === 'PREVIEW_AUTO' ? (
