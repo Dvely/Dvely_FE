@@ -1,0 +1,83 @@
+/*
+  Pretendard - woff2 만 쓴다.
+
+  패키지가 주는 `pretendard.css` 는 한 @font-face 안에 woff2 와 woff 를 같이 적는다.
+  브라우저는 앞의 woff2 를 집어 가므로 **woff 는 아무도 내려받지 않는데**, 번들러는
+  참조된 자산이라 전부 dist 에 복사한다. 8개 x 약 1.1MB 가 배포 산출물에만 쌓였다.
+
+  그래서 이건 사용자 로딩이 빨라지는 변경이 아니다 - 줄어드는 것은 배포 산출물이다.
+
+  url 이 node_modules 까지 상대경로로 들어가는 게 눈에 거슬리지만, CSS 의 url() 은
+  패키지 이름으로 적으면 vite 가 풀지 못하고 **조용히 경로 그대로 둬서 폰트가 전부
+  404 난다**(실제로 그렇게 한 번 깨뜨렸다). 패키지가 woff2 전용 CSS 를 주지 않아
+  직접 적는 수밖에 없다.
+
+  weight 9종과 local() 폴백은 패키지 CSS 그대로다. **패키지를 올릴 때 이 파일도 다시
+  만들어야 한다.** 원본: node_modules/pretendard/dist/web/static/pretendard.css
+
+  Copyright (c) 2021 Kil Hyung-jin, with Reserved Font Name Pretendard.
+  SIL Open Font License 1.1 - https://github.com/orioncactus/pretendard
+*/
+
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 900;
+  font-display: swap;
+  src: local('Pretendard Black'), url(../../node_modules/pretendard/dist/web/static/woff2/Pretendard-Black.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 800;
+  font-display: swap;
+  src: local('Pretendard ExtraBold'), url(../../node_modules/pretendard/dist/web/static/woff2/Pretendard-ExtraBold.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 700;
+  font-display: swap;
+  src: local('Pretendard Bold'), url(../../node_modules/pretendard/dist/web/static/woff2/Pretendard-Bold.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-display: swap;
+  src: local('Pretendard SemiBold'), url(../../node_modules/pretendard/dist/web/static/woff2/Pretendard-SemiBold.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-display: swap;
+  src: local('Pretendard Medium'), url(../../node_modules/pretendard/dist/web/static/woff2/Pretendard-Medium.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-display: swap;
+  src: local('Pretendard Regular'), url(../../node_modules/pretendard/dist/web/static/woff2/Pretendard-Regular.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 300;
+  font-display: swap;
+  src: local('Pretendard Light'), url(../../node_modules/pretendard/dist/web/static/woff2/Pretendard-Light.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 200;
+  font-display: swap;
+  src: local('Pretendard ExtraLight'), url(../../node_modules/pretendard/dist/web/static/woff2/Pretendard-ExtraLight.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 100;
+  font-display: swap;
+  src: local('Pretendard Thin'), url(../../node_modules/pretendard/dist/web/static/woff2/Pretendard-Thin.woff2) format('woff2');
+}
