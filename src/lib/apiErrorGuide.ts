@@ -2,6 +2,7 @@ import {
   dispatchGitHubAppInstallRequired,
   dispatchGitHubAppReauthorizationRequired,
 } from '@/constants/authEvents';
+import { ACTIVE_RUN_LIMIT_EXCEEDED_CODE, PREVIEW_LIMIT_EXCEEDED_CODE } from '@/lib/runLimit';
 import { extractApiErrorCode, extractApiErrorMessage } from '@/utils/response';
 
 /**
@@ -99,6 +100,25 @@ const API_ERROR_GUIDE: Record<string, ApiErrorGuide> = {
     // 되돌리기가 실패하면 서버가 승인을 PENDING 으로 되돌려 둔다. 다시 눌러도 된다
     hint: '승인은 그대로 남아 있습니다. 다시 시도하거나 "preview 에 남기기"로 거절해 주세요.',
     action: { kind: 'retry', label: '다시 시도' },
+  },
+  [ACTIVE_RUN_LIMIT_EXCEEDED_CODE]: {
+    /*
+      서버 문장에 지금 수·상한·다음 행동이 들어 있어서(예: "동시에 2개까지 실행할 수
+      있습니다") 그걸 되풀이하지 않는다. 화면이 보탤 것은 **이 요청이 어떻게 됐는지** 다.
+
+      `AI_PROVIDER_RATE_LIMITED` 와 달리 재시도 버튼을 주지 않는다. 시간이 풀어주는 게
+      아니라 진행 중인 것이 끝나야 풀리므로, 지금 다시 누르면 같은 벽에 또 부딪힌다.
+
+      어느 자리에서 와도 참인 문장만 적는다 — 메시지 전송·되묻기 답뿐 아니라 재시도·
+      계획 승인·도메인 연결에서도 온다. "적어둔 말을 돌려놨습니다" 처럼 한쪽에서만
+      참인 말을 쓰면 다른 자리에서 없는 일을 가리키게 된다.
+    */
+    hint: '이 요청은 서버에 반영되지 않았습니다. 진행 중인 작업이 끝나면 다시 시도할 수 있습니다.',
+  },
+  [PREVIEW_LIMIT_EXCEEDED_CODE]: {
+    // 자리를 비우는 것이 유일한 다음 행동이라 그것만 적는다. 프리뷰를 닫는 버튼은
+    // 각 프로젝트의 프리뷰 자리에 있으므로, 여기서 한 곳으로 보낼 수가 없다
+    hint: '쓰지 않는 프리뷰를 닫으면 자리가 생깁니다. 다른 프로젝트의 프리뷰도 함께 셉니다.',
   },
   PREVIEW_ENVIRONMENT_UNAVAILABLE: {
     // 서버 쪽 Docker 문제라 사용자가 고칠 수 있는 게 없다. 재시도 외에는
