@@ -4,6 +4,7 @@ import {
   type ProjectItem,
   type PreviewVariant,
 } from '@/types/project-card.type';
+import { formatInSeoul } from '@/lib/seoulTime';
 
 export type ProjectStartType = 'landing' | 'portfolio' | 'blank';
 
@@ -45,12 +46,11 @@ function uniqueSlug(name: string): string {
 }
 
 function formatUpdatedAt(date: Date): string {
-  return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatInSeoul(
+    date,
+    { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' },
+    'en-US',
+  );
 }
 
 function startTypeToCategory(type: ProjectStartType): ProjectCategory {
