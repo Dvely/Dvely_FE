@@ -203,7 +203,7 @@ describe('시연 어댑터', () => {
     const created = await api.cloud.postCloudConnectionCreate({
       provider: 'AWS',
       displayName: '내 AWS 계정',
-      accountId: '481019284412',
+      accountId: '123456789012',
       region: 'ap-northeast-2',
       roleArn: '',
       awsCredentialType: 'ACCESS_KEY',

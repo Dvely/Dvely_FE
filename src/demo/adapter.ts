@@ -236,8 +236,8 @@ Run npm run build
   dist/assets/index-9c2f1a4e.js  184.21 kB
   ✓ built in 6.42s
 Upload to S3
-  upload: dist/index.html to s3://qeploy-todo-together/index.html
-  upload: dist/assets/index-9c2f1a4e.js to s3://qeploy-todo-together/assets/index-9c2f1a4e.js
+  upload: dist/index.html to s3://${DEMO.s3BucketName}/index.html
+  upload: dist/assets/index-9c2f1a4e.js to s3://${DEMO.s3BucketName}/assets/index-9c2f1a4e.js
   Published to ${DEMO.s3WebsiteUrl}`;
 
 /* -------------------------------------------------------------------------- */

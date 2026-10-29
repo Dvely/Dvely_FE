@@ -11,7 +11,7 @@
  * 상태를 몰래 바꾸지 않는다. 화면의 컨트롤을 실제로 찾아 누른다(dom.ts 참고).
  */
 import { setClockRate, setSceneSpeed } from '@/demo/config';
-import { resetDemoState } from '@/demo/scenario';
+import { DEMO, resetDemoState } from '@/demo/scenario';
 import { hideCursor, showCursor } from '@/demo/cursor';
 import { clearAppLocalStorage } from '@/lib/clearAppStorage';
 import {
@@ -348,7 +348,7 @@ export const scenes: Scene[] = [
       await fill('cloud-region', 'ap-northeast-2');
       await fill('cloud-key', 'AKIAIOSFODNN7EXAMPLE');
       await fill('cloud-secret', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY');
-      await fill('cloud-account', '481019284412');
+      await fill('cloud-account', DEMO.awsAccountId);
       await read(400);
       await click('cloud-create');
       // 등록은 형식만 본 것이다. 권한 검증이 끝나야 이 프로젝트에 붙일 수 있다

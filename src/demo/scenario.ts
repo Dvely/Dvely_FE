@@ -50,13 +50,24 @@ export const DEMO = {
   /** 프리뷰 세션과 게이트웨이 접근 토큰. 주소창에 찍히므로 실제 값과 같은 모양으로 둔다 */
   previewSessionId: '3f9c2b7d-4e51-4f88-a0d1-8c62e7b19a45',
   previewAccessToken: 'k7Qm2xVa9Lr4Tn8w',
-  s3WebsiteUrl: 'http://qeploy-todo-together.s3-website.ap-northeast-2.amazonaws.com',
+  /*
+    아래 AWS 값은 전부 문서용 예시 범위다. 지어낸 값이라도 실제 누군가의 자원과 겹칠 수
+    있어서 — 공인 IP, 계정 ID, 전역에서 하나뿐인 버킷 이름 — 겹칠 수 없는 값을 쓴다.
+    - 버킷: `amzn-s3-demo-` 로 시작하는 이름은 AWS 가 문서용으로 남겨 두어 만들 수 없다
+    - 인스턴스 ID: AWS 문서의 예시 값
+    - IP: RFC 5737 문서용 대역(203.0.113.0/24)
+    - RDS 호스트: 식별자 자리를 명백한 예시 문자열로 둔다
+  */
+  s3BucketName: 'amzn-s3-demo-todo-together',
+  s3WebsiteUrl: 'http://amzn-s3-demo-todo-together.s3-website.ap-northeast-2.amazonaws.com',
   domainHostname: 'todo-together.qeploy.com',
   domainUrl: 'https://todo-together.qeploy.com',
-  ec2InstanceId: 'i-0a3f9c2b7d4e51f88',
-  ec2Host: '13.125.44.201',
-  rdsHost: 'qeploy-todo-8f21.cvv1kqz2lmnp.ap-northeast-2.rds.amazonaws.com',
+  ec2InstanceId: 'i-1234567890abcdef0',
+  ec2Host: '203.0.113.24',
+  rdsHost: 'qeploy-todo.abcdefghijkl.ap-northeast-2.rds.amazonaws.com',
   awsRegion: 'ap-northeast-2',
+  /** AWS 문서의 예시 계정 ID */
+  awsAccountId: '123456789012',
 } as const;
 
 /**
@@ -258,7 +269,7 @@ function blankCloudConnection(): DemoState['cloudConnections'][number] {
     cloudConnectionId: 7,
     provider: 'AWS',
     displayName: '내 AWS 계정',
-    accountId: '481019284412',
+    accountId: DEMO.awsAccountId,
     region: DEMO.awsRegion,
     roleArn: null,
     awsCredentialType: 'ACCESS_KEY',
