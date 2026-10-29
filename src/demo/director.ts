@@ -11,20 +11,15 @@
  * 상태를 몰래 바꾸지 않는다. 화면의 컨트롤을 실제로 찾아 누른다(dom.ts 참고).
  */
 import { setClockRate, setSceneSpeed } from '@/demo/config';
-import { DEMO, resetDemoState } from '@/demo/scenario';
+import { resetDemoState } from '@/demo/scenario';
 import { hideCursor, showCursor } from '@/demo/cursor';
 import { clearAppLocalStorage } from '@/lib/clearAppStorage';
 import {
   click,
-  fill,
   find,
   findAll,
   pageHasText,
   pause,
-  previewClick,
-  previewHasText,
-  previewType,
-  select,
   show,
   type,
   waitForPreviewDocument,
@@ -62,7 +57,6 @@ export type Scene = {
 
 const PROMPT_APP =
   '팀이 같이 쓰는 할 일 관리 앱을 만들어줘. 회원가입·로그인, 마감일·우선순위·카테고리, 진행률이 보이게. 차분한 남색 카드형으로.';
-const PROMPT_INFRA = '내 AWS 계정에 백엔드 서버랑 데이터베이스를 만들어서 진짜로 가입되게 해줘.';
 const PROMPT_SHIP = '배포하고 todo-together.qeploy.com 도메인 붙여줘.';
 
 /** 읽을 시간. 승인 문구처럼 사람이 읽어야 하는 자리에 둔다 */
@@ -88,7 +82,25 @@ async function approve(count: number, firstReadMs = 1700) {
       카드 모양은 앞에서 이미 읽혔고, 다른 것은 요약 한 줄뿐이다.
     */
     await read(index === 0 ? firstReadMs : 850);
+    /*
+      누른 카드가 화면에서 걷힐 때까지 기다린다. 결정이 서버에 반영되기 전까지는 같은 카드가
+      남아 있어서, 바로 다음 승인을 찾으면 방금 누른 버튼을 다시 집는다 — 그러면 정작 다음
+      승인(저장소 연결 등)은 누르지 않은 채 지나간다.
+    */
+    /*
+      대화가 아직 "응답 중" 이면 승인 버튼을 눌러도 화면이 조용히 무시한다
+      (AgentConversationPanel.handleDecideApproval 의 isAssistantReplying). 되묻기에 답한
+      직후처럼 승인 카드가 응답 표시보다 먼저 뜨는 순간이 있어서, 응답 표시(맥박 막대)가
+      걷힐 때까지 기다린 뒤 누른다.
+    */
+    await waitUntil(
+      '응답 끝',
+      () => document.querySelector('[role="tabpanel"] .animate-pulse') == null,
+      15000,
+    );
+    const decided = find('approval-card');
     await click('approve');
+    await waitUntil('승인 반영', () => decided == null || !decided.isConnected, 15000);
     await pause(420);
   }
 }
@@ -134,331 +146,166 @@ function isLandingSettled() {
 /** 시작 버튼이 이미 눌렸는지. 사람이 눌러 시작했으면 첫 장면이 다시 누르지 않는다 */
 let loginPressed = false;
 
+/*
+  웹 서비스 → MCP·CLI 창구 → 터미널로 이어지는 통합 영상의 웹 부분이다(약 50초). 그래서
+  핵심만 남긴다 — 로그인, 프로젝트, 말로 만들기(되묻기·계획 승인), 프리뷰, 배포·도메인, 그리고
+  터미널로 넘어가는 창구. 클라우드 연결·서버·DB·작업 내역·직접 조작은 이 영상에서 뺐다.
+
+  클라우드 연결이 없으므로 배포는 GitHub Pages 로 나간다(서버의 기본 호스팅).
+*/
 export const scenes: Scene[] = [
   {
     /*
       첫 로그인은 GitHub 화면 두 개를 거친다 — 계정 접근 승인(OAuth)과 GitHub App 설치.
-      실제로는 둘 다 팝업이고, 시연은 github.com 에 나갈 수 없어 그 화면을 시연 빌드
-      안에서 재현한다(DemoGitHubWindow). 재현 화면이 떠 있는 동안 자막에 재현이라고 붙는다.
-
-      이 장면은 계정 접근 승인까지다. 팝업이 우리 콜백 주소를 거쳐 닫히고 홈으로 간다.
+      시연은 github.com 에 나갈 수 없어 그 화면을 시연 빌드 안에서 재현한다. 여기서는 한
+      장면으로 짧게 지난다.
     */
     caption: {
       title: 'GitHub 로그인 기능',
-      sub: '가입 없이 GitHub 계정으로 시작합니다',
+      sub: 'GitHub 계정으로 시작하고 저장소 권한을 허용합니다',
       note: 'GitHub 화면(재현)',
     },
     run: async () => {
       if (!loginPressed) {
-        // 자막이 올라오는 동안 한 박자 두고 커서가 화면 밖에서 들어와 시작 버튼을 누른다
-        await read(320);
-        await click('login', { glideMs: 760 });
+        await read(300);
+        await click('login', { glideMs: 700 });
       }
       await waitUntil('계정 접근 승인 화면', () => find('github-authorize') != null, 15000);
-      // 무엇을 읽어 가는지(계정 정보 읽기만) 읽을 시간
-      await read(1700);
+      await read(900);
       await click('github-authorize');
-      await waitUntil('홈 진입', () => window.location.pathname.startsWith('/home'), 20000);
-    },
-  },
-  {
-    /*
-      로그인 직후에는 App 이 아직 설치되지 않아 안내가 뜬다. 실제 첫 로그인이 그렇다.
-      허용하면 App 설치 화면이 뜨고, 저장소 범위와 권한을 보고 설치한다.
-    */
-    caption: {
-      title: '저장소 권한 연결 기능',
-      sub: 'Qeploy가 쓸 저장소 권한을 허용합니다',
-      note: 'GitHub 화면(재현)',
-    },
-    run: async () => {
       await waitUntil('권한 안내', () => find('github-app-confirm') != null, 20000);
-      await read(1400);
+      await read(600);
       await click('github-app-confirm');
       await waitUntil('App 설치 화면', () => find('github-install') != null, 15000);
-      // 저장소 범위와 권한 목록을 읽을 시간. 이 화면에서 가장 중요한 내용이다
-      await read(2600);
+      await read(1300);
       await click('github-install');
       await waitUntil(
         '안내 닫힘',
         () => find('github-window') == null && find('github-app-confirm') == null,
         15000,
       );
-      await read(300);
-    },
-  },
-  {
-    /*
-      홈의 시작하기. GitHub 를 연결했으니 첫 단계가 채워져 있고, 다음 할 일(프로젝트
-      만들기)이 펼쳐져 있다. 그 버튼을 눌러 다음 장면으로 간다 — 가이드가 실제로 길을
-      여는 모습이 이 장면의 내용이다.
-    */
-    caption: { title: '시작 가이드 기능', sub: '무엇부터 할지 화면이 알려 줍니다' },
-    run: async () => {
-      await waitUntil(
-        '첫 단계 완료',
-        () => find('guide-card')?.querySelector('[data-step="github"][data-done]') != null,
-        15000,
-      );
-      await show('guide-card');
-      await read(1300);
-      await click('guide-next');
-      await waitUntil('프로젝트 목록', () => window.location.pathname === '/project', 15000);
-      await read(300);
+      await read(250);
     },
   },
   {
     caption: { title: '프로젝트 생성 기능', sub: '이름만 정하면 바로 시작합니다' },
     run: async () => {
+      // 시작하기가 다음 할 일로 펼쳐 둔 "프로젝트 만들기" 로 간다
+      await click('guide-next');
+      await waitUntil('프로젝트 목록', () => window.location.pathname === '/project', 15000);
       await click('project-new');
-      await read(400);
-      await type('project-name', '함께 할 일', 20);
-      await read(350);
+      await read(300);
+      await type('project-name', '함께 할 일', 18);
+      await read(250);
       await click('project-create');
       await waitUntil('프로젝트 생성됨', () => find('project-card') != null, 20000);
-      await read(500);
+      await read(350);
     },
   },
   {
     caption: {
       title: '내 AI 키 연결 기능',
-      sub: '대화 옆에서 등록하고, 사용량은 내 계정으로 청구됩니다',
+      sub: '내 키로 실행되고, 사용량은 내 계정으로 청구됩니다',
     },
     run: async () => {
-      /*
-        운영자 키는 없다. 본인 키를 넣기 전에는 에이전트를 부를 수 없고, 채팅이 그
-        자리에서 등록하라고 안내한다 — 처음 쓰는 사람이 실제로 밟는 길이다.
-
-        등록은 대화 옆 시트에서 끝난다. 화면을 옮기지 않으므로 저장하면 시트가 닫히고 그
-        자리의 안내가 "등록했습니다" 로 바뀐다.
-      */
+      // 운영자 키는 없다. 처음 쓰는 사람이 실제로 밟는 단계라 한 컷으로 지난다
       await click('project-card');
-      await read(400);
+      await read(250);
       await click('open-agent');
       await waitUntil('키 안내', () => find('ai-key-register-link') != null, 20000);
-      // 처음 들어온 대화에는 무엇을 적으면 되는지가 먼저 보인다
-      await read(950);
+      await read(450);
       await click('ai-key-register-link');
       await click('ai-key-open-ANTHROPIC');
-      await read(300);
-      await type('ai-key-input', DEMO_AI_KEY, 9);
-      await read(250);
+      await type('ai-key-input', DEMO_AI_KEY, 6);
       await click('ai-key-save');
       await waitUntil('키 등록 반영', () => pageHasText('키를 등록했습니다'), 15000);
-      await read(850);
+      await read(450);
     },
   },
   {
     caption: { title: 'AI 코드 생성 기능', sub: '말로 적으면 앱이 만들어집니다' },
-    // 요청을 읽고 되물을 것을 고르는 30초 남짓
-    timeScale: 20,
+    // 요청을 읽고 되물을 것을 고르는 1분 남짓
+    timeScale: 30,
+    pace: 2,
     run: async () => {
-      await type('chat-input', PROMPT_APP, 11);
-      await read(380);
+      await type('chat-input', PROMPT_APP, 9);
+      await read(250);
       await click('chat-send');
       await agentWorks('되묻기', () => findAll('clarify-option').length > 0, 25000);
     },
   },
   {
-    caption: { title: '요구사항 확인 기능', sub: '모르는 것은 먼저 되묻습니다' },
-    run: async () => {
-      await read(1000);
-      findAll<HTMLInputElement>('clarify-option')[0].click();
-      await pause(350);
-      await click('clarify-submit');
-    },
-  },
-  {
-    caption: { title: '변경 승인 기능', sub: '실행 전에 무엇을 할지 확인합니다' },
-    // 계획을 세우는 1분 남짓
-    timeScale: 60,
-    run: async () => {
-      await approve(1);
-    },
-  },
-  {
-    caption: { title: '저장소 연결 기능', sub: '만든 결과를 내 GitHub 저장소에 남깁니다' },
-    // 코드를 쓰고 프리뷰를 띄우는 몇 분
+    caption: { title: '변경 승인 기능', sub: '모르는 것은 되묻고, 실행 전에 계획을 확인받습니다' },
+    // 계획을 세우고 코드를 쓰는 몇 분
     timeScale: 100,
+    pace: 2,
     run: async () => {
-      await approve(1);
+      await read(650);
+      findAll<HTMLInputElement>('clarify-option')[0].click();
+      await pause(250);
+      await click('clarify-submit');
+      // 실행 전 계획 승인
+      await approve(1, 1100);
+      // 만든 결과를 남길 저장소. 정책으로 끌 수 없는 게이트라 짧게라도 지난다
+      await approve(1, 600);
       await agentWorks('프리뷰', () => document.querySelector('iframe') != null, 30000);
-      await read(700);
     },
   },
   {
-    caption: { title: '작업 내역 기능', sub: '지난 작업이 어떻게 진행됐는지 다시 봅니다' },
+    caption: { title: '실시간 프리뷰 기능', sub: '만든 앱을 그 자리에서 확인합니다' },
     run: async () => {
-      /*
-        작업이 도는 동안 대화 끝에 보이던 진행 기록은 작업이 끝나면 사라지고 결과 줄만
-        남는다. 그 줄의 "작업 내역 보기" 로 다시 펼친다 — 되묻기와 계획 승인부터 코드
-        작성, 저장소 연결까지 시각과 함께 남아 있다.
-      */
-      await waitUntil('작업 내역 보기', () => find('task-log-toggle') != null, 15000);
-      // 접혀 있는 모양을 먼저 보여 준다
-      await show('task-log-toggle');
-      await read(550);
-      await click('task-log-toggle');
-      await waitUntil(
-        '작업 내역',
-        () => find('task-log-panel')?.querySelector('ol') != null,
-        10000,
-      );
-      /*
-        결과 줄을 대화 위쪽으로 올린다. 펼친 기록이 그 아래로 길게 내려오므로, 그대로 두면
-        기록 끝이 입력창 뒤로 들어간다. 사람이 펼치고 나서 조금 내려 읽는 것과 같다.
-      */
-      find('task-log-toggle')?.parentElement?.parentElement?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-      await read(1500);
-    },
-  },
-  {
-    caption: { title: '실시간 프리뷰 기능', sub: '아직 서버가 없어 가입이 실패합니다' },
-    run: async () => {
-      const preview = await waitForPreviewDocument();
-      await previewType(preview, '#email', 'demo@qeploy.com');
-      await previewType(preview, '#password', 'qeploy1234', 12);
-      await read(250);
-      await previewClick(preview, '#authSubmit');
-      await waitUntil('503 표시', () => previewHasText(preview, '503'), 10000);
+      await waitForPreviewDocument();
       await read(1300);
     },
   },
   {
-    caption: { title: '인프라 자동 구성 기능', sub: '채팅으로 서버와 DB를 요청합니다' },
-    timeScale: 20,
-    run: async () => {
-      await sendChat(PROMPT_INFRA);
-      // 연결된 AWS 계정이 없으면 에이전트가 여기서 멈추고 안내를 편다
-      await agentWorks('클라우드 안내', () => find('cloud-guide-register') != null, 25000);
-      await read(1200);
-    },
-  },
-  {
-    caption: { title: 'BYOC 연결 기능', sub: '내 AWS 계정을 대화 옆에서 등록합니다' },
-    run: async () => {
-      // 안내에서 바로 시트를 연다. 대화와 안내는 그대로 왼쪽에 남는다
-      await click('cloud-guide-register');
-      await waitUntil('등록 폼', () => find('cloud-name') != null, 20000);
-      await read(400);
-      await type('cloud-name', '내 AWS 계정', 16);
-      await fill('cloud-region', 'ap-northeast-2');
-      await fill('cloud-key', 'AKIAIOSFODNN7EXAMPLE');
-      await fill('cloud-secret', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY');
-      await fill('cloud-account', DEMO.awsAccountId);
-      await read(400);
-      await click('cloud-create');
-      // 등록은 형식만 본 것이다. 권한 검증이 끝나야 이 프로젝트에 붙일 수 있다
-      await waitUntil('검증 끝', () => find('cloud-sheet-use') != null, 25000);
-    },
-  },
-  {
-    caption: { title: '프로젝트 연결 기능', sub: '어느 계정에 만들지 프로젝트마다 고릅니다' },
-    run: async () => {
-      await show('cloud-sheet-use');
-      await read(800);
-      await click('cloud-sheet-use');
-      // 시트가 닫히면 안내에 연결이 붙어 있고, 남은 일은 다시 시도뿐이다
-      await waitUntil('연결됨', () => pageHasText('이 프로젝트에 연결됨'), 20000);
-      await read(700);
-      await click('cloud-guide-retry');
-    },
-  },
-  {
-    caption: { title: '백엔드 연동 기능', sub: '프리뷰가 서버로 바뀌어 실제로 가입됩니다' },
-    // 서버를 붙여 프리뷰를 다시 띄우는 1~2분
-    timeScale: 40,
-    run: async () => {
-      await agentWorks('서버형 프리뷰', () => pageHasText('프리뷰에서 실제로 가입'), 30000);
-      await read(600);
-      const preview = await waitForPreviewDocument();
-      /*
-        값을 다시 넣는다. 클라우드를 연결하는 동안 화면을 떠났다 돌아오면 프리뷰가 새로
-        로드되어 아까 친 것이 남아 있지 않다 — 빈 폼으로 누르면 아무 일도 안 일어난다.
-      */
-      await previewType(preview, '#email', 'demo@qeploy.com', 11);
-      await previewType(preview, '#password', 'qeploy1234', 11);
-      await read(240);
-      await previewClick(preview, '#authSubmit');
-      await waitUntil('가입 성공', () => previewHasText(preview, '로그아웃'), 15000);
-      await read(450);
-      await previewType(preview, '#newTodo', '시연 영상 편집하기', 14);
-      await previewClick(preview, '#addForm button');
-      await read(800);
-    },
-  },
-  {
-    caption: { title: '과금 자원 승인 기능', sub: '내 AWS에 만들기 전 확인합니다' },
-    /*
-      배속을 걸지 않는다. 이 장면은 사람이 승인 두 장을 읽고 누르는 것이 전부이고, 승인 뒤
-      RDS·EC2 를 만드는 일은 대화 화면에 드러나지 않은 채 뒤에서 이어진다 — 기다리는 모습이
-      없는데 ×N 을 띄우면 접지 않은 시간을 접었다고 말하는 셈이다.
-
-      시나리오만 당겨 둔다. 마지막 장면의 인프라 탭에서 서버가 다 떠 있어야 한다.
-    */
-    pace: 5,
-    run: async () => {
-      /*
-        처음 보는 승인에는 무엇이 되는지 설명이 붙어 있다. 과금이 걸린 첫 승인에서 한 번
-        펼쳐 읽는다.
-      */
-      await agentWorks('승인 카드', () => find('approval-help') != null, 30000);
-      await show('approval-card');
-      await click('approval-help');
-      await read(1500);
-      // 첫 장은 방금 펼친 설명과 함께 읽었다
-      await approve(2, 900);
-      await read(400);
-    },
-  },
-  {
-    caption: { title: '배포·도메인 연결 기능', sub: '내 AWS에 올리고 내 주소를 붙입니다' },
-    // 배포 계획과 빌드·업로드·인증서 발급을 기다리는 몇 분
+    caption: { title: '배포·도메인 연결 기능', sub: 'GitHub Pages에 올리고 내 주소를 붙입니다' },
+    // 빌드·업로드와 인증서 발급을 기다리는 몇 분
     timeScale: 120,
     pace: 2,
     run: async () => {
       await sendChat(PROMPT_SHIP);
-      await approve(2, 1300);
+      await approve(2, 1000);
       await agentWorks('배포 완료', () => pageHasText('에서 열립니다'), 40000);
-      await read(900);
+      await read(1000);
     },
   },
   {
-    caption: { title: '프로젝트 개요 기능', sub: '주소·커밋·승인 이력을 한 화면에' },
+    /*
+      터미널로 넘어가는 창구. 프로젝트 개요의 "터미널·코딩 에이전트에서 이어서 하기" 에서
+      연결 안내를 열고, 배포까지 맡기도록 WRITE 토큰을 발급해 토큰과 명령을 복사한다. 영상은
+      여기서 터미널 부분으로 이어진다 — 거기서 이 토큰과 명령을 그대로 붙여넣는다.
+    */
+    /*
+      자막이 짧아야 한다. 가운데 붙박은 자막이 길면 오른쪽 끝이 시트 안 명령 블록의 첫 글자를
+      덮는다(시트는 x 820 부터, 명령은 866 부터).
+    */
+    caption: { title: 'MCP·CLI 연결 기능', sub: '터미널에서 이어서 다룹니다' },
     run: async () => {
-      // 목록에서 프로젝트를 골라 들어간다 — 사람이 다음에 할 일이 그것이다
       await click('nav-project');
-      await read(400);
-      await click('project-card');
-      await waitUntil('개요', () => pageHasText('현재 URL'), 20000);
-      await read(1200);
-      // 시작하기를 열면 일곱 단계가 다 채워져 있다
-      await click('guide-open');
-      await waitUntil('시작하기 완료', () => pageHasText('모두 마쳤습니다'), 15000);
-      await read(1200);
-      await click('guide-open');
       await read(250);
-    },
-  },
-  {
-    caption: { title: '직접 조작 기능', sub: '채팅 없이 화면에서도 됩니다' },
-    run: async () => {
-      /*
-        라우터로 건너뛰지 않고 탭을 누른다. "화면에서도 됩니다" 라고 말하면서 화면이
-        저절로 넘어가면 자막과 화면이 어긋난다.
-
-        승인 이력을 한 번 보고, 인프라 탭에서 서버 사양을 직접 바꾼다. 탭을 다 도는 것보다
-        화면에서 무언가를 실제로 바꾸는 한 번이 이 장면의 내용이다.
-      */
-      await click('tab-approvals');
-      await read(700);
-      await click('tab-infra');
-      await read(450);
-      await select('server-tier', 't3.small');
-      await read(700);
+      await click('project-card');
+      await waitUntil('개요', () => find('agent-connect-card') != null, 20000);
+      await show('agent-connect-card');
+      await read(1000);
+      await click('agent-connect-open');
+      await waitUntil('연결 안내', () => find('agent-connect-sheet') != null, 15000);
+      await read(1100);
+      // 켜면 토큰이 WRITE 로 바뀌고 등록 명령에 쓰기 도구를 켜는 환경변수가 붙는다
+      await click('agent-connect-writes');
+      await read(600);
+      await type('api-token-label', '터미널', 40);
+      await type('api-token-expiry', '90', 60);
+      await read(200);
+      await click('api-token-issue');
+      await waitUntil('토큰 발급', () => find('api-token-value') != null, 15000);
+      await read(1200);
+      await click('api-token-copy');
+      await read(300);
+      await click('agent-connect-copy-login');
+      await read(250);
+      await click('agent-connect-copy-register');
+      await read(800);
     },
   },
 ];

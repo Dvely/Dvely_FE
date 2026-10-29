@@ -23,6 +23,7 @@ import type { EnvironmentVariable } from '@/types/environment.type';
 import type { ProvisionedDatabase } from '@/types/database.type';
 import type { ProvisionedServer } from '@/types/server.type';
 import type { Domain } from '@/types/domain.type';
+import type { ApiTokenInfo } from '@/types/apiToken.type';
 
 /* -------------------------------------------------------------------------- */
 /* 시연에 쓰는 고정값                                                          */
@@ -68,6 +69,16 @@ export const DEMO = {
   awsRegion: 'ap-northeast-2',
   /** AWS 문서의 예시 계정 ID */
   awsAccountId: '123456789012',
+  /**
+   * 터미널로 잇는 장면에서 발급하는 개인 액세스 토큰. 터미널 영상이 같은 값을 붙여넣으므로
+   * 글자 그대로 맞춘다. 실제 서버에서 발급된 적 없는 값이다.
+   */
+  apiToken: 'qp_7Hk2Vb9QxL4mN8rT3wYcA1pE6sJ0dF',
+  apiTokenPrefix: 'qp_7Hk2Vb9Q',
+  /** 클라우드 연결 없이 배포하면 GitHub Pages 로 나간다(BE 기본 호스팅) */
+  get githubPagesUrl() {
+    return `https://${this.repositoryOwner}.github.io/${this.repositoryName}/`;
+  },
 } as const;
 
 /**
@@ -222,6 +233,8 @@ export type DemoTask = {
   answered: AnsweredClarification | null;
   events: AgentTaskEvent[];
   pendingEvents: PendingEvent[];
+  /** 배포 작업이 어디로 올리는지. 배포 계획을 세울 때 정한다 */
+  shipHosting?: 'S3' | 'GITHUB_PAGES';
 };
 
 type DemoDeployment = {
@@ -261,6 +274,8 @@ type DemoState = {
   previewReady: boolean;
   /** GitHub App 설치 여부. 로그인 직후에는 아직 안 되어 있다 */
   githubAppInstalled: boolean;
+  /** 발급한 개인 액세스 토큰. 평문은 발급 응답에만 싣고 여기엔 두지 않는다 */
+  apiTokens: ApiTokenInfo[];
 };
 
 /** 등록 폼이 만들어 낼 연결의 틀 */
@@ -310,6 +325,7 @@ function freshState(): DemoState {
     aiCredentials: [],
     previewReady: false,
     githubAppInstalled: false,
+    apiTokens: [],
   };
 }
 
@@ -528,11 +544,15 @@ const RUNTIME_EVENTS: PendingEvent[] = [
   },
 ];
 
-const SHIP_EVENTS: PendingEvent[] = [
+/** 배포 진행 이벤트. 첫 줄은 어디로 올리는지에 따라 다르다 */
+const shipEvents = (hosting: 'S3' | 'GITHUB_PAGES'): PendingEvent[] => [
   {
     afterMs: 200,
     type: 'STEP_STARTED',
-    message: 'S3 에 올릴 빌드를 만들고 있습니다',
+    message:
+      hosting === 'S3'
+        ? 'S3 에 올릴 빌드를 만들고 있습니다'
+        : 'GitHub Pages 에 올릴 빌드를 만들고 있습니다',
     step: { index: 1, total: 2, agentType: 'DEPLOY' },
   },
   {
@@ -820,11 +840,24 @@ function advanceShipTask(task: DemoTask) {
   switch (task.stage) {
     case 'plan': {
       if (!elapsed(task.phaseStartedAt, T.shipPlan)) return;
-      const deployment = createDeployment('S3', false);
-      createDomain('managed_subdomain', DEMO.domainHostname, 'AWS_S3_FRONTEND');
+      /*
+        클라우드 연결이 없으면 GitHub Pages 로 나간다. 서버의 기본 호스팅이 그것이고, 연결이
+        없을 때 고를 수 있는 곳도 그것 하나다(BE Project.frontendHostingType ·
+        ProjectDecisionContextResolver). 연결이 있으면 내 AWS 의 S3 다.
+      */
+      const onAws = state.cloudConnectionId != null;
+      task.shipHosting = onAws ? 'S3' : 'GITHUB_PAGES';
+      const deployment = createDeployment(task.shipHosting, false);
+      createDomain(
+        'managed_subdomain',
+        DEMO.domainHostname,
+        onAws ? 'AWS_S3_FRONTEND' : 'GITHUB_PAGES',
+      );
       const deployApproval = addApproval(
         'DEPLOYMENT',
-        '최신 버전을 내 AWS 계정의 S3 정적 호스팅으로 배포합니다.',
+        onAws
+          ? '최신 버전을 내 AWS 계정의 S3 정적 호스팅으로 배포합니다.'
+          : '최신 버전을 GitHub Pages 로 배포합니다.',
         task.taskId,
       );
       deployment.approvalId = deployApproval.approvalId;
@@ -841,7 +874,7 @@ function advanceShipTask(task: DemoTask) {
     case 'planApproval':
       if (!allApprovalsDecided(task)) return;
       enter(task, 'deploy');
-      task.pendingEvents = [...SHIP_EVENTS];
+      task.pendingEvents = shipEvents(task.shipHosting ?? 'S3');
       return;
 
     case 'deploy': {
@@ -1099,7 +1132,12 @@ function advanceDeployment(deployment: DemoDeployment) {
   if (!elapsed(deployment.startedAt, T.deployRun)) return;
 
   deployment.status = 'SUCCESS';
-  deployment.deployedUrl = deployment.frontendHostingType === 'S3' ? DEMO.s3WebsiteUrl : null;
+  deployment.deployedUrl =
+    deployment.frontendHostingType === 'S3'
+      ? DEMO.s3WebsiteUrl
+      : deployment.frontendHostingType === 'GITHUB_PAGES'
+        ? DEMO.githubPagesUrl
+        : null;
   deployment.updatedAt = iso();
   deployment.startedAt = null;
   touch();
@@ -1198,6 +1236,32 @@ export function advanceDemoClock(): boolean {
   const changed = revision !== before;
   if (changed) persistDemoState();
   return changed;
+}
+
+/**
+ * 개인 액세스 토큰을 발급한다. 평문은 이 응답에만 싣는다 — 서버처럼 목록에는 앞부분만 둔다.
+ * 시연의 평문은 늘 같은 값이다(DEMO.apiToken). 터미널 영상이 그 값을 붙여넣는다.
+ */
+export function issueApiToken(scope: string, label: string | null, expiresInDays: number) {
+  const info: ApiTokenInfo = {
+    apiTokenId: nextId(),
+    tokenPrefix: DEMO.apiTokenPrefix,
+    scope,
+    label,
+    expiresAt: iso(expiresInDays * 24 * 60 * 60 * 1000),
+    lastUsedAt: null,
+    createdAt: iso(),
+  };
+  state.apiTokens.unshift(info);
+  persistDemoState();
+  touch();
+  return { token: DEMO.apiToken, info };
+}
+
+export function revokeApiToken(apiTokenId: number) {
+  state.apiTokens = state.apiTokens.filter((token) => token.apiTokenId !== apiTokenId);
+  persistDemoState();
+  touch();
 }
 
 /** GitHub App 설치를 마쳤다고 표시한다 */

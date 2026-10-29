@@ -340,4 +340,29 @@ describe('시연 어댑터', () => {
     }
     expect(failures).toEqual([]);
   });
+  it('토큰을 발급하면 평문은 응답에만 있고 목록에는 앞부분만 남는다', async () => {
+    const issued = await api.apiTokens.postApiToken({
+      scope: 'WRITE',
+      label: '터미널',
+      expiresInDays: 90,
+    });
+    // 터미널 영상이 이 값을 그대로 붙여넣는다
+    expect(issued.token).toBe('qp_7Hk2Vb9QxL4mN8rT3wYcA1pE6sJ0dF');
+    expect(issued.info).toMatchObject({
+      scope: 'WRITE',
+      label: '터미널',
+      tokenPrefix: 'qp_7Hk2Vb9Q',
+    });
+
+    const list = await api.apiTokens.getApiTokenList();
+    expect(list.map((token) => token.apiTokenId)).toContain(issued.info.apiTokenId);
+    expect(JSON.stringify(list)).not.toContain(issued.token);
+
+    await api.apiTokens.deleteApiToken(issued.info.apiTokenId);
+    expect(
+      (await api.apiTokens.getApiTokenList()).some(
+        (token) => token.apiTokenId === issued.info.apiTokenId,
+      ),
+    ).toBe(false);
+  });
 });

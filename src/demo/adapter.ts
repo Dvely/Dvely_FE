@@ -36,7 +36,9 @@ import {
   getTask,
   expiresIso,
   iso,
+  issueApiToken,
   markGithubAppInstalled,
+  revokeApiToken,
   activeTask,
   putAiCredential,
   state,
@@ -227,18 +229,28 @@ const SERVER_LOG = `[boot] cloud-init finished in 41s
 [app] POST /api/auth/signup 201 34ms
 [app] POST /api/auth/login 200 21ms`;
 
-const DEPLOY_LOG = `Run npm ci
+/** 배포 로그. 올리는 곳(S3 · GitHub Pages)에 따라 마지막 단계가 다르다 */
+function deployLog(hosting: string) {
+  const build = `Run npm ci
   added 214 packages in 12s
 Run npm run build
   vite v8.0.2 building for production...
   ✓ 138 modules transformed.
   dist/index.html                  0.46 kB
   dist/assets/index-9c2f1a4e.js  184.21 kB
-  ✓ built in 6.42s
+  ✓ built in 6.42s`;
+  if (hosting === 'GITHUB_PAGES') {
+    return `${build}
+Deploy to GitHub Pages
+  Uploaded artifact github-pages (2 files)
+  Published to ${DEMO.githubPagesUrl}`;
+  }
+  return `${build}
 Upload to S3
   upload: dist/index.html to s3://${DEMO.s3BucketName}/index.html
   upload: dist/assets/index-9c2f1a4e.js to s3://${DEMO.s3BucketName}/assets/index-9c2f1a4e.js
   Published to ${DEMO.s3WebsiteUrl}`;
+}
 
 /* -------------------------------------------------------------------------- */
 /* 라우트                                                                      */
@@ -826,7 +838,10 @@ const routes: [string, RegExp, Handler][] = [
           ],
         },
       ],
-      logText: DEPLOY_LOG,
+      logText: deployLog(
+        state.deployments.find((item) => item.historyId === Number(ctx.params[0]))
+          ?.frontendHostingType ?? 'S3',
+      ),
     }),
   ],
   ['GET', /^\/deployments\/(\d+)\/failure-analysis$/, () => NO_CONTENT],
@@ -1222,7 +1237,25 @@ const routes: [string, RegExp, Handler][] = [
   ],
 
   /* ----- MCP 토큰 ----- */
-  ['GET', /^\/api-tokens$/, () => []],
+  ['GET', /^\/api-tokens$/, () => state.apiTokens],
+  [
+    'POST',
+    /^\/api-tokens$/,
+    (ctx) =>
+      issueApiToken(
+        String(ctx.body.scope ?? 'READ'),
+        typeof ctx.body.label === 'string' ? ctx.body.label : null,
+        Number(ctx.body.expiresInDays ?? 30),
+      ),
+  ],
+  [
+    'DELETE',
+    /^\/api-tokens\/(\d+)$/,
+    (ctx) => {
+      revokeApiToken(Number(ctx.params[0]));
+      return NO_CONTENT;
+    },
+  ],
 
   /* ----- 템플릿 카탈로그 ----- */
   ['GET', /^\/templates$/, () => demoTemplates],
