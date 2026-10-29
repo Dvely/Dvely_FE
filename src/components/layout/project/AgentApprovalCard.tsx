@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useApprovalResultScopeQuery } from '@/api/approvals';
 import RejectOptionChoice from '@/components/layout/project/RejectOptionChoice';
 import ResultScopePanel from '@/components/layout/project/ResultScopePanel';
-import { APPROVAL_COPY, FALLBACK_APPROVAL_COPY } from '@/lib/approvalCopy';
+import { APPROVAL_COPY, APPROVAL_HELP, FALLBACK_APPROVAL_COPY } from '@/lib/approvalCopy';
 import { composeApiErrorMessage, findApiErrorGuide } from '@/lib/apiErrorGuide';
 import { dispatchGitHubAppReauthorizationRequired } from '@/constants/authEvents';
 import type { Approval, ApprovalInput } from '@/types/approval.type';
@@ -74,6 +74,9 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
   const selectedOption = chosenOption ?? defaultOption;
 
   const copy = APPROVAL_COPY[approval.type] ?? FALLBACK_APPROVAL_COPY;
+  // 처음 보는 사람용. 늘 펼쳐 두면 매번 같은 설명을 지나쳐야 해서 눌러야 열린다
+  const help = APPROVAL_HELP[approval.type];
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const summary = approval.summary?.trim() ?? '';
   // summary가 입력 기본값을 되풀이할 뿐이면(예: "[저장소 연결] my-repo") 아래 입력 필드와
   // 같은 값이 두 번 보인다. 그럴 때는 입력 필드만 남긴다
@@ -98,8 +101,28 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
 
   return (
     <div className="rounded-xl border border-[#c4b5fd] bg-[#faf5ff] px-3.5 py-3">
-      <p className="text-[13px] font-semibold text-[#4c1d95]">{copy.title}</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[13px] font-semibold text-[#4c1d95]">{copy.title}</p>
+        {help ? (
+          <button
+            type="button"
+            onClick={() => setIsHelpOpen((open) => !open)}
+            aria-expanded={isHelpOpen}
+            className="shrink-0 cursor-pointer text-[11px] font-semibold text-[#7c3aed] underline underline-offset-2"
+          >
+            {isHelpOpen ? '접기' : '이게 뭔가요?'}
+          </button>
+        ) : null}
+      </div>
       <p className="mt-1 text-[12px] leading-relaxed text-[#6d28d9]">{copy.description}</p>
+      {help && isHelpOpen ? (
+        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 rounded-lg bg-white/70 px-2.5 py-2 text-[12px] leading-relaxed">
+          <dt className="font-semibold text-[#15803d]">승인하면</dt>
+          <dd className="text-[#334155]">{help.approve}</dd>
+          <dt className="font-semibold text-[#b91c1c]">거절하면</dt>
+          <dd className="text-[#334155]">{help.reject}</dd>
+        </dl>
+      ) : null}
 
       {showSummary ? (
         <div className="mt-2 border-l-2 border-[#ddd6fe] pl-2.5">

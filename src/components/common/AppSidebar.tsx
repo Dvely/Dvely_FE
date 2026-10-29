@@ -4,6 +4,7 @@ import { Fragment, useState } from 'react';
 
 import qeployLogo from '@/assets/images/qeploy-logo-primary.svg';
 import qeploySymbol from '@/assets/images/qeploy-symbol-violet.svg';
+import SidebarGettingStarted from '@/components/common/SidebarGettingStarted';
 import type { AppShellPath } from '@/lib/appRoutes';
 
 const navItems: {
@@ -118,6 +119,8 @@ export default function AppSidebar() {
           );
         })}
       </nav>
+
+      <SidebarGettingStarted collapsed={collapsed} />
     </aside>
   );
 }
