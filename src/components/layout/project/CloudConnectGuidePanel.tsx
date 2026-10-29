@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Copy, X } from 'lucide-react';
 import { useCloudConnectionListQuery, useCloudRequirementsQuery } from '@/api/cloudConnections';
-import { getProjectInfrastructureSettings, putProjectInfrastructureSettings } from '@/api/projects';
+import CloudConnectSheet from '@/components/layout/project/CloudConnectSheet';
 import { useLeaveForSetup } from '@/hooks/useLeaveForSetup';
+import { useProjectCloudConnection } from '@/hooks/useProjectCloudConnection';
 import { composeApiErrorMessage } from '@/lib/apiErrorGuide';
 import { cloudConnectionStatusLabel } from '@/lib/cloudConnectionStatus';
 import { combinePolicyModules, stringifyPolicy } from '@/lib/cloudPolicyModules';
@@ -185,22 +185,13 @@ function CredentialCaseCard({ credentialCase, selected, onSelect }: CredentialCa
  * 과금될지 정하는 일이다.
  */
 function ProjectConnectionPicker({ projectId }: { projectId: number }) {
-  const queryClient = useQueryClient();
   const { data: connections = [], isLoading: isConnectionsLoading } =
     useCloudConnectionListQuery('cloud-connect-guide');
-  const { data: infraSettings, isLoading: isInfraLoading } = useQuery({
-    // 인프라 탭과 같은 키 — 여기서 고르면 그쪽도 같이 바뀐다
-    queryKey: ['project-infra-settings', projectId],
-    queryFn: () => getProjectInfrastructureSettings(projectId),
-    enabled: !!projectId,
-    gcTime: 0,
-  });
-  const selectMutation = useMutation({
-    mutationFn: (cloudConnectionId: number) =>
-      putProjectInfrastructureSettings(projectId, { cloudConnectionId }),
-    onSuccess: () =>
-      void queryClient.invalidateQueries({ queryKey: ['project-infra-settings', projectId] }),
-  });
+  const {
+    selectedConnectionId,
+    isLoading: isInfraLoading,
+    select: selectMutation,
+  } = useProjectCloudConnection(projectId);
 
   // 아직 만든 연결이 없으면 고를 것도 없다. 아래 "연결 등록하러 가기" 가 다음 할 일이다
   if (isConnectionsLoading || isInfraLoading || connections.length === 0) return null;
@@ -210,7 +201,7 @@ function ProjectConnectionPicker({ projectId }: { projectId: number }) {
       <p className="text-[12px] font-semibold text-[#334155]">이 프로젝트에 쓸 연결</p>
       <ul className="mt-2 flex flex-col gap-2">
         {connections.map((connection) => {
-          const selected = infraSettings?.cloudConnectionId === connection.cloudConnectionId;
+          const selected = selectedConnectionId === connection.cloudConnectionId;
           return (
             <li
               key={connection.cloudConnectionId}
@@ -271,6 +262,7 @@ function CloudConnectGuidePanel({
   onClose,
 }: CloudConnectGuidePanelProps) {
   const leaveForSetup = useLeaveForSetup(returnPath);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   /*
     사용자가 방식을 직접 고르기 전에는 비워 둔다.
 
@@ -582,16 +574,16 @@ function CloudConnectGuidePanel({
 
       <div className="sticky bottom-0 flex flex-wrap items-center gap-2 border-t border-[#e2e8f0] bg-white px-5 py-3">
         {/*
-          등록 폼으로 바로 보낸다. 넣을 값과 정책은 이 안내가 이미 보여주고 있다 — 예전에는
-          처음 쓰는 사람용 안내로 보냈는데, 그 화면에는 등록하는 곳으로 가는 길이 없었다.
-          등록을 마치면 이 대화로 돌아오고, 그때 위에서 이 프로젝트에 쓸 연결을 고른다.
+          이 자리에서 등록한다. 예전에는 설정 화면으로 넘어갔다가 돌아왔는데, 화면이 두 번
+          통째로 바뀌어 맥락이 끊겼다. 시트는 이 안내와 대화를 그대로 둔 채 열리고, 등록 →
+          검증 → 이 프로젝트에 쓰기까지 이어진 뒤 닫힌다. 그러면 남은 일은 다시 시도뿐이다.
         */}
         <button
           type="button"
-          onClick={() => leaveForSetup({ to: '/settings', search: { section: 'cloud-browser' } })}
+          onClick={() => setIsSheetOpen(true)}
           className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white"
         >
-          연결 등록하러 가기
+          여기서 연결 등록하기
         </button>
         <button
           type="button"
@@ -613,6 +605,13 @@ function CloudConnectGuidePanel({
           {isRetrying ? '확인하는 중' : '연결했어요 — 다시 시도'}
         </button>
       </div>
+
+      <CloudConnectSheet
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+        projectId={projectId}
+        returnPath={returnPath}
+      />
     </div>
   );
 }

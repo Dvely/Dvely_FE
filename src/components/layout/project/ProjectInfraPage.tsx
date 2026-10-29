@@ -15,6 +15,7 @@ import {
   putProjectInfrastructureConfiguration,
   putProjectInfrastructureSettings,
 } from '@/api/projects';
+import CloudConnectSheet from '@/components/layout/project/CloudConnectSheet';
 import ProjectDatabaseSection from '@/components/layout/project/ProjectDatabaseSection';
 import ProjectRuntimeSection from '@/components/layout/project/ProjectRuntimeSection';
 import ProjectServerSection from '@/components/layout/project/ProjectServerSection';
@@ -45,6 +46,7 @@ type ProjectInfraPageProps = {
 
 function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
   const currentPath = useCurrentPath();
+  const [isConnectSheetOpen, setIsConnectSheetOpen] = useState(false);
   const [budgetAmount, setBudgetAmount] = useState('');
   const [architecture, setArchitecture] = useState<DeploymentArchitecture>('SERVERLESS');
   const [computeTier, setComputeTier] = useState<ComputeTier>('SMALL');
@@ -143,17 +145,18 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
           <div className="mt-4 rounded-xl border border-dashed border-[#e2e8f0] px-4 py-5 text-center">
             <p className="text-[13px] text-[#64748b]">등록된 클라우드 연결이 없습니다.</p>
             <p className="mt-1 text-[12px] leading-relaxed text-[#94a3b8]">
-              설정 &gt; 클라우드 연결에서 AWS 계정을 등록하면 여기에서 고를 수 있습니다.
+              AWS 계정을 등록하면 여기에서 고를 수 있습니다. 이 화면을 떠나지 않고 등록할 수
+              있습니다.
             </p>
             <div className="mt-3 flex justify-center gap-3">
-              {/* 등록을 마치면 이 탭으로 돌아와 바로 고를 수 있게 자리를 들고 간다 */}
-              <Link
-                to="/settings"
-                search={{ section: 'cloud-browser', returnTo: currentPath }}
-                className="text-[12px] font-semibold text-[#0f172a] underline underline-offset-2"
+              {/* 탭을 떠나지 않고 시트에서 등록하고, 검증이 끝나면 그 자리에서 이 프로젝트에 붙인다 */}
+              <button
+                type="button"
+                onClick={() => setIsConnectSheetOpen(true)}
+                className="cursor-pointer text-[12px] font-semibold text-[#0f172a] underline underline-offset-2"
               >
-                연결 등록하러 가기
-              </Link>
+                여기서 연결 등록하기
+              </button>
               <Link
                 to="/onboarding/cloud"
                 search={{ returnTo: currentPath }}
@@ -327,6 +330,12 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
           </button>
         </div>
       </section>
+      <CloudConnectSheet
+        open={isConnectSheetOpen}
+        onOpenChange={setIsConnectSheetOpen}
+        projectId={projectId}
+        returnPath={currentPath}
+      />
     </div>
   );
 }

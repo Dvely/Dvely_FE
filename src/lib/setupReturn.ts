@@ -91,4 +91,24 @@ function returnLabel(path: string): string {
   return path.startsWith('/project/') ? '프로젝트로 돌아가기' : '이전 화면으로 돌아가기';
 }
 
-export { SETUP_RETURN_DELAY_MS, agentReturnPath, returnLabel, toSafeReturnPath };
+/*
+  돌아간 자리에서 보여줄 한 줄. 설정에서 등록을 마치고 화면이 통째로 바뀌면 왜 바뀌었는지가
+  끊긴다 — 돌아간 화면 위에 "키를 등록했습니다" 가 떠 있어야 이어진다.
+
+  띄우는 쪽(SetupReturnToast)은 로그인 뒤 모든 화면을 감싸는 자리에 있어서 화면을 옮겨도
+  그대로 남는다. 그래서 저장소에 맡기지 않고 옮기기 직전에 이벤트로 알린다.
+*/
+const SETUP_RETURN_NOTICE_EVENT = 'qeploy.setup-return-notice';
+
+function announceSetupReturn(message: string): void {
+  window.dispatchEvent(new CustomEvent<string>(SETUP_RETURN_NOTICE_EVENT, { detail: message }));
+}
+
+export {
+  SETUP_RETURN_DELAY_MS,
+  SETUP_RETURN_NOTICE_EVENT,
+  agentReturnPath,
+  announceSetupReturn,
+  returnLabel,
+  toSafeReturnPath,
+};

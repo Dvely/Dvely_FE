@@ -10,7 +10,7 @@ import {
   type KeyboardEvent,
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { SendHorizontal } from 'lucide-react';
+import { CheckCircle2, SendHorizontal } from 'lucide-react';
 import {
   postConversationMessageCreate,
   postProjectConversationCreate,
@@ -52,6 +52,7 @@ import { agentReturnPath } from '@/lib/setupReturn';
 import { useLeaveForSetup } from '@/hooks/useLeaveForSetup';
 import { refreshUserInfoInBackground } from '@/api/user';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
+import AiKeySheet from '@/components/layout/project/AiKeySheet';
 import { ChunkErrorBoundary } from '@/components/common/ChunkErrorBoundary';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
 import AgentRetryCard from '@/components/layout/project/AgentRetryCard';
@@ -409,9 +410,15 @@ function AgentConversationPanel({
     AI_CREDENTIAL_NOT_REGISTERED 로 막히면 보내려던 말이 입력창에 돌아와 있는데, 그대로
     떠나면 그 말이 사라진다.
   */
-  const leaveForSetup = useLeaveForSetup(
-    agentReturnPath(projectId, conversationId, isNewConversation),
-  );
+  const returnPath = agentReturnPath(projectId, conversationId, isNewConversation);
+  const leaveForSetup = useLeaveForSetup(returnPath);
+  /*
+    키는 대화를 떠나지 않고 시트에서 넣는다. 저장하면 시트가 닫히고, 배너가 있던 자리에
+    무엇이 바뀌었는지 한 줄을 남긴다 — 화면이 조용히 바뀌면 됐는지 알 수 없다. 다음
+    말을 보내면 걷힌다.
+  */
+  const [isKeySheetOpen, setIsKeySheetOpen] = useState(false);
+  const [keyNotice, setKeyNotice] = useState<string | null>(null);
 
   const showApiError = useCallback((error: unknown) => {
     setAlertMessage(formatApiErrorMessage(error));
@@ -1456,6 +1463,7 @@ function AgentConversationPanel({
   const handleSend = () => {
     const content = input.trim();
     if (!content || isInputLocked) return;
+    setKeyNotice(null);
 
     // 내가 방금 보낸 말은 어디에 있었든 보여야 한다. 위로 올라가 읽던 중이었대도
     // 전송은 "지금 여기로 돌아가겠다"는 뜻이다
@@ -1693,6 +1701,15 @@ function AgentConversationPanel({
           크레딧이 없는 키는 서버도 미리 알 수 없어 보낸 뒤에야 드러난다. 그때는 오류
           안내가 다른 제공자를 권하는데, 이 셀렉트가 그 말이 가리키는 자리다.
         */}
+        {keyNotice && !hasNoByokProvider ? (
+          <p
+            role="status"
+            className="mb-2 flex items-center gap-1.5 rounded-xl border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-2 text-[12px] font-medium text-[#15803d]"
+          >
+            <CheckCircle2 className="size-3.5 shrink-0" aria-hidden />
+            {keyNotice}
+          </p>
+        ) : null}
         {hasNoByokProvider ? (
           <div className="mb-2 flex flex-col gap-2 rounded-xl border border-[#fde68a] bg-[#fffbeb] px-3 py-2.5">
             <p className="text-[12px] leading-relaxed text-[#92400e]">
@@ -1701,9 +1718,7 @@ function AgentConversationPanel({
             </p>
             <button
               type="button"
-              onClick={() =>
-                leaveForSetup({ to: '/settings', search: { section: 'ai-credentials' } })
-              }
+              onClick={() => setIsKeySheetOpen(true)}
               className="h-8 cursor-pointer self-start rounded-lg bg-[#7c3aed] px-3 text-[12px] font-semibold text-white transition hover:bg-[#6d28d9]"
             >
               AI API 키 등록하러 가기
@@ -1770,6 +1785,16 @@ function AgentConversationPanel({
         </div>
       </footer>
 
+      <AiKeySheet
+        open={isKeySheetOpen}
+        onOpenChange={setIsKeySheetOpen}
+        returnPath={returnPath}
+        onSaved={(vendorLabel) => {
+          setAlertMessage(null);
+          setAlertNavigation(null);
+          setKeyNotice(`${vendorLabel} 키를 등록했습니다. 이제 보내면 이 키로 실행됩니다.`);
+        }}
+      />
       <AppAlertDialog
         open={alertMessage != null}
         message={alertMessage ?? ''}
@@ -1777,8 +1802,17 @@ function AgentConversationPanel({
           alertNavigation
             ? {
                 label: alertNavigation.label,
-                onClick: () =>
-                  leaveForSetup({ to: alertNavigation.to, search: alertNavigation.search }),
+                onClick: () => {
+                  // 키 등록은 시트에서 끝난다. 다른 화면으로 가야 하는 안내만 화면을 옮긴다
+                  if (
+                    alertNavigation.to === '/settings' &&
+                    alertNavigation.search?.section === 'ai-credentials'
+                  ) {
+                    setIsKeySheetOpen(true);
+                    return;
+                  }
+                  leaveForSetup({ to: alertNavigation.to, search: alertNavigation.search });
+                },
               }
             : undefined
         }

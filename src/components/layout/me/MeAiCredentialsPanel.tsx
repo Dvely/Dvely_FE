@@ -48,10 +48,13 @@ const VENDOR_META: Record<AiCredentialVendor, VendorMeta> = {
 
 type MeAiCredentialsPanelProps = {
   /**
-   * 키를 저장했을 때. 프로젝트에서 키를 넣으러 온 경우에만 온다 — 저장하면 그 자리로
-   * 돌아간다. 교체도 저장이라 같이 부른다. 삭제는 부르지 않는다(돌아갈 이유가 생긴 게 아니다)
+   * 키를 저장했을 때. 어느 벤더의 키인지(화면 이름) 함께 넘긴다.
+   *
+   * 프로젝트에서 키를 넣으러 온 경우에만 온다 — 저장하면 그 자리로 돌아가거나(설정 화면),
+   * 시트가 닫힌다(대화 안). 교체도 저장이라 같이 부른다. 삭제는 부르지 않는다(돌아갈
+   * 이유가 생긴 게 아니다)
    */
-  onSaved?: () => void;
+  onSaved?: (vendorLabel: string) => void;
 };
 
 function MeAiCredentialsPanel({ onSaved }: MeAiCredentialsPanelProps) {
@@ -99,7 +102,7 @@ function MeAiCredentialsPanel({ onSaved }: MeAiCredentialsPanelProps) {
       invalidate();
       setNotice(`${VENDOR_META[variables.vendor].label} 키를 저장했습니다.`);
       closeForm();
-      onSaved?.();
+      onSaved?.(VENDOR_META[variables.vendor].label);
     },
     onError: (error) => {
       // 붙여넣기에 개행이 섞이면 400 이 온다. trim 은 이미 했으므로 서버 문구를 그대로 보인다

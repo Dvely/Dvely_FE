@@ -1,5 +1,12 @@
-import { describe, expect, it } from 'vitest';
-import { agentReturnPath, returnLabel, toSafeReturnPath } from '@/lib/setupReturn';
+// @vitest-environment happy-dom
+import { describe, expect, it, vi } from 'vitest';
+import {
+  SETUP_RETURN_NOTICE_EVENT,
+  agentReturnPath,
+  announceSetupReturn,
+  returnLabel,
+  toSafeReturnPath,
+} from '@/lib/setupReturn';
 
 /*
   returnTo 는 주소창 값이다. 누구나 `?returnTo=` 를 고쳐 링크를 만들 수 있으므로, 앱 밖으로
@@ -108,5 +115,23 @@ describe('returnLabel', () => {
 
   it('아니면 이전 화면이라고 말한다', () => {
     expect(returnLabel('/templates')).toBe('이전 화면으로 돌아가기');
+  });
+});
+
+/*
+  설정에서 등록을 마치고 화면을 옮기기 직전에 알린다. 띄우는 쪽은 화면을 옮겨도 남는 자리에
+  있어서, 이 알림만 제대로 가면 돌아간 화면 위에 한 줄이 뜬다.
+*/
+describe('announceSetupReturn', () => {
+  it('한 줄을 이벤트로 알린다', () => {
+    const listener = vi.fn();
+    window.addEventListener(SETUP_RETURN_NOTICE_EVENT, listener);
+    announceSetupReturn('Anthropic 키를 등록했습니다 — 이어서 진행하세요');
+    window.removeEventListener(SETUP_RETURN_NOTICE_EVENT, listener);
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect((listener.mock.calls[0][0] as CustomEvent<string>).detail).toBe(
+      'Anthropic 키를 등록했습니다 — 이어서 진행하세요',
+    );
   });
 });

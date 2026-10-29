@@ -13,8 +13,11 @@ type MeSettingsShellProps = {
   onClose?: () => void;
   className?: string;
   variant?: 'dialog' | 'page';
-  /** AI 키 저장이나 클라우드 연결 검증이 끝났을 때. 돌아갈 자리가 있을 때만 온다 */
-  onSetupComplete?: () => void;
+  /**
+   * AI 키 저장이나 클라우드 연결 검증이 끝났을 때. 돌아갈 자리가 있을 때만 온다.
+   * 돌아간 자리에서 보여줄 한 줄을 함께 넘긴다
+   */
+  onSetupComplete?: (notice: string) => void;
 };
 
 function MeSettingsShell({
