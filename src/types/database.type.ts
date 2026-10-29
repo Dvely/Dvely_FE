@@ -1,8 +1,11 @@
 import { z } from 'zod';
 
 /**
- * DB 마련 방식.
- * LOCAL 만 실제로 동작하고 RDS·DOCKER 는 서버가 아직 막아둔다(승인 흐름과 함께 다음 단계).
+ * DB 마련 방식. 셋 다 서버가 열어두고 있다.
+ *
+ * LOCAL 은 프리뷰 컨테이너의 형제로 뜨는 무료 테스트 DB 라 승인이 없다. RDS·DOCKER 는
+ * 사용자 AWS 에 과금 자원을 만들어서 CONNECTED 클라우드 연결과 승인을 요구한다 —
+ * 서버가 둘을 같은 모양으로 다룬다.
  */
 const databaseMethodSchema = z.enum(['LOCAL', 'RDS', 'DOCKER']);
 
