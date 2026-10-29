@@ -4,8 +4,7 @@ import { ArrowRight, ChevronDown } from 'lucide-react';
 import { useGitHubLogin } from '@/hooks/useGitHubLogin';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 import { cn } from '@/lib/utils';
-import { IS_DEMO } from '@/demo/config';
-import { startDirector } from '@/demo/director';
+import { DEMO_START_EVENT, IS_DEMO } from '@/demo/config';
 
 type Phase =
   | 'logo'
@@ -103,7 +102,7 @@ function HeroSection() {
     */
     if (IS_DEMO) {
       // 재생이 이미 돌고 있으면(첫 장면이 이 버튼을 누른 경우) 시작은 그대로 넘어간다
-      startDirector({ loginPressed: true });
+      window.dispatchEvent(new Event(DEMO_START_EVENT));
       void startGitHubLogin();
       return;
     }

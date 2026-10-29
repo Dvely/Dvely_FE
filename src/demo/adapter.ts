@@ -246,7 +246,7 @@ const routes: [string, RegExp, Handler][] = [
     'GET',
     /^\/auth\/github\/url$/,
     () => {
-      // 우리 콜백 라우트를 그대로 팝업에 띄운다. GitHub 을 흉내 내는 화면은 만들지 않는다
+      // 시연은 이 주소로 나가지 않는다. 승인 화면은 시연 빌드 안에서 재현한다(demo/githubWindow)
       const demoState = `demo-state-${Date.now()}`;
       return {
         url: `${window.location.origin}/auth/callback?code=demo-code&state=${demoState}`,
@@ -275,14 +275,11 @@ const routes: [string, RegExp, Handler][] = [
   [
     'GET',
     /^\/auth\/github\/app\/install-url$/,
-    () => {
-      // 시연은 팝업을 열지 않는다. 설치 URL 을 받아 가는 순간 설치가 끝난 것으로 둔다
-      markGithubAppInstalled();
-      return {
-        url: `${window.location.origin}/auth/app-callback?setup_action=install`,
-        state: null,
-      };
-    },
+    () => ({
+      // 설치는 재현 화면에서 Install 을 눌러 콜백이 올 때 끝난다
+      url: `${window.location.origin}/auth/app-callback?setup_action=install`,
+      state: null,
+    }),
   ],
   [
     'GET',
@@ -292,7 +289,14 @@ const routes: [string, RegExp, Handler][] = [
       state: null,
     }),
   ],
-  ['GET', /^\/auth\/github\/app\/callback$/, () => ({})],
+  [
+    'GET',
+    /^\/auth\/github\/app\/callback$/,
+    () => {
+      markGithubAppInstalled();
+      return {};
+    },
+  ],
   ['DELETE', /^\/auth\/logout$/, () => null],
 
   /* ----- user ----- */

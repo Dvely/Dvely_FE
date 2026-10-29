@@ -10,6 +10,15 @@
  */
 export const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
 
+/**
+ * 랜딩의 시작 버튼이 자동 재생을 부르는 이벤트.
+ *
+ * 운영 코드가 재생기(director)를 직접 import 하면 `if (IS_DEMO)` 로 막아도 재생기 모듈이
+ * 운영 번들에 그대로 실린다 — 장면 대본·자막·시연용 키까지. 이벤트로 이어 두면 재생기는
+ * 시연 빌드에서만 마운트되는 DemoCaption 쪽에만 걸린다.
+ */
+export const DEMO_START_EVENT = 'qeploy-demo:start';
+
 /** 전체 배속. `.env.demo` 에서 한 번 정한다 */
 const rawSpeed = Number(import.meta.env.VITE_DEMO_SPEED);
 const BASE_SPEED = Number.isFinite(rawSpeed) && rawSpeed > 0 ? rawSpeed : 1;

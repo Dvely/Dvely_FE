@@ -70,7 +70,10 @@ describe('시연 어댑터', () => {
 
     // 봉투째 돌려준다(parseUserMeResponse)
     expect((await api.user.getUserInfo()).data?.githubAppInstalled).toBe(false);
+    // 설치 주소를 받아 가는 것만으로는 설치되지 않는다. 재현 화면에서 Install 을 눌러 콜백이 와야 한다
     await api.auth.fetchGitHubAppInstallUrl();
+    expect((await api.user.getUserInfo()).data?.githubAppInstalled).toBe(false);
+    await api.auth.completeGitHubAppCallback({ installation_id: 'demo', setup_action: 'install' });
     expect((await api.user.getUserInfo()).data?.githubAppInstalled).toBe(true);
 
     expect((await api.templates.getTemplateList()).length).toBeGreaterThan(0);

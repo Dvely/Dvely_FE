@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouterState } from '@tanstack/react-router';
 import { GitBranch } from 'lucide-react';
 import { refreshUserInfoInBackground } from '@/api/user';
-import { fetchGitHubAppInstallUrl, fetchGitHubAppReauthorizeUrl } from '@/api/auth';
+import {
+  completeGitHubAppCallback,
+  fetchGitHubAppInstallUrl,
+  fetchGitHubAppReauthorizeUrl,
+} from '@/api/auth';
 import {
   GITHUB_APP_INSTALL_REQUIRED_EVENT,
   GITHUB_APP_REAUTHORIZATION_REQUIRED_EVENT,
@@ -13,6 +17,7 @@ import {
   GITHUB_OAUTH_POPUP_FEATURES,
 } from '@/constants/githubOAuth';
 import { IS_DEMO } from '@/demo/config';
+import { runDemoGitHubWindow } from '@/demo/githubWindow';
 
 /**
  * 두 모드는 사용자가 처한 상황이 다르다.
@@ -126,11 +131,19 @@ function GitHubAppInstallPromptDialog() {
       if (!result?.data?.url) return;
 
       /*
-        시연에서는 팝업을 열지 않는다. 팝업 차단이면 그 자리에서 멈추고, 열려도 창이
-        떴다 사라지는 장면이 영상에 남는다. 설치는 URL 을 받아 가는 시점에 끝난 것으로
-        두고, 사용자 정보만 다시 읽어 화면을 맞춘다.
+        시연에서는 브라우저 팝업 대신 시연 빌드 안의 재현 화면을 띄운다(demo/githubWindow).
+        설치를 누르면 실제 팝업의 `/auth/app-callback` 이 하던 일(설치 콜백 → 안내 닫기 →
+        사용자 정보 다시 읽기)을 이 창에서 그대로 한다.
+
+        재현 화면이 떠 있는 동안 이 안내는 뒤에 그대로 남는다. 실제 팝업도 그렇다.
+        재인증 화면은 재현하지 않는다 — 시연 사용자는 만료되지 않는다.
       */
       if (IS_DEMO) {
+        setIsLoading(false);
+        if (promptMode === 'install') {
+          if (!(await runDemoGitHubWindow('install'))) return;
+          await completeGitHubAppCallback({ installation_id: 'demo', setup_action: 'install' });
+        }
         setOpen(false);
         await refreshUserInfoInBackground();
         return;

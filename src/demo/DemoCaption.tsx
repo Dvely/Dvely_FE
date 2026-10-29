@@ -13,8 +13,11 @@
  * 연결 안내의 하단 버튼("연결했어요 — 다시 시도")을 덮어서 그 높이만큼 띄운다.
  */
 import { useEffect, useState } from 'react';
+import { subscribeDemoGitHubWindow } from '@/demo/githubWindow';
+import { DEMO_START_EVENT } from '@/demo/config';
 import {
   resumeDirectorIfRequested,
+  startDirector,
   startDirectorOnAutoplay,
   subscribeDirector,
   type Caption,
@@ -28,7 +31,9 @@ const SHEET_WIDTH = 460;
 
 function DemoCaption() {
   /** 지금 그리고 있는 자막. 다음 것이 와도 접히는 동안은 이쪽이 남는다 */
-  const [shown, setShown] = useState<{ caption: Caption; timeScale: number } | null>(null);
+  const [shown, setShown] = useState<{ caption: Caption; sceneTimeScale: number } | null>(null);
+  /** 지금 시계를 접고 있는지. 같은 장면 안에서도 사람이 읽고 누르는 동안은 내려간다 */
+  const [fastForward, setFastForward] = useState(false);
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /*
@@ -42,6 +47,16 @@ function DemoCaption() {
     }, 120);
     return () => window.clearInterval(timer);
   }, []);
+  /*
+    GitHub 화면은 시연 빌드 안에서 재현한 것이다(DemoGitHubWindow). 그 화면이 떠 있는
+    동안만 자막에 재현이라고 적는다 — 장면 전체에 붙이면 우리 화면까지 재현처럼 읽히고,
+    승인 뒤 우리 콜백 주소로 바뀐 창은 재현이 아니다.
+  */
+  const [reproducing, setReproducing] = useState(false);
+  useEffect(
+    () => subscribeDemoGitHubWindow((next) => setReproducing(next?.phase === 'github')),
+    [],
+  );
 
   useEffect(() => {
     let timer = 0;
@@ -53,6 +68,8 @@ function DemoCaption() {
         currentError = next.error;
         setError(next.error);
       }
+
+      setFastForward(next.timeScale > 1);
 
       const title = next.caption?.title ?? null;
       if (title === currentTitle) return;
@@ -68,7 +85,9 @@ function DemoCaption() {
       setVisible(false);
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
-        setShown(next.caption ? { caption: next.caption, timeScale: next.timeScale } : null);
+        setShown(
+          next.caption ? { caption: next.caption, sceneTimeScale: next.sceneTimeScale } : null,
+        );
         setVisible(next.caption != null);
       }, FADE_MS);
     });
@@ -86,6 +105,16 @@ function DemoCaption() {
   useEffect(() => {
     if (resumeDirectorIfRequested()) return;
     startDirectorOnAutoplay();
+  }, []);
+
+  /*
+    사람이 랜딩의 시작 버튼을 누르면 여기서 재생을 시작한다(config 의 DEMO_START_EVENT).
+    재생이 이미 돌고 있으면(첫 장면이 그 버튼을 누른 경우) 그대로 넘어간다.
+  */
+  useEffect(() => {
+    const start = () => startDirector({ loginPressed: true });
+    window.addEventListener(DEMO_START_EVENT, start);
+    return () => window.removeEventListener(DEMO_START_EVENT, start);
   }, []);
 
   if (error) {
@@ -118,9 +147,21 @@ function DemoCaption() {
         {shown.caption.sub ? (
           <span className="text-[13.5px] font-medium text-[#64748b]">{shown.caption.sub}</span>
         ) : null}
-        {shown.timeScale > 1 ? (
-          <span className="whitespace-nowrap font-mono text-[11px] font-semibold text-[#94a3b8]">
-            ×{shown.timeScale}
+        {reproducing ? (
+          <span className="self-center whitespace-nowrap rounded-full bg-[#eef2f6] px-2 py-0.5 text-[12px] font-semibold text-[#475569]">
+            GitHub 화면(재현)
+          </span>
+        ) : null}
+        {/*
+          배속 표시는 자리를 잡아 두고 켜고 끈다. 에이전트를 기다리는 동안만 켜지는데, 그때마다
+          자막 폭이 바뀌면 알약이 출렁인다.
+        */}
+        {shown.sceneTimeScale > 1 ? (
+          <span
+            className="whitespace-nowrap font-mono text-[11px] font-semibold text-[#94a3b8] transition-opacity duration-200"
+            style={{ opacity: fastForward ? 1 : 0 }}
+          >
+            ×{shown.sceneTimeScale}
           </span>
         ) : null}
       </p>
