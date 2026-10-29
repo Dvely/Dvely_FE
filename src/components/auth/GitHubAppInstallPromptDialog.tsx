@@ -3,6 +3,7 @@ import { useRouterState } from '@tanstack/react-router';
 import { GitBranch } from 'lucide-react';
 import { refreshUserInfoInBackground } from '@/api/user';
 import { fetchGitHubAppInstallUrl, fetchGitHubAppReauthorizeUrl } from '@/api/auth';
+import { closeAfterRefresh } from '@/lib/closeAfterRefresh';
 import {
   GITHUB_APP_INSTALL_REQUIRED_EVENT,
   GITHUB_APP_REAUTHORIZATION_REQUIRED_EVENT,
@@ -91,13 +92,36 @@ function GitHubAppInstallPromptDialog() {
       window.removeEventListener(GITHUB_APP_REAUTHORIZATION_REQUIRED_EVENT, handleReauthorize);
   }, []);
 
-  const handleInstallSuccess = useCallback((event: MessageEvent) => {
-    if (event.origin !== window.location.origin) return;
-    if (event.data?.type !== GITHUB_APP_INSTALL_SUCCESS_MESSAGE) return;
-    setOpen(false);
-    // 저장된 사용자 정보에 옛 만료 플래그가 남지 않도록 다시 읽는다
-    void refreshUserInfoInBackground();
+  /** 팝업이 끝난 뒤 사용자 정보를 다시 읽는 중. 그동안 안내는 열어 둔 채 기다린다고 알린다 */
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  /*
+    사용자 정보를 다시 읽고 그것이 화면에 반영된 뒤에 닫는다(closeAfterRefresh).
+
+    예전에는 닫고 나서 읽어서, 안내가 걷힌 화면이 잠깐 옛 정보(미설치)로 그려졌다. 다시
+    읽는 이유는 둘이다 — 설치 여부를 화면에 맞추고, 저장된 정보에 옛 만료 플래그가 남지
+    않게 한다. 서버가 늦거나 실패해도 정해 둔 시간이 지나면 닫는다.
+  */
+  const finishInstall = useCallback(async () => {
+    setIsConfirming(true);
+    try {
+      await closeAfterRefresh({
+        refresh: refreshUserInfoInBackground,
+        close: () => setOpen(false),
+      });
+    } finally {
+      setIsConfirming(false);
+    }
   }, []);
+
+  const handleInstallSuccess = useCallback(
+    (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== GITHUB_APP_INSTALL_SUCCESS_MESSAGE) return;
+      void finishInstall();
+    },
+    [finishInstall],
+  );
 
   useEffect(() => {
     window.addEventListener('message', handleInstallSuccess);
@@ -157,11 +181,11 @@ function GitHubAppInstallPromptDialog() {
           <button
             type="button"
             onClick={() => void handleConfirm()}
-            disabled={isLoading}
+            disabled={isLoading || isConfirming}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f172a] py-3 text-[14px] font-semibold text-white transition hover:bg-[#1e293b] disabled:opacity-50"
           >
             <GitBranch className="size-4" strokeWidth={1.75} aria-hidden />
-            {isLoading ? '로딩 중...' : copy.confirmLabel}
+            {isConfirming ? '확인하는 중...' : isLoading ? '로딩 중...' : copy.confirmLabel}
           </button>
         </div>
       </div>
