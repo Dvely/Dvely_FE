@@ -25,10 +25,21 @@ const projectListItemSchema = z.object({
   updatedAt: z.string().prefault(''),
   /** 마지막 수정 시각의 상대 표현 (예: "2시간 전") */
   updatedAtRelativeText: z.string().prefault(''),
-  /** 템플릿 유형. 미설정 시 null */
-  templateType: z.string().nullable().prefault(null),
-  /** 프로젝트 시작 방식. 미설정 시 null */
-  startMode: startModeSchema.nullable().prefault(null),
+  /*
+    아래 둘은 **`.prefault` 를 쓰지 않는다.**
+
+    `.prefault(null)` 은 "서버가 null 을 줬다" 와 "서버가 아예 안 줬다" 를 같은 값으로
+    만든다. 실제로 목록 응답에는 이 두 필드가 없는데(BE `ProjectSummaryResponse` 는 6개
+    필드뿐이다) zod 가 조용히 null 을 채워서, **템플릿으로 만든 프로젝트에도 화면이
+    "템플릿 미설정" 이라고 말했다.** 오류가 없으니 아무도 몰랐다.
+
+    `.optional()` 이면 없을 때 `undefined` 가 되어 셋을 가를 수 있다 —
+    값이 있다 / 서버가 없다고 했다 / **서버가 말해주지 않았다.**
+  */
+  /** 템플릿 유형. 미설정이면 null, 서버가 주지 않으면 undefined */
+  templateType: z.string().nullable().optional(),
+  /** 프로젝트 시작 방식. 미설정이면 null, 서버가 주지 않으면 undefined */
+  startMode: startModeSchema.nullable().optional(),
 });
 
 /**
