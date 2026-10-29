@@ -46,7 +46,15 @@ const VENDOR_META: Record<AiCredentialVendor, VendorMeta> = {
   },
 };
 
-function MeAiCredentialsPanel() {
+type MeAiCredentialsPanelProps = {
+  /**
+   * 키를 저장했을 때. 프로젝트에서 키를 넣으러 온 경우에만 온다 — 저장하면 그 자리로
+   * 돌아간다. 교체도 저장이라 같이 부른다. 삭제는 부르지 않는다(돌아갈 이유가 생긴 게 아니다)
+   */
+  onSaved?: () => void;
+};
+
+function MeAiCredentialsPanel({ onSaved }: MeAiCredentialsPanelProps) {
   const queryClient = useQueryClient();
   const { data: credentials = [], isLoading } = useAiCredentialListQuery(AI_CREDENTIALS_QUERY_KEY);
 
@@ -59,8 +67,15 @@ function MeAiCredentialsPanel() {
 
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['ai-credential-list'] });
-    // 등록·삭제로 쓸 수 있는 코딩 에이전트가 바뀐다. 제공자 목록도 다시 읽는다
-    void queryClient.invalidateQueries({ queryKey: ['ai-provider-list'] });
+    /*
+      등록·삭제로 쓸 수 있는 코딩 에이전트가 바뀐다. 제공자 목록도 다시 읽는다.
+
+      지금 화면에 없는 목록까지 바로 읽는다(`refetchType: 'all'`). 그 목록은 떠나온 대화
+      화면의 것이라 여기 있는 동안은 쓰는 곳이 없다 — 기본값이면 표시만 해 두고 돌아간
+      뒤에야 읽어서, 돌아온 순간 옛 목록(빈 목록)으로 "키를 등록해야 합니다" 가 한 번
+      깜빡였다.
+    */
+    void queryClient.invalidateQueries({ queryKey: ['ai-provider-list'], refetchType: 'all' });
   }, [queryClient]);
 
   const closeForm = useCallback(() => {
@@ -84,6 +99,7 @@ function MeAiCredentialsPanel() {
       invalidate();
       setNotice(`${VENDOR_META[variables.vendor].label} 키를 저장했습니다.`);
       closeForm();
+      onSaved?.();
     },
     onError: (error) => {
       // 붙여넣기에 개행이 섞이면 400 이 온다. trim 은 이미 했으므로 서버 문구를 그대로 보인다

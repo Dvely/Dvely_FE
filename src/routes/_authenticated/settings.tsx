@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import MeSettingsPage from '@/components/layout/me/MeSettingsPage';
+import { toSafeReturnPath } from '@/lib/setupReturn';
 
 /*
   ?section= 으로 특정 절을 열 수 있다.
@@ -11,6 +12,12 @@ import MeSettingsPage from '@/components/layout/me/MeSettingsPage';
 */
 const settingsSearchSchema = z.object({
   section: z.string().optional(),
+  /*
+    프로젝트에서 키·연결을 넣으러 왔다면 돌아갈 자리. 등록을 마치면 그리로 돌려보낸다.
+    주소창 값이라 누구나 고쳐 만들 수 있다. 모양이 틀리면 화면을 깨지 말고 없던 것으로
+    치고, 앱 안 경로인지는 쓰기 직전에 거른다(toSafeReturnPath).
+  */
+  returnTo: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_authenticated/settings')({
@@ -19,6 +26,6 @@ export const Route = createFileRoute('/_authenticated/settings')({
 });
 
 function RouteComponent() {
-  const { section } = Route.useSearch();
-  return <MeSettingsPage initialSection={section} />;
+  const { section, returnTo } = Route.useSearch();
+  return <MeSettingsPage initialSection={section} returnTo={toSafeReturnPath(returnTo)} />;
 }

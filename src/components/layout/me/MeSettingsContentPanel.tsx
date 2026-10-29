@@ -9,9 +9,10 @@ import type { MeSettingsSectionId } from '@/components/layout/me/meSettingsNav';
 
 type MeSettingsContentPanelProps = {
   activeSection: MeSettingsSectionId;
+  onSetupComplete?: () => void;
 };
 
-function MeSettingsContentPanel({ activeSection }: MeSettingsContentPanelProps) {
+function MeSettingsContentPanel({ activeSection, onSetupComplete }: MeSettingsContentPanelProps) {
   const { t } = useTranslation();
   const title = t(`me.nav.items.${activeSection}`);
 
@@ -22,9 +23,9 @@ function MeSettingsContentPanel({ activeSection }: MeSettingsContentPanelProps) 
   } else if (activeSection === 'general') {
     panel = <MeGeneralSettingsPanel />;
   } else if (activeSection === 'cloud-browser') {
-    panel = <MeCloudConnectionsPanel />;
+    panel = <MeCloudConnectionsPanel onConnected={onSetupComplete} />;
   } else if (activeSection === 'ai-credentials') {
-    panel = <MeAiCredentialsPanel />;
+    panel = <MeAiCredentialsPanel onSaved={onSetupComplete} />;
   } else if (activeSection === 'api-tokens') {
     panel = <MeApiTokensPanel />;
   }

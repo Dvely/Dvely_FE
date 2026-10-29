@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Copy, X } from 'lucide-react';
-import { useCloudRequirementsQuery } from '@/api/cloudConnections';
+import { useCloudConnectionListQuery, useCloudRequirementsQuery } from '@/api/cloudConnections';
+import { getProjectInfrastructureSettings, putProjectInfrastructureSettings } from '@/api/projects';
+import { useLeaveForSetup } from '@/hooks/useLeaveForSetup';
+import { composeApiErrorMessage } from '@/lib/apiErrorGuide';
+import { cloudConnectionStatusLabel } from '@/lib/cloudConnectionStatus';
 import { combinePolicyModules, stringifyPolicy } from '@/lib/cloudPolicyModules';
 import { extractApiErrorMessage } from '@/utils/response';
 import type {
@@ -170,10 +174,88 @@ function CredentialCaseCard({ credentialCase, selected, onSelect }: CredentialCa
   );
 }
 
+/**
+ * 이 프로젝트가 쓸 연결을 이 자리에서 고른다.
+ *
+ * 예전에는 "이 프로젝트에 선택하기" 가 인프라 탭으로 보냈다. 설정에서 연결을 만들고 돌아온
+ * 사람이 **또 한 번 다른 화면에 갔다가** 이 대화로 돌아와 재시도를 눌러야 했다. 고르는 일은
+ * 버튼 하나라 여기서 끝낸다.
+ *
+ * 고르는 건 사용자가 한다. 연결이 하나뿐이어도 대신 고르지 않는다 — 어느 AWS 계정에서
+ * 과금될지 정하는 일이다.
+ */
+function ProjectConnectionPicker({ projectId }: { projectId: number }) {
+  const queryClient = useQueryClient();
+  const { data: connections = [], isLoading: isConnectionsLoading } =
+    useCloudConnectionListQuery('cloud-connect-guide');
+  const { data: infraSettings, isLoading: isInfraLoading } = useQuery({
+    // 인프라 탭과 같은 키 — 여기서 고르면 그쪽도 같이 바뀐다
+    queryKey: ['project-infra-settings', projectId],
+    queryFn: () => getProjectInfrastructureSettings(projectId),
+    enabled: !!projectId,
+    gcTime: 0,
+  });
+  const selectMutation = useMutation({
+    mutationFn: (cloudConnectionId: number) =>
+      putProjectInfrastructureSettings(projectId, { cloudConnectionId }),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: ['project-infra-settings', projectId] }),
+  });
+
+  // 아직 만든 연결이 없으면 고를 것도 없다. 아래 "연결 등록하러 가기" 가 다음 할 일이다
+  if (isConnectionsLoading || isInfraLoading || connections.length === 0) return null;
+
+  return (
+    <div className="mt-4 rounded-xl border border-[#e2e8f0] px-4 py-3">
+      <p className="text-[12px] font-semibold text-[#334155]">이 프로젝트에 쓸 연결</p>
+      <ul className="mt-2 flex flex-col gap-2">
+        {connections.map((connection) => {
+          const selected = infraSettings?.cloudConnectionId === connection.cloudConnectionId;
+          return (
+            <li
+              key={connection.cloudConnectionId}
+              className="flex items-center justify-between gap-3 rounded-lg bg-[#f8fafc] px-3 py-2"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-[12px] font-semibold text-[#0f172a]">
+                  {connection.displayName}
+                </p>
+                <p className="text-[11px] text-[#94a3b8]">
+                  {connection.provider} · {connection.region} ·{' '}
+                  {cloudConnectionStatusLabel(connection.status)}
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={selected || selectMutation.isPending}
+                onClick={() => selectMutation.mutate(connection.cloudConnectionId)}
+                className={`h-8 shrink-0 cursor-pointer rounded-lg px-3 text-[12px] font-semibold disabled:cursor-default ${
+                  selected
+                    ? 'bg-[#f0fdf4] text-[#15803d]'
+                    : 'border border-[#e2e8f0] bg-white text-[#334155] hover:bg-[#f1f5f9] disabled:opacity-50'
+                }`}
+              >
+                {selected ? '이 프로젝트에 연결됨' : '이 프로젝트에 쓰기'}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {selectMutation.error ? (
+        <p className="mt-2 text-[12px] leading-relaxed whitespace-pre-line text-[#b91c1c]">
+          {composeApiErrorMessage(selectMutation.error, '연결을 고르지 못했습니다.')}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 type CloudConnectGuidePanelProps = {
   /** 서버가 보낸 안내 문구. 왜 멈췄는지는 서버가 가장 정확히 안다 */
   question: string;
   projectId: number;
+  /** 설정에서 연결을 마치고 돌아올 자리. 보던 대화까지 담긴다 */
+  returnPath: string;
   /** 연결을 마친 뒤 눌러 배포를 이어 달리게 한다 */
   onRetry: () => void;
   isRetrying: boolean;
@@ -183,10 +265,12 @@ type CloudConnectGuidePanelProps = {
 function CloudConnectGuidePanel({
   question,
   projectId,
+  returnPath,
   onRetry,
   isRetrying,
   onClose,
 }: CloudConnectGuidePanelProps) {
+  const leaveForSetup = useLeaveForSetup(returnPath);
   /*
     사용자가 방식을 직접 고르기 전에는 비워 둔다.
 
@@ -262,6 +346,8 @@ function CloudConnectGuidePanel({
             </li>
           ))}
         </ol>
+
+        <ProjectConnectionPicker projectId={projectId} />
 
         {isLoading ? (
           <div className="mt-4 space-y-2">
@@ -495,19 +581,25 @@ function CloudConnectGuidePanel({
       </div>
 
       <div className="sticky bottom-0 flex flex-wrap items-center gap-2 border-t border-[#e2e8f0] bg-white px-5 py-3">
-        <Link
-          to="/onboarding/cloud"
-          className="inline-flex h-9 items-center rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white"
+        {/*
+          등록 폼으로 바로 보낸다. 넣을 값과 정책은 이 안내가 이미 보여주고 있다 — 예전에는
+          처음 쓰는 사람용 안내로 보냈는데, 그 화면에는 등록하는 곳으로 가는 길이 없었다.
+          등록을 마치면 이 대화로 돌아오고, 그때 위에서 이 프로젝트에 쓸 연결을 고른다.
+        */}
+        <button
+          type="button"
+          onClick={() => leaveForSetup({ to: '/settings', search: { section: 'cloud-browser' } })}
+          className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white"
         >
-          연결하러 가기
-        </Link>
-        <Link
-          to="/project/$slug/infra"
-          params={{ slug: String(projectId) }}
-          className="inline-flex h-9 items-center rounded-lg border border-[#e2e8f0] bg-white px-4 text-[13px] font-semibold text-[#334155] hover:bg-[#f8fafc]"
+          연결 등록하러 가기
+        </button>
+        <button
+          type="button"
+          onClick={() => leaveForSetup({ to: '/onboarding/cloud' })}
+          className="inline-flex h-9 cursor-pointer items-center rounded-lg border border-[#e2e8f0] bg-white px-4 text-[13px] font-semibold text-[#334155] hover:bg-[#f8fafc]"
         >
-          이 프로젝트에 선택하기
-        </Link>
+          AWS가 처음이신가요?
+        </button>
         {/*
           연결을 마쳤는지 화면은 알 수 없다. 사용자가 눌러 서버에 다시 물어보게 한다 —
           아직이면 서버가 같은 자리로 돌려보낸다.

@@ -10,31 +10,26 @@ import {
   useCloudConnectionVerificationJobQuery,
 } from '@/api/cloudConnections';
 import { composeApiErrorMessage } from '@/lib/apiErrorGuide';
+import { cloudConnectionStatusLabel, isCloudConnectionVerified } from '@/lib/cloudConnectionStatus';
 import type { CloudProvider } from '@/types/common.enum';
 
 const skeletonItems = Array.from({ length: 3 }, (_, index) => `cloud-skeleton-${index}`);
-
-/**
- * 상태를 사람 말로. **목록을 닫지 않는다** — 서버가 상태를 늘려도 모르는 값은 그대로
- * 보여주면 되지, 화면에서 사라지면 안 된다.
- */
-const STATUS_LABEL: Record<string, string> = {
-  VALIDATED: '검증됨',
-  VERIFYING: '검증 중',
-  CHECKING: '확인 중',
-  CONNECTED: '연결됨',
-  PERMISSION_MISSING: '권한 부족',
-  BILLING_DISABLED: '결제 비활성',
-  REGION_UNSUPPORTED: '미지원 리전',
-  INVALID_CREDENTIAL: '자격 만료·오류',
-  UNKNOWN_ERROR: '알 수 없는 오류',
-};
 
 /** 서버가 막아 주지 않는 경우에 대비한 기본 경고. 409 message 가 오면 그쪽이 더 정확하다 */
 const RELEASE_WARNING =
   '이 연결로 만든 DB·서버·CDN 은 함께 정리되지 않습니다. 해제하면 Qeploy 화면에서는 사라지지만 AWS 계정에는 남아 계속 과금됩니다. 프로젝트에서 자원을 먼저 정리한 뒤 해제해 주세요.';
 
-function MeCloudConnectionsPanel() {
+type MeCloudConnectionsPanelProps = {
+  /**
+   * 새 연결이 검증까지 끝나 쓸 수 있게 됐을 때. 프로젝트에서 연결하러 온 경우에만 온다.
+   *
+   * 등록 응답에서 부르지 않는다 — 등록은 형식만 본 것이고(VALIDATED) 실제 권한은 검증
+   * Job 이 끝나야 안다. 권한이 모자란 연결을 들고 돌아가면 배포에서 다시 막힌다.
+   */
+  onConnected?: () => void;
+};
+
+function MeCloudConnectionsPanel({ onConnected }: MeCloudConnectionsPanelProps) {
   const [provider, setProvider] = useState<CloudProvider>('AWS');
   const [displayName, setDisplayName] = useState('');
   const [region, setRegion] = useState('');
@@ -72,16 +67,38 @@ function MeCloudConnectionsPanel() {
   );
   const verificationDone =
     verificationJob?.status === 'SUCCEEDED' || verificationJob?.status === 'FAILED';
+  /*
+    새로 등록한 연결의 검증. 자격 교체와 따로 든다 — 둘은 다른 자리(등록 폼 / 목록의 한
+    행)에서 결과를 말한다.
 
+    예전에는 등록하고 나서 아무 말이 없었다. 목록의 상태가 바뀌는 걸 보고 짐작해야 했다.
+  */
+  const [createdJobId, setCreatedJobId] = useState<string | null>(null);
+  const { data: createdJob } = useCloudConnectionVerificationJobQuery(
+    'me-cloud-create',
+    createdJobId,
+  );
+  const createdJobDone = createdJob?.status === 'SUCCEEDED' || createdJob?.status === 'FAILED';
+  const createdConnectionReady = isCloudConnectionVerified(createdJob);
+
+  /*
+    지금 화면에 없는 목록까지 바로 읽는다(`refetchType: 'all'`). 프로젝트의 연결 안내가 같은
+    목록을 쓰는데, 기본값이면 돌아간 뒤에야 읽어서 방금 만든 연결이 잠깐 안 보인다.
+  */
   const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: ['cloud-connection-list'] });
+    void queryClient.invalidateQueries({ queryKey: ['cloud-connection-list'], refetchType: 'all' });
   };
 
   // 검증이 끝나면 목록의 상태도 바뀌어 있다
   useEffect(() => {
-    if (!verificationDone) return;
-    void queryClient.invalidateQueries({ queryKey: ['cloud-connection-list'] });
-  }, [verificationDone, queryClient]);
+    if (!verificationDone && !createdJobDone) return;
+    void queryClient.invalidateQueries({ queryKey: ['cloud-connection-list'], refetchType: 'all' });
+  }, [verificationDone, createdJobDone, queryClient]);
+
+  // 쓸 수 있는 연결이 됐을 때만 돌아간다. 권한 부족이면 여기 남아 사유를 읽게 한다
+  useEffect(() => {
+    if (createdConnectionReady) onConnected?.();
+  }, [createdConnectionReady, onConnected]);
 
   const closeReplace = () => {
     setReplaceTarget(null);
@@ -108,12 +125,13 @@ function MeCloudConnectionsPanel() {
         projectId: '',
         serviceAccountEmail: '',
       }),
-    onSuccess: () => {
+    onSuccess: (created) => {
       setDisplayName('');
       setRegion('');
       setAccessKeyId('');
       setSecretAccessKey('');
       setAccountId('');
+      setCreatedJobId(created.jobId || null);
       invalidate();
     },
   });
@@ -164,6 +182,7 @@ function MeCloudConnectionsPanel() {
 
   const handleCreate = async () => {
     setFormError(null);
+    setCreatedJobId(null);
     try {
       await createMutation.mutateAsync();
     } catch (error) {
@@ -318,6 +337,19 @@ function MeCloudConnectionsPanel() {
         >
           연결 등록
         </button>
+        {createdJobId ? (
+          <p
+            role="status"
+            className="mt-2 text-[12px] leading-relaxed whitespace-pre-line text-[#475569]"
+          >
+            {!createdJobDone
+              ? '등록했습니다. 이 키로 배포할 권한이 있는지 확인하는 중입니다 — 잠시 걸립니다.'
+              : createdConnectionReady
+                ? '권한 확인까지 마쳤습니다. 이제 프로젝트에서 이 연결을 고를 수 있습니다.'
+                : createdJob?.message ||
+                  '등록은 됐지만 권한 확인을 통과하지 못했습니다. 아래 목록에서 상태를 확인해 주세요.'}
+          </p>
+        ) : null}
       </section>
 
       <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
@@ -343,7 +375,7 @@ function MeCloudConnectionsPanel() {
                   </p>
                   <p className="text-[11px] text-[#94a3b8]">
                     {connection.provider} · {connection.region} ·{' '}
-                    {STATUS_LABEL[connection.status] ?? connection.status}
+                    {cloudConnectionStatusLabel(connection.status)}
                   </p>
                 </div>
                 {/*

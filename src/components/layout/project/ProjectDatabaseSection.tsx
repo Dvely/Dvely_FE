@@ -9,6 +9,7 @@ import {
 import { useProjectPreviewQuery } from '@/api/preview';
 import { usePreviewRuntimeConfigQuery } from '@/api/previewRuntime';
 import { getProjectInfrastructureSettings } from '@/api/projects';
+import { useCurrentPath } from '@/hooks/useLeaveForSetup';
 import { describeProvisionFailure } from '@/lib/provisionFailure';
 import { extractApiErrorMessage } from '@/utils/response';
 import type { CreatedDatabase, DatabaseEngine, DatabaseMethod } from '@/types/database.type';
@@ -56,6 +57,8 @@ function formatRemaining(expiresAt: string | null): string | null {
 }
 
 function ProjectDatabaseSection({ projectId }: { projectId: number }) {
+  // 처음 쓰는 사람용 안내를 다 읽고 연결까지 마치면 이 자리로 돌아온다
+  const currentPath = useCurrentPath();
   const [method, setMethod] = useState<DatabaseMethod>('LOCAL');
   const [engine, setEngine] = useState<DatabaseEngine>('POSTGRESQL');
   const [createError, setCreateError] = useState<string | null>(null);
@@ -178,6 +181,7 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
               연결해 주세요.{' '}
               <Link
                 to="/onboarding/cloud"
+                search={{ returnTo: currentPath }}
                 className="font-semibold underline underline-offset-2 hover:text-[#92400e]"
               >
                 AWS가 처음이신가요?

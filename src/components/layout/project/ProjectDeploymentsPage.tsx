@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { getProjectInfrastructureSettings } from '@/api/projects';
+import { useCurrentPath } from '@/hooks/useLeaveForSetup';
 import {
   getDeploymentFailureAnalysis,
   getDeploymentLogs,
@@ -77,6 +78,8 @@ function failureReason(item: { errorMessage?: string | null }) {
 }
 
 function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
+  // 처음 쓰는 사람용 안내를 다 읽고 연결까지 마치면 이 자리로 돌아온다
+  const currentPath = useCurrentPath();
   const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null);
   const [versionName, setVersionName] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
@@ -233,6 +236,7 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
             이 방식은 연결된 클라우드 계정이 있어야 합니다. 인프라 탭에서 먼저 연결해 주세요.{' '}
             <Link
               to="/onboarding/cloud"
+              search={{ returnTo: currentPath }}
               className="font-semibold underline underline-offset-2 hover:text-[#92400e]"
             >
               AWS가 처음이신가요?

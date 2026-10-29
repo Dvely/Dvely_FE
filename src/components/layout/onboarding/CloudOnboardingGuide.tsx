@@ -11,7 +11,9 @@
  */
 
 import { useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import { useCloudRequirementsQuery } from '@/api/cloudConnections';
+import SetupReturnBar from '@/components/common/SetupReturnBar';
 import { stringifyPolicy } from '@/lib/cloudPolicyModules';
 import { extractApiErrorMessage } from '@/utils/response';
 
@@ -85,6 +87,7 @@ const STEPS = [
       '입력하면 Qeploy가 자격을 확인합니다 — 상태가 "연결됨"이 되면 준비 완료입니다',
     ],
     tags: ['약 5분', '한 번만'],
+    linksToSettings: true,
   },
   {
     num: '4',
@@ -193,10 +196,21 @@ function Eyebrow({ children }: { children: string }) {
   );
 }
 
-function CloudOnboardingGuide() {
+type CloudOnboardingGuideProps = {
+  /** 프로젝트에서 왔을 때 돌아갈 자리. toSafeReturnPath 를 거친 값만 온다 */
+  returnTo?: string | null;
+};
+
+function CloudOnboardingGuide({ returnTo }: CloudOnboardingGuideProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-[#f8fafc]">
       <div className="mx-auto w-full max-w-[720px] px-5 py-8 sm:px-6 sm:py-10">
+        {returnTo ? (
+          <SetupReturnBar
+            returnTo={returnTo}
+            message="연결을 등록하면 하던 곳으로 자동으로 돌아갑니다. 지금 돌아가도 됩니다."
+          />
+        ) : null}
         <header>
           <Eyebrow>Qeploy 시작하기</Eyebrow>
           <h1 className="mt-3 text-[26px] font-bold leading-[1.15] tracking-tight text-[#0f172a] sm:text-[32px]">
@@ -322,6 +336,20 @@ function CloudOnboardingGuide() {
                   ))}
                 </ul>
                 {'showPolicy' in step && step.showPolicy ? <PolicyBlock /> : null}
+                {/*
+                  "설정 → 클라우드 연결" 이라고 글로만 적혀 있었다. 이 화면까지 온 사람은
+                  바로 다음 할 일이 그것인데, 설정을 다시 찾아가야 했다. 프로젝트에서 왔다면
+                  돌아갈 자리도 함께 넘긴다 — 등록을 마치면 그 프로젝트로 돌아간다.
+                */}
+                {'linksToSettings' in step && step.linksToSettings ? (
+                  <Link
+                    to="/settings"
+                    search={{ section: 'cloud-browser', returnTo: returnTo ?? undefined }}
+                    className="mt-3 inline-flex h-9 items-center rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white"
+                  >
+                    클라우드 연결 등록하러 가기
+                  </Link>
+                ) : null}
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {step.tags.map((tag, index) => (
                     <span

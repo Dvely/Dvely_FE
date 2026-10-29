@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useCloudConnectionListQuery } from '@/api/cloudConnections';
+import { useCurrentPath } from '@/hooks/useLeaveForSetup';
 import {
   deleteProjectCostBudget,
   deleteProjectInfrastructureSettings,
@@ -43,6 +44,7 @@ type ProjectInfraPageProps = {
 };
 
 function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
+  const currentPath = useCurrentPath();
   const [budgetAmount, setBudgetAmount] = useState('');
   const [architecture, setArchitecture] = useState<DeploymentArchitecture>('SERVERLESS');
   const [computeTier, setComputeTier] = useState<ComputeTier>('SMALL');
@@ -144,14 +146,17 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
               설정 &gt; 클라우드 연결에서 AWS 계정을 등록하면 여기에서 고를 수 있습니다.
             </p>
             <div className="mt-3 flex justify-center gap-3">
+              {/* 등록을 마치면 이 탭으로 돌아와 바로 고를 수 있게 자리를 들고 간다 */}
               <Link
                 to="/settings"
+                search={{ section: 'cloud-browser', returnTo: currentPath }}
                 className="text-[12px] font-semibold text-[#0f172a] underline underline-offset-2"
               >
                 연결 등록하러 가기
               </Link>
               <Link
                 to="/onboarding/cloud"
+                search={{ returnTo: currentPath }}
                 className="text-[12px] font-semibold text-[#7c3aed] underline underline-offset-2"
               >
                 AWS가 처음이신가요?

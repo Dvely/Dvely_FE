@@ -13,6 +13,8 @@ type MeSettingsShellProps = {
   onClose?: () => void;
   className?: string;
   variant?: 'dialog' | 'page';
+  /** AI 키 저장이나 클라우드 연결 검증이 끝났을 때. 돌아갈 자리가 있을 때만 온다 */
+  onSetupComplete?: () => void;
 };
 
 function MeSettingsShell({
@@ -20,6 +22,7 @@ function MeSettingsShell({
   onClose,
   className,
   variant = 'page',
+  onSetupComplete,
 }: MeSettingsShellProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -68,7 +71,7 @@ function MeSettingsShell({
         ) : null}
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-8 sm:py-8 lg:pt-8">
-          <MeSettingsContentPanel activeSection={activeSection} />
+          <MeSettingsContentPanel activeSection={activeSection} onSetupComplete={onSetupComplete} />
         </div>
       </div>
     </div>

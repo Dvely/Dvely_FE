@@ -9,7 +9,6 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SendHorizontal } from 'lucide-react';
 import {
@@ -49,6 +48,8 @@ import {
   shouldReturnInputToUser,
 } from '@/lib/runLimit';
 import { takeComposerDraft } from '@/lib/composerDraft';
+import { agentReturnPath } from '@/lib/setupReturn';
+import { useLeaveForSetup } from '@/hooks/useLeaveForSetup';
 import { refreshUserInfoInBackground } from '@/api/user';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
 import { ChunkErrorBoundary } from '@/components/common/ChunkErrorBoundary';
@@ -125,6 +126,13 @@ type AgentConversationPanelProps = {
    * 안 된다. 화면이 스스로 지우는 대신 서버에 다시 물어 맞춘다.
    */
   restoreToken?: number;
+  /**
+   * 맡겨 둔 입력을 지금 찾아가도 되는지. 어느 대화를 열지 아직 모를 때는 false 다.
+   *
+   * 찾아가는 순간 맡김이 지워진다. 대화 목록을 읽는 동안 잠깐 뜨는 빈 패널이 먼저 찾아가면
+   * 자리가 안 맞아 그대로 버려지고, 정작 그 대화가 열렸을 때는 남은 것이 없다.
+   */
+  canRestoreDraft?: boolean;
   projectId: number;
   projectName: string;
   conversationId: number | null;
@@ -278,6 +286,7 @@ function AgentConversationPanel({
   isDeployInFlight = false,
   onCloudConnectRequired,
   restoreToken = 0,
+  canRestoreDraft = true,
 }: AgentConversationPanelProps) {
   /*
     홈에서 넘어온 요청은 입력창에 먼저 담아 둔다.
@@ -395,7 +404,14 @@ function AgentConversationPanel({
     { kind: 'navigate' }
   > | null>(null);
 
-  const navigate = useNavigate();
+  /*
+    키를 넣으러 설정에 갔다가 이 대화로 돌아온다. 적던 말도 맡겨 두고 간다 —
+    AI_CREDENTIAL_NOT_REGISTERED 로 막히면 보내려던 말이 입력창에 돌아와 있는데, 그대로
+    떠나면 그 말이 사라진다.
+  */
+  const leaveForSetup = useLeaveForSetup(
+    agentReturnPath(projectId, conversationId, isNewConversation),
+  );
 
   const showApiError = useCallback((error: unknown) => {
     setAlertMessage(formatApiErrorMessage(error));
@@ -613,11 +629,12 @@ function AgentConversationPanel({
     다닐 때마다 돌아보지만, 자리가 맞지 않으면 아무 일도 하지 않는다.
   */
   useEffect(() => {
+    if (!canRestoreDraft) return;
     const restored = takeComposerDraft({ projectId, conversationId });
     if (!restored) return;
 
     setInput((current) => (current.trim() ? current : restored));
-  }, [projectId, conversationId]);
+  }, [projectId, conversationId, canRestoreDraft]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -1685,7 +1702,7 @@ function AgentConversationPanel({
             <button
               type="button"
               onClick={() =>
-                void navigate({ to: '/settings', search: { section: 'ai-credentials' } })
+                leaveForSetup({ to: '/settings', search: { section: 'ai-credentials' } })
               }
               className="h-8 cursor-pointer self-start rounded-lg bg-[#7c3aed] px-3 text-[12px] font-semibold text-white transition hover:bg-[#6d28d9]"
             >
@@ -1761,10 +1778,7 @@ function AgentConversationPanel({
             ? {
                 label: alertNavigation.label,
                 onClick: () =>
-                  void navigate({
-                    to: alertNavigation.to,
-                    search: alertNavigation.search ?? {},
-                  }),
+                  leaveForSetup({ to: alertNavigation.to, search: alertNavigation.search }),
               }
             : undefined
         }

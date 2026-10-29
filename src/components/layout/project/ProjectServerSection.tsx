@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { useProjectDomainListQuery } from '@/api/domains';
 import { postProjectServer, postServerTerminate, useProjectServerListQuery } from '@/api/servers';
 import { getProjectInfrastructureSettings } from '@/api/projects';
+import { useCurrentPath } from '@/hooks/useLeaveForSetup';
 import ServerLogViewer from '@/components/layout/project/ServerLogViewer';
 import { describeProvisionFailure } from '@/lib/provisionFailure';
 import { toSafeHttpUrl } from '@/lib/safeUrl';
@@ -81,6 +82,8 @@ const HEALTH_HINT: Partial<Record<HealthState, string>> = {
 };
 
 function ProjectServerSection({ projectId }: { projectId: number }) {
+  // 처음 쓰는 사람용 안내를 다 읽고 연결까지 마치면 이 자리로 돌아온다
+  const currentPath = useCurrentPath();
   const [instanceType, setInstanceType] = useState(INSTANCE_TYPE_OPTIONS[0].value);
   const [createError, setCreateError] = useState<string | null>(null);
   const [awaitingApproval, setAwaitingApproval] = useState(false);
@@ -172,6 +175,7 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
           먼저 연결해 주세요.{' '}
           <Link
             to="/onboarding/cloud"
+            search={{ returnTo: currentPath }}
             className="font-semibold underline underline-offset-2 hover:text-[#92400e]"
           >
             AWS가 처음이신가요?

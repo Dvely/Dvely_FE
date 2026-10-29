@@ -31,6 +31,15 @@ const DRAFT_STASH_KEY = 'qeploy.reload-draft';
  */
 const DRAFT_TTL_MS = 5 * 60 * 1000;
 
+/**
+ * 설정에 다녀오는 동안 맡겨 두는 시간.
+ *
+ * AI 키나 클라우드 연결을 넣으러 나가면 새로고침 한 번보다 훨씬 오래 걸린다. AWS 는 계정을
+ * 만들고(약 15분) 키를 발급받아(약 10분) 연결하는(약 5분) 일까지 낄 수 있다 — 연결 안내가
+ * 적어 둔 시간을 더한 값이다. 5분이면 돌아왔을 때 이미 버려져 있다.
+ */
+const SETUP_DRAFT_TTL_MS = 30 * 60 * 1000;
+
 /** 맡긴 말이 어느 자리의 것인지 */
 type ComposerDraftScope = {
   projectId: number | string;
@@ -43,6 +52,8 @@ type StoredDraft = {
   text: string;
   /** 맡긴 시각(ms) */
   at: number;
+  /** 찾아갈 수 있는 시간(ms). 없으면 DRAFT_TTL_MS */
+  ttl?: number;
 };
 
 /**
@@ -56,11 +67,20 @@ function toScopeKey({ projectId, conversationId }: ComposerDraftScope): string {
 /**
  * 적던 말을 맡긴다. 빈 말은 맡지 않는다 — 돌려줄 것이 없는데 자리만 차지한다.
  */
-function stashComposerDraft(scope: ComposerDraftScope, text: string): void {
+function stashComposerDraft(
+  scope: ComposerDraftScope,
+  text: string,
+  ttlMs: number = DRAFT_TTL_MS,
+): void {
   const trimmed = text.trim();
   if (!trimmed) return;
 
-  const stored: StoredDraft = { scope: toScopeKey(scope), text: trimmed, at: Date.now() };
+  const stored: StoredDraft = {
+    scope: toScopeKey(scope),
+    text: trimmed,
+    at: Date.now(),
+    ttl: ttlMs,
+  };
   try {
     sessionStorage.setItem(DRAFT_STASH_KEY, JSON.stringify(stored));
   } catch {
@@ -102,7 +122,13 @@ function takeComposerDraft(scope: ComposerDraftScope): string {
 
   if (!stored || typeof stored.text !== 'string' || !stored.text) return '';
   if (stored.scope !== toScopeKey(scope)) return '';
-  if (!Number.isFinite(stored.at) || Date.now() - stored.at > DRAFT_TTL_MS) return '';
+  // 맡긴 쪽이 적은 시간을 따르되 설정 왕복보다 길게는 두지 않는다. 저장소 값은 누구나
+  // 고칠 수 있어서, 상한이 없으면 아주 오래된 말이 튀어나오게 만들 수 있다
+  const ttl =
+    typeof stored.ttl === 'number' && Number.isFinite(stored.ttl)
+      ? Math.min(stored.ttl, SETUP_DRAFT_TTL_MS)
+      : DRAFT_TTL_MS;
+  if (!Number.isFinite(stored.at) || Date.now() - stored.at > ttl) return '';
 
   return stored.text;
 }
@@ -119,7 +145,7 @@ function takeComposerDraft(scope: ComposerDraftScope): string {
 const COMPOSER_SELECTOR = 'textarea[data-composer-draft]';
 
 /** 화면에 떠 있는 입력창의 말을 그 자리와 함께 맡긴다 */
-function stashComposerDraftFromDom(): void {
+function stashComposerDraftFromDom(ttlMs: number = DRAFT_TTL_MS): void {
   const composer = document.querySelector<HTMLTextAreaElement>(COMPOSER_SELECTOR);
   if (!composer) return;
 
@@ -131,6 +157,7 @@ function stashComposerDraftFromDom(): void {
   stashComposerDraft(
     { projectId, conversationId: Number.isInteger(parsed) ? parsed : null },
     composer.value,
+    ttlMs,
   );
 }
 
@@ -138,6 +165,7 @@ export {
   COMPOSER_SELECTOR,
   DRAFT_STASH_KEY,
   DRAFT_TTL_MS,
+  SETUP_DRAFT_TTL_MS,
   stashComposerDraft,
   stashComposerDraftFromDom,
   takeComposerDraft,
