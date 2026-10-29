@@ -7,6 +7,7 @@ import {
   fetchGitHubAppInstallUrl,
   fetchGitHubAppReauthorizeUrl,
 } from '@/api/auth';
+import { closeAfterRefresh } from '@/lib/closeAfterRefresh';
 import {
   GITHUB_APP_INSTALL_REQUIRED_EVENT,
   GITHUB_APP_REAUTHORIZATION_REQUIRED_EVENT,
@@ -97,13 +98,36 @@ function GitHubAppInstallPromptDialog() {
       window.removeEventListener(GITHUB_APP_REAUTHORIZATION_REQUIRED_EVENT, handleReauthorize);
   }, []);
 
-  const handleInstallSuccess = useCallback((event: MessageEvent) => {
-    if (event.origin !== window.location.origin) return;
-    if (event.data?.type !== GITHUB_APP_INSTALL_SUCCESS_MESSAGE) return;
-    setOpen(false);
-    // 저장된 사용자 정보에 옛 만료 플래그가 남지 않도록 다시 읽는다
-    void refreshUserInfoInBackground();
+  /** 팝업이 끝난 뒤 사용자 정보를 다시 읽는 중. 그동안 안내는 열어 둔 채 기다린다고 알린다 */
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  /*
+    사용자 정보를 다시 읽고 그것이 화면에 반영된 뒤에 닫는다(closeAfterRefresh).
+
+    예전에는 닫고 나서 읽어서, 안내가 걷힌 화면이 잠깐 옛 정보(미설치)로 그려졌다. 다시
+    읽는 이유는 둘이다 — 설치 여부를 화면에 맞추고, 저장된 정보에 옛 만료 플래그가 남지
+    않게 한다. 서버가 늦거나 실패해도 정해 둔 시간이 지나면 닫는다.
+  */
+  const finishInstall = useCallback(async () => {
+    setIsConfirming(true);
+    try {
+      await closeAfterRefresh({
+        refresh: refreshUserInfoInBackground,
+        close: () => setOpen(false),
+      });
+    } finally {
+      setIsConfirming(false);
+    }
   }, []);
+
+  const handleInstallSuccess = useCallback(
+    (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== GITHUB_APP_INSTALL_SUCCESS_MESSAGE) return;
+      void finishInstall();
+    },
+    [finishInstall],
+  );
 
   useEffect(() => {
     window.addEventListener('message', handleInstallSuccess);
@@ -132,16 +156,12 @@ function GitHubAppInstallPromptDialog() {
 
       /*
         시연에서는 브라우저 팝업 대신 시연 빌드 안의 재현 화면을 띄운다(demo/githubWindow).
-        설치를 누르면 실제 팝업의 `/auth/app-callback` 이 하던 일(설치 콜백 → 안내 닫기 →
-        사용자 정보 다시 읽기)을 이 창에서 그대로 한다.
+        설치를 누르면 실제 팝업의 `/auth/app-callback` 이 하던 일(설치 콜백)을 이 창에서
+        하고, 그 뒤는 실제 팝업이 성공을 알렸을 때와 같은 길(finishInstall)로 간다 — 사용자
+        정보를 다시 읽고 화면에 반영된 뒤에 닫는다.
 
         재현 화면이 떠 있는 동안 이 안내는 뒤에 그대로 남는다. 실제 팝업도 그렇다.
         재인증 화면은 재현하지 않는다 — 시연 사용자는 만료되지 않는다.
-
-        사용자 정보를 다시 읽고 그것이 화면에 반영된 뒤에 닫는다. 먼저 닫으면 그 사이 홈의
-        시작하기가 옛 정보로 "GitHub 연결하기" 를 안 한 것처럼 찍혔다(녹화 프레임에서 확인).
-        쿼리 캐시를 고친 것은 다음 태스크에 화면으로 알려지므로(TanStack notifyManager) 한
-        태스크를 넘긴 뒤 닫는다.
       */
       if (IS_DEMO) {
         setIsLoading(false);
@@ -149,9 +169,7 @@ function GitHubAppInstallPromptDialog() {
           if (!(await runDemoGitHubWindow('install'))) return;
           await completeGitHubAppCallback({ installation_id: 'demo', setup_action: 'install' });
         }
-        await refreshUserInfoInBackground();
-        await new Promise((resolve) => window.setTimeout(resolve, 0));
-        setOpen(false);
+        await finishInstall();
         return;
       }
 
@@ -188,12 +206,12 @@ function GitHubAppInstallPromptDialog() {
           <button
             type="button"
             onClick={() => void handleConfirm()}
-            disabled={isLoading}
+            disabled={isLoading || isConfirming}
             data-demo="github-app-confirm"
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f172a] py-3 text-[14px] font-semibold text-white transition hover:bg-[#1e293b] disabled:opacity-50"
           >
             <GitBranch className="size-4" strokeWidth={1.75} aria-hidden />
-            {isLoading ? '로딩 중...' : copy.confirmLabel}
+            {isConfirming ? '확인하는 중...' : isLoading ? '로딩 중...' : copy.confirmLabel}
           </button>
         </div>
       </div>

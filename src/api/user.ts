@@ -61,8 +61,9 @@ async function fetchAndPersistUserInfo() {
     writeStoredUser(response.data);
     /*
       화면의 쿼리 캐시도 같이 맞춘다. 배경 갱신(refreshUserInfoInBackground)은 저장소에만
-      적어서, 이미 떠 있는 화면은 옛 값을 계속 들고 있었다 — GitHub App 을 막 설치했는데
-      시작하기의 "GitHub 연결하기" 가 안 끝난 채로 남았다.
+      적어서, 이미 떠 있는 화면(머리말·설정·시작하기 등 useUserInfoQuery)은 옛 값을 계속
+      들고 있었다 — GitHub App 을 막 설치했는데 시작하기의 "GitHub 연결하기" 가 안 끝난 채로
+      남았다.
     */
     queryClient.setQueriesData({ queryKey: ['user-info'] }, response);
     // 서버가 재인증이 필요하다고 하면 어디서 읽었든 화면에 진입점이 뜨게 한다.
