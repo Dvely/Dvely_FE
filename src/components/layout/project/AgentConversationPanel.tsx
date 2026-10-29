@@ -1407,6 +1407,17 @@ function AgentConversationPanel({
     setHasUnseenBelow(false);
   }, []);
 
+  /*
+    지난 작업의 기록을 펼치면 바닥에서 놓아 준다.
+
+    펼친 사람은 그 줄을 읽으려는 것이다. 바닥에 붙어 있던 채로 두면 기록이 아래로
+    자라는 만큼 아래 ResizeObserver 가 바닥으로 끌어내려서, 방금 누른 줄과 기록의 앞부분이
+    위로 밀려 사라진다. 다시 바닥으로 내려오면 handleScroll 이 도로 붙인다.
+  */
+  const releaseBottomPin = useCallback(() => {
+    isNearBottomRef.current = false;
+  }, []);
+
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -1606,6 +1617,7 @@ function AgentConversationPanel({
                       key={message.messageId}
                       message={message}
                       logTaskId={logTaskId !== liveTaskId ? logTaskId : null}
+                      onTaskLogExpand={releaseBottomPin}
                     />
                   );
                 })}
@@ -1870,6 +1882,7 @@ type MessageBubbleProps = {
   message: ConversationMessage;
   /** 이 줄 아래에 펼칠 지난 작업. 없으면 펼치기를 그리지 않는다 */
   logTaskId?: string | null;
+  onTaskLogExpand?: () => void;
 };
 
 const MESSAGE_URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -1962,7 +1975,7 @@ const ASSISTANT_TONE_CLASS = {
   failed: 'rounded-xl border-l-2 border-[#fca5a5] bg-[#fef2f2] px-3.5 py-3 text-[#b91c1c]',
 } as const;
 
-function MessageBubble({ message, logTaskId = null }: MessageBubbleProps) {
+function MessageBubble({ message, logTaskId = null, onTaskLogExpand }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
   // 종류는 서버가 알려준 것만 믿는다. 모르는 값이면 지금까지와 똑같이 그려진다
@@ -2018,7 +2031,9 @@ function MessageBubble({ message, logTaskId = null }: MessageBubbleProps) {
         ) : (
           plainText
         )}
-        {isAssistant && logTaskId ? <AgentTaskLogHistory taskId={logTaskId} /> : null}
+        {isAssistant && logTaskId ? (
+          <AgentTaskLogHistory taskId={logTaskId} onExpand={onTaskLogExpand} />
+        ) : null}
       </div>
     </div>
   );
