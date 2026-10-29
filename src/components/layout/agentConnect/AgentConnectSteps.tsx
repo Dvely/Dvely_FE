@@ -43,7 +43,10 @@ type WritesToggleProps = {
  */
 export function WritesToggle({ checked, onChange }: WritesToggleProps) {
   return (
-    <label className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-[#e2e8f0] bg-white px-3.5 py-3">
+    <label
+      data-demo="agent-connect-writes"
+      className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-[#e2e8f0] bg-white px-3.5 py-3"
+    >
       <span className="min-w-0">
         <span className="block text-[13px] font-semibold text-[#0f172a]">배포까지 맡기기</span>
         <span className="mt-0.5 block text-[12px] leading-relaxed text-[#64748b]">
@@ -57,7 +60,6 @@ export function WritesToggle({ checked, onChange }: WritesToggleProps) {
           role="switch"
           checked={checked}
           onChange={(event) => onChange(event.target.checked)}
-          data-demo="agent-connect-writes"
           className="peer sr-only"
         />
         <span
