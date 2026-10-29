@@ -48,6 +48,7 @@ import {
   shouldResendClarificationAsMessage,
   shouldReturnInputToUser,
 } from '@/lib/runLimit';
+import { takeComposerDraft } from '@/lib/composerDraft';
 import { refreshUserInfoInBackground } from '@/api/user';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
 import { ChunkErrorBoundary } from '@/components/common/ChunkErrorBoundary';
@@ -598,6 +599,25 @@ function AgentConversationPanel({
     },
     [],
   );
+
+  /*
+    새로고침으로 날아간 입력을 되돌린다.
+
+    배포로 조각이 사라지면 화면이 새로고침되는데(자동이든 배너 버튼이든) 그때 적던 말이
+    사라진다. 맡겨 둔 값이 **이 자리의 것일 때만** 한 번 되돌린다.
+
+    입력창이 비어 있을 때만 넣는다. 사용자가 이미 다시 적기 시작했다면 그 말이 더 최신이고,
+    덮어쓰면 방금 친 글자를 잃는다.
+
+    `takeComposerDraft` 가 읽는 즉시 지우므로 같은 말이 두 번 나타나지 않는다. 대화를 옮겨
+    다닐 때마다 돌아보지만, 자리가 맞지 않으면 아무 일도 하지 않는다.
+  */
+  useEffect(() => {
+    const restored = takeComposerDraft({ projectId, conversationId });
+    if (!restored) return;
+
+    setInput((current) => (current.trim() ? current : restored));
+  }, [projectId, conversationId]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -1708,6 +1728,14 @@ function AgentConversationPanel({
             rows={2}
             value={input}
             disabled={isInputLocked}
+            /*
+              새로고침 직전에 적던 말을 맡기는 쪽은 라우트 바깥(전역 배너·자동 새로고침)에
+              있어서 React 로는 지금 어느 대화인지 알 수 없다. 그래서 이 자리를 여기에
+              적어 둔다 — 맡기는 쪽이 이 표시로 입력창을 찾고 자리까지 함께 읽는다.
+            */
+            data-composer-draft=""
+            data-project-id={projectId}
+            data-conversation-id={conversationId ?? ''}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={awaitingInputTaskId ? '위 질문에 답해 주세요' : '메시지를 입력하세요'}
