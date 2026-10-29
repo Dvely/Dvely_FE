@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { ArrowLeft, ChevronRight, Play, Settings } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Play, Settings, Terminal } from 'lucide-react';
 import { formatActivityTime } from '@/lib/projectActivity';
 import { toSafeHttpUrl } from '@/lib/safeUrl';
 import { formatProjectDisplayName } from '@/components/layout/project/agentChat.utils';
+import AgentConnectSheet from '@/components/layout/project/AgentConnectSheet';
 import ProjectActivityDetailDialog from '@/components/layout/project/ProjectActivityDetailDialog';
 import ProjectSettingsDialog from '@/components/layout/project/ProjectSettingsDialog';
 import ProjectWorkspaceNav from '@/components/layout/project/ProjectWorkspaceNav';
@@ -48,6 +49,7 @@ function ProjectDetailPage({
   isRelatedLoading = false,
 }: ProjectDetailPageProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAgentConnectOpen, setIsAgentConnectOpen] = useState(false);
   const isPending = project.status === 'DRAFT';
   const latestCommit = commits[0] ?? overview?.latestCommit ?? null;
   const activityRows = activityLogs.slice(0, 5);
@@ -138,6 +140,39 @@ function ProjectDetailPage({
               </div>
             )}
           </div>
+
+          {/*
+            터미널·코딩 에이전트로 넘어가는 자리. 연결은 설정의 토큰 화면에서도 되지만, 이
+            프로젝트를 보다가 "터미널에서 이어서 하자" 는 순간에 그 길을 찾아 나서게 하지 않는다.
+          */}
+          <section
+            data-demo="agent-connect-card"
+            className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#e2e8f0] bg-white p-5"
+          >
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#0f172a] text-white">
+                <Terminal className="size-5" strokeWidth={1.75} aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-[14px] font-bold text-[#0f172a]">
+                  터미널·코딩 에이전트에서 이어서 하기
+                </h3>
+                <p className="mt-1 text-[13px] leading-relaxed text-[#64748b]">
+                  Claude Code·Codex 에서 이 프로젝트의 배포 상태·로그를 묻고, 원하면 배포까지
+                  맡깁니다.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAgentConnectOpen(true)}
+              data-demo="agent-connect-open"
+              className="inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white transition hover:bg-[#1e293b]"
+            >
+              연결 안내
+              <ChevronRight className="size-4" aria-hidden />
+            </button>
+          </section>
 
           {/* 하단 정보 */}
           <div className="mt-6 grid gap-5 lg:grid-cols-3">
@@ -320,6 +355,12 @@ function ProjectDetailPage({
       <ProjectActivityDetailDialog
         activity={detailActivity}
         onClose={() => setDetailActivity(null)}
+      />
+
+      <AgentConnectSheet
+        open={isAgentConnectOpen}
+        onOpenChange={setIsAgentConnectOpen}
+        projectName={formatProjectDisplayName(project.name, project.projectId)}
       />
 
       <ProjectSettingsDialog

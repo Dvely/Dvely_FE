@@ -98,6 +98,10 @@
           "title": "GitHub integration",
           "description": "Grant GitHub App permissions to connect repositories and sync code."
         },
+        "agentConnect": {
+          "title": "Terminal & coding agents",
+          "description": "Use Qeploy as an MCP tool from Claude Code or Codex. Issue a token and connect from the project overview or here."
+        },
         "account": {
           "title": "Account & settings",
           "description": "Update your profile, language, theme, and other account preferences."

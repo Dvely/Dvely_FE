@@ -7,6 +7,7 @@ import {
   Mail,
   MessageCircle,
   Search,
+  Terminal,
   User,
 } from 'lucide-react';
 import { Link, useNavigate } from '@tanstack/react-router';
@@ -25,12 +26,19 @@ const quickLinkIcons: Record<HelpQuickLinkId, typeof BookOpen> = {
   gettingStarted: BookOpen,
   projects: FolderKanban,
   github: GitBranch,
+  agentConnect: Terminal,
   account: User,
 };
 
 const quickLinkRoutes: Partial<Record<HelpQuickLinkId, string>> = {
   projects: '/project',
+  agentConnect: '/settings',
   account: '/settings',
+};
+
+/** 링크가 특정 절을 열어야 할 때. 터미널 연결은 설정의 액세스 토큰 절로 바로 간다 */
+const quickLinkSearch: Partial<Record<HelpQuickLinkId, { section: string }>> = {
+  agentConnect: { section: 'api-tokens' },
 };
 
 function HelpPage() {
@@ -113,7 +121,7 @@ function HelpPage() {
 
               if (route) {
                 return (
-                  <Link key={id} to={route} className={cardClassName}>
+                  <Link key={id} to={route} search={quickLinkSearch[id]} className={cardClassName}>
                     {content}
                   </Link>
                 );
