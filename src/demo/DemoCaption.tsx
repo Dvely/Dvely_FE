@@ -5,11 +5,20 @@
  * 조작판은 두지 않는다 — 진행 표시나 버튼이 남으면 그것부터 눈에 들어온다.
  *
  * 영화 자막이 아니라 화면 구석에 붙는 라벨이다. 가운데에 스크림을 깔고 큰 글씨를
- * 얹으면 그게 화면의 주인공이 되고 제품이 뒤로 밀린다. 좌상단에 알약 하나만 띄운다 —
+ * 얹으면 그게 화면의 주인공이 되고 제품이 뒤로 밀린다. 구석에 알약 하나만 띄운다 —
  * 지금 무엇을 보고 있는지 알려 주면 그걸로 끝이다.
+ *
+ * 오른쪽 아래, 바닥에서 조금 띄운 자리다. 좌상단에 두었더니 에이전트 화면의 제목과
+ * 탭을 덮었다. 오른쪽 아래는 대부분의 장면에서 프리뷰의 빈 바닥인데, 바닥에 붙이면
+ * 연결 안내의 하단 버튼("연결했어요 — 다시 시도")을 덮어서 그 높이만큼 띄운다.
  */
 import { useEffect, useState } from 'react';
-import { resumeDirectorIfRequested, subscribeDirector, type Caption } from '@/demo/director';
+import {
+  resumeDirectorIfRequested,
+  startDirectorOnAutoplay,
+  subscribeDirector,
+  type Caption,
+} from '@/demo/director';
 
 /** 접고 올리는 데 걸리는 시간. 너무 짧으면 깜빡임이고 길면 굼뜨다 */
 const FADE_MS = 240;
@@ -56,9 +65,13 @@ function DemoCaption() {
     };
   }, []);
 
-  // 시작 버튼이 새로고침을 끼우고 떠났다면 돌아온 뒤 여기서 이어받는다
+  /*
+    시작 버튼이 새로고침을 끼우고 떠났다면 돌아온 뒤 여기서 이어받는다. 아니면 주소에
+    `?autoplay` 가 있을 때 혼자 시작한다 — 녹화가 그 길로 들어온다.
+  */
   useEffect(() => {
-    resumeDirectorIfRequested();
+    if (resumeDirectorIfRequested()) return;
+    startDirectorOnAutoplay();
   }, []);
 
   if (error) {
@@ -76,10 +89,10 @@ function DemoCaption() {
   return (
     <div
       data-demo-caption
-      className="pointer-events-none fixed left-6 top-6 z-[200]"
+      className="pointer-events-none fixed bottom-[76px] right-6 z-[200]"
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(-6px)',
+        transform: visible ? 'translateY(0)' : 'translateY(6px)',
         transition: `opacity ${FADE_MS}ms ease, transform ${FADE_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
       }}
     >

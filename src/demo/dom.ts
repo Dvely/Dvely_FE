@@ -70,8 +70,31 @@ export async function waitFor<T extends HTMLElement>(name: string, timeoutMs = 3
   return find<T>(name)!;
 }
 
-/** 화면에 보이게 스크롤하고 잠깐 둔다 — 영상에서 무엇을 누르는지 보여야 한다 */
+/**
+ * 이미 화면 안에 다 들어와 있는지.
+ *
+ * 여백은 몇 픽셀만 둔다. 하단에 붙어 있는 버튼(입력창의 전송, 연결 안내의 하단 버튼)은
+ * 원래 바닥 가까이 있는 것이라, 여백을 넉넉히 잡으면 안 보이는 것으로 쳐서 그 컨테이너를
+ * 통째로 스크롤해 버린다.
+ */
+function isWithinViewport(element: HTMLElement, margin = 4) {
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.top >= margin &&
+    rect.left >= 0 &&
+    rect.bottom <= window.innerHeight - margin &&
+    rect.right <= window.innerWidth
+  );
+}
+
+/**
+ * 화면에 보이게 스크롤하고 잠깐 둔다 — 영상에서 무엇을 누르는지 보여야 한다.
+ *
+ * 이미 보이면 건드리지 않는다. 보이는 버튼까지 가운데로 끌어오면 누를 때마다 화면이
+ * 출렁이고, 맨 위에 둔 안내(설정의 "하던 곳으로 돌아갑니다" 띠 등)가 밀려 나간다.
+ */
 async function reveal(element: HTMLElement) {
+  if (isWithinViewport(element)) return;
   element.scrollIntoView({ behavior: 'smooth', block: 'center' });
   await pause(170);
 }
@@ -88,10 +111,17 @@ export async function show(name: string) {
   await pause(260);
 }
 
-export async function click(name: string, timeoutMs = 30000) {
+/**
+ * 누른다. `glideMs` 를 주면 그 시간에 걸쳐 천천히 다가간다 — 화면 밖에서 처음 들어올 때
+ * 쓴다. 거리로 정하는 평소 속도로는 화면을 가로지르는 첫 이동이 순간이동처럼 보인다.
+ */
+export async function click(
+  name: string,
+  { timeoutMs = 30000, glideMs }: { timeoutMs?: number; glideMs?: number } = {},
+) {
   const element = await waitFor<HTMLElement>(name, timeoutMs);
   await reveal(element);
-  await moveCursorToElement(element);
+  await moveCursorToElement(element, null, glideMs);
   await pressCursor();
   element.click();
   await pause(80);

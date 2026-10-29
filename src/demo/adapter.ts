@@ -135,7 +135,7 @@ function previewSession() {
     };
   }
   return {
-    sessionId: 'demo-preview-session',
+    sessionId: DEMO.previewSessionId,
     projectId: DEMO.projectId,
     taskId: null,
     status: 'ACTIVE',
@@ -625,7 +625,7 @@ const routes: [string, RegExp, Handler][] = [
     'POST',
     /^\/preview-sessions\/[^/]+\/access$/,
     () => ({
-      sessionId: 'demo-preview-session',
+      sessionId: DEMO.previewSessionId,
       previewUrl: demoPreviewUrl(),
       expiresAt: iso(1000 * 60 * 55),
     }),
@@ -634,7 +634,7 @@ const routes: [string, RegExp, Handler][] = [
     'GET',
     /^\/preview-sessions\/[^/]+\/status$/,
     () => ({
-      sessionId: 'demo-preview-session',
+      sessionId: DEMO.previewSessionId,
       projectId: DEMO.projectId,
       taskId: null,
       sessionStatus: 'ACTIVE',
@@ -654,7 +654,7 @@ const routes: [string, RegExp, Handler][] = [
   [
     'GET',
     /^\/preview-sessions\/[^/]+\/logs$/,
-    () => ({ sessionId: 'demo-preview-session', containerRunning: true, logText: SERVER_LOG }),
+    () => ({ sessionId: DEMO.previewSessionId, containerRunning: true, logText: SERVER_LOG }),
   ],
   [
     'DELETE',
@@ -1219,7 +1219,7 @@ const routes: [string, RegExp, Handler][] = [
       projectId: DEMO.projectId,
       conversationId: DEMO.conversationId,
       taskId: null,
-      previewSessionId: 'demo-preview-session',
+      previewSessionId: DEMO.previewSessionId,
       status: 'PREVIEW_READY',
       summary: '회원가입·로그인 화면 추가',
       approvalId: null,

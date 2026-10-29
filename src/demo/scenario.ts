@@ -40,6 +40,9 @@ export const DEMO = {
   get repositoryFullName() {
     return `${this.repositoryOwner}/${this.repositoryName}`;
   },
+  /** 프리뷰 세션과 게이트웨이 접근 토큰. 주소창에 찍히므로 실제 값과 같은 모양으로 둔다 */
+  previewSessionId: '3f9c2b7d-4e51-4f88-a0d1-8c62e7b19a45',
+  previewAccessToken: 'k7Qm2xVa9Lr4Tn8w',
   s3WebsiteUrl: 'http://qeploy-todo-together.s3-website.ap-northeast-2.amazonaws.com',
   domainHostname: 'todo-together.qeploy.com',
   domainUrl: 'https://todo-together.qeploy.com',
@@ -49,9 +52,16 @@ export const DEMO = {
   awsRegion: 'ap-northeast-2',
 } as const;
 
-/** 프리뷰 iframe 이 가리킬 주소. 같은 오리진이라 CORS·X-Frame 문제가 없다 */
+/**
+ * 프리뷰 iframe 이 가리킬 주소. 같은 오리진이라 CORS·X-Frame 문제가 없다.
+ *
+ * 실제 서버의 프리뷰 게이트웨이와 같은 모양으로 둔다(`{오리진}/api/v1/previews/{세션}/
+ * {토큰}/`, BE PreviewGatewayUrlResolver). 저장소를 잇기 전에는 프리뷰 주소창에 이
+ * 주소가 그대로 찍히는데, 예전처럼 `/demo-preview/index.html` 이면 실제 화면에 없는
+ * 주소를 보여주게 된다. 이 경로는 vite 의 시연 미들웨어가 정적 파일로 돌려준다.
+ */
 export function demoPreviewUrl() {
-  return `${window.location.origin}/demo-preview/index.html`;
+  return `${window.location.origin}/api/v1/previews/${DEMO.previewSessionId}/${DEMO.previewAccessToken}/`;
 }
 
 /**

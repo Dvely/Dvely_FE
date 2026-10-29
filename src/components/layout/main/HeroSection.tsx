@@ -102,7 +102,8 @@ function HeroSection() {
       실제로 누를 버튼이 그대로 출발선이 되는 편이 낫다.
     */
     if (IS_DEMO) {
-      startDirector();
+      // 재생이 이미 돌고 있으면(첫 장면이 이 버튼을 누른 경우) 시작은 그대로 넘어간다
+      startDirector({ loginPressed: true });
       void startGitHubLogin();
       return;
     }

@@ -220,6 +220,7 @@ function ProjectConnectionPicker({ projectId }: { projectId: number }) {
                 type="button"
                 disabled={selected || selectMutation.isPending}
                 onClick={() => selectMutation.mutate(connection.cloudConnectionId)}
+                data-demo="cloud-guide-use"
                 className={`h-8 shrink-0 cursor-pointer rounded-lg px-3 text-[12px] font-semibold disabled:cursor-default ${
                   selected
                     ? 'bg-[#f0fdf4] text-[#15803d]'

@@ -84,33 +84,48 @@ async function sendChat(prompt: string) {
 /** 시연용 키. 형식만 맞춘 가짜 값이고, 화면에서는 비밀번호 칸이라 점으로만 보인다 */
 const DEMO_AI_KEY = 'sk-ant-api03-qeploy-demo-0000000000000000';
 
-/** 지금 프로젝트의 채팅을 연다 — 사이드바 · 카드 · 에이전트 버튼을 차례로 누른다 */
-async function openProjectChat() {
-  await click('nav-project');
-  await read(450);
-  await click('project-card');
-  await read(500);
-  await click('open-agent');
-  await waitUntil('채팅 진입', () => find('chat-input') != null, 20000);
+/**
+ * 랜딩이 다 올라왔는지. 문구와 버튼은 시차를 두고 떠오르므로, 버튼이 보이기 시작한 때가
+ * 아니라 **조상까지 다 불투명해진 때**를 본다 — 반쯤 투명한 버튼을 누르면 떠오르는
+ * 도중에 화면이 넘어간다.
+ */
+function isLandingSettled() {
+  let element: HTMLElement | null = find('login');
+  if (!element) return false;
+  while (element && element !== document.body) {
+    if (getComputedStyle(element).opacity !== '1') return false;
+    element = element.parentElement;
+  }
+  return true;
 }
+
+/** 시작 버튼이 이미 눌렸는지. 사람이 눌러 시작했으면 첫 장면이 다시 누르지 않는다 */
+let loginPressed = false;
 
 export const scenes: Scene[] = [
   {
-    caption: { title: 'GitHub 로그인 기능', sub: '계정을 따로 만들지 않습니다' },
+    /*
+      로그인과 권한 연결을 한 장면으로 둔다.
+
+      시연에는 GitHub 로그인 화면이 없다 — 남의 서비스 화면을 흉내 내 찍을 수는 없어서,
+      누르면 로그인을 마친 뒤로 바로 넘어간다. 그래서 자막을 둘로 나누면 "로그인" 자막이
+      권한 안내 위에 떴다가 같은 안내 위에서 "권한 연결" 로 바뀌었다. 화면은 하나인데
+      자막만 두 번 바뀌는 셈이라, 누르는 순간부터 권한을 허용할 때까지를 한 이름으로 묶는다.
+    */
+    caption: { title: 'GitHub 로그인 기능', sub: '가입 없이 시작하고 저장소 권한을 허용합니다' },
     run: async () => {
+      if (!loginPressed) {
+        // 자막이 올라오는 동안 한 박자 두고 커서가 화면 밖에서 들어와 시작 버튼을 누른다
+        await read(320);
+        await click('login', { glideMs: 760 });
+      }
       await waitUntil('홈 진입', () => window.location.pathname.startsWith('/home'), 20000);
-      await read(900);
-    },
-  },
-  {
-    caption: { title: 'GitHub 권한 연결 기능', sub: '저장소에 접근할 권한을 허용합니다' },
-    run: async () => {
       // 로그인 직후 App 이 아직 설치되지 않아 안내가 뜬다. 실제 첫 로그인이 그렇다
       await waitUntil('권한 안내', () => find('github-app-confirm') != null, 20000);
-      await read(1100);
+      await read(1300);
       await click('github-app-confirm');
       await waitUntil('안내 닫힘', () => find('github-app-confirm') == null, 15000);
-      await read(450);
+      await read(400);
     },
   },
   {
@@ -146,9 +161,17 @@ export const scenes: Scene[] = [
       await read(300);
       await click('ai-key-save');
       await waitUntil('키 저장', () => pageHasText('키를 저장했습니다'), 15000);
-      await read(750);
-      await openProjectChat();
-      await read(350);
+      /*
+        여기서 아무것도 누르지 않는다. 설정은 떠나온 대화를 기억하고 있다가 저장이
+        끝나면 그리로 돌려보낸다 — 프로젝트를 다시 찾아 들어가지 않는 것이 이 장면이다.
+      */
+      await waitUntil(
+        '대화로 복귀',
+        () => window.location.pathname.endsWith('/agent') && find('chat-input') != null,
+        15000,
+      );
+      // 돌아온 대화에서 안내가 걷히고 제공자(Claude Code)가 잡힌 것을 보여 준다
+      await read(950);
     },
   },
   {
@@ -200,18 +223,15 @@ export const scenes: Scene[] = [
     run: async () => {
       await sendChat(PROMPT_INFRA);
       // 연결된 AWS 계정이 없으면 에이전트가 여기서 멈추고 안내를 편다
-      await waitUntil('클라우드 안내', () => find('cloud-guide-select') != null, 25000);
+      await waitUntil('클라우드 안내', () => find('cloud-guide-register') != null, 25000);
       await read(1400);
     },
   },
   {
     caption: { title: 'BYOC 연결 기능', sub: '자원은 내 AWS 계정에 만들어집니다' },
     run: async () => {
-      await click('cloud-guide-select');
-      await waitUntil('연결 없음', () => find('cloud-register-link') != null, 20000);
-      await read(900);
-      await click('cloud-register-link');
-      await click('settings-cloud-browser');
+      // 안내에서 바로 등록 화면으로 간다. 떠나온 대화는 설정이 기억한다
+      await click('cloud-guide-register');
       await waitUntil('등록 폼', () => find('cloud-name') != null, 20000);
       await read(500);
       await type('cloud-name', '내 AWS 계정', 16);
@@ -219,28 +239,25 @@ export const scenes: Scene[] = [
       await fill('cloud-key', 'AKIAIOSFODNN7EXAMPLE');
       await fill('cloud-secret', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY');
       await fill('cloud-account', '481019284412');
-      await read(500);
+      await read(450);
       await click('cloud-create');
-      await waitUntil('검증됨', () => pageHasText('· 연결됨'), 25000);
-      await read(1000);
+      // 권한 검증이 끝나 쓸 수 있는 연결이 되면 설정이 알아서 대화로 돌려보낸다
+      await waitUntil('검증 끝', () => pageHasText('권한 확인까지 마쳤습니다'), 25000);
+      await waitUntil(
+        '대화로 복귀',
+        () => window.location.pathname.endsWith('/agent') && find('cloud-guide-use') != null,
+        15000,
+      );
     },
   },
   {
     caption: { title: '프로젝트 연결 기능', sub: '어느 계정에 만들지 프로젝트마다 고릅니다' },
     run: async () => {
-      // 설정에서 프로젝트로 돌아온다 — 사이드바 · 카드 · 인프라 탭
-      await click('nav-project');
-      await read(450);
-      await click('project-card');
-      await click('tab-infra');
-      await waitUntil('연결 목록', () => find('cloud-select') != null, 20000);
-      await read(600);
-      await click('cloud-select');
-      await waitUntil('선택됨', () => pageHasText('선택됨'), 20000);
+      // 돌아온 자리의 안내에서 그대로 고르고 이어간다. 인프라 탭에 다녀오지 않는다
+      await read(900);
+      await click('cloud-guide-use');
+      await waitUntil('연결됨', () => pageHasText('이 프로젝트에 연결됨'), 20000);
       await read(800);
-      await click('open-agent');
-      await waitUntil('안내 복귀', () => find('cloud-guide-retry') != null, 20000);
-      await read(500);
       await click('cloud-guide-retry');
     },
   },
@@ -371,8 +388,9 @@ export function isDirectorRunning() {
  * 동작하고, 이동한 곳에서는 토큰이 없어 다시 랜딩으로 되돌려진다 — 첫 장면에서
  * 제자리를 돈다. 그때만 새로고침을 끼워 화면째로 지운다.
  */
-export function startDirector() {
+export function startDirector({ loginPressed: pressed = false }: { loginPressed?: boolean } = {}) {
   if (running) return;
+  loginPressed = pressed;
 
   if (localStorage.getItem('accessToken')) {
     sessionStorage.setItem(AUTORUN_KEY, '1');
@@ -385,21 +403,49 @@ export function startDirector() {
   void runScenes();
 }
 
-/** 새로고침 뒤 표식이 있으면 이어서 돌린다 */
+/**
+ * 새로고침 뒤 표식이 있으면 이어서 돌린다. 이어받았으면 true.
+ *
+ * 새로고침으로 랜딩부터 다시 뜨므로 시작 버튼은 아직 안 눌린 것이다 — 첫 장면이 누른다.
+ */
 export function resumeDirectorIfRequested() {
-  if (sessionStorage.getItem(AUTORUN_KEY) !== '1') return;
+  if (sessionStorage.getItem(AUTORUN_KEY) !== '1') return false;
   sessionStorage.removeItem(AUTORUN_KEY);
   resetDemoState();
-  void runScenes();
+  loginPressed = false;
+  void runScenes({ cursorOffscreen: true });
+  return true;
 }
 
-async function runScenes() {
+/**
+ * 랜딩 주소에 `?autoplay` 가 있으면 혼자 시작한다.
+ *
+ * 녹화가 이 길로 들어온다. 시작 버튼을 녹화 도구가 누르면 첫 장면 전에 커서 없이 버튼이
+ * 눌려 버린다 — 커서는 재생이 시작돼야 생기기 때문이다. 재생이 먼저 시작하면 커서가
+ * 화면 밖에서 들어와 그 버튼을 누르는 것부터 담을 수 있다.
+ *
+ * 랜딩 문구가 다 올라온 뒤에 시작한다. 그 전에 자막을 띄우면 떠오르는 문구와 겹친다.
+ */
+export function startDirectorOnAutoplay() {
+  if (running || window.location.pathname !== '/') return;
+  if (!new URLSearchParams(window.location.search).has('autoplay')) return;
+
+  void (async () => {
+    await waitUntil('랜딩', isLandingSettled, 30000);
+    if (running) return;
+    resetDemoState();
+    loginPressed = false;
+    await runScenes({ cursorOffscreen: true });
+  })();
+}
+
+async function runScenes({ cursorOffscreen = false }: { cursorOffscreen?: boolean } = {}) {
   if (running) return;
 
   running = true;
   error = null;
   emit();
-  showCursor();
+  showCursor({ offscreen: cursorOffscreen });
 
   try {
     for (const scene of scenes) {

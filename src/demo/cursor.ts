@@ -67,11 +67,22 @@ function ensure() {
   document.body.appendChild(root);
 }
 
-export function showCursor() {
+/**
+ * 커서를 띄운다.
+ *
+ * `offscreen` 이면 화면 오른쪽 아래 바깥에 둔다. 첫 동작이 그 자리에서 미끄러져 들어오므로
+ * 마우스를 화면으로 가져오는 것처럼 보인다. 아니면 가운데 아래쯤에서 시작한다 — 어느
+ * 쪽이든 갑자기 버튼 위에 나타나면 순간이동처럼 보인다.
+ */
+export function showCursor({ offscreen = false }: { offscreen?: boolean } = {}) {
   ensure();
   if (!root) return;
-  // 첫 등장은 화면 가운데 아래쯤에서 시작한다 — 갑자기 버튼 위에 나타나면 순간이동처럼 보인다
-  if (pointerX === 0 && pointerY === 0) {
+  if (offscreen) {
+    pointerX = window.innerWidth + SIZE * 2;
+    pointerY = window.innerHeight * 0.86;
+    root.style.transition = 'none';
+    root.style.transform = `translate3d(${pointerX}px, ${pointerY}px, 0)`;
+  } else if (pointerX === 0 && pointerY === 0) {
     pointerX = window.innerWidth * 0.5;
     pointerY = window.innerHeight * 0.72;
     root.style.transform = `translate3d(${pointerX}px, ${pointerY}px, 0)`;
@@ -142,12 +153,12 @@ export function hideCursor() {
  * 거리에 따라 시간을 달리한다 — 가까운 곳까지 늘 같은 시간을 쓰면 굼떠 보이고,
  * 먼 곳을 짧게 가면 순간이동으로 읽힌다.
  */
-export async function moveCursorTo(x: number, y: number) {
+export async function moveCursorTo(x: number, y: number, durationMs?: number) {
   ensure();
   if (!root) return;
 
   const distance = Math.hypot(x - pointerX, y - pointerY);
-  const duration = Math.min(280, Math.max(95, Math.round(distance * 0.34)));
+  const duration = durationMs ?? Math.min(280, Math.max(95, Math.round(distance * 0.34)));
 
   root.style.transition = `transform ${duration}ms cubic-bezier(0.4, 0, 0.15, 1), opacity 160ms ease`;
   root.style.transform = `translate3d(${x}px, ${y}px, 0)`;
@@ -183,7 +194,11 @@ export async function pressCursor() {
 }
 
 /** 요소 위로 옮긴다. iframe 안쪽이면 프레임 위치만큼 더한다 */
-export async function moveCursorToElement(element: Element, frame?: Element | null) {
+export async function moveCursorToElement(
+  element: Element,
+  frame?: Element | null,
+  durationMs?: number,
+) {
   const rect = element.getBoundingClientRect();
   if (rect.width === 0 && rect.height === 0) return;
 
@@ -191,5 +206,5 @@ export async function moveCursorToElement(element: Element, frame?: Element | nu
   const x = (offset?.left ?? 0) + rect.left + rect.width / 2;
   const y = (offset?.top ?? 0) + rect.top + rect.height / 2;
 
-  await moveCursorTo(x, y);
+  await moveCursorTo(x, y, durationMs);
 }

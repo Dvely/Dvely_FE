@@ -166,7 +166,8 @@ describe('시연 어댑터', () => {
     const session = await api.preview.getProjectPreviewSession(projectId);
     expect(session.status).toBe('ACTIVE');
     const access = await api.preview.postPreviewSessionAccess(session.sessionId ?? '');
-    expect(access.previewUrl).toContain('/demo-preview/');
+    // 운영 게이트웨이와 같은 모양이어야 주소창에 찍힐 때 실제와 어긋나지 않는다
+    expect(new URL(access.previewUrl).pathname).toMatch(/^\/api\/v1\/previews\/[^/]+\/[^/]+\/$/);
   });
 
   it('인프라 요청은 클라우드 연결을 기다렸다가 과금 자원 승인을 만든다', async () => {
