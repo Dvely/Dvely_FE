@@ -250,7 +250,9 @@ function ProjectDetailPage({
                       {latestCommit.sha}
                     </p>
                     <p className="mt-1 text-[12px] text-[#64748b]">{latestCommit.message}</p>
-                    <p className="mt-1 text-[12px] text-[#94a3b8]">{latestCommit.committedAt}</p>
+                    <p className="mt-1 text-[12px] text-[#94a3b8]">
+                      {formatActivityTime(latestCommit.committedAt)}
+                    </p>
                   </>
                 ) : (
                   <p className="mt-3 text-[12px] text-[#94a3b8]">표시할 커밋이 없습니다.</p>

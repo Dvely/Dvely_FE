@@ -7,6 +7,7 @@ import { getProjectInfrastructureSettings } from '@/api/projects';
 import { useCurrentPath } from '@/hooks/useLeaveForSetup';
 import ServerLogViewer from '@/components/layout/project/ServerLogViewer';
 import { describeProvisionFailure } from '@/lib/provisionFailure';
+import { formatActivityTime } from '@/lib/projectActivity';
 import { toSafeHttpUrl } from '@/lib/safeUrl';
 import { extractApiErrorMessage } from '@/utils/response';
 import type { ServerLogSource } from '@/types/server.type';
@@ -285,7 +286,7 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
                       <span
                         title={
                           server.lastHealthCheckAt
-                            ? `마지막 확인 ${server.lastHealthCheckAt}`
+                            ? `마지막 확인 ${formatActivityTime(server.lastHealthCheckAt)}`
                             : undefined
                         }
                         className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${HEALTH_BADGE[healthState].className}`}

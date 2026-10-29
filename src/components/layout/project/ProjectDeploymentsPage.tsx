@@ -12,6 +12,7 @@ import {
   postProjectDeploymentCreate,
   useProjectDeploymentListQuery,
 } from '@/api/deployments';
+import { formatActivityTime } from '@/lib/projectActivity';
 
 type ProjectDeploymentsPageProps = {
   projectId: number;
@@ -305,7 +306,7 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
                         {item.versionLabel || item.deployTargetType}
                       </p>
                       <p className="mt-1 text-[11px] text-[#94a3b8]">
-                        {describeDeploymentStatus(item)} · {item.triggeredAt}
+                        {describeDeploymentStatus(item)} · {formatActivityTime(item.triggeredAt)}
                       </p>
                       {failureReason(item) ? (
                         <p className="mt-1 text-[11px] leading-relaxed text-[#b91c1c]">
