@@ -1,5 +1,6 @@
 import AppHeader from '@/components/common/AppHeader';
 import HomeExploreSection from '@/components/layout/home/HomeExploreSection';
+import HomeGettingStartedCard from '@/components/layout/home/HomeGettingStartedCard';
 import HomePromptHero from '@/components/layout/home/HomePromptHero';
 
 function HomePage() {
@@ -8,6 +9,7 @@ function HomePage() {
       <AppHeader />
       <div className="mx-auto w-full max-w-[1280px] flex-1 px-4 pb-12 sm:px-6">
         <HomePromptHero />
+        <HomeGettingStartedCard />
         <HomeExploreSection />
       </div>
     </div>

@@ -88,7 +88,7 @@
       "items": {
         "gettingStarted": {
           "title": "はじめに",
-          "description": "ホームでプロンプトを入力して最初のプロジェクトを作成しましょう。"
+          "description": "ステップごとの「はじめに」ガイドをホームとサイドバーにもう一度表示します。"
         },
         "projects": {
           "title": "プロジェクト管理",

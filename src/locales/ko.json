@@ -88,7 +88,7 @@
       "items": {
         "gettingStarted": {
           "title": "시작하기",
-          "description": "홈에서 프롬프트를 입력해 첫 프로젝트를 만들어 보세요."
+          "description": "단계별 시작하기 가이드를 홈과 사이드바에 다시 띄웁니다."
         },
         "projects": {
           "title": "프로젝트 관리",

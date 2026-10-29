@@ -88,7 +88,7 @@
       "items": {
         "gettingStarted": {
           "title": "Getting started",
-          "description": "Enter a prompt on the home page to create your first project."
+          "description": "Show the step-by-step getting started guide on the home page and sidebar again."
         },
         "projects": {
           "title": "Project management",

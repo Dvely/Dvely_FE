@@ -1453,9 +1453,13 @@ function AgentConversationPanel({
   }, [scrollToBottom]);
 
   const showMessageSkeletons = isMessagesLoading && displayMessages.length === 0;
+  /*
+    대화가 하나도 없는 프로젝트에서도 띄운다. 예전에는 "새 대화" 를 눌렀을 때만 떠서, 막
+    만든 프로젝트에 처음 들어온 사람에게는 빈 화면만 보였다 — 가장 안내가 필요한 순간이다.
+  */
   const showWelcome =
     !showMessageSkeletons &&
-    isNewConversation &&
+    (isNewConversation || conversationId == null) &&
     !isSending &&
     !isAssistantReplying &&
     displayMessages.length === 0;
@@ -1560,6 +1564,22 @@ function AgentConversationPanel({
               <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3.5 py-3 text-[13px] leading-relaxed text-[#475569]">
                 안녕하세요! <span className="font-semibold text-[#0f172a]">{projectName}</span>{' '}
                 워크스페이스입니다. 메시지를 입력하면 대화가 시작됩니다.
+                {/*
+                  무엇을 적어야 하는지와, 보내면 무슨 일이 일어나는지. 뒤의 것은 기본 승인
+                  정책 기준이다(프로젝트를 만들면 모두 켜져 있다). 끄면 묻지 않고 진행한다.
+                */}
+                <p className="mt-2.5 text-[12px] font-semibold text-[#334155]">
+                  이렇게 적으면 원하는 것에 가깝게 만듭니다
+                </p>
+                <ul className="mt-1 flex flex-col gap-0.5 text-[12px] text-[#64748b]">
+                  <li>· 누가 무엇을 하는 서비스인지 — "팀원이 할 일을 나눠 맡는 앱"</li>
+                  <li>· 꼭 있어야 할 기능 — 회원가입, 마감일, 검색 같은 것</li>
+                  <li>· 원하는 분위기 — "차분한 남색, 카드형 목록"</li>
+                </ul>
+                <p className="mt-2 text-[12px] text-[#64748b]">
+                  보내면 에이전트가 모르는 것은 먼저 묻고, 계획을 보여 주고 승인을 받은 뒤 만듭니다.
+                  결과는 오른쪽 프리뷰에서 바로 확인할 수 있습니다.
+                </p>
               </div>
             ) : null}
             {showMessageSkeletons
