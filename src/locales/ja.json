@@ -98,6 +98,10 @@
           "title": "GitHub連携",
           "description": "GitHub Appの権限を許可するとリポジトリを接続してコードを同期できます。"
         },
+        "agentConnect": {
+          "title": "ターミナル・コーディングエージェント連携",
+          "description": "Claude Code・Codex から Qeploy を MCP ツールとして使えます。プロジェクト概要またはここでトークンを発行して接続します。"
+        },
         "account": {
           "title": "アカウントと設定",
           "description": "プロフィール、言語、テーマなどのアカウント設定を変更できます。"
