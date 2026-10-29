@@ -8,6 +8,7 @@ import {
   isFailureEvent,
   selectVisibleEvents,
 } from '@/components/layout/project/agentTaskEvent.utils';
+import { formatSeoulHourMinute } from '@/lib/seoulTime';
 
 /**
  * 지금 어디까지 왔는지.
@@ -26,9 +27,12 @@ const QUIET_SECONDS_BEFORE_ELAPSED = 10;
 /**
  * 이 줄이 뜬 뒤로 얼마나 조용했는지.
  *
- * 서버가 적어 보낸 `createdAt` 이 아니라 **화면에 뜬 시각**부터 센다. 서버 시각에는
- * 오프셋이 없어(formatEventTime 참고) 브라우저 시계와 빼면 시차만큼 엉뚱한 값이 나온다.
- * 여기서 필요한 것은 절대 시각이 아니라 "멈춘 건가" 에 답할 숫자라서 그걸로 충분하다.
+ * 서버가 적어 보낸 `createdAt` 이 아니라 **화면에 뜬 시각**부터 센다.
+ *
+ * 예전 주석은 "서버 시각에 오프셋이 없어서" 라고 적었는데 그 전제는 더 이상 사실이
+ * 아니다 — 서버가 응답 직렬화 때 KST 오프셋을 붙이므로 빼도 맞는 값이 나온다. 그래도
+ * 마운트 기준을 유지하는 이유는 여기서 필요한 것이 절대 시각이 아니라 **"멈춘 건가"에
+ * 답할 숫자**이기 때문이다. 서버·브라우저 시계가 조금 어긋나도 이 숫자는 흔들리지 않는다.
  *
  * 새 이벤트가 오면 호출부가 `key` 를 바꿔 이 조각을 다시 마운트한다 — 그래서 여기에는
  * 초기화가 없다. effect 안에서 상태를 되돌리면 이벤트가 올 때마다 렌더가 한 번씩 더 돈다.
@@ -44,12 +48,6 @@ function ElapsedSinceMount() {
   if (seconds < QUIET_SECONDS_BEFORE_ELAPSED) return null;
 
   return <span className="ml-1.5 text-[11px] text-[#94a3b8]">{formatElapsed(seconds)}</span>;
-}
-
-/** 이벤트에 붙은 시각. 서버가 오프셋 없이 보내므로 벽시계 그대로 읽는다 */
-function formatEventTime(createdAt: string): string {
-  const match = /T(\d{2}):(\d{2})/.exec(createdAt);
-  return match ? `${match[1]}:${match[2]}` : '';
 }
 
 type AgentTaskTimelineProps = {
@@ -121,7 +119,7 @@ function AgentTaskTimeline({ events }: AgentTaskTimelineProps) {
               }`}
             >
               <span className="shrink-0 font-mono text-[11px] text-[#cbd5e1]">
-                {formatEventTime(event.createdAt)}
+                {formatSeoulHourMinute(event.createdAt)}
               </span>
               {/*
                 단계 아이콘. 모르는 종류면 점으로 떨어진다 — 줄 시작이 늘 같은 폭이라야
