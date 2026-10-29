@@ -14,6 +14,7 @@ function HomeGettingStartedCard() {
   return (
     <section
       aria-label="시작하기"
+      data-demo="guide-card"
       className="mx-auto mt-6 w-full max-w-[780px] rounded-2xl border border-[#e2e8f0] bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]"
     >
       <GettingStartedChecklist

@@ -10,7 +10,7 @@
  *
  * 상태를 몰래 바꾸지 않는다. 화면의 컨트롤을 실제로 찾아 누른다(dom.ts 참고).
  */
-import { setSceneSpeed } from '@/demo/config';
+import { setClockRate, setSceneSpeed } from '@/demo/config';
 import { resetDemoState } from '@/demo/scenario';
 import { hideCursor, showCursor } from '@/demo/cursor';
 import { clearAppLocalStorage } from '@/lib/clearAppStorage';
@@ -40,13 +40,24 @@ export type Caption = {
 
 export type Scene = {
   caption: Caption;
-  /** 시나리오 시간을 이만큼 접는다. 1이면 실시간 */
-  speed?: number;
+  /**
+   * 화면 시계 배속. 이 장면 동안 화면에 찍히는 시각이 이만큼 빨리 가고, 자막에도 같은 ×N 이
+   * 뜬다(config.ts 의 화면 시계 참고). 1이면 실시간 — 사람이 직접 누르고 적는 장면이다.
+   *
+   * 에이전트가 일하는 장면만 접는다. 실제로 걸리는 시간에 맞춘다: 코드 생성 수 분,
+   * RDS·EC2 5~10분, 배포 수 분.
+   */
+  timeScale?: number;
+  /**
+   * 시나리오 타이머를 줄이는 정도. 화면에 약속하는 값이 아니라 장면 길이를 맞추는 내부
+   * 장치다 — 보는 사람에게 드러나는 시간은 timeScale 이 정한다.
+   */
+  pace?: number;
   run: () => Promise<void>;
 };
 
 const PROMPT_APP =
-  '회원가입과 로그인이 되는 할 일 관리 웹앱을 만들어줘. 로그인하면 내 할 일만 보이게.';
+  '팀이 같이 쓰는 할 일 관리 앱을 만들어줘. 회원가입·로그인, 마감일·우선순위·카테고리, 진행률이 보이게. 차분한 남색 카드형으로.';
 const PROMPT_INFRA = '내 AWS 계정에 백엔드 서버랑 데이터베이스를 만들어서 진짜로 가입되게 해줘.';
 const PROMPT_SHIP = '배포하고 todo-together.qeploy.com 도메인 붙여줘.';
 
@@ -129,55 +140,71 @@ export const scenes: Scene[] = [
     },
   },
   {
-    caption: { title: '프로젝트 생성 기능', sub: '이름만 정하면 바로 시작합니다' },
+    /*
+      홈의 시작하기. GitHub 를 연결했으니 첫 단계가 채워져 있고, 다음 할 일(프로젝트
+      만들기)이 펼쳐져 있다. 그 버튼을 눌러 다음 장면으로 간다 — 가이드가 실제로 길을
+      여는 모습이 이 장면의 내용이다.
+    */
+    caption: { title: '시작 가이드 기능', sub: '무엇부터 할지 화면이 알려 줍니다' },
     run: async () => {
-      await click('nav-project');
-      await read(550);
-      await click('project-new');
-      await read(450);
-      await type('project-name', '할 일 관리 앱', 20);
-      await read(400);
-      await click('project-create');
-      await waitUntil('프로젝트 생성됨', () => find('project-card') != null, 20000);
-      await read(700);
+      await waitUntil(
+        '첫 단계 완료',
+        () => find('guide-card')?.querySelector('[data-step="github"][data-done]') != null,
+        15000,
+      );
+      await show('guide-card');
+      await read(1500);
+      await click('guide-next');
+      await waitUntil('프로젝트 목록', () => window.location.pathname === '/project', 15000);
+      await read(350);
     },
   },
   {
-    caption: { title: '내 AI 키 연결 기능', sub: 'AI 사용량은 내 계정으로 청구됩니다' },
+    caption: { title: '프로젝트 생성 기능', sub: '이름만 정하면 바로 시작합니다' },
+    run: async () => {
+      await click('project-new');
+      await read(450);
+      await type('project-name', '함께 할 일', 20);
+      await read(400);
+      await click('project-create');
+      await waitUntil('프로젝트 생성됨', () => find('project-card') != null, 20000);
+      await read(600);
+    },
+  },
+  {
+    caption: {
+      title: '내 AI 키 연결 기능',
+      sub: '대화 옆에서 등록하고, 사용량은 내 계정으로 청구됩니다',
+    },
     run: async () => {
       /*
         운영자 키는 없다. 본인 키를 넣기 전에는 에이전트를 부를 수 없고, 채팅이 그
-        자리에서 등록하러 가라고 안내한다 — 처음 쓰는 사람이 실제로 밟는 길이다.
+        자리에서 등록하라고 안내한다 — 처음 쓰는 사람이 실제로 밟는 길이다.
+
+        등록은 대화 옆 시트에서 끝난다. 화면을 옮기지 않으므로 저장하면 시트가 닫히고 그
+        자리의 안내가 "등록했습니다" 로 바뀐다.
       */
       await click('project-card');
-      await read(500);
+      await read(450);
       await click('open-agent');
       await waitUntil('키 안내', () => find('ai-key-register-link') != null, 20000);
-      await read(1000);
+      // 처음 들어온 대화에는 무엇을 적으면 되는지가 먼저 보인다
+      await read(1300);
       await click('ai-key-register-link');
       await click('ai-key-open-ANTHROPIC');
-      await read(350);
-      await type('ai-key-input', DEMO_AI_KEY, 9);
       await read(300);
+      await type('ai-key-input', DEMO_AI_KEY, 9);
+      await read(250);
       await click('ai-key-save');
-      await waitUntil('키 저장', () => pageHasText('키를 저장했습니다'), 15000);
-      /*
-        여기서 아무것도 누르지 않는다. 설정은 떠나온 대화를 기억하고 있다가 저장이
-        끝나면 그리로 돌려보낸다 — 프로젝트를 다시 찾아 들어가지 않는 것이 이 장면이다.
-      */
-      await waitUntil(
-        '대화로 복귀',
-        () => window.location.pathname.endsWith('/agent') && find('chat-input') != null,
-        15000,
-      );
-      // 돌아온 대화에서 안내가 걷히고 제공자(Claude Code)가 잡힌 것을 보여 준다
-      await read(950);
+      await waitUntil('키 등록 반영', () => pageHasText('키를 등록했습니다'), 15000);
+      await read(1100);
     },
   },
   {
     caption: { title: 'AI 코드 생성 기능', sub: '말로 적으면 앱이 만들어집니다' },
+    timeScale: 10,
     run: async () => {
-      await type('chat-input', PROMPT_APP, 13);
+      await type('chat-input', PROMPT_APP, 11);
       await read(380);
       await click('chat-send');
     },
@@ -194,12 +221,14 @@ export const scenes: Scene[] = [
   },
   {
     caption: { title: '변경 승인 기능', sub: '실행 전에 무엇을 할지 확인합니다' },
+    timeScale: 40,
     run: async () => {
       await approve(1);
     },
   },
   {
     caption: { title: '저장소 연결 기능', sub: '만든 결과를 내 GitHub 저장소에 남깁니다' },
+    timeScale: 20,
     run: async () => {
       await approve(1);
       await waitUntil('프리뷰', () => document.querySelector('iframe') != null, 30000);
@@ -220,20 +249,21 @@ export const scenes: Scene[] = [
   },
   {
     caption: { title: '인프라 자동 구성 기능', sub: '채팅으로 서버와 DB를 요청합니다' },
+    timeScale: 10,
     run: async () => {
       await sendChat(PROMPT_INFRA);
       // 연결된 AWS 계정이 없으면 에이전트가 여기서 멈추고 안내를 편다
       await waitUntil('클라우드 안내', () => find('cloud-guide-register') != null, 25000);
-      await read(1400);
+      await read(1300);
     },
   },
   {
-    caption: { title: 'BYOC 연결 기능', sub: '자원은 내 AWS 계정에 만들어집니다' },
+    caption: { title: 'BYOC 연결 기능', sub: '내 AWS 계정을 대화 옆에서 등록합니다' },
     run: async () => {
-      // 안내에서 바로 등록 화면으로 간다. 떠나온 대화는 설정이 기억한다
+      // 안내에서 바로 시트를 연다. 대화와 안내는 그대로 왼쪽에 남는다
       await click('cloud-guide-register');
       await waitUntil('등록 폼', () => find('cloud-name') != null, 20000);
-      await read(500);
+      await read(450);
       await type('cloud-name', '내 AWS 계정', 16);
       await fill('cloud-region', 'ap-northeast-2');
       await fill('cloud-key', 'AKIAIOSFODNN7EXAMPLE');
@@ -241,21 +271,17 @@ export const scenes: Scene[] = [
       await fill('cloud-account', '481019284412');
       await read(450);
       await click('cloud-create');
-      // 권한 검증이 끝나 쓸 수 있는 연결이 되면 설정이 알아서 대화로 돌려보낸다
-      await waitUntil('검증 끝', () => pageHasText('권한 확인까지 마쳤습니다'), 25000);
-      await waitUntil(
-        '대화로 복귀',
-        () => window.location.pathname.endsWith('/agent') && find('cloud-guide-use') != null,
-        15000,
-      );
+      // 등록은 형식만 본 것이다. 권한 검증이 끝나야 이 프로젝트에 붙일 수 있다
+      await waitUntil('검증 끝', () => find('cloud-sheet-use') != null, 25000);
     },
   },
   {
     caption: { title: '프로젝트 연결 기능', sub: '어느 계정에 만들지 프로젝트마다 고릅니다' },
     run: async () => {
-      // 돌아온 자리의 안내에서 그대로 고르고 이어간다. 인프라 탭에 다녀오지 않는다
+      await show('cloud-sheet-use');
       await read(900);
-      await click('cloud-guide-use');
+      await click('cloud-sheet-use');
+      // 시트가 닫히면 안내에 연결이 붙어 있고, 남은 일은 다시 시도뿐이다
       await waitUntil('연결됨', () => pageHasText('이 프로젝트에 연결됨'), 20000);
       await read(800);
       await click('cloud-guide-retry');
@@ -263,6 +289,7 @@ export const scenes: Scene[] = [
   },
   {
     caption: { title: '백엔드 연동 기능', sub: '프리뷰가 서버로 바뀌어 실제로 가입됩니다' },
+    timeScale: 20,
     run: async () => {
       await waitUntil('서버형 프리뷰', () => pageHasText('프리뷰에서 실제로 가입'), 30000);
       await read(700);
@@ -284,15 +311,26 @@ export const scenes: Scene[] = [
   },
   {
     caption: { title: '과금 자원 승인 기능', sub: '내 AWS에 만들기 전 확인합니다' },
-    speed: 5,
+    // RDS·EC2 를 만드는 5~10분을 접는다
+    timeScale: 100,
+    pace: 5,
     run: async () => {
+      /*
+        처음 보는 승인에는 무엇이 되는지 설명이 붙어 있다. 과금이 걸린 첫 승인에서 한 번
+        펼쳐 읽는다.
+      */
+      await waitUntil('승인 카드', () => find('approval-help') != null, 30000);
+      await show('approval-card');
+      await click('approval-help');
+      await read(2000);
       await approve(2);
       await read(500);
     },
   },
   {
     caption: { title: '배포·도메인 연결 기능', sub: '내 AWS에 올리고 내 주소를 붙입니다' },
-    speed: 5,
+    timeScale: 30,
+    pace: 5,
     run: async () => {
       await sendChat(PROMPT_SHIP);
       await approve(2);
@@ -305,10 +343,16 @@ export const scenes: Scene[] = [
     run: async () => {
       // 목록에서 프로젝트를 골라 들어간다 — 사람이 다음에 할 일이 그것이다
       await click('nav-project');
-      await read(500);
+      await read(450);
       await click('project-card');
       await waitUntil('개요', () => pageHasText('현재 URL'), 20000);
+      await read(1400);
+      // 시작하기를 열면 일곱 단계가 다 채워져 있다
+      await click('guide-open');
+      await waitUntil('시작하기 완료', () => pageHasText('모두 마쳤습니다'), 15000);
       await read(1500);
+      await click('guide-open');
+      await read(300);
     },
   },
   {
@@ -346,7 +390,8 @@ export const scenes: Scene[] = [
 export type DirectorSnapshot = {
   running: boolean;
   caption: Caption | null;
-  speed: number;
+  /** 지금 장면의 화면 시계 배속. 자막의 ×N 이 이것이다 */
+  timeScale: number;
   error: string | null;
 };
 
@@ -356,12 +401,12 @@ const AUTORUN_KEY = 'demo-autorun';
 
 let running = false;
 let caption: Caption | null = null;
-let speed = 1;
+let timeScale = 1;
 let error: string | null = null;
 const listeners = new Set<Listener>();
 
 function snapshot(): DirectorSnapshot {
-  return { running, caption, speed, error };
+  return { running, caption, timeScale, error };
 }
 
 function emit() {
@@ -450,8 +495,9 @@ async function runScenes({ cursorOffscreen = false }: { cursorOffscreen?: boolea
   try {
     for (const scene of scenes) {
       caption = scene.caption;
-      speed = scene.speed ?? 1;
-      setSceneSpeed(speed);
+      timeScale = scene.timeScale ?? 1;
+      setSceneSpeed(scene.pace ?? 1);
+      setClockRate(timeScale);
       emit();
       await scene.run();
     }
@@ -462,9 +508,10 @@ async function runScenes({ cursorOffscreen = false }: { cursorOffscreen?: boolea
   } finally {
     hideCursor();
     setSceneSpeed(1);
+    setClockRate(1);
     running = false;
     caption = null;
-    speed = 1;
+    timeScale = 1;
     emit();
   }
 }

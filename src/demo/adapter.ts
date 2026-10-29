@@ -34,6 +34,7 @@ import {
   ensureBackendEnvVars,
   findApproval,
   getTask,
+  expiresIso,
   iso,
   markGithubAppInstalled,
   activeTask,
@@ -100,9 +101,9 @@ function latestCommit() {
   if (!state.repositoryBound) return null;
   return {
     sha: '4f2c91ae8d3b7',
-    message: 'feat: 회원가입·로그인 화면과 할 일 목록 추가',
+    message: 'feat: 할 일 카드(마감일·우선순위·카테고리)와 진행률 추가',
     author: DEMO.username,
-    committedAt: iso(-1000 * 60 * 3),
+    committedAt: state.repositoryBoundAt ?? iso(),
   };
 }
 
@@ -139,7 +140,7 @@ function previewSession() {
     projectId: DEMO.projectId,
     taskId: null,
     status: 'ACTIVE',
-    expiresAt: iso(1000 * 60 * 55),
+    expiresAt: expiresIso(1000 * 60 * 55),
     failureReason: '',
   };
 }
@@ -153,7 +154,7 @@ function activityLogs() {
     {
       type: 'PROJECT_CREATED',
       message: `프로젝트가 생성되었습니다: ${DEMO.projectName}`,
-      occurredAt: iso(-1000 * 60 * 12),
+      occurredAt: state.projectCreatedAt ?? iso(),
     },
   ];
   for (const approval of [...state.approvals].reverse()) {
@@ -304,6 +305,7 @@ const routes: [string, RegExp, Handler][] = [
     /^\/projects$/,
     (ctx) => {
       state.projectCreated = true;
+      state.projectCreatedAt ??= iso();
       const name =
         typeof ctx.body.name === 'string' && ctx.body.name ? ctx.body.name : DEMO.projectName;
       return { projectId: DEMO.projectId, name, status: 'ACTIVE' };
@@ -317,7 +319,7 @@ const routes: [string, RegExp, Handler][] = [
         fullName: DEMO.repositoryFullName,
         name: DEMO.repositoryName,
         owner: DEMO.repositoryOwner,
-        description: '말로 만든 할 일 관리 앱',
+        description: '말로 만든 팀 할 일 앱',
         visibility: 'PRIVATE',
         defaultBranch: 'main',
         updatedAt: iso(-1000 * 60 * 5),
@@ -334,7 +336,7 @@ const routes: [string, RegExp, Handler][] = [
       startMode: 'blank',
       templateType: null,
       draftMode: 'fast',
-      createdAt: iso(-1000 * 60 * 12),
+      createdAt: state.projectCreatedAt ?? iso(),
       updatedAt: iso(),
     }),
   ],
@@ -402,8 +404,8 @@ const routes: [string, RegExp, Handler][] = [
       repositoryVisibility: 'PRIVATE',
       bindingStatus: state.repositoryBound ? 'BOUND' : 'NOT_BOUND',
       repositoryHealth: 'HEALTHY',
-      connectedAt: state.repositoryBound ? iso(-1000 * 60 * 4) : null,
-      lastSyncedAt: state.repositoryBound ? iso(-1000 * 60 * 3) : null,
+      connectedAt: state.repositoryBoundAt,
+      lastSyncedAt: state.repositoryBoundAt,
     }),
   ],
   [
@@ -474,8 +476,23 @@ const routes: [string, RegExp, Handler][] = [
   ['DELETE', /^\/projects\/\d+\/settings\/cost-budget$/, () => null],
 
   /* ----- conversations ----- */
-  ['GET', /^\/projects\/\d+\/conversations$/, () => [conversation()]],
-  ['POST', /^\/projects\/\d+\/conversations$/, () => conversation()],
+  /*
+    대화는 첫 요청을 보낼 때 생긴다. 프로젝트를 만들자마자 대화가 하나 있는 것처럼 굴면
+    채팅 첫 화면(작성 팁)이 안 뜨고, 시작하기의 "첫 요청" 단계가 저절로 끝난다.
+  */
+  [
+    'GET',
+    /^\/projects\/\d+\/conversations$/,
+    () => (state.conversationCreatedAt ? [conversation()] : []),
+  ],
+  [
+    'POST',
+    /^\/projects\/\d+\/conversations$/,
+    () => {
+      state.conversationCreatedAt ??= iso();
+      return conversation();
+    },
+  ],
   ['GET', /^\/conversations\/\d+$/, () => conversation()],
   ['DELETE', /^\/conversations\/\d+$/, () => null],
   ['GET', /^\/conversations\/\d+\/messages$/, () => state.messages],
@@ -499,6 +516,7 @@ const routes: [string, RegExp, Handler][] = [
       }
       const task = createTask(taskKindFor(content));
       state.projectCreated = true;
+      state.projectCreatedAt ??= iso();
       return addMessage('user', content, task.taskId);
     },
   ],
@@ -518,6 +536,7 @@ const routes: [string, RegExp, Handler][] = [
         throw badRequest('본인 AI API 키를 먼저 등록해 주세요.');
       }
       state.projectCreated = true;
+      state.projectCreatedAt ??= iso();
       const content = String(ctx.body.content ?? '');
       const kind = taskKindFor(content);
       const task = createTask(kind);
@@ -627,7 +646,7 @@ const routes: [string, RegExp, Handler][] = [
     () => ({
       sessionId: DEMO.previewSessionId,
       previewUrl: demoPreviewUrl(),
-      expiresAt: iso(1000 * 60 * 55),
+      expiresAt: expiresIso(1000 * 60 * 55),
     }),
   ],
   [
@@ -642,7 +661,7 @@ const routes: [string, RegExp, Handler][] = [
       oomKilled: false,
       exitCode: null,
       startedAt: iso(-1000 * 60 * 2),
-      expiresAt: iso(1000 * 60 * 55),
+      expiresAt: expiresIso(1000 * 60 * 55),
       resources: {
         memoryUsageBytes: 214958080,
         memoryLimitBytes: 536870912,
@@ -1310,7 +1329,7 @@ function conversation() {
     projectId: DEMO.projectId,
     deleted: false,
     deletedAt: null,
-    createdAt: iso(-1000 * 60 * 12),
+    createdAt: state.conversationCreatedAt ?? iso(),
     updatedAt: iso(),
   };
 }

@@ -23,11 +23,25 @@ import {
 /** 접고 올리는 데 걸리는 시간. 너무 짧으면 깜빡임이고 길면 굼뜨다 */
 const FADE_MS = 240;
 
+/** 오른쪽 시트의 폭(SideSheet 의 max-w). 시트가 열리면 이만큼 비켜선다 */
+const SHEET_WIDTH = 460;
+
 function DemoCaption() {
   /** 지금 그리고 있는 자막. 다음 것이 와도 접히는 동안은 이쪽이 남는다 */
-  const [shown, setShown] = useState<{ caption: Caption; speed: number } | null>(null);
+  const [shown, setShown] = useState<{ caption: Caption; timeScale: number } | null>(null);
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /*
+    시트가 열려 있으면 그 왼쪽으로 비켜선다. 시트의 버튼(연결 등록·이 프로젝트에 쓰기)이
+    바로 오른쪽 아래에 있어서, 제자리에 두면 누르는 순간을 자막이 가린다.
+  */
+  const [sheetOpen, setSheetOpen] = useState(false);
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setSheetOpen(document.querySelector('[data-demo="side-sheet"]') != null);
+    }, 120);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     let timer = 0;
@@ -54,7 +68,7 @@ function DemoCaption() {
       setVisible(false);
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
-        setShown(next.caption ? { caption: next.caption, speed: next.speed } : null);
+        setShown(next.caption ? { caption: next.caption, timeScale: next.timeScale } : null);
         setVisible(next.caption != null);
       }, FADE_MS);
     });
@@ -89,11 +103,12 @@ function DemoCaption() {
   return (
     <div
       data-demo-caption
-      className="pointer-events-none fixed bottom-[76px] right-6 z-[200]"
+      className="pointer-events-none fixed bottom-[76px] z-[200]"
       style={{
+        right: sheetOpen ? SHEET_WIDTH + 24 : 24,
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(6px)',
-        transition: `opacity ${FADE_MS}ms ease, transform ${FADE_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+        transition: `opacity ${FADE_MS}ms ease, transform ${FADE_MS}ms cubic-bezier(0.22, 1, 0.36, 1), right 280ms cubic-bezier(0.22, 1, 0.36, 1)`,
       }}
     >
       <p className="flex max-w-[560px] items-baseline gap-2.5 rounded-full bg-white px-6 py-3 shadow-[0_4px_20px_rgba(15,23,42,0.16),0_1px_3px_rgba(15,23,42,0.1)]">
@@ -103,9 +118,9 @@ function DemoCaption() {
         {shown.caption.sub ? (
           <span className="text-[13.5px] font-medium text-[#64748b]">{shown.caption.sub}</span>
         ) : null}
-        {shown.speed > 1 ? (
+        {shown.timeScale > 1 ? (
           <span className="whitespace-nowrap font-mono text-[11px] font-semibold text-[#94a3b8]">
-            ×{shown.speed}
+            ×{shown.timeScale}
           </span>
         ) : null}
       </p>

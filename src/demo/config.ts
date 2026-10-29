@@ -35,3 +35,44 @@ export function getSceneSpeed() {
 export function demoMs(base: number) {
   return Math.max(16, Math.round(base / (BASE_SPEED * sceneSpeed)));
 }
+
+/*
+  화면 시계.
+
+  시연은 실제로 수십 분 걸리는 일(코드 생성 수 분, RDS·EC2 5~10분, 배포 수 분)을 80여 초에
+  담는다. 그런데 화면에 찍히는 시각이 벽시계 그대로면 진행 로그·승인 이력이 전부 같은
+  분(11:11)으로 찍혀서, 시간을 접었다는 사실이 화면에서 사라지고 오히려 어색해진다.
+
+  그래서 화면에 적히는 시각은 따로 흐르는 시계를 쓴다. 장면마다 배속(×N)을 정하면 그
+  장면 동안 시계가 N배로 가고, 자막에도 같은 ×N 을 띄운다 — 자막의 배속과 화면 시각의
+  흐름이 같은 숫자에서 나온다.
+
+  시연 진행 속도(위 sceneSpeed)와는 다르다. 그것은 시나리오 타이머를 줄이는 내부 장치고,
+  보는 사람에게 약속하는 것은 이 시계다.
+*/
+let clockAt = Date.now();
+let clockRealAt = Date.now();
+let clockRate = 1;
+
+/** 화면 시각(ms) */
+export function demoNow() {
+  return clockAt + (Date.now() - clockRealAt) * clockRate;
+}
+
+/** 지금부터 화면 시계를 이 배속으로 흘린다. 여기까지 흐른 시각은 그대로 둔다 */
+export function setClockRate(rate: number) {
+  clockAt = demoNow();
+  clockRealAt = Date.now();
+  clockRate = rate > 0 ? rate : 1;
+}
+
+export function getClockRate() {
+  return clockRate;
+}
+
+/** 시계를 이 시각에 맞추고 실시간으로 되돌린다 */
+export function resetDemoClock(startAt: number) {
+  clockAt = startAt;
+  clockRealAt = Date.now();
+  clockRate = 1;
+}

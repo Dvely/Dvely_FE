@@ -26,6 +26,7 @@ function SideSheet({ open, onOpenChange, title, description, footer, children }:
         <Dialog.Overlay className="fixed inset-0 z-50 bg-[#0f172a]/15 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
         <Dialog.Content
           className="fixed top-0 right-0 z-50 flex h-full w-full max-w-[460px] flex-col border-l border-[#e2e8f0] bg-white shadow-[-12px_0_40px_rgba(15,23,42,0.12)] outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=open]:duration-300"
+          data-demo="side-sheet"
           // 열자마자 첫 입력으로 포커스를 옮기면 모바일에서 키보드가 시트를 덮는다
           onOpenAutoFocus={(event) => event.preventDefault()}
         >

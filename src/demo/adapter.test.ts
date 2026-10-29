@@ -79,7 +79,7 @@ describe('시연 어댑터', () => {
   it('프로젝트를 만들면 목록과 개요가 읽힌다', async () => {
     expect(await api.projects.getProjectList()).toEqual([]);
     const created = await api.projects.postProjectCreate({
-      name: '할 일 관리 앱',
+      name: '함께 할 일',
       startMode: 'blank',
       templateType: null,
       draftMode: 'fast',
@@ -126,7 +126,7 @@ describe('시연 어댑터', () => {
       (task) => task.status === 'WAITING_INPUT',
     );
     expect(asking.clarification?.inputType).toBe('SINGLE_SELECT');
-    await api.agent.postAgentTaskInput(taskId, { value: 'minimal' });
+    await api.agent.postAgentTaskInput(taskId, { value: 'cards' });
 
     const planned = await until(
       '계획 승인',
@@ -134,7 +134,7 @@ describe('시연 어댑터', () => {
       (task) => task.pendingApprovalId != null,
     );
     expect(planned.status).toBe('WAITING_APPROVAL');
-    expect(planned.answeredClarification?.answer).toBe('깔끔한 단일 페이지');
+    expect(planned.answeredClarification?.answer).toBe('카테고리 필터가 있는 카드 목록');
     const change = await api.approvals.getApprovalDetail(planned.pendingApprovalId!);
     expect(change.type).toBe('CHANGE');
     await api.approvals.postApprovalApprove(change.approvalId);

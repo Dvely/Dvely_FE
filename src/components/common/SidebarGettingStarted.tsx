@@ -32,6 +32,7 @@ function SidebarGettingStarted({ collapsed }: { collapsed: boolean }) {
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
+        data-demo="guide-open"
         aria-label={`시작하기 ${doneCount}/${total} 완료`}
         title={collapsed ? '시작하기' : undefined}
         className={cn(

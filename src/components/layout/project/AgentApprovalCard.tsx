@@ -111,6 +111,7 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
             type="button"
             onClick={() => setIsHelpOpen((open) => !open)}
             aria-expanded={isHelpOpen}
+            data-demo="approval-help"
             className="shrink-0 cursor-pointer text-[11px] font-semibold text-[#7c3aed] underline underline-offset-2"
           >
             {isHelpOpen ? '접기' : '이게 뭔가요?'}

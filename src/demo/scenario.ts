@@ -13,7 +13,7 @@
  * 상태는 sessionStorage 에 남긴다. 예전에는 메모리에만 뒀는데, 새로고침 한 번에
  * 대화 이력과 프리뷰가 통째로 사라져서 시연 뒤에 화면을 둘러볼 수가 없었다.
  */
-import { demoMs } from '@/demo/config';
+import { demoMs, demoNow, resetDemoClock } from '@/demo/config';
 import type { Approval } from '@/types/approval.type';
 import type { AgentTaskEvent, AnsweredClarification, TaskClarification } from '@/types/agent.type';
 import type { AiCredential } from '@/types/aiCredential.type';
@@ -33,7 +33,7 @@ export const DEMO = {
   username: 'danto',
   avatarUrl: 'https://avatars.githubusercontent.com/u/9919?v=4',
   projectId: 1,
-  projectName: '할 일 관리 앱',
+  projectName: '함께 할 일',
   conversationId: 1,
   repositoryOwner: 'danto',
   repositoryName: 'todo-together',
@@ -114,14 +114,33 @@ const now = () => Date.now();
  * `toISOString()` 은 UTC 라 화면이 그 문자열에서 시:분을 그대로 읽으면(AgentTaskTimeline)
  * 서울 기준 아홉 시간 앞선 시각이 찍힌다.
  */
-export function iso(offsetMs = 0) {
-  const date = new Date(now() + offsetMs);
+function formatWallClock(ms: number) {
+  const date = new Date(ms);
   const pad = (value: number) => String(value).padStart(2, '0');
   return (
     `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
     `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
   );
 }
+
+/** 화면 시계(config.demoNow) 기준. 진행 로그·승인 이력처럼 화면에 찍히는 시각에 쓴다 */
+export function iso(offsetMs = 0) {
+  return formatWallClock(demoNow() + offsetMs);
+}
+
+/**
+ * 만료 시각. 화면은 남은 시간을 **브라우저 시계**로 센다 — 화면 시계로 적으면 앞서 간 만큼
+ * 남은 시간이 부풀어(55분이 70분으로) 보인다. 그래서 만료만은 벽시계 기준으로 적는다.
+ */
+export function expiresIso(offsetMs: number) {
+  return formatWallClock(Date.now() + offsetMs);
+}
+
+/**
+ * 시연 첫 화면의 시각. 오늘 오후 두 시로 맞춘다 — 녹화한 시각이 아니라 이야기의 시각이라,
+ * 언제 찍어도 같은 시각에서 시작한다.
+ */
+const CLOCK_START_HOUR = 14;
 
 function elapsed(startedAt: number, base: number) {
   return now() - startedAt >= demoMs(base);
@@ -202,7 +221,12 @@ type DemoDeployment = {
 type DemoState = {
   seq: number;
   projectCreated: boolean;
+  /** 화면 시계로 적은 시각. 볼 때마다 지금에서 빼서 만들면 시계가 갈수록 따라 움직인다 */
+  projectCreatedAt: string | null;
+  repositoryBoundAt: string | null;
   repositoryBound: boolean;
+  /** 첫 요청으로 대화가 생긴 시각. 그 전에는 대화가 없다 */
+  conversationCreatedAt: string | null;
   runtimeType: string;
   cloudConnectionId: number | null;
   tasks: Map<string, DemoTask>;
@@ -250,7 +274,10 @@ function freshState(): DemoState {
   return {
     seq: 100,
     projectCreated: false,
+    projectCreatedAt: null,
+    repositoryBoundAt: null,
     repositoryBound: false,
+    conversationCreatedAt: null,
     runtimeType: 'STATIC',
     cloudConnectionId: null,
     tasks: new Map(),
@@ -309,6 +336,9 @@ function nextId() {
  */
 export function resetDemoState() {
   Object.assign(state, freshState());
+  const start = new Date();
+  start.setHours(CLOCK_START_HOUR, 0, 0, 0);
+  resetDemoClock(start.getTime());
   setBackendReady(false);
   try {
     for (const key of PREVIEW_KEYS) localStorage.removeItem(key);
@@ -394,7 +424,10 @@ export function decideApproval(approvalId: number, approved: boolean) {
   touch();
   if (!approved) return approval;
 
-  if (approval.type === 'REPOSITORY_BINDING') state.repositoryBound = true;
+  if (approval.type === 'REPOSITORY_BINDING') {
+    state.repositoryBound = true;
+    state.repositoryBoundAt = iso();
+  }
 
   if (approval.type === 'DEPLOYMENT') {
     const deployment =
@@ -451,9 +484,14 @@ const CODE_BUILD_EVENTS: PendingEvent[] = [
     message: '프로젝트 구조를 만들고 있습니다',
     step: { index: 1, total: 1, agentType: 'CODE' },
   },
-  { afterMs: 900, type: 'PROGRESS', message: '회원가입·로그인 화면을 작성했습니다' },
-  { afterMs: 1600, type: 'PROGRESS', message: '할 일 목록 화면을 작성했습니다' },
-  { afterMs: 2200, type: 'PROGRESS', message: '의존성을 설치하고 빌드합니다' },
+  { afterMs: 700, type: 'PROGRESS', message: '회원가입·로그인 화면을 작성했습니다' },
+  {
+    afterMs: 1250,
+    type: 'PROGRESS',
+    message: '마감일·우선순위·카테고리가 있는 할 일 카드를 만들었습니다',
+  },
+  { afterMs: 1800, type: 'PROGRESS', message: '진행률 요약과 카테고리 필터를 넣었습니다' },
+  { afterMs: 2300, type: 'PROGRESS', message: '남색 카드형 테마를 입히고 빌드합니다' },
 ];
 
 const RUNTIME_EVENTS: PendingEvent[] = [
@@ -528,11 +566,11 @@ export function clarificationFor(task: DemoTask): TaskClarification | null {
 }
 
 const CODE_CLARIFICATION: TaskClarification = {
-  question: '어떤 화면 구성으로 만들까요?',
+  question: '할 일 목록을 어떻게 보여 줄까요?',
   inputType: 'SINGLE_SELECT',
   options: [
-    { value: 'minimal', label: '깔끔한 단일 페이지', recommended: true },
-    { value: 'dashboard', label: '사이드바가 있는 대시보드', recommended: false },
+    { value: 'cards', label: '카테고리 필터가 있는 카드 목록', recommended: true },
+    { value: 'board', label: '마감일별로 묶은 보드', recommended: false },
   ],
   allowOther: true,
   actionType: null,
@@ -619,7 +657,7 @@ function advanceCodeTask(task: DemoTask) {
       if (!elapsed(task.phaseStartedAt, T.agentThink)) return;
       // 무엇을 만들지 정하기 전에 모르는 것을 먼저 되묻는다
       enter(task, 'ask', 'WAITING_INPUT');
-      pushEvent(task, 'WAITING_INPUT', '화면 구성을 확인하고 있습니다');
+      pushEvent(task, 'WAITING_INPUT', '목록 구성을 확인하고 있습니다');
       return;
 
     case 'plan': {
@@ -630,7 +668,7 @@ function advanceCodeTask(task: DemoTask) {
       */
       const approval = addApproval(
         'CHANGE',
-        '회원가입·로그인 화면과 할 일 목록 화면을 새로 만듭니다. 내 할 일만 보이도록 로그인한 사용자 기준으로 거릅니다.',
+        '회원가입·로그인 화면과, 마감일·우선순위·카테고리가 있는 할 일 카드 목록을 만듭니다. 진행률 요약과 카테고리 필터를 두고, 남색 카드형으로 꾸밉니다. 내 할 일만 보이도록 로그인한 사용자 기준으로 거릅니다.',
         task.taskId,
       );
       waitForApprovals(task, 'planApproval', 'WAITING_APPROVAL', [approval]);
@@ -684,7 +722,7 @@ function advanceCodeTask(task: DemoTask) {
       if (!elapsed(task.phaseStartedAt, T.agentFinish)) return;
       finishTask(
         task,
-        '회원가입·로그인 화면과 할 일 목록을 만들었습니다. 오른쪽 프리뷰에서 바로 써 볼 수 있습니다.',
+        '회원가입·로그인과 할 일 카드 목록(마감일·우선순위·카테고리, 진행률, 카테고리 필터)을 남색 카드형으로 만들었습니다. 오른쪽 프리뷰에서 바로 써 볼 수 있습니다.',
       );
       return;
 
@@ -918,7 +956,7 @@ export function createDatabase(method: string, engine: string, origin = 'MANUAL'
     port: requiresApproval ? null : engine === 'MYSQL' ? 3306 : 5432,
     database: requiresApproval ? null : 'todo_app',
     username: requiresApproval ? null : 'qeploy',
-    expiresAt: method === 'LOCAL' ? iso(3600000) : null,
+    expiresAt: method === 'LOCAL' ? expiresIso(3600000) : null,
     errorCode: null,
     errorMessage: null,
     createdAt: iso(),
