@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { useAgentTaskLogQuery } from '@/api/agent';
 import AgentTaskTimeline from '@/components/layout/project/AgentTaskTimeline';
-import {
-  findStepProgress,
-  selectVisibleEvents,
-} from '@/components/layout/project/agentTaskEvent.utils';
+import { selectVisibleEvents } from '@/components/layout/project/agentTaskEvent.utils';
 
 /**
  * 지난 작업의 진행 기록을 다시 펼친다.
@@ -31,8 +28,12 @@ function AgentTaskLogHistory({
   const { data, isPending, isError, refetch } = useAgentTaskLogQuery(taskId, open);
 
   const visibleEvents = data ? selectVisibleEvents(data) : [];
-  // 단계 수는 한 번 읽은 뒤에만 안다. 모를 때는 적지 않는다
-  const step = data ? findStepProgress(data) : null;
+  /*
+    제목에는 펼치면 나오는 줄 수를 적는다. 단계 수(stepTotal)를 적었더니 "1단계" 아래에
+    열다섯 줄이 나와 둘을 같은 것으로 읽었다 — 단계는 펼친 기록의 막대가 이미 보여 준다.
+    줄 수는 한 번 읽은 뒤에만 알아서, 그 전에는 적지 않는다.
+  */
+  const recordCount = visibleEvents.length;
 
   return (
     <div className="mt-2">
@@ -48,7 +49,7 @@ function AgentTaskLogHistory({
           aria-hidden
         />
         {open ? '작업 내역 접기' : '작업 내역 보기'}
-        {step ? <span className="font-normal">({step.total}단계)</span> : null}
+        {recordCount > 0 ? <span className="font-normal">(기록 {recordCount}개)</span> : null}
       </button>
 
       {open ? (
