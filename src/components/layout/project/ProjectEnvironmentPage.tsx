@@ -7,6 +7,7 @@ import {
   postEnvironmentVariableCreate,
   useEnvironmentVariableListQuery,
 } from '@/api/environment';
+import { formatActivityTime } from '@/lib/projectActivity';
 import type { EnvironmentVariableScope } from '@/types/common.enum';
 
 type ProjectEnvironmentPageProps = {
@@ -184,7 +185,7 @@ function ProjectEnvironmentPage({ projectId }: ProjectEnvironmentPageProps) {
         <ul className="mt-3 space-y-2 text-[12px] text-[#64748b]">
           {history.slice(0, 8).map((item) => (
             <li key={item.historyId}>
-              {item.action} · {item.key} · {item.createdAt}
+              {item.action} · {item.key} · {formatActivityTime(item.createdAt)}
             </li>
           ))}
         </ul>
