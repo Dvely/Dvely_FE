@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAssetLoadFailed } from '@/lib/assetLoadFailure';
+import { stashComposerDraftFromDom } from '@/lib/composerDraft';
 
 /**
  * 조각을 못 받았다는 것을 알리고 새로고침할 길을 준다.
@@ -17,19 +18,6 @@ import { useAssetLoadFailed } from '@/lib/assetLoadFailure';
  *
  * 닫을 수 있게 둔다. 잘못 뜬 경우에 지울 방법이 없으면 남은 세션 내내 자리를 차지한다.
  */
-
-/** 새로고침으로 날아갈 입력을 잠깐 맡아 둘 자리. 복구는 각 화면이 알아서 한다 */
-const DRAFT_STASH_KEY = 'dvely:reload-draft';
-
-function stashComposerDraft() {
-  const draft = document.querySelector<HTMLTextAreaElement>('textarea')?.value?.trim();
-  if (!draft) return;
-  try {
-    sessionStorage.setItem(DRAFT_STASH_KEY, draft);
-  } catch {
-    // 저장이 막힌 브라우저(프라이빗 모드 등)면 그냥 넘어간다 — 새로고침을 막을 이유는 아니다
-  }
-}
 
 function AssetLoadFailureNotice() {
   const hasFailed = useAssetLoadFailed();
@@ -50,7 +38,8 @@ function AssetLoadFailureNotice() {
         <button
           type="button"
           onClick={() => {
-            stashComposerDraft();
+            // 적던 말을 맡겨 둔다. 돌아와서 같은 대화를 열면 입력창이 그것을 찾아간다
+            stashComposerDraftFromDom();
             window.location.reload();
           }}
           className="shrink-0 cursor-pointer rounded-lg bg-[#92400e] px-2.5 py-1 text-[12px] font-semibold text-white transition hover:bg-[#78350f]"
@@ -70,4 +59,4 @@ function AssetLoadFailureNotice() {
   );
 }
 
-export { AssetLoadFailureNotice, DRAFT_STASH_KEY };
+export { AssetLoadFailureNotice };

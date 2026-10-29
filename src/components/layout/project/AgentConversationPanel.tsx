@@ -43,6 +43,12 @@ import {
   findApiErrorGuide,
   type ApiErrorAction,
 } from '@/lib/apiErrorGuide';
+import {
+  isActiveRunLimitError,
+  shouldResendClarificationAsMessage,
+  shouldReturnInputToUser,
+} from '@/lib/runLimit';
+import { takeComposerDraft } from '@/lib/composerDraft';
 import { refreshUserInfoInBackground } from '@/api/user';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
 import { ChunkErrorBoundary } from '@/components/common/ChunkErrorBoundary';
@@ -572,6 +578,47 @@ function AgentConversationPanel({
     };
   }, [conversationId, projectId]);
 
+  /*
+    보내지 못한 낙관적 말풍선을 걷어낸다.
+
+    오버레이만 비우면 되는 게 아니다. `onMutate` 는 세션 저장소에도 함께 적어둔다 —
+    새로고침해도 방금 적은 말이 남아 있게 하려는 것이다. 그래서 거기서도 지워야 하고,
+    빠뜨리면 **서버에 없는 말풍선이 새로고침할 때 되살아난다.** 적어둔 자리가 둘이니
+    지우는 자리도 둘이다.
+  */
+  const discardUnsentMessage = useCallback(
+    (context: { userMessage: ConversationMessage; draftConversationId: number } | undefined) => {
+      if (!context) return;
+
+      const { userMessage, draftConversationId } = context;
+      setOverlayMessages((prev) => {
+        const next = prev.filter((message) => message.messageId !== userMessage.messageId);
+        writeSessionMessages(draftConversationId, next);
+        return next;
+      });
+    },
+    [],
+  );
+
+  /*
+    새로고침으로 날아간 입력을 되돌린다.
+
+    배포로 조각이 사라지면 화면이 새로고침되는데(자동이든 배너 버튼이든) 그때 적던 말이
+    사라진다. 맡겨 둔 값이 **이 자리의 것일 때만** 한 번 되돌린다.
+
+    입력창이 비어 있을 때만 넣는다. 사용자가 이미 다시 적기 시작했다면 그 말이 더 최신이고,
+    덮어쓰면 방금 친 글자를 잃는다.
+
+    `takeComposerDraft` 가 읽는 즉시 지우므로 같은 말이 두 번 나타나지 않는다. 대화를 옮겨
+    다닐 때마다 돌아보지만, 자리가 맞지 않으면 아무 일도 하지 않는다.
+  */
+  useEffect(() => {
+    const restored = takeComposerDraft({ projectId, conversationId });
+    if (!restored) return;
+
+    setInput((current) => (current.trim() ? current : restored));
+  }, [projectId, conversationId]);
+
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
       let targetConversationId = conversationId;
@@ -731,21 +778,29 @@ function AgentConversationPanel({
         return;
       }
 
-      console.error('[agent] send/poll failed', error);
+      // 동시 실행 상한은 정상 경로다 — 서버가 "지금은 자리가 없다"고 알려준 것이라
+      // 로그에 남길 고장이 아니다
+      if (!isActiveRunLimitError(error)) {
+        console.error('[agent] send/poll failed', error);
+      }
 
       showApiError(error);
       // GitHub App 권한이 원인이면 여기서 설정 진입점을 띄운다. 문구만 보여주면
       // 사용자가 GitHub 설정까지 스스로 찾아가야 한다
       dispatchApiErrorAction(error);
 
-      if (!(conversationId != null && context?.userMessage)) {
+      /*
+        적은 말을 돌려줄지는 "서버가 이 메시지를 받았는가" 에 달렸다 — 판단은
+        `shouldReturnInputToUser` 에 적어 뒀다.
+
+        돌려줄 때는 낙관적 말풍선도 함께 걷어낸다. 입력창에 말이 돌아왔는데 같은 말이
+        말풍선으로도 남아 있으면 보낸 것인지 아닌지 알 수 없게 된다.
+      */
+      if (shouldReturnInputToUser(error, conversationId != null)) {
         setInput(content);
-        if (context?.userMessage) {
-          setOverlayMessages((prev) =>
-            prev.filter((message) => message.messageId !== context.userMessage.messageId),
-          );
-        }
+        discardUnsentMessage(context);
       }
+
       setIsAssistantReplying(false);
       setProgressTask(null);
       setRunningTaskId(null);
@@ -847,6 +902,16 @@ function AgentConversationPanel({
       void queryClient.invalidateQueries({ queryKey: ['approval-detail'] });
 
       /*
+        동시 실행 상한이면 승인이 서버에 닿지 않았다 — 카드는 PENDING 그대로이고 다시
+        누르면 된다. onMutate 가 "이미 결정했다"고 적어둔 것을 지워야 한다. 남겨두면
+        `pendingApprovalId` 가 다른 경로로 비는 순간(다음 메시지의 onSuccess 등) 감시
+        조회가 이 카드를 다시 띄우지 못해, PENDING 인 승인에 손댈 길이 없어진다.
+      */
+      if (isActiveRunLimitError(error)) {
+        decidedApprovalIdsRef.current.delete(variables.approvalId);
+      }
+
+      /*
         상한까지 기다렸지만 작업은 아직 돈다 — 실패가 아니다. 오류 알림을 띄우면
         성공할 작업을 실패로 오해하게 된다. 조용히 알리고 물러난다. 결과는 서버가
         채팅에 적고 메시지 목록 폴링이 가져온다.
@@ -931,6 +996,10 @@ function AgentConversationPanel({
         서술은 서버 하나가 소유한다는 이 파일의 규칙을 그대로 따른다. 대신 답이 닿는 즉시
         대화를 다시 읽어(mutationFn 참고) 빈 구간을 짧게 만든다.
       */
+      // 답이 서버에 닿지도 못하는 경우가 있다(동시 실행 상한). 그때 폼을 되살리려면
+      // 무엇을 묻고 있었는지가 필요한데, 아래에서 비우고 나면 그 값이 없다
+      const previousAwaitingInput = awaitingInput;
+
       setInput('');
       setIsAssistantReplying(true);
       setLongRunningBaseline(null);
@@ -938,6 +1007,8 @@ function AgentConversationPanel({
       setProgressTask(null);
       // 답을 보냈으니 대기 상태를 푼다. 이어 달리다 또 물으면 onSuccess 가 다시 세운다
       setAwaitingInput(null);
+
+      return { previousAwaitingInput };
     },
     onSuccess: ({ task, taskId, pendingApprovalId }) => {
       if (conversationId == null) return;
@@ -957,7 +1028,7 @@ function AgentConversationPanel({
       setRunningTaskId(null);
       onConversationActivity?.(conversationId);
     },
-    onError: (error, variables) => {
+    onError: (error, variables, context) => {
       setIsAssistantReplying(false);
       setProgressTask(null);
       setRunningTaskId(null);
@@ -967,6 +1038,18 @@ function AgentConversationPanel({
       // 상한까지 기다렸지만 아직 도는 중 — 실패가 아니다. 답은 이미 서버가 받았다
       if (error instanceof AgentPollTimeoutError) {
         setLongRunningBaseline(serverMessages?.length ?? 0);
+        return;
+      }
+
+      /*
+        다시 보내면 안 되는 실패가 있다 — 판단은 `shouldResendClarificationAsMessage` 에
+        적어 뒀다. 그때는 묻고 있던 질문을 되살려 두고(폼을 닫지 않는다) 적은 말을 돌려준
+        뒤 안내만 한다. 답은 아직 갈 곳이 있다.
+      */
+      if (!shouldResendClarificationAsMessage(error)) {
+        setInput(variables.value);
+        setAwaitingInput(context?.previousAwaitingInput ?? null);
+        showApiError(error);
         return;
       }
 
@@ -1004,10 +1087,15 @@ function AgentConversationPanel({
       return { task, taskId, pendingApprovalId };
     },
     onMutate: () => {
+      // 재시도 자체가 상한에 막힐 수 있다. 그때 카드를 되살리려면 원래 값이 필요하다
+      const previousRetryableTask = retryableTask;
+
       setRetryableTask(null);
       setIsAssistantReplying(true);
       setLongRunningBaseline(null);
       setProgressTask(null);
+
+      return { previousRetryableTask };
     },
     onSuccess: ({ task, taskId, pendingApprovalId }) => {
       if (conversationId == null) return;
@@ -1028,7 +1116,7 @@ function AgentConversationPanel({
       setRunningTaskId(null);
       onConversationActivity?.(conversationId);
     },
-    onError: (error, taskId) => {
+    onError: (error, taskId, context) => {
       setIsAssistantReplying(false);
       setProgressTask(null);
       setRunningTaskId(null);
@@ -1037,6 +1125,17 @@ function AgentConversationPanel({
 
       if (error instanceof AgentPollTimeoutError) {
         setLongRunningBaseline(serverMessages?.length ?? 0);
+        return;
+      }
+
+      /*
+        동시 실행 상한은 아래 409 와 다르다. 재시도가 막힌 것이 아니라 **지금 자리가 없을
+        뿐**이고 남은 시도 횟수도 그대로다 — 진행 중인 작업이 끝나면 같은 버튼이 통한다.
+        그래서 이쪽만 카드를 되살린다.
+      */
+      if (isActiveRunLimitError(error)) {
+        setRetryableTask(context?.previousRetryableTask ?? null);
+        showApiError(error);
         return;
       }
 
@@ -1629,6 +1728,14 @@ function AgentConversationPanel({
             rows={2}
             value={input}
             disabled={isInputLocked}
+            /*
+              새로고침 직전에 적던 말을 맡기는 쪽은 라우트 바깥(전역 배너·자동 새로고침)에
+              있어서 React 로는 지금 어느 대화인지 알 수 없다. 그래서 이 자리를 여기에
+              적어 둔다 — 맡기는 쪽이 이 표시로 입력창을 찾고 자리까지 함께 읽는다.
+            */
+            data-composer-draft=""
+            data-project-id={projectId}
+            data-conversation-id={conversationId ?? ''}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={awaitingInputTaskId ? '위 질문에 답해 주세요' : '메시지를 입력하세요'}

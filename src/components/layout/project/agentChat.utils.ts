@@ -1,4 +1,5 @@
 import type { ConversationMessage } from '@/types/chat.type';
+import { formatInSeoul, seoulRelativeDayLabel } from '@/lib/seoulTime';
 
 let localMessageId = -1;
 
@@ -115,7 +116,9 @@ export function migrateSessionMessages(fromConversationId: number, toConversatio
   sessionMessagesByConversation.delete(fromConversationId);
 }
 
-const PENDING_HOME_AGENT_PROMPT_KEY = 'dvely:pending-home-agent-prompt';
+const PENDING_HOME_AGENT_PROMPT_KEY = 'qeploy.pending-home-agent-prompt';
+/** 이름을 바꾸기 전 키. 넘기는 중에 배포가 끼면 그 한 번을 잃으므로 읽을 때만 함께 본다 */
+const LEGACY_PENDING_HOME_AGENT_PROMPT_KEY = 'dvely:pending-home-agent-prompt';
 
 /**
  * 홈에서 쓴 문장을 다음 화면까지 들고 간다.
@@ -139,9 +142,14 @@ export function setPendingHomeAgentPrompt(prompt: string) {
 
 export function consumePendingHomeAgentPrompt(): string | null {
   try {
-    const value = sessionStorage.getItem(PENDING_HOME_AGENT_PROMPT_KEY);
+    const value =
+      sessionStorage.getItem(PENDING_HOME_AGENT_PROMPT_KEY) ??
+      sessionStorage.getItem(LEGACY_PENDING_HOME_AGENT_PROMPT_KEY);
     if (value) {
+      // 한 번 쓰고 버리는 값이다. **두 키를 다 지워야 한다** — 옛 키를 남기면 다음
+      // 방문마다 같은 프롬프트가 되살아난다
       sessionStorage.removeItem(PENDING_HOME_AGENT_PROMPT_KEY);
+      sessionStorage.removeItem(LEGACY_PENDING_HOME_AGENT_PROMPT_KEY);
     }
     return value;
   } catch {
@@ -172,34 +180,31 @@ export function formatProjectDisplayName(name: string, projectId: number): strin
   return trimmed ? trimmed : formatUntitledLabel(projectId);
 }
 
+/**
+ * `오늘`·`어제`·`10월 29일`.
+ *
+ * 예전에는 `toDateString()` 끼리 비교했다. 그건 **보는 사람의 자정**을 기준으로 갈라서,
+ * 서울 00:30 에 나눈 대화가 서울 밖에서는 `어제` 로 적혔다 — 날짜가 통째로 하루 밀린다.
+ * 서울 기준 날짜 열쇠로 비교한다.
+ */
 export function formatConversationDateLabel(iso: string): string {
   if (!iso) return '';
 
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '';
+  const relative = seoulRelativeDayLabel(iso);
+  if (relative) return relative;
 
-  const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday = date.toDateString() === yesterday.toDateString();
-
-  if (isToday) return '오늘';
-  if (isYesterday) return '어제';
-
-  return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+  return formatInSeoul(iso, { month: 'short', day: 'numeric' });
 }
 
 export function formatConversationPreview(iso: string): string {
   if (!iso) return '대화';
 
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '대화';
-
-  return date.toLocaleString('ko-KR', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  return (
+    formatInSeoul(iso, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }) || '대화'
+  );
 }

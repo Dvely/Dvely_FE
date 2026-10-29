@@ -98,9 +98,21 @@ function CredentialCaseCard({ credentialCase, selected, onSelect }: CredentialCa
             권장
           </span>
         ) : null}
+        {/*
+          "받지 않음" 이 아니라 "고를 수 없음" 이다.
+
+          `supported: false` 에는 두 가지가 섞여 들어온다. 임시 자격은 **영영 받지 않고**,
+          역할 위임은 **이 환경에서 아직 준비되지 않은 것**이라 서버 쪽이 갖춰지면 자동으로
+          열린다. "받지 않음" 은 뒤쪽에 대해 틀린 말이고, 바로 아래 caution 이 "아직
+          준비되지 않아" 라고 말하므로 배지가 그 문장과 어긋났다.
+
+          어느 쪽인지는 `type` 을 보고 짐작할 수 있지만 그러지 않는다 — 값 목록을 화면에
+          적어 두면 BE 가 종류를 늘릴 때 또 어긋난다(`credentialCaseSchema` 주석의 그 이유).
+          대신 **둘 다에 참인 말**만 배지에 적고, 영영인지 당장인지는 서버 문장에 맡긴다.
+        */}
         {supported ? null : (
           <span className="rounded-full bg-[#e2e8f0] px-1.5 py-0.5 text-[10px] font-semibold text-[#475569]">
-            받지 않음
+            고를 수 없음
           </span>
         )}
       </span>

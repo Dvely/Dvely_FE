@@ -36,11 +36,28 @@ function scrollToSection(sectionId: string) {
   md 이상은 기존 구성 그대로다.
 */
 /** 배너를 닫은 적이 있는지. 닫기가 그 세션 안에서만 듣지 않게 남겨 둔다 */
-const BANNER_DISMISSED_KEY = 'dvely:landing-banner-dismissed';
+const BANNER_DISMISSED_KEY = 'qeploy.landing-banner-dismissed';
+/**
+ * 이름을 바꾸기 전 키. **localStorage** 라 그냥 바꾸면 이미 닫은 사람에게 배너가 다시
+ * 뜬다 — 눈에 보이는 퇴행이다. 그래서 새 키가 없을 때만 옛 키를 보고, 본 즉시 새 키로
+ * 옮겨 적는다. 옮겨 적고 나면 옛 키는 필요 없어서 지운다.
+ *
+ * 한두 번 배포가 지나 사실상 모두 옮겨졌다고 볼 수 있으면 이 줄과 아래 분기를 지워도 된다.
+ */
+const LEGACY_BANNER_DISMISSED_KEY = 'dvely:landing-banner-dismissed';
 
 function readBannerOpen(): boolean {
   try {
-    return localStorage.getItem(BANNER_DISMISSED_KEY) !== '1';
+    if (localStorage.getItem(BANNER_DISMISSED_KEY) === '1') return false;
+
+    // 옛 키로 닫아 둔 사람을 새 키로 옮긴다
+    if (localStorage.getItem(LEGACY_BANNER_DISMISSED_KEY) === '1') {
+      localStorage.setItem(BANNER_DISMISSED_KEY, '1');
+      localStorage.removeItem(LEGACY_BANNER_DISMISSED_KEY);
+      return false;
+    }
+
+    return true;
   } catch {
     // 저장이 막힌 브라우저면 그냥 띄운다 — 못 읽는 것이 안 띄울 이유는 아니다
     return true;
