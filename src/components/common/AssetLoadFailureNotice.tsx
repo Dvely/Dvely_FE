@@ -18,8 +18,17 @@ import { useAssetLoadFailed } from '@/lib/assetLoadFailure';
  * 닫을 수 있게 둔다. 잘못 뜬 경우에 지울 방법이 없으면 남은 세션 내내 자리를 차지한다.
  */
 
-/** 새로고침으로 날아갈 입력을 잠깐 맡아 둘 자리. 복구는 각 화면이 알아서 한다 */
-const DRAFT_STASH_KEY = 'dvely:reload-draft';
+/**
+ * 새로고침으로 날아갈 입력을 잠깐 맡아 둘 자리.
+ *
+ * **지금 이 값을 읽는 자리가 없다.** 주석은 "복구는 각 화면이 알아서 한다" 고 적어 뒀고
+ * 상수도 export 돼 있지만, 저장소 전체에서 가져다 쓰는 곳이 없다 — 맡아만 두고 아무도
+ * 찾아가지 않는다. 그래서 이름을 바꾸는 데 잃을 값도 없다(옛 키 보정을 두지 않은 이유다).
+ *
+ * 맡기는 쪽을 지우지는 않았다. 복구를 붙이는 것이 맞는 방향이고, 그건 이름 통일과 섞을
+ * 일이 아니라 따로 다룰 건이다(#146 에 적어 둔다).
+ */
+const DRAFT_STASH_KEY = 'qeploy.reload-draft';
 
 function stashComposerDraft() {
   const draft = document.querySelector<HTMLTextAreaElement>('textarea')?.value?.trim();
