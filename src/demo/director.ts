@@ -36,6 +36,8 @@ export type Caption = {
   title: string;
   /** 한 줄 설명. 없으면 제목만 */
   sub?: string;
+  /** 재현 화면이 떠 있는 동안만 보이는 표시. 장면 내내 자리는 잡아 둔다 */
+  note?: string;
 };
 
 export type Scene = {
@@ -141,7 +143,11 @@ export const scenes: Scene[] = [
 
       이 장면은 계정 접근 승인까지다. 팝업이 우리 콜백 주소를 거쳐 닫히고 홈으로 간다.
     */
-    caption: { title: 'GitHub 로그인 기능', sub: '가입 없이 GitHub 계정으로 시작합니다' },
+    caption: {
+      title: 'GitHub 로그인 기능',
+      sub: '가입 없이 GitHub 계정으로 시작합니다',
+      note: 'GitHub 화면(재현)',
+    },
     run: async () => {
       if (!loginPressed) {
         // 자막이 올라오는 동안 한 박자 두고 커서가 화면 밖에서 들어와 시작 버튼을 누른다
@@ -160,7 +166,11 @@ export const scenes: Scene[] = [
       로그인 직후에는 App 이 아직 설치되지 않아 안내가 뜬다. 실제 첫 로그인이 그렇다.
       허용하면 App 설치 화면이 뜨고, 저장소 범위와 권한을 보고 설치한다.
     */
-    caption: { title: '저장소 권한 연결 기능', sub: 'Qeploy가 쓸 저장소 권한을 허용합니다' },
+    caption: {
+      title: '저장소 권한 연결 기능',
+      sub: 'Qeploy가 쓸 저장소 권한을 허용합니다',
+      note: 'GitHub 화면(재현)',
+    },
     run: async () => {
       await waitUntil('권한 안내', () => find('github-app-confirm') != null, 20000);
       await read(1400);

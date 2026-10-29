@@ -28,6 +28,12 @@ const ARROW = `
         fill="#0f172a" stroke="#ffffff" stroke-width="1.4" stroke-linejoin="round"/>
 </svg>`;
 
+/**
+ * 커서의 쌓임 순서. 자막(DemoCaption)보다 한 칸 위로 모든 것의 맨 위다 — 자막 위를
+ * 지나가는 커서가 자막 밑으로 사라지면 어색하다.
+ */
+const CURSOR_Z_INDEX = 2147483647;
+
 function ensure() {
   if (root) return;
 
@@ -39,7 +45,7 @@ function ensure() {
     top: '0',
     width: `${SIZE}px`,
     height: `${SIZE}px`,
-    zIndex: '300',
+    zIndex: String(CURSOR_Z_INDEX),
     pointerEvents: 'none',
     opacity: '0',
     // 화살표 끝이 좌표를 가리키도록 왼쪽 위를 기준으로 둔다
