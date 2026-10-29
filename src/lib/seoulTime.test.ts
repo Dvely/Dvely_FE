@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { formatSeoulHourMinute, withSeoulOffsetIfMissing } from '@/lib/seoulTime';
+import {
+  formatInSeoul,
+  formatSeoulHourMinute,
+  seoulDayKey,
+  seoulRelativeDayLabel,
+  withSeoulOffsetIfMissing,
+} from '@/lib/seoulTime';
 
 /*
   이 테스트의 핵심은 **보는 사람의 시간대와 무관하게 같은 숫자가 나오는가** 다.
@@ -67,5 +73,76 @@ describe('withSeoulOffsetIfMissing', () => {
 
   it('없으면 KST 를 붙인다', () => {
     expect(withSeoulOffsetIfMissing('2026-10-29T09:33:00')).toBe('2026-10-29T09:33:00+09:00');
+  });
+});
+
+/*
+  `오늘`·`어제` 는 **서울의 자정**으로 갈려야 한다.
+
+  예전에는 `toDateString()` 끼리 비교했는데 그건 보는 사람의 자정 기준이다. 서울 00:30 에
+  나눈 대화가 UTC 브라우저에서는 전날 15:30 으로 읽혀 `어제` 가 된다 — 날짜가 통째로 하루
+  밀린다. 테스트는 그 경계만 본다.
+*/
+describe('seoulRelativeDayLabel', () => {
+  /** 서울 2026-10-29 12:00 = UTC 03:00 */
+  const now = new Date('2026-10-29T12:00:00+09:00');
+
+  it('서울 자정 직후 값을 오늘로 본다', () => {
+    expect(seoulRelativeDayLabel('2026-10-29T00:30:00+09:00', now)).toBe('오늘');
+  });
+
+  it('서울 자정 직전 값을 어제로 본다', () => {
+    expect(seoulRelativeDayLabel('2026-10-28T23:30:00+09:00', now)).toBe('어제');
+  });
+
+  it('그보다 오래된 값은 null — 호출부가 날짜를 적는다', () => {
+    expect(seoulRelativeDayLabel('2026-10-27T12:00:00+09:00', now)).toBeNull();
+    expect(seoulRelativeDayLabel('', now)).toBeNull();
+  });
+
+  /*
+    같은 순간을 UTC 표기로 줘도 결과가 같아야 한다. 서울 00:30 은 UTC 로 전날 15:30 이라,
+    보는 사람 시계로 가르면 여기서 `어제` 가 나온다.
+  */
+  it('같은 순간을 UTC 표기로 줘도 오늘이다', () => {
+    expect(seoulRelativeDayLabel('2026-10-28T15:30:00Z', now)).toBe('오늘');
+  });
+});
+
+describe('seoulDayKey', () => {
+  it('서울 기준 날짜로 묶는다', () => {
+    // 서울 00:30 과 23:30 은 같은 날이다
+    expect(seoulDayKey('2026-10-29T00:30:00+09:00')).toBe('2026-10-29');
+    expect(seoulDayKey('2026-10-29T23:30:00+09:00')).toBe('2026-10-29');
+    // UTC 15:00 부터 서울은 다음 날이다
+    expect(seoulDayKey('2026-10-28T15:00:00Z')).toBe('2026-10-29');
+    expect(seoulDayKey('2026-10-28T14:59:00Z')).toBe('2026-10-28');
+  });
+});
+
+describe('formatInSeoul', () => {
+  /** 형식은 호출부가 정한 그대로 두고 시간대만 못박는다 — 화면 문구가 바뀌면 안 된다 */
+  it('호출부가 준 형식을 그대로 쓴다', () => {
+    expect(formatInSeoul('2026-10-29T09:33:00+09:00', { month: 'short', day: 'numeric' })).toBe(
+      '10월 29일',
+    );
+    expect(
+      formatInSeoul('2026-10-29T09:33:00+09:00', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+    ).toBe('2026년 10월 29일');
+  });
+
+  it('UTC 로 와도 서울 기준으로 적는다', () => {
+    expect(formatInSeoul('2026-10-28T15:00:00Z', { month: 'short', day: 'numeric' })).toBe(
+      '10월 29일',
+    );
+  });
+
+  it('읽을 수 없으면 빈 문자열', () => {
+    expect(formatInSeoul('어제', { month: 'short', day: 'numeric' })).toBe('');
+    expect(formatInSeoul(null, { month: 'short', day: 'numeric' })).toBe('');
   });
 });

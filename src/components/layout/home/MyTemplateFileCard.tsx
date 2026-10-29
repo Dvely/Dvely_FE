@@ -3,6 +3,7 @@ import { FileArchive, Trash2 } from 'lucide-react';
 import { formatFileSize } from '@/lib/zipFile';
 import { TEMPLATE_INDUSTRY_LABEL, TEMPLATE_SITE_TYPES } from '@/lib/templateCategories';
 import type { MyTemplateItem } from '@/types/my-template.type';
+import { formatInSeoul } from '@/lib/seoulTime';
 
 type MyTemplateFileCardProps = {
   template: MyTemplateItem;
@@ -10,12 +11,7 @@ type MyTemplateFileCardProps = {
 };
 
 function formatAddedAt(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat('ko-KR', {
-    month: 'short',
-    day: 'numeric',
-  }).format(date);
+  return formatInSeoul(value, { month: 'short', day: 'numeric' });
 }
 
 function MyTemplateFileCard({ template, onRemove }: MyTemplateFileCardProps) {
