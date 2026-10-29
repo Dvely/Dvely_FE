@@ -29,3 +29,9 @@ dist-ssr
 # Playwright MCP 가 검증 중 남기는 스냅샷·스크린샷·콘솔 로그.
 # 저장소에 들어갈 물건이 아닌데 untracked 로 떠서 실수로 커밋될 여지가 있다.
 .playwright-mcp/
+
+# BE Swagger 덤프를 임시로 받아 두던 자리.
+#
+# 계약은 운영 OpenAPI 로 확인한다. 저장소에 사본을 두면 그게 낡은 뒤에도 누군가 그걸
+# 계약으로 읽는다 — 실제로 dev 에만 있는 필드와 운영에 있는 필드를 가릴 수 없게 된다.
+.tmp-swagger/
