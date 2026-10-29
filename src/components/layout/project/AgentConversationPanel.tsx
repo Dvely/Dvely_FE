@@ -74,6 +74,8 @@ import {
   toMessageTone,
 } from '@/components/layout/project/chatMessageKind.utils';
 import type { ConversationMessage } from '@/types/chat.type';
+import AgentTaskLogHistory from '@/components/layout/project/AgentTaskLogHistory';
+import { findTaskLogAnchors } from '@/lib/agentTaskLog';
 
 /*
   마크다운 렌더러는 따로 받는다.
@@ -509,6 +511,14 @@ function AgentConversationPanel({
     const coveredId = findCardCoveredMessageId(merged, answeredClarification?.taskId ?? null);
     return coveredId == null ? merged : merged.filter((m) => m.messageId !== coveredId);
   }, [serverMessages, overlayMessages, answeredClarification]);
+
+  /*
+    지난 작업의 진행 기록을 펼칠 자리. 작업마다 마지막으로 매듭지은 줄 하나다.
+
+    지금 도는 작업은 빼고 그린다(아래 liveTaskId) — 그 기록은 대화 끝에서 실시간으로
+    보이고 있어서, 위 줄에서 또 펼치면 같은 것이 두 군데 뜬다.
+  */
+  const taskLogAnchors = useMemo(() => findTaskLogAnchors(displayMessages), [displayMessages]);
   const pollAbortRef = useRef<AbortController | null>(null);
 
   /*
@@ -1429,6 +1439,8 @@ function AgentConversationPanel({
   }, [scrollToBottom]);
 
   const showMessageSkeletons = isMessagesLoading && displayMessages.length === 0;
+  /** 지금 대화 끝에서 실시간으로 기록을 보여 주는 작업. 그 작업의 줄에는 펼치기를 붙이지 않는다 */
+  const liveTaskId = isSending || isAssistantReplying ? runningTaskId : null;
   const showWelcome =
     !showMessageSkeletons &&
     isNewConversation &&
@@ -1541,9 +1553,16 @@ function AgentConversationPanel({
               ? [0, 1, 2, 3].map((item) => (
                   <AssistantReplySkeleton key={`message-skeleton-${item}`} />
                 ))
-              : displayMessages.map((message) => (
-                  <MessageBubble key={message.messageId} message={message} />
-                ))}
+              : displayMessages.map((message) => {
+                  const logTaskId = taskLogAnchors.get(message.messageId) ?? null;
+                  return (
+                    <MessageBubble
+                      key={message.messageId}
+                      message={message}
+                      logTaskId={logTaskId !== liveTaskId ? logTaskId : null}
+                    />
+                  );
+                })}
             {/*
             무엇을 정했는지. 답하는 폼이 사라진 자리를 대신하는 **읽기 전용** 기록이다.
 
@@ -1776,6 +1795,8 @@ function AgentConversationPanel({
 
 type MessageBubbleProps = {
   message: ConversationMessage;
+  /** 이 줄 아래에 펼칠 지난 작업. 없으면 펼치기를 그리지 않는다 */
+  logTaskId?: string | null;
 };
 
 const MESSAGE_URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -1868,7 +1889,7 @@ const ASSISTANT_TONE_CLASS = {
   failed: 'rounded-xl border-l-2 border-[#fca5a5] bg-[#fef2f2] px-3.5 py-3 text-[#b91c1c]',
 } as const;
 
-function MessageBubble({ message }: MessageBubbleProps) {
+function MessageBubble({ message, logTaskId = null }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
   // 종류는 서버가 알려준 것만 믿는다. 모르는 값이면 지금까지와 똑같이 그려진다
@@ -1924,6 +1945,7 @@ function MessageBubble({ message }: MessageBubbleProps) {
         ) : (
           plainText
         )}
+        {isAssistant && logTaskId ? <AgentTaskLogHistory taskId={logTaskId} /> : null}
       </div>
     </div>
   );

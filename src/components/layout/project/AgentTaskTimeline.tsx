@@ -52,9 +52,17 @@ function ElapsedSinceMount() {
 
 type AgentTaskTimelineProps = {
   events: AgentTaskEvent[];
+  /**
+   * 지금 도는 작업인가. 기본은 그렇다.
+   *
+   * 지난 작업의 기록을 다시 펼칠 때는 false 로 준다 — 마지막 줄의 맥박과 경과 초, 단계
+   * 막대의 깜빡임은 "지금 이걸 하고 있다" 는 뜻이라, 다 끝난 기록에 붙으면 아직 도는
+   * 것처럼 읽힌다.
+   */
+  live?: boolean;
 };
 
-function AgentTaskTimeline({ events }: AgentTaskTimelineProps) {
+function AgentTaskTimeline({ events, live = true }: AgentTaskTimelineProps) {
   const visibleEvents = selectVisibleEvents(events);
   const lastEvent = visibleEvents.at(-1) ?? null;
   const hasFailed = lastEvent != null && isFailureEvent(lastEvent);
@@ -63,7 +71,7 @@ function AgentTaskTimeline({ events }: AgentTaskTimelineProps) {
   if (visibleEvents.length === 0) return null;
 
   return (
-    <div className="mb-2">
+    <div className={live ? 'mb-2' : undefined}>
       {/*
         단계 막대. 칸을 단계 수만큼 쪼갠다 — 채운 비율 하나보다 "2단계 중 1단계"가 훨씬
         빨리 읽히고, 서버가 단계 수를 바꿔도 계산이 어긋나지 않는다.
@@ -92,7 +100,9 @@ function AgentTaskTimeline({ events }: AgentTaskTimelineProps) {
                       : isCurrent
                         ? hasFailed
                           ? 'bg-[#dc2626]'
-                          : 'animate-pulse bg-[#a78bfa]'
+                          : live
+                            ? 'animate-pulse bg-[#a78bfa]'
+                            : 'bg-[#7c3aed]'
                         : 'bg-[#e2e8f0]'
                   }`}
                 />
@@ -140,7 +150,7 @@ function AgentTaskTimeline({ events }: AgentTaskTimelineProps) {
                   마지막 줄에만 붙는 표시가 "지금 이걸 하고 있다"를 말한다. 몇 분 걸리는
                   단계에서 이게 없으면 같은 화면이 멈춘 것과 구분되지 않는다
                 */}
-                {isLast && !hasFailed ? (
+                {live && isLast && !hasFailed ? (
                   <>
                     <span
                       aria-hidden="true"

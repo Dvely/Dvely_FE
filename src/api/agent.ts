@@ -1,6 +1,7 @@
 import Http from '@/utils/httpClients';
 import { useQuery } from '@tanstack/react-query';
 import { errorResponse, succesResponse } from '@/utils/response';
+import { isTaskLogFinal } from '@/lib/agentTaskLog';
 import type { ApiResponse } from '@/types/response.type';
 import { getAiProviderListResSchema, type GetAiProviderListResType } from '@/types/aiProvider.type';
 import {
@@ -458,6 +459,22 @@ function useAgentTaskEventListQuery(
   });
 }
 
+/**
+ * 지난 작업의 진행 기록 전체. 대화의 "작업 내역 보기" 를 펼칠 때만 읽는다.
+ *
+ * 처음부터(`afterEventId=0`) 한 번에 받는다 — 이어 받는 스트림이 아니라 다 지난 기록이다.
+ * 더 늘지 않는 기록(끝났거나 취소된 작업)은 다시 읽지 않는다. 승인을 기다리던 작업처럼
+ * 이어 달릴 수 있는 기록은 펼칠 때마다 새로 읽는다.
+ */
+function useAgentTaskLogQuery(taskId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['agent-task-log', taskId],
+    queryFn: () => getAgentTaskEventList(taskId, 0),
+    enabled: enabled && taskId.length > 0,
+    staleTime: (query) => (isTaskLogFinal(query.state.data) ? Infinity : 0),
+  });
+}
+
 export {
   AgentPollTimeoutError,
   getConversationActiveTask,
@@ -477,5 +494,6 @@ export {
   useAgentTaskQuery,
   useApprovalTaskWatchQuery,
   useAgentTaskEventListQuery,
+  useAgentTaskLogQuery,
   SETTLED_AGENT_TASK_STATUSES,
 };
