@@ -162,7 +162,8 @@ export const scenes: Scene[] = [
     */
     caption: {
       title: 'GitHub 로그인 기능',
-      sub: 'GitHub 계정으로 시작하고 저장소 권한을 허용합니다',
+      // 제목에 GitHub 이 있으니 설명에서는 되풀이하지 않는다 — 자막을 한 줄에 담는다
+      sub: '계정으로 시작하고 저장소 권한을 허용합니다',
       note: 'GitHub 화면(재현)',
     },
     run: async () => {
@@ -190,7 +191,11 @@ export const scenes: Scene[] = [
   {
     caption: { title: '프로젝트 생성 기능', sub: '이름만 정하면 바로 시작합니다' },
     run: async () => {
-      // 시작하기가 다음 할 일로 펼쳐 둔 "프로젝트 만들기" 로 간다
+      /*
+        시작하기가 다음 할 일로 펼쳐 둔 "프로젝트 만들기" 로 간다. 그 버튼은 앞 장면의 로그인
+        자막 밑에 걸쳐 있다 — 자막이 다 접힌 뒤(DemoCaption 의 FADE_MS) 커서를 옮긴다.
+      */
+      await read(260);
       await click('guide-next');
       await waitUntil('프로젝트 목록', () => window.location.pathname === '/project', 15000);
       await click('project-new');

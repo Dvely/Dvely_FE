@@ -42,6 +42,12 @@ const CAPTION_Z_INDEX = 2147483646;
  */
 const CAPTION_BOTTOM = 76;
 
+/*
+  자막은 언제나 한 줄이다. 두 줄로 접히면 알약이 아니라 상자가 되고, 장면마다 높이가 달라져
+  붙박은 자리가 흔들린다. 그래서 폭을 막지 않고 글자 길이대로 둔다 — 줄여야 하는 것은 폭이
+  아니라 문구다. 가장 긴 것(GitHub 로그인 장면, 재현 표시 포함)이 약 550px 이다.
+*/
+
 function DemoCaption() {
   /** 지금 그리고 있는 자막. 다음 것이 와도 접히는 동안은 이쪽이 남는다 */
   const [shown, setShown] = useState<{ caption: Caption; sceneTimeScale: number } | null>(null);
@@ -149,12 +155,14 @@ function DemoCaption() {
         transition: `opacity ${FADE_MS}ms ease`,
       }}
     >
-      <p className="flex max-w-[560px] items-baseline gap-2.5 rounded-full bg-white px-6 py-3 shadow-[0_4px_20px_rgba(15,23,42,0.16),0_1px_3px_rgba(15,23,42,0.1)]">
+      <p className="flex items-baseline gap-2.5 whitespace-nowrap rounded-full bg-white px-6 py-3 shadow-[0_4px_20px_rgba(15,23,42,0.16),0_1px_3px_rgba(15,23,42,0.1)]">
         <span className="whitespace-nowrap text-[17px] font-bold tracking-[-0.01em] text-[#0f172a]">
           {shown.caption.title}
         </span>
         {shown.caption.sub ? (
-          <span className="text-[13.5px] font-medium text-[#64748b]">{shown.caption.sub}</span>
+          <span className="whitespace-nowrap text-[13.5px] font-medium text-[#64748b]">
+            {shown.caption.sub}
+          </span>
         ) : null}
         {/*
           재현 표시도 배속 표시처럼 장면 내내 자리를 잡아 두고 켜고 끈다. 재현 창이 뜨고 닫힐
