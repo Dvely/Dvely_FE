@@ -30,8 +30,11 @@ const projectItemSchema = z.object({
   deployStatus: projectCardDeployStatusSchema,
   /** 프로젝트 카테고리 */
   category: projectCategorySchema,
-  /** 템플릿 설정 여부 */
-  hasTemplate: z.boolean(),
+  /**
+   * 템플릿 상태. **`unknown` 은 "없다" 가 아니라 "모른다" 다.**
+   * 서버 응답에 근거가 없을 때이고, 그때 화면은 템플릿에 대해 아무 말도 하지 않는다.
+   */
+  templateState: z.enum(['has', 'none', 'unknown']),
   /** 카드 부제 */
   subtitle: z.string().prefault(''),
   /** 마지막 수정 시각 표시 */

@@ -6,7 +6,7 @@ import ProjectCreateDialog from './ProjectCreateDialog';
 import { FilterSelect } from '@/components/ui/Filter';
 import { useProjectListQuery } from '@/api/projects';
 import { formatProjectDisplayName } from '@/components/layout/project/agentChat.utils';
-import { hasProjectTemplate, templateTypeToPreviewVariant } from '@/lib/projectTemplate';
+import { resolveProjectTemplateState, templateTypeToPreviewVariant } from '@/lib/projectTemplate';
 import {
   DEPLOY_STATUS_LABEL,
   TEMPLATE_UNCONFIGURED_LABEL,
@@ -38,8 +38,8 @@ function toProjectCardItem(project: {
   deployStatus: DeployStatus;
   currentUrl: string | null;
   updatedAtRelativeText: string;
-  templateType: string | null;
-  startMode: string | null;
+  templateType?: string | null;
+  startMode?: string | null;
 }): ProjectItem {
   const deployStatusMap: Record<DeployStatus, ProjectItem['deployStatus']> = {
     DRAFT: 'pending',
@@ -50,22 +50,27 @@ function toProjectCardItem(project: {
     FAILED: 'pending',
   };
 
-  const hasTemplate = hasProjectTemplate(project);
+  const templateState = resolveProjectTemplateState(project);
 
   return {
     id: String(project.projectId),
     slug: formatProjectDisplayName(project.name, project.projectId),
     deployStatus: deployStatusMap[project.deployStatus],
     category: 'landing',
-    hasTemplate,
+    templateState,
     subtitle: project.currentUrl ?? '배포되지 않음',
     updatedAt: project.updatedAtRelativeText,
-    preview: hasTemplate ? templateTypeToPreviewVariant(project.templateType) : 'landing',
+    preview:
+      templateState === 'has'
+        ? templateTypeToPreviewVariant(project.templateType ?? null)
+        : 'landing',
   };
 }
 
 function ProjectListRow({ project }: { project: ProjectItem }) {
-  const subtitle = project.hasTemplate ? project.subtitle : TEMPLATE_UNCONFIGURED_SUBTITLE;
+  // 모를 때는 평소 부제를 쓴다. "홈에서 템플릿을 골라 주세요" 는 **없다고 알 때만** 참이다
+  const subtitle =
+    project.templateState === 'none' ? TEMPLATE_UNCONFIGURED_SUBTITLE : project.subtitle;
 
   return (
     <ProjectNavLink
@@ -79,7 +84,7 @@ function ProjectListRow({ project }: { project: ProjectItem }) {
       <span className="shrink-0 rounded bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#475569]">
         {DEPLOY_STATUS_LABEL[project.deployStatus]}
       </span>
-      {!project.hasTemplate ? (
+      {project.templateState === 'none' ? (
         <span className="shrink-0 rounded bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">
           {TEMPLATE_UNCONFIGURED_LABEL}
         </span>
