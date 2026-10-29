@@ -19,6 +19,8 @@
  * 빈 화면을 무한히 깜빡이게 되므로, 직전 새로고침 시각을 들고 다니며 막는다.
  */
 
+import { stashComposerDraftFromDom } from '@/lib/composerDraft';
+
 /** 마지막으로 이것 때문에 새로고침한 시각 */
 const RELOAD_AT_KEY = 'qeploy.chunk-reload-at';
 
@@ -69,6 +71,9 @@ function reloadOnceForChunkFailure(error: unknown): boolean {
     return false;
   }
 
+  // 사용자가 적던 말을 맡겨 둔다. 자동 새로고침은 누른 적도 없이 화면이 다시 뜨는
+  // 길이라, 여기서 안 맡기면 **왜 사라졌는지도 모르게** 입력이 날아간다
+  stashComposerDraftFromDom();
   window.location.reload();
   return true;
 }
