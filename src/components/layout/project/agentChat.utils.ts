@@ -1,4 +1,5 @@
 import type { ConversationMessage } from '@/types/chat.type';
+import { formatInSeoul, seoulRelativeDayLabel } from '@/lib/seoulTime';
 
 let localMessageId = -1;
 
@@ -179,34 +180,31 @@ export function formatProjectDisplayName(name: string, projectId: number): strin
   return trimmed ? trimmed : formatUntitledLabel(projectId);
 }
 
+/**
+ * `오늘`·`어제`·`10월 29일`.
+ *
+ * 예전에는 `toDateString()` 끼리 비교했다. 그건 **보는 사람의 자정**을 기준으로 갈라서,
+ * 서울 00:30 에 나눈 대화가 서울 밖에서는 `어제` 로 적혔다 — 날짜가 통째로 하루 밀린다.
+ * 서울 기준 날짜 열쇠로 비교한다.
+ */
 export function formatConversationDateLabel(iso: string): string {
   if (!iso) return '';
 
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '';
+  const relative = seoulRelativeDayLabel(iso);
+  if (relative) return relative;
 
-  const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday = date.toDateString() === yesterday.toDateString();
-
-  if (isToday) return '오늘';
-  if (isYesterday) return '어제';
-
-  return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+  return formatInSeoul(iso, { month: 'short', day: 'numeric' });
 }
 
 export function formatConversationPreview(iso: string): string {
   if (!iso) return '대화';
 
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '대화';
-
-  return date.toLocaleString('ko-KR', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  return (
+    formatInSeoul(iso, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }) || '대화'
+  );
 }

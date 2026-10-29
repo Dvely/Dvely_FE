@@ -11,6 +11,7 @@ import {
 } from '@/types/apiToken.type';
 import { composeApiErrorMessage } from '@/lib/apiErrorGuide';
 import { cn } from '@/lib/utils';
+import { formatInSeoul } from '@/lib/seoulTime';
 
 const API_TOKENS_QUERY_KEY = 'me-api-tokens';
 
@@ -63,9 +64,8 @@ codex mcp add qeploy -- npx -y @qeploy/mcp`,
 
 function formatDate(value: string | null) {
   if (!value) return null;
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return null;
-  return date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+  // 만료일은 날짜 단위라 경계에서만 어긋나지만, 어긋나면 **하루 통째로** 틀린다
+  return formatInSeoul(value, { year: 'numeric', month: 'long', day: 'numeric' }) || null;
 }
 
 function MeApiTokensPanel() {

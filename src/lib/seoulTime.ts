@@ -30,18 +30,82 @@ const KST_OFFSET = '+09:00';
 const HAS_OFFSET = /(?:Z|[+-]\d{2}:?\d{2})$/i;
 
 /**
- * 한 번만 만든다. 이벤트 줄마다 불리는 자리라 매번 만들면 그 비용이 목록 길이에 비례한다.
- *
- * `hourCycle: 'h23'` 을 명시한다. `hour12: false` 만 두면 로케일에 따라 자정이 `24:00` 으로
- * 나오는 경우가 있어서다 — 이 런타임에서는 `00:00` 이지만, 그 차이를 로케일 구현에 맡기지
- * 않는다.
+ * 만든 포매터를 모아 둔다. 목록의 줄마다 불리는 자리들이라, 매번 새로 만들면 그 비용이
+ * 목록 길이에 비례한다. `Intl.DateTimeFormat` 생성은 포맷 한 번보다 훨씬 비싸다.
  */
-const seoulHourMinute = new Intl.DateTimeFormat('ko-KR', {
-  timeZone: SEOUL_TIME_ZONE,
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
-});
+const formatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function seoulFormatter(locale: string, options: Intl.DateTimeFormatOptions) {
+  const key = `${locale}|${JSON.stringify(options)}`;
+  const cached = formatterCache.get(key);
+  if (cached) return cached;
+
+  const formatter = new Intl.DateTimeFormat(locale, { timeZone: SEOUL_TIME_ZONE, ...options });
+  formatterCache.set(key, formatter);
+  return formatter;
+}
+
+/** 읽을 수 있으면 Date, 아니면 null. 오프셋 보정을 거친다 */
+function toSeoulDate(value: string | Date | null | undefined): Date | null {
+  if (!value) return null;
+
+  const date = value instanceof Date ? value : new Date(withSeoulOffsetIfMissing(value));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * 서울 시각으로 적는다. **형식은 호출부가 정한다.**
+ *
+ * 자리마다 쓰는 형식이 달라서(`10월 29일` · `10. 29. 오전 09:33` · `2026년 10월 29일`)
+ * 함수를 그만큼 만들면 거의 같은 코드가 여섯 벌이 된다. 바뀌어야 하는 건 **시간대 하나**
+ * 뿐이므로 옵션은 그대로 받고 시간대만 여기서 못박는다 — 화면 문구는 한 글자도 안 바뀐다.
+ */
+function formatInSeoul(
+  value: string | Date | null | undefined,
+  options: Intl.DateTimeFormatOptions,
+  locale = 'ko-KR',
+): string {
+  const date = toSeoulDate(value);
+  if (!date) return '';
+
+  return seoulFormatter(locale, options).format(date);
+}
+
+/**
+ * 서울 기준 날짜 하나를 `YYYY-MM-DD` 로. **날짜 비교에만 쓴다.**
+ *
+ * `en-CA` 를 쓰는 이유는 그 로케일이 `YYYY-MM-DD` 를 주기 때문이다 — 화면에 보여줄 값이
+ * 아니라 **같은 날인지 가릴 열쇠**다. `Date` 끼리 비교하면 보는 사람의 자정을 기준으로
+ * 갈라져서, 서울 00:30 의 대화가 UTC 브라우저에서는 "어제" 가 된다.
+ */
+function seoulDayKey(value: string | Date | null | undefined): string {
+  const date = toSeoulDate(value);
+  if (!date) return '';
+
+  return seoulFormatter('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(
+    date,
+  );
+}
+
+/** 하루를 밀리초로. 서울은 서머타임이 없어 하루가 늘 24시간이다 */
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * 서울 기준으로 `오늘`·`어제` 인지. 둘 다 아니면 null — 호출부가 날짜를 적는다.
+ *
+ * `now` 를 받는 이유는 테스트에서 시각을 고정해야 하기 때문이다. 기본값은 지금이다.
+ */
+function seoulRelativeDayLabel(
+  value: string | Date | null | undefined,
+  now: Date = new Date(),
+): '오늘' | '어제' | null {
+  const key = seoulDayKey(value);
+  if (!key) return null;
+
+  if (key === seoulDayKey(now)) return '오늘';
+  if (key === seoulDayKey(new Date(now.getTime() - ONE_DAY_MS))) return '어제';
+  return null;
+}
 
 /**
  * 오프셋이 없으면 KST 로 간주해 붙인다. 있으면 그대로 둔다.
@@ -60,10 +124,14 @@ function withSeoulOffsetIfMissing(value: string): string {
 function formatSeoulHourMinute(value: string | null | undefined): string {
   if (!value) return '';
 
-  const date = new Date(withSeoulOffsetIfMissing(value));
-  if (Number.isNaN(date.getTime())) return '';
-
-  return seoulHourMinute.format(date);
+  return formatInSeoul(value, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 }
 
-export { SEOUL_TIME_ZONE, formatSeoulHourMinute, withSeoulOffsetIfMissing };
+export {
+  SEOUL_TIME_ZONE,
+  formatInSeoul,
+  formatSeoulHourMinute,
+  seoulDayKey,
+  seoulRelativeDayLabel,
+  withSeoulOffsetIfMissing,
+};
