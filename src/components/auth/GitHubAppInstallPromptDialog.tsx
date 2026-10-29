@@ -137,6 +137,11 @@ function GitHubAppInstallPromptDialog() {
 
         재현 화면이 떠 있는 동안 이 안내는 뒤에 그대로 남는다. 실제 팝업도 그렇다.
         재인증 화면은 재현하지 않는다 — 시연 사용자는 만료되지 않는다.
+
+        사용자 정보를 다시 읽고 그것이 화면에 반영된 뒤에 닫는다. 먼저 닫으면 그 사이 홈의
+        시작하기가 옛 정보로 "GitHub 연결하기" 를 안 한 것처럼 찍혔다(녹화 프레임에서 확인).
+        쿼리 캐시를 고친 것은 다음 태스크에 화면으로 알려지므로(TanStack notifyManager) 한
+        태스크를 넘긴 뒤 닫는다.
       */
       if (IS_DEMO) {
         setIsLoading(false);
@@ -144,8 +149,9 @@ function GitHubAppInstallPromptDialog() {
           if (!(await runDemoGitHubWindow('install'))) return;
           await completeGitHubAppCallback({ installation_id: 'demo', setup_action: 'install' });
         }
-        setOpen(false);
         await refreshUserInfoInBackground();
+        await new Promise((resolve) => window.setTimeout(resolve, 0));
+        setOpen(false);
         return;
       }
 

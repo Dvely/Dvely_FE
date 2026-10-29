@@ -74,6 +74,12 @@ function demoUser() {
   };
 }
 
+/**
+ * 목록 한 줄. 서버 `ProjectSummaryResponse` 의 여섯 필드 그대로다.
+ *
+ * 템플릿 필드(templateType · startMode)는 싣지 않는다 — 서버 목록 응답에 없다. 실으면
+ * 화면이 "템플릿 미설정" 이라고 단정해 운영과 다른 카드가 찍힌다(#170).
+ */
 function projectListItem() {
   const live = state.deployments.find((item) => item.status === 'SUCCESS');
   const connected = state.domains.find((item) => item.status === 'CONNECTED');
@@ -84,8 +90,6 @@ function projectListItem() {
     currentUrl: connected ? DEMO.domainUrl : (live?.deployedUrl ?? null),
     updatedAt: iso(),
     updatedAtRelativeText: '방금 전',
-    templateType: null,
-    startMode: 'blank',
   };
 }
 

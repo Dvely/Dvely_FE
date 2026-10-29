@@ -10,6 +10,8 @@
  * 흐름으로 이어서 돈다.
  */
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { findTaskLogAnchors, isTaskLogFinal } from '@/lib/agentTaskLog';
+import { resolveProjectTemplateState } from '@/lib/projectTemplate';
 
 async function load() {
   return {
@@ -88,7 +90,10 @@ describe('시연 어댑터', () => {
       draftMode: 'fast',
     });
     expect(created.projectId).toBe(projectId);
-    expect(await api.projects.getProjectList()).toHaveLength(1);
+    const list = await api.projects.getProjectList();
+    expect(list).toHaveLength(1);
+    // 서버 목록 응답에는 템플릿 필드가 없다. 화면은 모른다고 보고 "템플릿 미설정" 을 달지 않는다
+    expect(resolveProjectTemplateState(list[0])).toBe('unknown');
     expect((await api.projects.getProjectOverview(projectId)).currentUrl).toBeNull();
   });
 
@@ -162,9 +167,16 @@ describe('시연 어댑터', () => {
     );
 
     const messages = await api.chat.getConversationMessageList(conversationId);
-    expect(messages.some((item) => item.kind === 'AGENT_RESULT')).toBe(true);
-    const events = await api.agent.getAgentTaskEventList(taskId);
+    const result = messages.find((item) => item.kind === 'AGENT_RESULT');
+    // 결과 줄에 작업 ID 가 실려야 대화에서 그 작업의 기록을 다시 펼칠 수 있다
+    expect(result?.taskId).toBe(taskId);
+    expect(findTaskLogAnchors(messages).get(result!.messageId)).toBe(taskId);
+
+    // 끝난 작업의 기록도 처음부터 다 내려준다 — 되묻기·계획 승인 대기부터 완료까지
+    const events = await api.agent.getAgentTaskEventList(taskId, 0);
     expect(events.some((event) => event.agentType === 'CODE' && event.stepIndex === 1)).toBe(true);
+    expect(events.some((event) => event.status === 'WAITING_APPROVAL')).toBe(true);
+    expect(isTaskLogFinal(events)).toBe(true);
 
     const session = await api.preview.getProjectPreviewSession(projectId);
     expect(session.status).toBe('ACTIVE');

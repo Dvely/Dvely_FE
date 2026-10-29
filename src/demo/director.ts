@@ -68,8 +68,12 @@ function read(ms = 1000) {
   return pause(ms);
 }
 
-/** 지금 떠 있는 승인을 차례로 결정한다. 하나 누르면 다음 것이 올라온다 */
-async function approve(count: number) {
+/**
+ * 지금 떠 있는 승인을 차례로 결정한다. 하나 누르면 다음 것이 올라온다.
+ *
+ * `firstReadMs` 는 첫 장을 읽는 시간이다. 바로 앞에서 그 승인의 설명을 이미 읽었으면 줄인다.
+ */
+async function approve(count: number, firstReadMs = 1700) {
   for (let index = 0; index < count; index += 1) {
     await agentWorks('승인 카드', () => findAll('approve').length > 0, 30000);
     await show('approval-card');
@@ -81,7 +85,7 @@ async function approve(count: number) {
       승인이 여섯 번 나오므로(계획·저장소·DB·서버·배포·도메인) 첫 장보다 조금 줄였다.
       카드 모양은 앞에서 이미 읽혔고, 다른 것은 요약 한 줄뿐이다.
     */
-    await read(index === 0 ? 1700 : 850);
+    await read(index === 0 ? firstReadMs : 850);
     await click('approve');
     await pause(420);
   }
@@ -223,7 +227,7 @@ export const scenes: Scene[] = [
       await click('open-agent');
       await waitUntil('키 안내', () => find('ai-key-register-link') != null, 20000);
       // 처음 들어온 대화에는 무엇을 적으면 되는지가 먼저 보인다
-      await read(1100);
+      await read(950);
       await click('ai-key-register-link');
       await click('ai-key-open-ANTHROPIC');
       await read(300);
@@ -231,7 +235,7 @@ export const scenes: Scene[] = [
       await read(250);
       await click('ai-key-save');
       await waitUntil('키 등록 반영', () => pageHasText('키를 등록했습니다'), 15000);
-      await read(1000);
+      await read(850);
     },
   },
   {
@@ -270,6 +274,35 @@ export const scenes: Scene[] = [
       await approve(1);
       await agentWorks('프리뷰', () => document.querySelector('iframe') != null, 30000);
       await read(700);
+    },
+  },
+  {
+    caption: { title: '작업 내역 기능', sub: '지난 작업이 어떻게 진행됐는지 다시 봅니다' },
+    run: async () => {
+      /*
+        작업이 도는 동안 대화 끝에 보이던 진행 기록은 작업이 끝나면 사라지고 결과 줄만
+        남는다. 그 줄의 "작업 내역 보기" 로 다시 펼친다 — 되묻기와 계획 승인부터 코드
+        작성, 저장소 연결까지 시각과 함께 남아 있다.
+      */
+      await waitUntil('작업 내역 보기', () => find('task-log-toggle') != null, 15000);
+      // 접혀 있는 모양을 먼저 보여 준다
+      await show('task-log-toggle');
+      await read(550);
+      await click('task-log-toggle');
+      await waitUntil(
+        '작업 내역',
+        () => find('task-log-panel')?.querySelector('ol') != null,
+        10000,
+      );
+      /*
+        결과 줄을 대화 위쪽으로 올린다. 펼친 기록이 그 아래로 길게 내려오므로, 그대로 두면
+        기록 끝이 입력창 뒤로 들어간다. 사람이 펼치고 나서 조금 내려 읽는 것과 같다.
+      */
+      find('task-log-toggle')?.parentElement?.parentElement?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+      await read(1500);
     },
   },
   {
@@ -365,8 +398,9 @@ export const scenes: Scene[] = [
       await agentWorks('승인 카드', () => find('approval-help') != null, 30000);
       await show('approval-card');
       await click('approval-help');
-      await read(1700);
-      await approve(2);
+      await read(1500);
+      // 첫 장은 방금 펼친 설명과 함께 읽었다
+      await approve(2, 900);
       await read(400);
     },
   },
@@ -377,7 +411,7 @@ export const scenes: Scene[] = [
     pace: 2,
     run: async () => {
       await sendChat(PROMPT_SHIP);
-      await approve(2);
+      await approve(2, 1300);
       await agentWorks('배포 완료', () => pageHasText('에서 열립니다'), 40000);
       await read(900);
     },
@@ -410,11 +444,11 @@ export const scenes: Scene[] = [
         화면에서 무언가를 실제로 바꾸는 한 번이 이 장면의 내용이다.
       */
       await click('tab-approvals');
-      await read(800);
+      await read(700);
       await click('tab-infra');
-      await read(500);
+      await read(450);
       await select('server-tier', 't3.small');
-      await read(800);
+      await read(700);
     },
   },
 ];
@@ -546,7 +580,7 @@ async function runScenes({ cursorOffscreen = false }: { cursorOffscreen?: boolea
       await scene.run();
     }
     // 마지막 자막은 잠깐 더 두고 접는다
-    await pause(1500);
+    await pause(1200);
   } catch (thrown) {
     error = thrown instanceof Error ? thrown.message : String(thrown);
   } finally {
