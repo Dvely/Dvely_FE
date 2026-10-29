@@ -19,7 +19,9 @@ export type HomePromptAttachedTemplate = {
   subtitle: string;
 };
 
-const HOME_PROMPT_TEMPLATE_KEY = 'dvely:home-prompt-template';
+const HOME_PROMPT_TEMPLATE_KEY = 'qeploy.home-prompt-template';
+/** 이름을 바꾸기 전 키. 얹어 둔 채 배포가 끼면 템플릿이 사라지므로 읽을 때만 함께 본다 */
+const LEGACY_HOME_PROMPT_TEMPLATE_KEY = 'dvely:home-prompt-template';
 
 export function toHomePromptAttachedTemplate(template: Template): HomePromptAttachedTemplate {
   const card = toTemplateCard(template);
@@ -52,7 +54,9 @@ export function setHomePromptTemplate(template: HomePromptAttachedTemplate) {
 
 export function readHomePromptTemplate(): HomePromptAttachedTemplate | null {
   try {
-    const raw = sessionStorage.getItem(HOME_PROMPT_TEMPLATE_KEY);
+    const raw =
+      sessionStorage.getItem(HOME_PROMPT_TEMPLATE_KEY) ??
+      sessionStorage.getItem(LEGACY_HOME_PROMPT_TEMPLATE_KEY);
     if (!raw) return null;
 
     const parsed: unknown = JSON.parse(raw);
@@ -77,7 +81,9 @@ export function readHomePromptTemplate(): HomePromptAttachedTemplate | null {
 
 export function clearHomePromptTemplate() {
   try {
+    // 두 키를 다 지운다 — 옛 키를 남기면 치웠는데도 템플릿이 계속 얹혀 보인다
     sessionStorage.removeItem(HOME_PROMPT_TEMPLATE_KEY);
+    sessionStorage.removeItem(LEGACY_HOME_PROMPT_TEMPLATE_KEY);
   } catch {
     // 지우지 못했다. 맡긴 적이 없으면 지울 것도 없다
   }

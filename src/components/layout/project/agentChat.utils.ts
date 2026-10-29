@@ -115,7 +115,9 @@ export function migrateSessionMessages(fromConversationId: number, toConversatio
   sessionMessagesByConversation.delete(fromConversationId);
 }
 
-const PENDING_HOME_AGENT_PROMPT_KEY = 'dvely:pending-home-agent-prompt';
+const PENDING_HOME_AGENT_PROMPT_KEY = 'qeploy.pending-home-agent-prompt';
+/** 이름을 바꾸기 전 키. 넘기는 중에 배포가 끼면 그 한 번을 잃으므로 읽을 때만 함께 본다 */
+const LEGACY_PENDING_HOME_AGENT_PROMPT_KEY = 'dvely:pending-home-agent-prompt';
 
 /**
  * 홈에서 쓴 문장을 다음 화면까지 들고 간다.
@@ -139,9 +141,14 @@ export function setPendingHomeAgentPrompt(prompt: string) {
 
 export function consumePendingHomeAgentPrompt(): string | null {
   try {
-    const value = sessionStorage.getItem(PENDING_HOME_AGENT_PROMPT_KEY);
+    const value =
+      sessionStorage.getItem(PENDING_HOME_AGENT_PROMPT_KEY) ??
+      sessionStorage.getItem(LEGACY_PENDING_HOME_AGENT_PROMPT_KEY);
     if (value) {
+      // 한 번 쓰고 버리는 값이다. **두 키를 다 지워야 한다** — 옛 키를 남기면 다음
+      // 방문마다 같은 프롬프트가 되살아난다
       sessionStorage.removeItem(PENDING_HOME_AGENT_PROMPT_KEY);
+      sessionStorage.removeItem(LEGACY_PENDING_HOME_AGENT_PROMPT_KEY);
     }
     return value;
   } catch {
