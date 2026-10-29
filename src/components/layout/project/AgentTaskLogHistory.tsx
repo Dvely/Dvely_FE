@@ -14,8 +14,20 @@ import {
  * 기다리기 시작하면 사라진다. 그 작업이 남긴 줄 아래에 접어 두었다가, 펼칠 때만 서버에서
  * 읽어 같은 모양으로 그린다 — 대화를 열 때마다 작업 수만큼 요청이 나가지 않게 한다.
  */
-function AgentTaskLogHistory({ taskId }: { taskId: string }) {
+function AgentTaskLogHistory({
+  taskId,
+  onExpand,
+}: {
+  taskId: string;
+  /** 펼치기 직전에 부른다. 대화가 바닥에 붙어 따라 내려가지 않게 놓아 줄 때 쓴다 */
+  onExpand?: () => void;
+}) {
   const [open, setOpen] = useState(false);
+
+  const toggle = () => {
+    if (!open) onExpand?.();
+    setOpen((prev) => !prev);
+  };
   const { data, isPending, isError, refetch } = useAgentTaskLogQuery(taskId, open);
 
   const visibleEvents = data ? selectVisibleEvents(data) : [];
@@ -26,7 +38,7 @@ function AgentTaskLogHistory({ taskId }: { taskId: string }) {
     <div className="mt-2">
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={toggle}
         aria-expanded={open}
         data-demo="task-log-toggle"
         className="inline-flex cursor-pointer items-center gap-1 text-[12px] font-medium text-[#94a3b8] transition hover:text-[#64748b]"
