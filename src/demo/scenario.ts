@@ -30,12 +30,19 @@ import type { Domain } from '@/types/domain.type';
 
 export const DEMO = {
   userId: 1,
-  username: 'danto',
-  avatarUrl: 'https://avatars.githubusercontent.com/u/9919?v=4',
+  /*
+    시연 계정은 실제로 없는 이름을 쓴다. 영상에 찍히는 GitHub 계정·저장소 주소가 남의
+    실제 계정을 가리키면 안 된다(예전 값은 다른 사람의 실제 GitHub 계정이었다).
+    `qeploy-demo` 는 지금 GitHub 에 없는 이름이다. 표시 이름은 설정 화면이 이 값을
+    다듬어 "Qeploy Demo" 로 적는다(formatDisplayName).
+  */
+  username: 'qeploy-demo',
+  /** 프로필 사진은 두지 않는다. 화면은 기본 아이콘으로 떨어진다 — 실제 인물 사진이 찍히면 안 된다 */
+  avatarUrl: null,
   projectId: 1,
   projectName: '함께 할 일',
   conversationId: 1,
-  repositoryOwner: 'danto',
+  repositoryOwner: 'qeploy-demo',
   repositoryName: 'todo-together',
   get repositoryFullName() {
     return `${this.repositoryOwner}/${this.repositoryName}`;

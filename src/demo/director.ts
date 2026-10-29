@@ -319,7 +319,7 @@ export const scenes: Scene[] = [
     caption: { title: '실시간 프리뷰 기능', sub: '아직 서버가 없어 가입이 실패합니다' },
     run: async () => {
       const preview = await waitForPreviewDocument();
-      await previewType(preview, '#email', 'danto@qeploy.com');
+      await previewType(preview, '#email', 'demo@qeploy.com');
       await previewType(preview, '#password', 'qeploy1234', 12);
       await read(250);
       await previewClick(preview, '#authSubmit');
@@ -379,7 +379,7 @@ export const scenes: Scene[] = [
         값을 다시 넣는다. 클라우드를 연결하는 동안 화면을 떠났다 돌아오면 프리뷰가 새로
         로드되어 아까 친 것이 남아 있지 않다 — 빈 폼으로 누르면 아무 일도 안 일어난다.
       */
-      await previewType(preview, '#email', 'danto@qeploy.com', 11);
+      await previewType(preview, '#email', 'demo@qeploy.com', 11);
       await previewType(preview, '#password', 'qeploy1234', 11);
       await read(240);
       await previewClick(preview, '#authSubmit');
