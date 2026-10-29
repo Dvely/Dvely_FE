@@ -88,7 +88,8 @@ export function createUserProject(input: {
     slug,
     deployStatus: 'pending',
     category,
-    hasTemplate: input.startType !== 'blank',
+    // 화면에서 만든 값이라 근거가 분명하다 — 모르는 경우가 없다
+    templateState: input.startType === 'blank' ? 'none' : 'has',
     subtitle,
     updatedAt: formatUpdatedAt(new Date()),
     preview,

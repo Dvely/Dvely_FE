@@ -37,13 +37,19 @@ function BrowserChrome({ slug }: { slug: string }) {
   );
 }
 
-function UnconfiguredTemplatePreview() {
+/**
+ * 템플릿 자리에 놓는 그림.
+ *
+ * `label` 을 받지 않으면 **아무 말도 적지 않는다.** 템플릿이 있는지 모를 때 쓰는 모양이다 —
+ * "빈 템플릿" 은 없다고 아는 경우에만 참이라, 모르는 자리에 적으면 거짓말이 된다.
+ */
+function UnconfiguredTemplatePreview({ label }: { label?: string }) {
   return (
     <div className="flex h-[128px] flex-col items-center justify-center gap-2 bg-gradient-to-br from-[#faf5ff] via-[#f8fafc] to-[#eef2ff]">
       <span className="flex size-9 items-center justify-center rounded-xl bg-white text-[#7c3aed] shadow-sm ring-1 ring-[#e9d5ff]">
         <LayoutTemplate className="size-4" strokeWidth={1.75} />
       </span>
-      <p className="text-[10px] font-medium text-[#64748b]">{TEMPLATE_UNCONFIGURED_HINT}</p>
+      {label ? <p className="text-[10px] font-medium text-[#64748b]">{label}</p> : null}
     </div>
   );
 }
@@ -122,13 +128,18 @@ function ProjectPreview({ variant }: { variant: ProjectItem['preview'] }) {
 type ProjectCardProps = { project: ProjectItem };
 
 function ProjectCard({ project }: ProjectCardProps) {
-  const categoryLabel = project.hasTemplate
+  const hasTemplate = project.templateState === 'has';
+  // 모를 때는 배지를 아예 달지 않는다. 있다고도 없다고도 말하지 않는 쪽이 맞다
+  const showsTemplateBadge = project.templateState !== 'unknown';
+
+  const categoryLabel = hasTemplate
     ? CATEGORY_LABEL[project.category]
     : TEMPLATE_UNCONFIGURED_LABEL;
-  const categoryClass = project.hasTemplate
+  const categoryClass = hasTemplate
     ? categoryBadgeClass[project.category]
     : 'bg-[#f1f5f9] text-[#64748b]';
-  const subtitle = project.hasTemplate ? project.subtitle : TEMPLATE_UNCONFIGURED_SUBTITLE;
+  const subtitle =
+    project.templateState === 'none' ? TEMPLATE_UNCONFIGURED_SUBTITLE : project.subtitle;
 
   return (
     <ProjectNavLink
@@ -142,10 +153,12 @@ function ProjectCard({ project }: ProjectCardProps) {
       <div className="border-b border-[#f1f5f9] bg-[#f8fafc] p-3">
         <div className="overflow-hidden rounded-lg border border-[#e2e8f0] bg-white shadow-[0_2px_6px_rgba(15,23,42,0.05)]">
           <BrowserChrome slug={project.slug} />
-          {project.hasTemplate ? (
+          {hasTemplate ? (
             <ProjectPreview variant={project.preview} />
           ) : (
-            <UnconfiguredTemplatePreview />
+            <UnconfiguredTemplatePreview
+              label={project.templateState === 'none' ? TEMPLATE_UNCONFIGURED_HINT : undefined}
+            />
           )}
         </div>
       </div>
@@ -157,9 +170,11 @@ function ProjectCard({ project }: ProjectCardProps) {
           >
             {DEPLOY_STATUS_LABEL[project.deployStatus]}
           </span>
-          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${categoryClass}`}>
-            {categoryLabel}
-          </span>
+          {showsTemplateBadge ? (
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${categoryClass}`}>
+              {categoryLabel}
+            </span>
+          ) : null}
         </div>
         <h3 className="mt-3 truncate text-[15px] font-bold tracking-[-0.02em] text-[#0f172a]">
           {project.slug}
