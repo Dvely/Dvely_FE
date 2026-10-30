@@ -62,6 +62,20 @@ Pages의 404로 끝난다. 백엔드를 다시 띄우면 `api.qeploy.com` 같은
 `VITE_API_URL`을 그 주소로 바꾼 뒤 재배포한다. 이때 백엔드 CORS가 `https://qeploy.com`을
 허용해야 한다.
 
+### 일시 중단 표시
+
+백엔드가 없는 동안 화면은 일시 중단 상태로 나간다(`src/constants/serviceStatus.ts`의
+`SERVICE_SUSPENDED`). 상단 배너로 알리고, 로그인·워크스페이스 진입은 서버에 묻지 않고 안내
+창을 띄운다. 템플릿 카탈로그는 서버 대신 `dvely.github.io/qeploy-templates/catalog.json`을
+직접 읽는다.
+
+`public/status.json`은 같은 상태를 기계가 읽는 사본이다. MCP·CLI(`@qeploy/client`)가 API
+응답을 못 받으면 이 파일을 읽어 사용자에게 중단 안내를 보여 준다.
+
+다시 열 때는 백엔드 주소를 `VITE_API_URL`에 넣고, `SERVICE_SUSPENDED`를 `false`로,
+`status.json`의 `status`를 `"operational"`로 바꿔 한 번에 배포한다. `public/llms.txt`의
+"현재 상태" 절도 지운다.
+
 ## 배포 검증
 
 워크플로가 마지막에 Pages 엣지(`185.199.108.153`)를 직접 때려 확인한다.
