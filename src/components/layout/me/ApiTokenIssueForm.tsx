@@ -122,7 +122,6 @@ function ApiTokenIssueForm({
                   onScopeChange(value);
                   setFormError(null);
                 }}
-                data-demo={`api-token-scope-${value}`}
                 className="mt-0.5 size-4 shrink-0 accent-[#7c3aed]"
               />
               <span className="min-w-0">
@@ -148,7 +147,6 @@ function ApiTokenIssueForm({
             maxLength={64}
             onChange={(event) => setLabel(event.target.value)}
             placeholder={labelPlaceholder}
-            data-demo="api-token-label"
             className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-[#7c3aed]"
           />
         </label>
@@ -164,7 +162,6 @@ function ApiTokenIssueForm({
             onChange={(event) =>
               setExpiresByScope((prev) => ({ ...prev, [scope]: event.target.value }))
             }
-            data-demo="api-token-expiry"
             className="h-9 rounded-lg border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-[#7c3aed]"
           />
         </label>
@@ -180,7 +177,6 @@ function ApiTokenIssueForm({
         <button
           type="submit"
           disabled={issueMutation.isPending}
-          data-demo="api-token-issue"
           className="h-9 rounded-lg bg-[#7c3aed] px-4 text-[13px] font-semibold text-white transition hover:bg-[#6d28d9] disabled:opacity-50"
         >
           {issueMutation.isPending ? '발급 중…' : '발급'}

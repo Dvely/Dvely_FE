@@ -205,7 +205,6 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
             호스팅
             <select
               value={hostingType}
-              data-demo="deploy-hosting"
               onChange={(event) => setHostingType(event.target.value)}
               className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-3 text-[13px] text-[#334155]"
             >
@@ -221,7 +220,6 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
             type="button"
             disabled={deployMutation.isPending || needsCloudConnection}
             onClick={() => void handleDeploy()}
-            data-demo="deploy-submit"
             className="h-9 rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {deployMutation.isPending ? '요청 중' : '배포'}

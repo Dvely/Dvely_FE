@@ -136,7 +136,6 @@ function CloudConnectionCreateForm({
           </label>
           <input
             id="cloud-display-name"
-            data-demo="cloud-name"
             value={displayName}
             onChange={(event) => setDisplayName(event.target.value)}
             placeholder="예: 내 AWS 계정"
@@ -149,7 +148,6 @@ function CloudConnectionCreateForm({
           </label>
           <input
             id="cloud-region"
-            data-demo="cloud-region"
             value={region}
             onChange={(event) => setRegion(event.target.value)}
             /*
@@ -167,7 +165,6 @@ function CloudConnectionCreateForm({
           </label>
           <input
             id="cloud-access-key-id"
-            data-demo="cloud-key"
             value={accessKeyId}
             onChange={(event) => setAccessKeyId(event.target.value)}
             placeholder={provider === 'AWS' ? 'AKIA…' : undefined}
@@ -190,7 +187,6 @@ function CloudConnectionCreateForm({
           */}
           <input
             id="cloud-secret"
-            data-demo="cloud-secret"
             type="password"
             autoComplete="new-password"
             value={secretAccessKey}
@@ -221,7 +217,6 @@ function CloudConnectionCreateForm({
             </label>
             <input
               id="cloud-account-id"
-              data-demo="cloud-account"
               value={accountId}
               onChange={(event) => setAccountId(event.target.value)}
               inputMode="numeric"
@@ -242,7 +237,6 @@ function CloudConnectionCreateForm({
         type="button"
         disabled={createMutation.isPending}
         onClick={() => void handleCreate()}
-        data-demo="cloud-create"
         className="mt-3 h-9 rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:opacity-50"
       >
         연결 등록

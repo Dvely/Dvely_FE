@@ -37,13 +37,10 @@ function ApiTokenRevealBox({ token, label }: ApiTokenRevealBoxProps) {
       {label ? <p className="mt-3 text-[12px] text-[#94a3b8]">{label}</p> : null}
 
       <div className="mt-2 flex items-stretch gap-2">
-        <code
-          data-demo="api-token-value"
-          className="min-w-0 flex-1 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-2.5 font-mono text-[12px] break-all text-[#0f172a] select-all"
-        >
+        <code className="min-w-0 flex-1 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-2.5 font-mono text-[12px] break-all text-[#0f172a] select-all">
           {token}
         </code>
-        <CopyButton text={token} className="w-[84px]" demoId="api-token-copy" />
+        <CopyButton text={token} className="w-[84px]" />
       </div>
     </div>
   );

@@ -51,7 +51,7 @@ function AgentConnectSheet({ open, onOpenChange, projectName }: AgentConnectShee
         </Link>
       }
     >
-      <div data-demo="agent-connect-sheet" className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5">
         <WritesToggle checked={enableWrites} onChange={setEnableWrites} />
 
         <section className="flex gap-2">

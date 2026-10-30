@@ -225,7 +225,6 @@ function MeAiCredentialsPanel({ onSaved }: MeAiCredentialsPanelProps) {
                       setLabel(registered?.label ?? '');
                       setEditingVendor(isEditing ? null : vendor);
                     }}
-                    data-demo={`ai-key-open-${vendor}`}
                     className="h-9 rounded-lg border border-[#e2e8f0] bg-white px-3 text-[12px] font-semibold text-[#334155] transition hover:bg-[#f8fafc] disabled:opacity-50"
                   >
                     {isEditing ? '취소' : registered ? '키 교체' : '키 등록'}
@@ -259,7 +258,6 @@ function MeAiCredentialsPanel({ onSaved }: MeAiCredentialsPanelProps) {
                     <input
                       value={apiKey}
                       onChange={(event) => setApiKey(event.target.value)}
-                      data-demo="ai-key-input"
                       placeholder={meta.placeholder}
                       autoComplete="off"
                       spellCheck={false}
@@ -291,7 +289,6 @@ function MeAiCredentialsPanel({ onSaved }: MeAiCredentialsPanelProps) {
                     <button
                       type="submit"
                       disabled={saveMutation.isPending}
-                      data-demo="ai-key-save"
                       className={cn(
                         'h-9 rounded-lg bg-[#7c3aed] px-4 text-[13px] font-semibold text-white transition',
                         'hover:bg-[#6d28d9] disabled:opacity-50',

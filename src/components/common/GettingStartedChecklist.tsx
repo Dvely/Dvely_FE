@@ -40,7 +40,6 @@ function StepAction({
             dispatchGitHubAppInstallRequired();
           }}
           className={ACTION_CLASS}
-          data-demo="guide-next"
         >
           권한 설정하기 {arrow}
         </button>
@@ -52,25 +51,19 @@ function StepAction({
           search={{ section: 'ai-credentials' }}
           onClick={onNavigate}
           className={ACTION_CLASS}
-          data-demo="guide-next"
         >
           키 등록하러 가기 {arrow}
         </Link>
       );
     case 'project':
       return (
-        <Link to="/project" onClick={onNavigate} className={ACTION_CLASS} data-demo="guide-next">
+        <Link to="/project" onClick={onNavigate} className={ACTION_CLASS}>
           프로젝트 만들기 {arrow}
         </Link>
       );
     case 'cloud':
       return (
-        <Link
-          to="/onboarding/cloud"
-          onClick={onNavigate}
-          className={ACTION_CLASS}
-          data-demo="guide-next"
-        >
+        <Link to="/onboarding/cloud" onClick={onNavigate} className={ACTION_CLASS}>
           연결 안내 보기 {arrow}
         </Link>
       );
@@ -84,7 +77,6 @@ function StepAction({
           params={{ slug: String(latestProjectId) }}
           onClick={onNavigate}
           className={ACTION_CLASS}
-          data-demo="guide-next"
         >
           대화로 가기 {arrow}
         </Link>

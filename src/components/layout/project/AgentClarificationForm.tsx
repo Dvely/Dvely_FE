@@ -93,7 +93,6 @@ function AgentClarificationForm({
           >
             <input
               type={isMulti ? 'checkbox' : 'radio'}
-              data-demo="clarify-option"
               name="agent-clarification"
               checked={selected.includes(option.value)}
               onChange={() => toggle(option.value)}
@@ -113,7 +112,6 @@ function AgentClarificationForm({
           <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-white px-2.5 py-2 text-[13px] text-[#334155] ring-1 ring-[#ede9fe] hover:ring-[#ddd6fe]">
             <input
               type={isMulti ? 'checkbox' : 'radio'}
-              data-demo="clarify-option"
               name="agent-clarification"
               checked={isOtherChosen}
               onChange={() => toggle(OTHER_CHOICE)}
@@ -143,7 +141,6 @@ function AgentClarificationForm({
         <button
           type="button"
           onClick={() => onSubmit(composedValue)}
-          data-demo="clarify-submit"
           disabled={!canSubmit}
           className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-[#7c3aed] px-4 text-[13px] font-semibold text-white transition hover:bg-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-50"
         >

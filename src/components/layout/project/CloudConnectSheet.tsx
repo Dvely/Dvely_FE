@@ -76,7 +76,6 @@ function CloudConnectSheet({ open, onOpenChange, projectId, returnPath }: CloudC
             type="button"
             disabled={select.isPending}
             onClick={() => select.mutate(verifiedId, { onSuccess: () => handleOpenChange(false) })}
-            data-demo="cloud-sheet-use"
             className="mt-3 inline-flex h-9 cursor-pointer items-center rounded-lg bg-[#15803d] px-4 text-[13px] font-semibold text-white transition hover:bg-[#166534] disabled:opacity-50"
           >
             {select.isPending ? '연결하는 중' : '이 프로젝트에 쓰기'}

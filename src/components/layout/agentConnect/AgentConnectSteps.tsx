@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 
 /** 복사 버튼이 붙은 명령 한 덩어리 */
-function CommandBlock({ command, demoId }: { command: string; demoId?: string }) {
+function CommandBlock({ command }: { command: string }) {
   return (
     <div className="mt-1.5 flex items-start gap-2 rounded-lg bg-[#0f172a] py-2 pr-2 pl-3">
       {/*
@@ -23,7 +23,7 @@ function CommandBlock({ command, demoId }: { command: string; demoId?: string })
         {command}
       </pre>
       {/* 명령이 바뀌면(에이전트·쓰기 전환) "복사됨" 도 새로 시작한다 */}
-      <CopyButton key={command} text={command} tone="onDark" demoId={demoId} />
+      <CopyButton key={command} text={command} tone="onDark" />
     </div>
   );
 }
@@ -47,10 +47,7 @@ type WritesToggleProps = {
  */
 export function WritesToggle({ checked, onChange }: WritesToggleProps) {
   return (
-    <label
-      data-demo="agent-connect-writes"
-      className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-[#e2e8f0] bg-white px-3.5 py-3"
-    >
+    <label className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-[#e2e8f0] bg-white px-3.5 py-3">
       <span className="min-w-0">
         <span className="block text-[13px] font-semibold text-[#0f172a]">배포까지 맡기기</span>
         <span className="mt-0.5 block text-[12px] leading-relaxed text-[#64748b]">
@@ -120,7 +117,7 @@ function AgentConnectSteps({
             <p className="text-[12px] font-semibold text-[#0f172a]">
               발급한 토큰을 기기에 저장합니다
             </p>
-            <CommandBlock command={LOGIN_COMMAND} demoId="agent-connect-copy-login" />
+            <CommandBlock command={LOGIN_COMMAND} />
             <p className="mt-1.5 text-[12px] leading-relaxed text-[#64748b]">
               발급한 토큰(qp_ 로 시작합니다)을 붙여넣습니다. 입력은 화면에 표시되지 않고, 서버에 한
               번 확인한 뒤 소유자만 읽을 수 있는 파일에 저장됩니다. 스코프는 발급할 때 정해지므로 이
@@ -156,10 +153,7 @@ function AgentConnectSteps({
                 ))}
               </div>
             </div>
-            <CommandBlock
-              command={buildRegisterCommand(client, enableWrites)}
-              demoId="agent-connect-copy-register"
-            />
+            <CommandBlock command={buildRegisterCommand(client, enableWrites)} />
             <p className="mt-1.5 text-[12px] leading-relaxed text-[#64748b]">
               토큰은 이 명령에 적지 않습니다. 앞에서 저장한 것을 그대로 읽습니다.
               {enableWrites ? (

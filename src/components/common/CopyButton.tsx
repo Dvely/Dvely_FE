@@ -7,7 +7,6 @@ type CopyButtonProps = {
   /** primary: 보라 채움(토큰처럼 꼭 복사해야 하는 값) · onDark: 어두운 명령 블록 위 */
   tone?: 'primary' | 'onDark';
   className?: string;
-  demoId?: string;
 };
 
 /**
@@ -16,7 +15,7 @@ type CopyButtonProps = {
  * 클립보드가 막힌 환경(비보안 컨텍스트·권한 거부)이 있다. 그때는 "복사 안 됨" 으로 바꿔
  * 직접 고르게 둔다 — 조용히 실패하면 사용자는 복사된 줄 알고 빈 값을 붙여넣는다.
  */
-function CopyButton({ text, tone = 'primary', className, demoId }: CopyButtonProps) {
+function CopyButton({ text, tone = 'primary', className }: CopyButtonProps) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
 
   const handleCopy = async () => {
@@ -32,7 +31,6 @@ function CopyButton({ text, tone = 'primary', className, demoId }: CopyButtonPro
     <button
       type="button"
       onClick={() => void handleCopy()}
-      data-demo={demoId}
       title={state === 'failed' ? '복사가 막혀 있습니다. 직접 선택해 복사해 주세요.' : undefined}
       className={cn(
         'inline-flex shrink-0 cursor-pointer items-center justify-center gap-1 rounded-lg font-semibold transition',

@@ -2,11 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouterState } from '@tanstack/react-router';
 import { GitBranch } from 'lucide-react';
 import { refreshUserInfoInBackground } from '@/api/user';
-import {
-  completeGitHubAppCallback,
-  fetchGitHubAppInstallUrl,
-  fetchGitHubAppReauthorizeUrl,
-} from '@/api/auth';
+import { fetchGitHubAppInstallUrl, fetchGitHubAppReauthorizeUrl } from '@/api/auth';
 import { closeAfterRefresh } from '@/lib/closeAfterRefresh';
 import {
   GITHUB_APP_INSTALL_REQUIRED_EVENT,
@@ -17,8 +13,6 @@ import {
   GITHUB_APP_INSTALL_SUCCESS_MESSAGE,
   GITHUB_OAUTH_POPUP_FEATURES,
 } from '@/constants/githubOAuth';
-import { IS_DEMO } from '@/demo/config';
-import { runDemoGitHubWindow } from '@/demo/githubWindow';
 
 /**
  * 두 모드는 사용자가 처한 상황이 다르다.
@@ -154,25 +148,6 @@ function GitHubAppInstallPromptDialog() {
           : await fetchGitHubAppInstallUrl();
       if (!result?.data?.url) return;
 
-      /*
-        시연에서는 브라우저 팝업 대신 시연 빌드 안의 재현 화면을 띄운다(demo/githubWindow).
-        설치를 누르면 실제 팝업의 `/auth/app-callback` 이 하던 일(설치 콜백)을 이 창에서
-        하고, 그 뒤는 실제 팝업이 성공을 알렸을 때와 같은 길(finishInstall)로 간다 — 사용자
-        정보를 다시 읽고 화면에 반영된 뒤에 닫는다.
-
-        재현 화면이 떠 있는 동안 이 안내는 뒤에 그대로 남는다. 실제 팝업도 그렇다.
-        재인증 화면은 재현하지 않는다 — 시연 사용자는 만료되지 않는다.
-      */
-      if (IS_DEMO) {
-        setIsLoading(false);
-        if (promptMode === 'install') {
-          if (!(await runDemoGitHubWindow('install'))) return;
-          await completeGitHubAppCallback({ installation_id: 'demo', setup_action: 'install' });
-        }
-        await finishInstall();
-        return;
-      }
-
       window.open(result.data.url, GITHUB_APP_INSTALL_POPUP_NAME, GITHUB_OAUTH_POPUP_FEATURES);
     } finally {
       setIsLoading(false);
@@ -207,7 +182,6 @@ function GitHubAppInstallPromptDialog() {
             type="button"
             onClick={() => void handleConfirm()}
             disabled={isLoading || isConfirming}
-            data-demo="github-app-confirm"
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f172a] py-3 text-[14px] font-semibold text-white transition hover:bg-[#1e293b] disabled:opacity-50"
           >
             <GitBranch className="size-4" strokeWidth={1.75} aria-hidden />

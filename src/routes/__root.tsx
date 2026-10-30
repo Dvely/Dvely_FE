@@ -6,9 +6,6 @@ import RouteErrorComponent from '@/components/common/RouteErrorComponent';
 import AppSidebar from '@/components/common/AppSidebar';
 import { AssetLoadFailureNotice } from '@/components/common/AssetLoadFailureNotice';
 import SeoHead from '@/components/common/SeoHead';
-import { IS_DEMO } from '@/demo/config';
-import DemoCaption from '@/demo/DemoCaption';
-import DemoGitHubWindow from '@/demo/DemoGitHubWindow';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -31,8 +28,6 @@ function RootComponent() {
       <SeoHead />
       <AssetLoadFailureNotice />
       <GitHubAppInstallPromptDialog />
-      {IS_DEMO ? <DemoCaption /> : null}
-      {IS_DEMO ? <DemoGitHubWindow /> : null}
 
       {!showAppChrome ? (
         <div className="min-h-screen w-full bg-white text-[#0f172a]">
