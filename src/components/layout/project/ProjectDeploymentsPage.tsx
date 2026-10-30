@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { getProjectInfrastructureSettings } from '@/api/projects';
+import { useCurrentPath } from '@/hooks/useLeaveForSetup';
 import {
   getDeploymentFailureAnalysis,
   getDeploymentLogs,
@@ -11,6 +12,7 @@ import {
   postProjectDeploymentCreate,
   useProjectDeploymentListQuery,
 } from '@/api/deployments';
+import { formatActivityTime } from '@/lib/projectActivity';
 
 type ProjectDeploymentsPageProps = {
   projectId: number;
@@ -77,6 +79,8 @@ function failureReason(item: { errorMessage?: string | null }) {
 }
 
 function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
+  // 처음 쓰는 사람용 안내를 다 읽고 연결까지 마치면 이 자리로 돌아온다
+  const currentPath = useCurrentPath();
   const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null);
   const [versionName, setVersionName] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
@@ -201,6 +205,7 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
             호스팅
             <select
               value={hostingType}
+              data-demo="deploy-hosting"
               onChange={(event) => setHostingType(event.target.value)}
               className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-3 text-[13px] text-[#334155]"
             >
@@ -216,6 +221,7 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
             type="button"
             disabled={deployMutation.isPending || needsCloudConnection}
             onClick={() => void handleDeploy()}
+            data-demo="deploy-submit"
             className="h-9 rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {deployMutation.isPending ? '요청 중' : '배포'}
@@ -233,6 +239,7 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
             이 방식은 연결된 클라우드 계정이 있어야 합니다. 인프라 탭에서 먼저 연결해 주세요.{' '}
             <Link
               to="/onboarding/cloud"
+              search={{ returnTo: currentPath }}
               className="font-semibold underline underline-offset-2 hover:text-[#92400e]"
             >
               AWS가 처음이신가요?
@@ -299,7 +306,7 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
                         {item.versionLabel || item.deployTargetType}
                       </p>
                       <p className="mt-1 text-[11px] text-[#94a3b8]">
-                        {describeDeploymentStatus(item)} · {item.triggeredAt}
+                        {describeDeploymentStatus(item)} · {formatActivityTime(item.triggeredAt)}
                       </p>
                       {failureReason(item) ? (
                         <p className="mt-1 text-[11px] leading-relaxed text-[#b91c1c]">

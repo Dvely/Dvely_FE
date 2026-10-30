@@ -88,7 +88,7 @@
       "items": {
         "gettingStarted": {
           "title": "はじめに",
-          "description": "ホームでプロンプトを入力して最初のプロジェクトを作成しましょう。"
+          "description": "ステップごとの「はじめに」ガイドをホームとサイドバーにもう一度表示します。"
         },
         "projects": {
           "title": "プロジェクト管理",
@@ -97,6 +97,10 @@
         "github": {
           "title": "GitHub連携",
           "description": "GitHub Appの権限を許可するとリポジトリを接続してコードを同期できます。"
+        },
+        "agentConnect": {
+          "title": "ターミナル・コーディングエージェント連携",
+          "description": "Claude Code・Codex から Qeploy を MCP ツールとして使えます。プロジェクト概要またはここでトークンを発行して接続します。"
         },
         "account": {
           "title": "アカウントと設定",

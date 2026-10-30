@@ -4,6 +4,7 @@ import { getUserMeResSchema, userSchema, type GetUserMeResType } from '@/types/u
 import { clearStoredUser, readStoredUser, writeStoredUser } from '@/lib/userStorage';
 import { dispatchGitHubAppReauthorizationRequired } from '@/constants/authEvents';
 import { useQuery } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
 
 const endpoint = '/users';
 
@@ -58,6 +59,13 @@ async function fetchAndPersistUserInfo() {
   const response = await getUserInfo();
   if (response.data) {
     writeStoredUser(response.data);
+    /*
+      화면의 쿼리 캐시도 같이 맞춘다. 배경 갱신(refreshUserInfoInBackground)은 저장소에만
+      적어서, 이미 떠 있는 화면(머리말·설정·시작하기 등 useUserInfoQuery)은 옛 값을 계속
+      들고 있었다 — GitHub App 을 막 설치했는데 시작하기의 "GitHub 연결하기" 가 안 끝난 채로
+      남았다.
+    */
+    queryClient.setQueriesData({ queryKey: ['user-info'] }, response);
     // 서버가 재인증이 필요하다고 하면 어디서 읽었든 화면에 진입점이 뜨게 한다.
     // 이 값이 true 인데 버튼이 없으면 사용자는 서버 오류 문구만 보고 막힌다
     if (response.data.githubAppReauthorizationRequired) {

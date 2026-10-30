@@ -19,9 +19,13 @@
 
 /** 승인 유형별 제목과 설명. 무엇을 승인하는지 버튼 바로 옆에서 읽히게 한다 */
 const APPROVAL_COPY: Record<string, { title: string; description: string }> = {
+  /*
+    실행 **전**에 묻는 계획 승인이다(BE §3.5 ①). 전에는 "만든 코드 변경을 적용할지" 라고
+    적혀 있어서 이미 만든 것을 반영하는 승인(RESULT)처럼 읽혔다.
+  */
   CHANGE: {
     title: '변경 사항 승인',
-    description: '에이전트가 만든 코드 변경을 적용할지 결정합니다.',
+    description: '에이전트가 세운 코드 변경 계획대로 작업을 시작할지 결정합니다.',
   },
   DEPLOYMENT: {
     title: '배포 승인',
@@ -68,6 +72,60 @@ const APPROVAL_COPY: Record<string, { title: string; description: string }> = {
   },
 };
 
+/**
+ * "이게 뭔가요?" 를 펼쳤을 때 보이는 설명. 누르면 무엇이 되고 안 누르면 무엇이 되는지를
+ * 적는다 — 카드의 설명은 무엇을 묻는지까지만 말해서, 처음 보는 사람은 거절이 무엇을
+ * 지우는지(혹은 안 지우는지) 알 수 없었다.
+ *
+ * **서버 동작만 적는다**(BE FRONTEND_API_GUIDE §3.5 · §5.3). 화면이 짐작한 말을 적으면
+ * 바로 이 자리가 "없는 일을 있다고 말하는" 자리가 된다. 비용 숫자는 적지 않는다 — 숫자는
+ * 처음 쓰는 사람용 안내가 서버 기준으로 들고 있다.
+ */
+const APPROVAL_HELP: Record<string, { approve: string; reject: string }> = {
+  CHANGE: {
+    approve: '이 계획대로 작업을 시작합니다. 아직 아무것도 바뀌지 않은 상태에서 묻는 승인입니다.',
+    reject: '작업이 취소되고 아무것도 바뀌지 않습니다.',
+  },
+  RESULT: {
+    approve:
+      'preview 브랜치의 지금 상태가 main 에 반영됩니다(PR 생성·병합). 공개된 사이트는 배포해야 바뀝니다.',
+    reject:
+      'main 에 반영되지 않습니다. 변경은 preview 브랜치에 남아 다음 요청이 그 위에서 이어집니다.',
+  },
+  REPOSITORY_BINDING: {
+    approve:
+      '이 이름으로 GitHub 저장소를 만들어(같은 이름이 있으면 그것을) 연결하고, 작업물을 preview 브랜치에 올립니다.',
+    reject:
+      '작업은 그대로 끝나지만 결과물은 프리뷰에만 남고, 프리뷰가 만료되면 사라집니다. 이 승인만 정책으로 끌 수 없는 이유입니다.',
+  },
+  DEPLOYMENT: {
+    approve: 'main 의 현재 상태를 실제로 공개합니다.',
+    reject: '배포하지 않습니다. 코드와 저장소는 그대로입니다.',
+  },
+  DOMAIN_BINDING: {
+    approve: '이 도메인을 프로젝트에 연결하는 작업을 시작합니다.',
+    reject: '연결하지 않습니다.',
+  },
+  DOMAIN_UNBIND: {
+    approve: '도메인을 떼어냅니다. 그 주소로는 더 이상 접속할 수 없습니다.',
+    reject: '도메인은 그대로 연결되어 있습니다.',
+  },
+  INFRA_OPERATION: {
+    approve: '이 인프라 작업을 실행합니다.',
+    reject: '실행하지 않습니다.',
+  },
+  SERVER_PROVISION: {
+    approve:
+      '당신의 AWS 계정에 서버를 만듭니다. 켜져 있는 동안 AWS 가 당신에게 청구하고, 서버를 종료하면 그때부터 청구가 멈춥니다.',
+    reject: '서버를 만들지 않습니다. 비용도 생기지 않습니다.',
+  },
+  DATABASE_PROVISION: {
+    approve:
+      '당신의 AWS 계정에 데이터베이스를 만듭니다. 만드는 데 5~10분이 걸리고, 켜져 있는 동안 AWS 가 당신에게 청구합니다.',
+    reject: '데이터베이스를 만들지 않습니다. 비용도 생기지 않습니다.',
+  },
+};
+
 /** 모르는 유형이 와도 카드는 떠야 한다. 결정할 방법이 사라지는 것보다 낫다 */
 const FALLBACK_APPROVAL_COPY = {
   title: '승인이 필요합니다',
@@ -87,4 +145,10 @@ function describeApprovalType(type: string): string {
   return APPROVAL_COPY[type]?.title ?? type;
 }
 
-export { APPROVAL_COPY, APPROVAL_STATUS_LABEL, FALLBACK_APPROVAL_COPY, describeApprovalType };
+export {
+  APPROVAL_COPY,
+  APPROVAL_HELP,
+  APPROVAL_STATUS_LABEL,
+  FALLBACK_APPROVAL_COPY,
+  describeApprovalType,
+};

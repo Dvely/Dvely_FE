@@ -10,6 +10,7 @@ import { getChangeDiff, useProjectChangeListQuery } from '@/api/changes';
 import { getPreviewSessionStatus } from '@/api/preview';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
 import { APPROVAL_STATUS_LABEL, describeApprovalType } from '@/lib/approvalCopy';
+import { formatActivityTime } from '@/lib/projectActivity';
 import type { RejectOption } from '@/types/resultScope.type';
 
 type ProjectApprovalsPageProps = {
@@ -165,7 +166,7 @@ function ProjectApprovalsPage({ projectId }: ProjectApprovalsPageProps) {
                     </p>
                   ) : null}
                   <p className="mt-1 text-[11px] text-[#94a3b8]">
-                    {approval.decidedAt || approval.createdAt}
+                    {formatActivityTime(approval.decidedAt || approval.createdAt)}
                   </p>
                 </div>
                 <span className="shrink-0 rounded-full bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-medium text-[#64748b]">

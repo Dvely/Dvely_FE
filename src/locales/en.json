@@ -88,7 +88,7 @@
       "items": {
         "gettingStarted": {
           "title": "Getting started",
-          "description": "Enter a prompt on the home page to create your first project."
+          "description": "Show the step-by-step getting started guide on the home page and sidebar again."
         },
         "projects": {
           "title": "Project management",
@@ -97,6 +97,10 @@
         "github": {
           "title": "GitHub integration",
           "description": "Grant GitHub App permissions to connect repositories and sync code."
+        },
+        "agentConnect": {
+          "title": "Terminal & coding agents",
+          "description": "Use Qeploy as an MCP tool from Claude Code or Codex. Issue a token and connect from the project overview or here."
         },
         "account": {
           "title": "Account & settings",

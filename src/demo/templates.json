@@ -1,0 +1,122 @@
+[
+  {
+    "templateId": "aquafolio",
+    "name": "아쿠아폴리오",
+    "description": "깊고 푸른 바다의 아쿠아리움과 해양 생물 도감·생태 프로그램·티켓 예매",
+    "tags": ["아쿠아리움", "해양", "체험", "입장권", "어두운 테마"],
+    "stack": "vanilla",
+    "demoUrl": "https://dvely.github.io/qeploy-templates/t/aquafolio/",
+    "thumbnailUrl": "https://dvely.github.io/qeploy-templates/t/aquafolio/thumbnail.jpg",
+    "contentHints": []
+  },
+  {
+    "templateId": "atelier-cuisine",
+    "name": "아틀리에 퀴진",
+    "description": "세계 요리 레시피와 셰프 클래스, 식재료 마켓을 연결하는 미식 스튜디오",
+    "tags": ["음식", "레시피", "스튜디오", "마켓", "다중 페이지"],
+    "stack": "vanilla",
+    "demoUrl": "https://dvely.github.io/qeploy-templates/t/atelier-cuisine/",
+    "thumbnailUrl": "https://dvely.github.io/qeploy-templates/t/atelier-cuisine/thumbnail.jpg",
+    "contentHints": []
+  },
+  {
+    "templateId": "craft-roast",
+    "name": "크래프트 앤 로스트",
+    "description": "스페셜티 로스터리와 파티세리, 메뉴 페어링·원두 마켓·매장 및 가맹 안내",
+    "tags": ["카페", "커피", "로스터리", "제과", "쇼핑", "가맹점"],
+    "stack": "vanilla",
+    "demoUrl": "https://dvely.github.io/qeploy-templates/t/craft-roast/",
+    "thumbnailUrl": "https://dvely.github.io/qeploy-templates/t/craft-roast/thumbnail.jpg",
+    "contentHints": []
+  },
+  {
+    "templateId": "daywell24",
+    "name": "데이웰24",
+    "description": "원본의 메뉴·슬라이더·스크롤 UI와 애니메이션을 보존하고 새 브랜드의 콘텐츠로 교체한 편의점 브랜드 사이트",
+    "tags": ["소매점", "편의점", "가맹점", "행사", "애니메이션", "반응형"],
+    "stack": "vanilla",
+    "demoUrl": "https://dvely.github.io/qeploy-templates/t/daywell24/",
+    "thumbnailUrl": "https://dvely.github.io/qeploy-templates/t/daywell24/thumbnail.jpg",
+    "contentHints": []
+  },
+  {
+    "templateId": "flexspace",
+    "name": "플렉스스페이스",
+    "description": "기업 맞춤 오피스 솔루션과 지점·호실·구축 사례, 견적 계산 및 공간 투어 신청",
+    "tags": ["공유 오피스", "사무실", "기업", "업무 공간", "예약"],
+    "stack": "vanilla",
+    "demoUrl": "https://dvely.github.io/qeploy-templates/t/flexspace/",
+    "thumbnailUrl": "https://dvely.github.io/qeploy-templates/t/flexspace/thumbnail.jpg",
+    "contentHints": []
+  },
+  {
+    "templateId": "harutgyeol",
+    "name": "HARUTGYEOL · 하룻결",
+    "description": "숙소 12개와 저널 3개의 상세 페이지, 기획전·탐색·찜·예약 문의로 이어지는 숙소 큐레이션 사이트",
+    "tags": ["숙소", "여행", "큐레이션", "다중 페이지"],
+    "stack": "vanilla",
+    "demoUrl": "https://dvely.github.io/qeploy-templates/t/harutgyeol/",
+    "thumbnailUrl": "https://dvely.github.io/qeploy-templates/t/harutgyeol/thumbnail.jpg",
+    "contentHints": []
+  },
+  {
+    "templateId": "lumiere",
+    "name": "루미에르 · 메디컬 뷰티",
+    "description": "시술 탐색과 의료진 소개, 케이스 리뷰와 상세 상담 화면을 담은 미니멀 메디컬 뷰티 템플릿",
+    "tags": ["의원", "뷰티", "의료", "큐레이션"],
+    "stack": "vanilla",
+    "demoUrl": "https://dvely.github.io/qeploy-templates/t/lumiere/",
+    "thumbnailUrl": "https://dvely.github.io/qeploy-templates/t/lumiere/thumbnail.jpg",
+    "contentHints": []
+  },
+  {
+    "templateId": "ondam-foods",
+    "name": "온담식품",
+    "description": "전체 화면 캠페인과 도형 사진 전환, 글로벌 이미지 모자이크, 확장형 지속가능경영 카드, 제품 슬라이더를 갖춘 식품 기업 브랜드 사이트",
+    "tags": ["식품", "기업", "브랜드", "레시피", "애니메이션", "반응형"],
+    "stack": "vanilla",
+    "demoUrl": "https://dvely.github.io/qeploy-templates/t/ondam-foods/",
+    "thumbnailUrl": "https://dvely.github.io/qeploy-templates/t/ondam-foods/thumbnail.jpg",
+    "contentHints": []
+  },
+  {
+    "templateId": "ongyeol-haus",
+    "name": "온결 하우스",
+    "description": "공간 사진 중심의 인테리어 소재 브랜드 홈. 8개 제품 분류와 제품 상세, 쇼룸·갤러리·고객지원 화면을 연결합니다.",
+    "tags": ["인테리어", "자재", "건축", "브랜드", "쇼룸", "반응형"],
+    "stack": "vanilla",
+    "demoUrl": "https://dvely.github.io/qeploy-templates/t/ongyeol-haus/",
+    "thumbnailUrl": "https://dvely.github.io/qeploy-templates/t/ongyeol-haus/thumbnail.jpg",
+    "contentHints": []
+  },
+  {
+    "templateId": "pages",
+    "name": "페이지스 서점",
+    "description": "에디터의 도서 큐레이션과 북클럽·작가 북토크를 연결하는 서점",
+    "tags": ["서점", "문화", "편집 콘텐츠", "다중 페이지"],
+    "stack": "vanilla",
+    "demoUrl": "https://dvely.github.io/qeploy-templates/t/pages/",
+    "thumbnailUrl": "https://dvely.github.io/qeploy-templates/t/pages/thumbnail.jpg",
+    "contentHints": []
+  },
+  {
+    "templateId": "playforge",
+    "name": "플레이포지",
+    "description": "스포츠 장비와 클럽 모임, 디지털 매치 패스와 기관 설비 견적을 연결하는 플랫폼",
+    "tags": ["스포츠", "장비", "클럽", "매칭", "견적"],
+    "stack": "vanilla",
+    "demoUrl": "https://dvely.github.io/qeploy-templates/t/playforge/",
+    "thumbnailUrl": "https://dvely.github.io/qeploy-templates/t/playforge/thumbnail.jpg",
+    "contentHints": []
+  },
+  {
+    "templateId": "portfolio-grid",
+    "name": "포트폴리오 그리드",
+    "description": "작업물을 격자로 보여주는 개인·스튜디오 포트폴리오",
+    "tags": ["포트폴리오", "갤러리", "개인"],
+    "stack": "vanilla",
+    "demoUrl": "https://dvely.github.io/qeploy-templates/t/portfolio-grid/",
+    "thumbnailUrl": "https://dvely.github.io/qeploy-templates/t/portfolio-grid/thumbnail.jpg",
+    "contentHints": []
+  }
+]

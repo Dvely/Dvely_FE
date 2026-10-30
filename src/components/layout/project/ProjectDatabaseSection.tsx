@@ -9,6 +9,7 @@ import {
 import { useProjectPreviewQuery } from '@/api/preview';
 import { usePreviewRuntimeConfigQuery } from '@/api/previewRuntime';
 import { getProjectInfrastructureSettings } from '@/api/projects';
+import { useCurrentPath } from '@/hooks/useLeaveForSetup';
 import { describeProvisionFailure } from '@/lib/provisionFailure';
 import { extractApiErrorMessage } from '@/utils/response';
 import type { CreatedDatabase, DatabaseEngine, DatabaseMethod } from '@/types/database.type';
@@ -56,6 +57,8 @@ function formatRemaining(expiresAt: string | null): string | null {
 }
 
 function ProjectDatabaseSection({ projectId }: { projectId: number }) {
+  // 처음 쓰는 사람용 안내를 다 읽고 연결까지 마치면 이 자리로 돌아온다
+  const currentPath = useCurrentPath();
   const [method, setMethod] = useState<DatabaseMethod>('LOCAL');
   const [engine, setEngine] = useState<DatabaseEngine>('POSTGRESQL');
   const [createError, setCreateError] = useState<string | null>(null);
@@ -142,6 +145,7 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
               <select
                 value={method}
                 onChange={(event) => setMethod(event.target.value as DatabaseMethod)}
+                data-demo="db-method"
                 className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
               >
                 {METHOD_OPTIONS.map((option) => (
@@ -178,6 +182,7 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
               연결해 주세요.{' '}
               <Link
                 to="/onboarding/cloud"
+                search={{ returnTo: currentPath }}
                 className="font-semibold underline underline-offset-2 hover:text-[#92400e]"
               >
                 AWS가 처음이신가요?
@@ -196,6 +201,7 @@ function ProjectDatabaseSection({ projectId }: { projectId: number }) {
             type="button"
             disabled={needsPreview || needsCloudConnection || createMutation.isPending}
             onClick={() => createMutation.mutate()}
+            data-demo="db-create"
             className="mt-3 h-9 cursor-pointer rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {createMutation.isPending ? '만드는 중...' : 'DB 추가'}

@@ -4,6 +4,7 @@ import { ArrowRight, ChevronDown } from 'lucide-react';
 import { useGitHubLogin } from '@/hooks/useGitHubLogin';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 import { cn } from '@/lib/utils';
+import { DEMO_START_EVENT, IS_DEMO } from '@/demo/config';
 
 type Phase =
   | 'logo'
@@ -92,6 +93,20 @@ function HeroSection() {
 
   const handleAuth = useCallback(() => {
     if (isLoggingIn) return;
+
+    /*
+      시연에서는 이 버튼이 전체 재생의 시작점이다.
+
+      따로 "시연 시작" 버튼을 두면 영상 첫 화면에 제품과 무관한 것이 찍힌다. 사용자가
+      실제로 누를 버튼이 그대로 출발선이 되는 편이 낫다.
+    */
+    if (IS_DEMO) {
+      // 재생이 이미 돌고 있으면(첫 장면이 이 버튼을 누른 경우) 시작은 그대로 넘어간다
+      window.dispatchEvent(new Event(DEMO_START_EVENT));
+      void startGitHubLogin();
+      return;
+    }
+
     if (isLoggedIn) {
       void navigate({ to: '/home' });
       return;
@@ -319,6 +334,7 @@ function HeroSection() {
               type="button"
               disabled={isLoggingIn}
               onClick={handleAuth}
+              data-demo="login"
               className="inline-flex h-12 items-center gap-1 rounded-full bg-[#7C3AED] px-6 text-[14px] font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#6D28D9] disabled:opacity-60"
             >
               {isLoggedIn ? '대시보드' : '무료로 시작하기'}

@@ -7,9 +7,10 @@ import {
   Mail,
   MessageCircle,
   Search,
+  Terminal,
   User,
 } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import {
   HELP_FAQ_IDS,
@@ -18,18 +19,26 @@ import {
   type HelpQuickLinkId,
 } from '@/components/layout/help/helpContent';
 import { Input } from '@/components/ui/input';
+import { setGettingStartedHidden } from '@/lib/gettingStarted';
 import { cn } from '@/lib/utils';
 
 const quickLinkIcons: Record<HelpQuickLinkId, typeof BookOpen> = {
   gettingStarted: BookOpen,
   projects: FolderKanban,
   github: GitBranch,
+  agentConnect: Terminal,
   account: User,
 };
 
 const quickLinkRoutes: Partial<Record<HelpQuickLinkId, string>> = {
   projects: '/project',
+  agentConnect: '/settings',
   account: '/settings',
+};
+
+/** 링크가 특정 절을 열어야 할 때. 터미널 연결은 설정의 액세스 토큰 절로 바로 간다 */
+const quickLinkSearch: Partial<Record<HelpQuickLinkId, { section: string }>> = {
+  agentConnect: { section: 'api-tokens' },
 };
 
 function HelpPage() {
@@ -37,6 +46,7 @@ function HelpPage() {
   const [openFaqId, setOpenFaqId] = useState<HelpFaqId | null>(HELP_FAQ_IDS[0]);
 
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -111,9 +121,27 @@ function HelpPage() {
 
               if (route) {
                 return (
-                  <Link key={id} to={route} className={cardClassName}>
+                  <Link key={id} to={route} search={quickLinkSearch[id]} className={cardClassName}>
                     {content}
                   </Link>
+                );
+              }
+
+              // 숨겨 둔 시작하기 가이드를 다시 켠다. 숨기기를 되돌릴 길이 있어야 마음 놓고 숨긴다
+              if (id === 'gettingStarted') {
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => {
+                      setGettingStartedHidden(false);
+                      void navigate({ to: '/home' });
+                    }}
+                    className={cn(cardClassName, 'cursor-pointer text-left')}
+                  >
+                    {content}
+                    <ChevronRight className="mt-0.5 size-4 shrink-0 text-[#94a3b8]" aria-hidden />
+                  </button>
                 );
               }
 

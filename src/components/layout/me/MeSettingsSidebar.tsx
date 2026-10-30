@@ -76,6 +76,7 @@ function MeSettingsSidebar({
                   <li key={id} className="shrink-0 lg:shrink">
                     <button
                       type="button"
+                      data-demo={`settings-${id}`}
                       onClick={() => onSectionChange(id)}
                       className={cn(
                         'flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium whitespace-nowrap transition lg:gap-2.5',

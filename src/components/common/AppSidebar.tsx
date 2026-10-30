@@ -4,6 +4,7 @@ import { Fragment, useState } from 'react';
 
 import qeployLogo from '@/assets/images/qeploy-logo-primary.svg';
 import qeploySymbol from '@/assets/images/qeploy-symbol-violet.svg';
+import SidebarGettingStarted from '@/components/common/SidebarGettingStarted';
 import type { AppShellPath } from '@/lib/appRoutes';
 
 const navItems: {
@@ -100,6 +101,7 @@ export default function AppSidebar() {
               ) : null}
               <Link
                 to={to}
+                data-demo={`nav-${to.replace('/', '')}`}
                 title={collapsed ? label : undefined}
                 className={`flex flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[13px] font-medium transition lg:w-full lg:flex-none lg:flex-row lg:gap-0 ${
                   collapsed
@@ -118,6 +120,8 @@ export default function AppSidebar() {
           );
         })}
       </nav>
+
+      <SidebarGettingStarted collapsed={collapsed} />
     </aside>
   );
 }

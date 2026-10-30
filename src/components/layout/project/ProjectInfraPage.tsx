@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useCloudConnectionListQuery } from '@/api/cloudConnections';
+import { useCurrentPath } from '@/hooks/useLeaveForSetup';
 import {
   deleteProjectCostBudget,
   deleteProjectInfrastructureSettings,
@@ -14,6 +15,7 @@ import {
   putProjectInfrastructureConfiguration,
   putProjectInfrastructureSettings,
 } from '@/api/projects';
+import CloudConnectSheet from '@/components/layout/project/CloudConnectSheet';
 import ProjectDatabaseSection from '@/components/layout/project/ProjectDatabaseSection';
 import ProjectRuntimeSection from '@/components/layout/project/ProjectRuntimeSection';
 import ProjectServerSection from '@/components/layout/project/ProjectServerSection';
@@ -43,6 +45,8 @@ type ProjectInfraPageProps = {
 };
 
 function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
+  const currentPath = useCurrentPath();
+  const [isConnectSheetOpen, setIsConnectSheetOpen] = useState(false);
   const [budgetAmount, setBudgetAmount] = useState('');
   const [architecture, setArchitecture] = useState<DeploymentArchitecture>('SERVERLESS');
   const [computeTier, setComputeTier] = useState<ComputeTier>('SMALL');
@@ -141,17 +145,22 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
           <div className="mt-4 rounded-xl border border-dashed border-[#e2e8f0] px-4 py-5 text-center">
             <p className="text-[13px] text-[#64748b]">등록된 클라우드 연결이 없습니다.</p>
             <p className="mt-1 text-[12px] leading-relaxed text-[#94a3b8]">
-              설정 &gt; 클라우드 연결에서 AWS 계정을 등록하면 여기에서 고를 수 있습니다.
+              AWS 계정을 등록하면 여기에서 고를 수 있습니다. 이 화면을 떠나지 않고 등록할 수
+              있습니다.
             </p>
             <div className="mt-3 flex justify-center gap-3">
-              <Link
-                to="/settings"
-                className="text-[12px] font-semibold text-[#0f172a] underline underline-offset-2"
+              {/* 탭을 떠나지 않고 시트에서 등록하고, 검증이 끝나면 그 자리에서 이 프로젝트에 붙인다 */}
+              <button
+                type="button"
+                onClick={() => setIsConnectSheetOpen(true)}
+                data-demo="cloud-register-link"
+                className="cursor-pointer text-[12px] font-semibold text-[#0f172a] underline underline-offset-2"
               >
-                연결 등록하러 가기
-              </Link>
+                여기서 연결 등록하기
+              </button>
               <Link
                 to="/onboarding/cloud"
+                search={{ returnTo: currentPath }}
                 className="text-[12px] font-semibold text-[#7c3aed] underline underline-offset-2"
               >
                 AWS가 처음이신가요?
@@ -180,6 +189,7 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
                     type="button"
                     disabled={selected || selectConnectionMutation.isPending}
                     onClick={() => selectConnectionMutation.mutate(connection.cloudConnectionId)}
+                    data-demo="cloud-select"
                     className="h-8 rounded-lg border border-[#e2e8f0] px-3 text-[12px] font-semibold disabled:opacity-50"
                   >
                     {selected ? '선택됨' : '선택'}
@@ -322,6 +332,12 @@ function ProjectInfraPage({ projectId }: ProjectInfraPageProps) {
           </button>
         </div>
       </section>
+      <CloudConnectSheet
+        open={isConnectSheetOpen}
+        onOpenChange={setIsConnectSheetOpen}
+        projectId={projectId}
+        returnPath={currentPath}
+      />
     </div>
   );
 }

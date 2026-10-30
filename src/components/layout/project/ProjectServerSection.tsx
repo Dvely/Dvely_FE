@@ -4,8 +4,10 @@ import { Link } from '@tanstack/react-router';
 import { useProjectDomainListQuery } from '@/api/domains';
 import { postProjectServer, postServerTerminate, useProjectServerListQuery } from '@/api/servers';
 import { getProjectInfrastructureSettings } from '@/api/projects';
+import { useCurrentPath } from '@/hooks/useLeaveForSetup';
 import ServerLogViewer from '@/components/layout/project/ServerLogViewer';
 import { describeProvisionFailure } from '@/lib/provisionFailure';
+import { formatActivityTime } from '@/lib/projectActivity';
 import { toSafeHttpUrl } from '@/lib/safeUrl';
 import { extractApiErrorMessage } from '@/utils/response';
 import type { ServerLogSource } from '@/types/server.type';
@@ -81,6 +83,8 @@ const HEALTH_HINT: Partial<Record<HealthState, string>> = {
 };
 
 function ProjectServerSection({ projectId }: { projectId: number }) {
+  // 처음 쓰는 사람용 안내를 다 읽고 연결까지 마치면 이 자리로 돌아온다
+  const currentPath = useCurrentPath();
   const [instanceType, setInstanceType] = useState(INSTANCE_TYPE_OPTIONS[0].value);
   const [createError, setCreateError] = useState<string | null>(null);
   const [awaitingApproval, setAwaitingApproval] = useState(false);
@@ -156,6 +160,7 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
         <select
           value={instanceType}
           onChange={(event) => setInstanceType(event.target.value)}
+          data-demo="server-tier"
           className="h-9 rounded-lg border border-[#e2e8f0] px-2.5 text-[13px]"
         >
           {INSTANCE_TYPE_OPTIONS.map((option) => (
@@ -172,6 +177,7 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
           먼저 연결해 주세요.{' '}
           <Link
             to="/onboarding/cloud"
+            search={{ returnTo: currentPath }}
             className="font-semibold underline underline-offset-2 hover:text-[#92400e]"
           >
             AWS가 처음이신가요?
@@ -188,6 +194,7 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
         type="button"
         disabled={!isCloudConnected || createMutation.isPending}
         onClick={() => createMutation.mutate()}
+        data-demo="server-create"
         className="mt-3 h-9 cursor-pointer rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         {createMutation.isPending ? '요청하는 중...' : '백엔드 서버 만들기'}
@@ -279,7 +286,7 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
                       <span
                         title={
                           server.lastHealthCheckAt
-                            ? `마지막 확인 ${server.lastHealthCheckAt}`
+                            ? `마지막 확인 ${formatActivityTime(server.lastHealthCheckAt)}`
                             : undefined
                         }
                         className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${HEALTH_BADGE[healthState].className}`}

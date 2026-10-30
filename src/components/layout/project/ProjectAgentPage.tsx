@@ -28,6 +28,7 @@ import {
 } from '@/api/preview';
 import { refreshUserInfoInBackground } from '@/api/user';
 import { composeApiErrorMessage, dispatchApiErrorAction } from '@/lib/apiErrorGuide';
+import { agentReturnPath } from '@/lib/setupReturn';
 import {
   postProjectRepositoryReqSchema,
   type GetProjectDetailResType,
@@ -73,13 +74,17 @@ type MobilePane = 'chat' | 'preview';
 type ProjectAgentPageProps = {
   projectId: number;
   project: GetProjectDetailResType;
+  /** 설정에 다녀오기 전에 보던 대화. 새 대화였으면 'new' */
+  returnedConversation?: number | 'new';
 };
 
-function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
+function ProjectAgentPage({ projectId, project, returnedConversation }: ProjectAgentPageProps) {
   const [homePrompt] = useState(() => consumePendingHomeAgentPrompt());
   const [sidebarTab, setSidebarTab] = useState<AgentSidebarTab>('conversation');
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
-  const [isNewConversation, setIsNewConversation] = useState(() => homePrompt !== null);
+  const [isNewConversation, setIsNewConversation] = useState(
+    () => homePrompt !== null || returnedConversation === 'new',
+  );
   const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
   const [connectedRepo, setConnectedRepo] = useState<GithubRepository | null>(null);
   const [hasDisconnectedRepository, setHasDisconnectedRepository] = useState(false);
@@ -211,9 +216,26 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
     [conversations],
   );
 
+  /*
+    설정에 다녀오기 전에 보던 대화. 목록에 있을 때만 쓴다 — 그사이 지워졌으면 예전처럼
+    최근 대화를 연다. 사용자가 다른 대화를 고르면 그쪽이 앞선다.
+  */
+  const returnedConversationId =
+    typeof returnedConversation === 'number' &&
+    activeConversations.some((conversation) => conversation.conversationId === returnedConversation)
+      ? returnedConversation
+      : null;
+
+  // 어느 대화를 열지 목록이 와야 정해진다. 그 전에 뜨는 패널은 잠깐 머물다 바뀐다
+  const isResolvingConversation =
+    !isNewConversation && activeConversationId == null && isConversationsLoading;
+
   const resolvedConversationId = isNewConversation
     ? activeConversationId
-    : (activeConversationId ?? activeConversations[0]?.conversationId ?? null);
+    : (activeConversationId ??
+      returnedConversationId ??
+      activeConversations[0]?.conversationId ??
+      null);
 
   const {
     data: projectPreview,
@@ -509,6 +531,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
             onConversationActivity={handleConversationActivity}
             onCloudConnectRequired={setCloudConnectRequest}
             restoreToken={conversationRestoreToken}
+            canRestoreDraft={!isResolvingConversation}
             onAgentTaskActiveChange={handleAgentTaskActiveChange}
             isDeployInFlight={isDeployInFlight}
           />
@@ -654,6 +677,7 @@ function ProjectAgentPage({ projectId, project }: ProjectAgentPageProps) {
           <CloudConnectGuidePanel
             question={cloudConnectRequest.question}
             projectId={projectId}
+            returnPath={agentReturnPath(projectId, resolvedConversationId, isNewConversation)}
             isRetrying={retryCloudConnectMutation.isPending}
             onRetry={() => retryCloudConnectMutation.mutate(cloudConnectRequest.taskId)}
             onClose={() => setCloudConnectRequest(null)}

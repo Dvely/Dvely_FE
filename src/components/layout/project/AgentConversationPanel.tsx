@@ -9,9 +9,8 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { SendHorizontal } from 'lucide-react';
+import { CheckCircle2, SendHorizontal } from 'lucide-react';
 import {
   postConversationMessageCreate,
   postProjectConversationCreate,
@@ -49,8 +48,11 @@ import {
   shouldReturnInputToUser,
 } from '@/lib/runLimit';
 import { takeComposerDraft } from '@/lib/composerDraft';
+import { agentReturnPath } from '@/lib/setupReturn';
+import { useLeaveForSetup } from '@/hooks/useLeaveForSetup';
 import { refreshUserInfoInBackground } from '@/api/user';
 import AppAlertDialog from '@/components/common/AppAlertDialog';
+import AiKeySheet from '@/components/layout/project/AiKeySheet';
 import { ChunkErrorBoundary } from '@/components/common/ChunkErrorBoundary';
 import AgentApprovalCard from '@/components/layout/project/AgentApprovalCard';
 import AgentRetryCard from '@/components/layout/project/AgentRetryCard';
@@ -74,6 +76,8 @@ import {
   toMessageTone,
 } from '@/components/layout/project/chatMessageKind.utils';
 import type { ConversationMessage } from '@/types/chat.type';
+import AgentTaskLogHistory from '@/components/layout/project/AgentTaskLogHistory';
+import { findTaskLogAnchors } from '@/lib/agentTaskLog';
 
 /*
   마크다운 렌더러는 따로 받는다.
@@ -98,6 +102,7 @@ import {
   shouldSendHomeAgentPromptOnce,
   writeSessionMessages,
 } from '@/components/layout/project/agentChat.utils';
+import { IS_DEMO } from '@/demo/config';
 
 const suggestedPrompts = [
   {
@@ -125,6 +130,13 @@ type AgentConversationPanelProps = {
    * 안 된다. 화면이 스스로 지우는 대신 서버에 다시 물어 맞춘다.
    */
   restoreToken?: number;
+  /**
+   * 맡겨 둔 입력을 지금 찾아가도 되는지. 어느 대화를 열지 아직 모를 때는 false 다.
+   *
+   * 찾아가는 순간 맡김이 지워진다. 대화 목록을 읽는 동안 잠깐 뜨는 빈 패널이 먼저 찾아가면
+   * 자리가 안 맞아 그대로 버려지고, 정작 그 대화가 열렸을 때는 남은 것이 없다.
+   */
+  canRestoreDraft?: boolean;
   projectId: number;
   projectName: string;
   conversationId: number | null;
@@ -278,6 +290,7 @@ function AgentConversationPanel({
   isDeployInFlight = false,
   onCloudConnectRequired,
   restoreToken = 0,
+  canRestoreDraft = true,
 }: AgentConversationPanelProps) {
   /*
     홈에서 넘어온 요청은 입력창에 먼저 담아 둔다.
@@ -395,7 +408,20 @@ function AgentConversationPanel({
     { kind: 'navigate' }
   > | null>(null);
 
-  const navigate = useNavigate();
+  /*
+    키를 넣으러 설정에 갔다가 이 대화로 돌아온다. 적던 말도 맡겨 두고 간다 —
+    AI_CREDENTIAL_NOT_REGISTERED 로 막히면 보내려던 말이 입력창에 돌아와 있는데, 그대로
+    떠나면 그 말이 사라진다.
+  */
+  const returnPath = agentReturnPath(projectId, conversationId, isNewConversation);
+  const leaveForSetup = useLeaveForSetup(returnPath);
+  /*
+    키는 대화를 떠나지 않고 시트에서 넣는다. 저장하면 시트가 닫히고, 배너가 있던 자리에
+    무엇이 바뀌었는지 한 줄을 남긴다 — 화면이 조용히 바뀌면 됐는지 알 수 없다. 다음
+    말을 보내면 걷힌다.
+  */
+  const [isKeySheetOpen, setIsKeySheetOpen] = useState(false);
+  const [keyNotice, setKeyNotice] = useState<string | null>(null);
 
   const showApiError = useCallback((error: unknown) => {
     setAlertMessage(formatApiErrorMessage(error));
@@ -509,6 +535,14 @@ function AgentConversationPanel({
     const coveredId = findCardCoveredMessageId(merged, answeredClarification?.taskId ?? null);
     return coveredId == null ? merged : merged.filter((m) => m.messageId !== coveredId);
   }, [serverMessages, overlayMessages, answeredClarification]);
+
+  /*
+    지난 작업의 진행 기록을 펼칠 자리. 작업마다 마지막으로 매듭지은 줄 하나다.
+
+    지금 도는 작업은 빼고 그린다(아래 liveTaskId) — 그 기록은 대화 끝에서 실시간으로
+    보이고 있어서, 위 줄에서 또 펼치면 같은 것이 두 군데 뜬다.
+  */
+  const taskLogAnchors = useMemo(() => findTaskLogAnchors(displayMessages), [displayMessages]);
   const pollAbortRef = useRef<AbortController | null>(null);
 
   /*
@@ -613,11 +647,12 @@ function AgentConversationPanel({
     다닐 때마다 돌아보지만, 자리가 맞지 않으면 아무 일도 하지 않는다.
   */
   useEffect(() => {
+    if (!canRestoreDraft) return;
     const restored = takeComposerDraft({ projectId, conversationId });
     if (!restored) return;
 
     setInput((current) => (current.trim() ? current : restored));
-  }, [projectId, conversationId]);
+  }, [projectId, conversationId, canRestoreDraft]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -1372,6 +1407,17 @@ function AgentConversationPanel({
     setHasUnseenBelow(false);
   }, []);
 
+  /*
+    지난 작업의 기록을 펼치면 바닥에서 놓아 준다.
+
+    펼친 사람은 그 줄을 읽으려는 것이다. 바닥에 붙어 있던 채로 두면 기록이 아래로
+    자라는 만큼 아래 ResizeObserver 가 바닥으로 끌어내려서, 방금 누른 줄과 기록의 앞부분이
+    위로 밀려 사라진다. 다시 바닥으로 내려오면 handleScroll 이 도로 붙인다.
+  */
+  const releaseBottomPin = useCallback(() => {
+    isNearBottomRef.current = false;
+  }, []);
+
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -1429,9 +1475,15 @@ function AgentConversationPanel({
   }, [scrollToBottom]);
 
   const showMessageSkeletons = isMessagesLoading && displayMessages.length === 0;
+  /** 지금 대화 끝에서 실시간으로 기록을 보여 주는 작업. 그 작업의 줄에는 펼치기를 붙이지 않는다 */
+  const liveTaskId = isSending || isAssistantReplying ? runningTaskId : null;
+  /*
+    대화가 하나도 없는 프로젝트에서도 띄운다. 예전에는 "새 대화" 를 눌렀을 때만 떠서, 막
+    만든 프로젝트에 처음 들어온 사람에게는 빈 화면만 보였다 — 가장 안내가 필요한 순간이다.
+  */
   const showWelcome =
     !showMessageSkeletons &&
-    isNewConversation &&
+    (isNewConversation || conversationId == null) &&
     !isSending &&
     !isAssistantReplying &&
     displayMessages.length === 0;
@@ -1439,6 +1491,7 @@ function AgentConversationPanel({
   const handleSend = () => {
     const content = input.trim();
     if (!content || isInputLocked) return;
+    setKeyNotice(null);
 
     // 내가 방금 보낸 말은 어디에 있었든 보여야 한다. 위로 올라가 읽던 중이었대도
     // 전송은 "지금 여기로 돌아가겠다"는 뜻이다
@@ -1535,15 +1588,39 @@ function AgentConversationPanel({
               <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3.5 py-3 text-[13px] leading-relaxed text-[#475569]">
                 안녕하세요! <span className="font-semibold text-[#0f172a]">{projectName}</span>{' '}
                 워크스페이스입니다. 메시지를 입력하면 대화가 시작됩니다.
+                {/*
+                  무엇을 적어야 하는지와, 보내면 무슨 일이 일어나는지. 뒤의 것은 기본 승인
+                  정책 기준이다(프로젝트를 만들면 모두 켜져 있다). 끄면 묻지 않고 진행한다.
+                */}
+                <p className="mt-2.5 text-[12px] font-semibold text-[#334155]">
+                  이렇게 적으면 원하는 것에 가깝게 만듭니다
+                </p>
+                <ul className="mt-1 flex flex-col gap-0.5 text-[12px] text-[#64748b]">
+                  <li>· 누가 무엇을 하는 서비스인지 — "팀원이 할 일을 나눠 맡는 앱"</li>
+                  <li>· 꼭 있어야 할 기능 — 회원가입, 마감일, 검색 같은 것</li>
+                  <li>· 원하는 분위기 — "차분한 남색, 카드형 목록"</li>
+                </ul>
+                <p className="mt-2 text-[12px] text-[#64748b]">
+                  보내면 에이전트가 모르는 것은 먼저 묻고, 계획을 보여 주고 승인을 받은 뒤 만듭니다.
+                  결과는 오른쪽 프리뷰에서 바로 확인할 수 있습니다.
+                </p>
               </div>
             ) : null}
             {showMessageSkeletons
               ? [0, 1, 2, 3].map((item) => (
                   <AssistantReplySkeleton key={`message-skeleton-${item}`} />
                 ))
-              : displayMessages.map((message) => (
-                  <MessageBubble key={message.messageId} message={message} />
-                ))}
+              : displayMessages.map((message) => {
+                  const logTaskId = taskLogAnchors.get(message.messageId) ?? null;
+                  return (
+                    <MessageBubble
+                      key={message.messageId}
+                      message={message}
+                      logTaskId={logTaskId !== liveTaskId ? logTaskId : null}
+                      onTaskLogExpand={releaseBottomPin}
+                    />
+                  );
+                })}
             {/*
             무엇을 정했는지. 답하는 폼이 사라진 자리를 대신하는 **읽기 전용** 기록이다.
 
@@ -1676,6 +1753,15 @@ function AgentConversationPanel({
           크레딧이 없는 키는 서버도 미리 알 수 없어 보낸 뒤에야 드러난다. 그때는 오류
           안내가 다른 제공자를 권하는데, 이 셀렉트가 그 말이 가리키는 자리다.
         */}
+        {keyNotice && !hasNoByokProvider ? (
+          <p
+            role="status"
+            className="mb-2 flex items-center gap-1.5 rounded-xl border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-2 text-[12px] font-medium text-[#15803d]"
+          >
+            <CheckCircle2 className="size-3.5 shrink-0" aria-hidden />
+            {keyNotice}
+          </p>
+        ) : null}
         {hasNoByokProvider ? (
           <div className="mb-2 flex flex-col gap-2 rounded-xl border border-[#fde68a] bg-[#fffbeb] px-3 py-2.5">
             <p className="text-[12px] leading-relaxed text-[#92400e]">
@@ -1684,9 +1770,8 @@ function AgentConversationPanel({
             </p>
             <button
               type="button"
-              onClick={() =>
-                void navigate({ to: '/settings', search: { section: 'ai-credentials' } })
-              }
+              onClick={() => setIsKeySheetOpen(true)}
+              data-demo="ai-key-register-link"
               className="h-8 cursor-pointer self-start rounded-lg bg-[#7c3aed] px-3 text-[12px] font-semibold text-white transition hover:bg-[#6d28d9]"
             >
               AI API 키 등록하러 가기
@@ -1710,7 +1795,8 @@ function AgentConversationPanel({
             </select>
           </label>
         ) : null}
-        <div className="mb-2 flex flex-wrap gap-2">
+        {/* 시연에서는 감춘다 — 제안 문구가 화면에 남으면 시나리오와 다른 것을 읽게 된다 */}
+        <div className={IS_DEMO ? 'hidden' : 'mb-2 flex flex-wrap gap-2'}>
           {suggestedPrompts.map(({ label, prompt }) => (
             <button
               key={label}
@@ -1739,12 +1825,14 @@ function AgentConversationPanel({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={awaitingInputTaskId ? '위 질문에 답해 주세요' : '메시지를 입력하세요'}
+            data-demo="chat-input"
             className="min-h-[40px] flex-1 resize-none bg-transparent text-[13px] text-[#0f172a] outline-none placeholder:text-[#94a3b8] disabled:opacity-60"
           />
           <button
             type="button"
             disabled={!input.trim() || isInputLocked}
             onClick={handleSend}
+            data-demo="chat-send"
             className="mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#7c3aed] text-white transition hover:bg-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="전송"
           >
@@ -1753,6 +1841,16 @@ function AgentConversationPanel({
         </div>
       </footer>
 
+      <AiKeySheet
+        open={isKeySheetOpen}
+        onOpenChange={setIsKeySheetOpen}
+        returnPath={returnPath}
+        onSaved={(vendorLabel) => {
+          setAlertMessage(null);
+          setAlertNavigation(null);
+          setKeyNotice(`${vendorLabel} 키를 등록했습니다. 이제 보내면 이 키로 실행됩니다.`);
+        }}
+      />
       <AppAlertDialog
         open={alertMessage != null}
         message={alertMessage ?? ''}
@@ -1760,11 +1858,17 @@ function AgentConversationPanel({
           alertNavigation
             ? {
                 label: alertNavigation.label,
-                onClick: () =>
-                  void navigate({
-                    to: alertNavigation.to,
-                    search: alertNavigation.search ?? {},
-                  }),
+                onClick: () => {
+                  // 키 등록은 시트에서 끝난다. 다른 화면으로 가야 하는 안내만 화면을 옮긴다
+                  if (
+                    alertNavigation.to === '/settings' &&
+                    alertNavigation.search?.section === 'ai-credentials'
+                  ) {
+                    setIsKeySheetOpen(true);
+                    return;
+                  }
+                  leaveForSetup({ to: alertNavigation.to, search: alertNavigation.search });
+                },
               }
             : undefined
         }
@@ -1776,6 +1880,9 @@ function AgentConversationPanel({
 
 type MessageBubbleProps = {
   message: ConversationMessage;
+  /** 이 줄 아래에 펼칠 지난 작업. 없으면 펼치기를 그리지 않는다 */
+  logTaskId?: string | null;
+  onTaskLogExpand?: () => void;
 };
 
 const MESSAGE_URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -1868,7 +1975,7 @@ const ASSISTANT_TONE_CLASS = {
   failed: 'rounded-xl border-l-2 border-[#fca5a5] bg-[#fef2f2] px-3.5 py-3 text-[#b91c1c]',
 } as const;
 
-function MessageBubble({ message }: MessageBubbleProps) {
+function MessageBubble({ message, logTaskId = null, onTaskLogExpand }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
   // 종류는 서버가 알려준 것만 믿는다. 모르는 값이면 지금까지와 똑같이 그려진다
@@ -1924,6 +2031,9 @@ function MessageBubble({ message }: MessageBubbleProps) {
         ) : (
           plainText
         )}
+        {isAssistant && logTaskId ? (
+          <AgentTaskLogHistory taskId={logTaskId} onExpand={onTaskLogExpand} />
+        ) : null}
       </div>
     </div>
   );

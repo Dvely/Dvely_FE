@@ -9,9 +9,11 @@ import type { MeSettingsSectionId } from '@/components/layout/me/meSettingsNav';
 
 type MeSettingsContentPanelProps = {
   activeSection: MeSettingsSectionId;
+  /** 등록을 마쳤을 때. 돌아간 자리에서 보여줄 한 줄을 함께 넘긴다 */
+  onSetupComplete?: (notice: string) => void;
 };
 
-function MeSettingsContentPanel({ activeSection }: MeSettingsContentPanelProps) {
+function MeSettingsContentPanel({ activeSection, onSetupComplete }: MeSettingsContentPanelProps) {
   const { t } = useTranslation();
   const title = t(`me.nav.items.${activeSection}`);
 
@@ -22,9 +24,26 @@ function MeSettingsContentPanel({ activeSection }: MeSettingsContentPanelProps) 
   } else if (activeSection === 'general') {
     panel = <MeGeneralSettingsPanel />;
   } else if (activeSection === 'cloud-browser') {
-    panel = <MeCloudConnectionsPanel />;
+    panel = (
+      <MeCloudConnectionsPanel
+        onConnected={
+          onSetupComplete
+            ? () => onSetupComplete('클라우드 연결을 마쳤습니다 — 이 프로젝트에 쓸 연결을 고르세요')
+            : undefined
+        }
+      />
+    );
   } else if (activeSection === 'ai-credentials') {
-    panel = <MeAiCredentialsPanel />;
+    panel = (
+      <MeAiCredentialsPanel
+        onSaved={
+          onSetupComplete
+            ? (vendorLabel) =>
+                onSetupComplete(`${vendorLabel} 키를 등록했습니다 — 이어서 진행하세요`)
+            : undefined
+        }
+      />
+    );
   } else if (activeSection === 'api-tokens') {
     panel = <MeApiTokensPanel />;
   }
