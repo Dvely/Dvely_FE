@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import { fetchGitHubAuthUrl } from '@/api/auth';
 import { GITHUB_OAUTH_POPUP_FEATURES, GITHUB_OAUTH_POPUP_NAME } from '@/constants/githubOAuth';
+import { SERVICE_SUSPENDED } from '@/constants/serviceStatus';
+import { openServiceSuspendedNotice } from '@/lib/serviceSuspendedNotice';
 import {
   clearOAuthCodeProcessed,
   extractStateFromOAuthUrl,
@@ -12,6 +14,12 @@ export function useGitHubLogin() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const startGitHubLogin = useCallback(async () => {
+    // 서버가 없으니 로그인 URL 을 물어도 Pages 의 404 가 온다. 묻지 않고 이유를 말한다
+    if (SERVICE_SUSPENDED) {
+      openServiceSuspendedNotice();
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage(null);
 

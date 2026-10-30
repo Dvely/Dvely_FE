@@ -13,6 +13,7 @@ import {
   GITHUB_APP_INSTALL_SUCCESS_MESSAGE,
   GITHUB_OAUTH_POPUP_FEATURES,
 } from '@/constants/githubOAuth';
+import { SERVICE_SUSPENDED } from '@/constants/serviceStatus';
 
 /**
  * 두 모드는 사용자가 처한 상황이 다르다.
@@ -51,6 +52,8 @@ function GitHubAppInstallPromptDialog() {
 
   // 앱 마운트 시 체크 — 이미 로그인된 상태(새로고침 등)에서도 감지
   useEffect(() => {
+    // 일시 중단 중에는 물을 서버가 없다. 남은 토큰으로 매번 실패할 요청을 보내지 않는다
+    if (SERVICE_SUSPENDED) return;
     if (!localStorage.getItem('accessToken')) return;
 
     void refreshUserInfoInBackground().then((response) => {

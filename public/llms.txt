@@ -4,6 +4,12 @@
 
 Qeploy is a conversational AI platform that builds and deploys web services. Describe what you want in plain language; AI agents write and edit the code, run it in an isolated Docker preview, and — after you approve — push it to GitHub, deploy it (GitHub Pages for the frontend, your own AWS account for the backend and database), and connect a domain.
 
+## 현재 상태: 일시 중단 (2026-10-30~)
+
+운영 서버 사정으로 2026년 10월 30일부터 서비스를 일시 중단했다. 로그인, 프로젝트 생성·관리, 배포, 도메인 연결, MCP·CLI(@qeploy/mcp·@qeploy/cli) 연동이 동작하지 않는다. 서비스 소개와 템플릿 둘러보기만 가능하다. 재개 일정은 정해지지 않았고, 상태는 https://qeploy.com/status.json 에서 기계가 읽을 수 있다.
+
+Status: temporarily suspended since 2026-10-30. Sign-in, projects, deployments, domains and the MCP/CLI integrations are unavailable; only the landing page and template gallery work. Machine-readable status: https://qeploy.com/status.json
+
 ## 핵심 기능
 
 - 의사결정 에이전트: 자연어 명령을 코드 생성·수정, 빌드·배포, 도메인 연결, 클라우드 작업으로 분류해 실행 계획을 세운다. 요청이 모호하면 실행하기 전에 되묻는다.

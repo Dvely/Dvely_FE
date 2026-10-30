@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import qeployLogo from '@/assets/images/qeploy-logo-primary.svg';
+import { SERVICE_SUSPENDED, SERVICE_SUSPENSION_NOTICE } from '@/constants/serviceStatus';
 import { useGitHubLogin } from '@/hooks/useGitHubLogin';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
+import { openServiceSuspendedNotice } from '@/lib/serviceSuspendedNotice';
 
 const NAV_ITEMS = [
   { label: '서비스 소개', id: 'intro' },
@@ -180,7 +182,32 @@ function HeaderContainer() {
           하지 않아서, 라벨이 하는 일과 어긋나 있었다 — 안 띄우는 것보다 띄우고
           거짓말하는 쪽이 나쁘다.
         */}
-        {bannerOpen && !isTemplatePage && !isLoggedIn ? (
+        {/*
+          일시 중단 중에는 그 사실이 이 자리를 차지한다. "GitHub 을 연결하세요" 는 지금 할 수
+          없는 일이라 띄우지 않는다. 닫기를 두지 않고 템플릿 화면·로그인한 사람에게도 띄운다 —
+          누구에게나 해당하는 상태이고, 닫으면 다음 클릭에서 고장으로 읽힌다.
+
+          좁은 화면에서는 첫 문장만 남으므로 띠 전체를 눌러 안내 창을 열게 한다.
+        */}
+        {SERVICE_SUSPENDED ? (
+          <button
+            type="button"
+            onClick={openServiceSuspendedNotice}
+            className="flex w-full items-center justify-center bg-[#1e1b4b] px-4 py-1.5 text-white md:px-12 md:py-2.5"
+          >
+            <span className="truncate text-[12px] md:text-[13px]">
+              <b>{SERVICE_SUSPENSION_NOTICE.headline}</b>
+              <span className="hidden md:inline">
+                {' '}
+                {SERVICE_SUSPENSION_NOTICE.since}부터 {SERVICE_SUSPENSION_NOTICE.unavailable}이
+                동작하지 않습니다.
+              </span>
+            </span>
+            <span className="ml-2 shrink-0 text-[12px] font-semibold underline underline-offset-2 md:text-[13px]">
+              자세히
+            </span>
+          </button>
+        ) : bannerOpen && !isTemplatePage && !isLoggedIn ? (
           <div className="relative flex w-full items-center justify-center bg-[#1e1b4b] px-10 py-1.5 text-white md:px-12 md:py-2.5">
             <p className="truncate text-[12px] md:text-[13px]">
               <b>쓰던 GitHub에 Qeploy를 연결하세요.</b>
