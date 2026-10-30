@@ -1,6 +1,6 @@
 name: CI
 
-# main 병합이 곧 EC2 배포이므로(deploy-ec2.yml) 검증은 병합 전에 끝나야 한다.
+# main 병합이 곧 GitHub Pages 배포이므로(deploy-pages.yml) 검증은 병합 전에 끝나야 한다.
 #
 # 저장소 설정의 main 보호 규칙에 "Typecheck and build"가 required status check로
 # 걸려 있다(strict). 그래서 이 워크플로가 실패하면 실제로 병합이 막힌다 — 워크플로
@@ -71,7 +71,7 @@ jobs:
       - name: Test
         run: bun run test
 
-      # 여기서 굽는 값은 검증용 더미다. 실제 프로덕션 값은 deploy-ec2.yml이 주입한다.
+      # 여기서 굽는 값은 검증용 더미다. 실제 프로덕션 값은 deploy-pages.yml이 주입한다.
       # 다만 비워두면 axios baseURL이 undefined가 되어 "빌드는 됐는데 런타임에 전부
       # 404" 인 상태를 그대로 통과시키므로, 형태가 있는 값을 넣어 둔다.
       - name: Build
