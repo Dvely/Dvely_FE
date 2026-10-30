@@ -88,7 +88,6 @@ function ProjectDetailPage({
                 <Link
                   to="/project/$slug/agent"
                   params={{ slug: String(projectId) }}
-                  data-demo="open-agent"
                   className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#7c3aed] px-4 text-[13px] font-semibold text-white shadow-[0_4px_14px_rgba(124,58,237,0.35)] transition hover:bg-[#6d28d9]"
                 >
                   <Play className="size-4 fill-current" />
@@ -131,7 +130,6 @@ function ProjectDetailPage({
                 <Link
                   to="/project/$slug/agent"
                   params={{ slug: String(projectId) }}
-                  data-demo="open-agent"
                   className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg bg-[#7c3aed] px-5 text-[13px] font-semibold text-white"
                 >
                   <Play className="size-4 fill-current" />
@@ -145,10 +143,7 @@ function ProjectDetailPage({
             터미널·코딩 에이전트로 넘어가는 자리. 연결은 설정의 토큰 화면에서도 되지만, 이
             프로젝트를 보다가 "터미널에서 이어서 하자" 는 순간에 그 길을 찾아 나서게 하지 않는다.
           */}
-          <section
-            data-demo="agent-connect-card"
-            className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#e2e8f0] bg-white p-5"
-          >
+          <section className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#e2e8f0] bg-white p-5">
             <div className="flex min-w-0 items-start gap-3">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#0f172a] text-white">
                 <Terminal className="size-5" strokeWidth={1.75} aria-hidden />
@@ -166,7 +161,6 @@ function ProjectDetailPage({
             <button
               type="button"
               onClick={() => setIsAgentConnectOpen(true)}
-              data-demo="agent-connect-open"
               className="inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white transition hover:bg-[#1e293b]"
             >
               연결 안내

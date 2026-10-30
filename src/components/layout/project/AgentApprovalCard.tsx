@@ -100,10 +100,7 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
   };
 
   return (
-    <div
-      data-demo="approval-card"
-      className="rounded-xl border border-[#c4b5fd] bg-[#faf5ff] px-3.5 py-3"
-    >
+    <div className="rounded-xl border border-[#c4b5fd] bg-[#faf5ff] px-3.5 py-3">
       <div className="flex items-start justify-between gap-2">
         <p className="text-[13px] font-semibold text-[#4c1d95]">{copy.title}</p>
         {help ? (
@@ -111,7 +108,6 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
             type="button"
             onClick={() => setIsHelpOpen((open) => !open)}
             aria-expanded={isHelpOpen}
-            data-demo="approval-help"
             className="shrink-0 cursor-pointer text-[11px] font-semibold text-[#7c3aed] underline underline-offset-2"
           >
             {isHelpOpen ? '접기' : '이게 뭔가요?'}
@@ -252,7 +248,6 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
           type="button"
           disabled={isBusy}
           onClick={handleApprove}
-          data-demo="approve"
           className="h-8 rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isBusy ? '처리 중' : '승인'}

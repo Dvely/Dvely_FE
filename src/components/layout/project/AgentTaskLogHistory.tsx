@@ -41,7 +41,6 @@ function AgentTaskLogHistory({
         type="button"
         onClick={toggle}
         aria-expanded={open}
-        data-demo="task-log-toggle"
         className="inline-flex cursor-pointer items-center gap-1 text-[12px] font-medium text-[#94a3b8] transition hover:text-[#64748b]"
       >
         <ChevronRight
@@ -53,10 +52,7 @@ function AgentTaskLogHistory({
       </button>
 
       {open ? (
-        <div
-          data-demo="task-log-panel"
-          className="mt-2 rounded-lg border border-[#eef2f6] bg-[#f8fafc] px-3 py-2.5"
-        >
+        <div className="mt-2 rounded-lg border border-[#eef2f6] bg-[#f8fafc] px-3 py-2.5">
           {isPending ? (
             <div aria-hidden="true" className="flex flex-col gap-1.5">
               <div className="h-3 w-[70%] animate-pulse rounded bg-[#e2e8f0]" />
