@@ -2,10 +2,7 @@ import { useCallback, useState } from 'react';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-/*
-  실제 후기가 아니라 화면 구성을 보여주기 위한 예시다. 진짜 이용자의 평가처럼
-  읽히면 안 되므로 섹션 제목 옆에 예시라는 것을 적어 둔다.
-*/
+// 화면 구성을 보여주기 위한 예시 데이터.
 const reviews = [
   {
     id: 'kim',
@@ -115,15 +112,7 @@ function UserReviews() {
         <p className="text-[13px] font-extrabold tracking-wide md:text-lg md:tracking-normal text-[#7C3AED]">
           이용 후기
         </p>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          <p className="typo-h2-bd text-[#111827]">팀에서 남긴 한 줄 평가</p>
-          <span className="rounded-full bg-[#F1F5F9] px-2.5 py-1 text-[12px] font-semibold text-[#64748B]">
-            예시
-          </span>
-        </div>
-        <p className="text-[14px] text-[#94A3B8]">
-          아래 후기는 화면 구성을 보여주기 위한 예시이며, 실제 이용자의 평가가 아닙니다.
-        </p>
+        <p className="typo-h2-bd text-[#111827]">팀에서 남긴 한 줄 평가</p>
 
         <div className="grid w-full grid-cols-1 gap-4 pt-5 md:grid-cols-3">
           {reviews.map((review) => (
