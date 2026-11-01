@@ -157,7 +157,7 @@ function HeaderContainer() {
               onClick={handleAuth}
               className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[#7C3AED] px-4 text-[13px] font-semibold text-white shadow-[0_6px_16px_rgba(124,58,237,0.28)] transition hover:bg-[#6D28D9] disabled:opacity-60 md:h-10 md:px-5 md:text-[14px]"
             >
-              {isLoggedIn ? '대시보드' : '시작하기'}
+              {isLoggedIn ? '프로젝트 시작하기' : '시작하기'}
               <ArrowRight className="size-4" />
             </button>
             {/* 좁은 화면에서 가로 내비가 들어갈 자리가 없다. 같은 항목을 이 안에 담는다 */}

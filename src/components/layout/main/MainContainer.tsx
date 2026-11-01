@@ -7,7 +7,6 @@ import OutputShowcase from './OutputShowcase';
 import UserReviews from './UserReviews';
 import ServiceStats from './ServiceStats';
 import ProcessSection from './ProcessSection';
-import StartNowSection from './StartNowSection';
 import PricingSection from './PricingSection';
 import Footer from '../footer/Footer';
 
@@ -24,7 +23,6 @@ function MainContainer() {
       <UserReviews />
       <ServiceStats />
       <ProcessSection />
-      <StartNowSection />
       <PricingSection />
       <Footer />
     </main>
