@@ -20,6 +20,12 @@ import { DRAFT_STASH_KEY } from '@/lib/composerDraft';
 const postConversationMessageCreate = vi.fn();
 const pollAgentTask = vi.fn();
 
+/*
+  승인 카드를 띄우려면 두 조회가 같은 승인을 돌려줘야 한다. 테스트마다 갈아끼울 수 있게
+  바깥 변수로 둔다 — `vi.mock` 은 호이스팅되므로 안에서 바로 쓰면 초기화 전에 읽힌다.
+*/
+let approvalFixture: Record<string, unknown> | null = null;
+
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn(),
   Link: ({ children }: { children?: unknown }) => children,
@@ -53,8 +59,8 @@ vi.mock('@/api/approvals', () => ({
   postApprovalApprove: vi.fn(),
   postApprovalReject: vi.fn(),
   getProjectApprovalList: vi.fn(async () => []),
-  useApprovalDetailQuery: () => ({ data: null }),
-  useConversationPendingApprovalQuery: () => ({ data: null }),
+  useApprovalDetailQuery: () => ({ data: approvalFixture }),
+  useConversationPendingApprovalQuery: () => ({ data: approvalFixture?.approvalId ?? null }),
   useApprovalResultScopeQuery: () => ({ data: null }),
 }));
 
@@ -90,6 +96,7 @@ function composer(): HTMLTextAreaElement {
 beforeEach(() => {
   sessionStorage.clear();
   vi.clearAllMocks();
+  approvalFixture = null;
 });
 
 afterEach(() => cleanup());
@@ -166,5 +173,65 @@ describe('동시 실행 상한이면 적은 말을 돌려준다 (#163)', () => {
 
     // onMutate 가 입력창을 비웠다가, 429 를 받으면 되돌려 놓아야 한다
     await waitFor(() => expect(composer().value).toBe('고쳐줘'));
+  });
+});
+
+/*
+  #173. 승인 카드가 "응답 중" 이 풀리기 전에 먼저 뜨는 순간이 있다.
+
+  `handleDecideApproval` 은 `isAssistantReplying` 이면 그냥 돌아가는데, 카드에는 그 사실이
+  넘어가지 않아 **버튼이 활성으로 그려졌다.** 눌러도 아무 일도 없고 안내도 없었다.
+
+  고친 뒤에는 그 구간 동안 버튼이 잠기고 이유가 보여야 한다. "눌러도 되는가" 가 아니라
+  **"눌러도 되는 것처럼 보이는가"** 를 보는 테스트다.
+*/
+describe('승인 카드는 누를 수 없을 때 그렇게 보인다 (#173)', () => {
+  const PENDING_APPROVAL = {
+    approvalId: 7,
+    projectId: 42,
+    conversationId: 7,
+    taskId: 'task-1',
+    type: 'RESULT',
+    status: 'PENDING',
+    summary: '변경 결과를 반영할까요?',
+    input: null,
+    createdAt: '2026-11-03T10:00:00+09:00',
+    decidedAt: null,
+    rejectOption: null,
+  };
+
+  function approveButton(): HTMLButtonElement {
+    const el = [...document.querySelectorAll('button')].find((b) =>
+      /^(승인|처리 중)$/.test(b.textContent?.trim() ?? ''),
+    );
+    if (!el) throw new Error('승인 버튼을 찾지 못했습니다');
+    return el as HTMLButtonElement;
+  }
+
+  it('응답을 기다리는 동안 승인 버튼이 잠기고 이유가 보인다', async () => {
+    approvalFixture = PENDING_APPROVAL;
+    // 보내기를 끝나지 않게 두면 isAssistantReplying 이 참으로 남는다 — 문제의 그 구간이다
+    postConversationMessageCreate.mockReturnValue(new Promise(() => {}));
+
+    renderPanel();
+    await waitFor(() => expect(approveButton()).toBeTruthy());
+    expect(approveButton().disabled).toBe(false);
+
+    fireEvent.change(composer(), { target: { value: '고쳐줘' } });
+    const send = document.querySelector<HTMLButtonElement>('button[aria-label="전송"]');
+    fireEvent.click(send!);
+
+    await waitFor(() => expect(approveButton().disabled).toBe(true));
+    expect(document.body.textContent).toContain('곧 결정할 수 있습니다');
+  });
+
+  it('평소에는 승인 버튼이 눌린다', async () => {
+    approvalFixture = PENDING_APPROVAL;
+
+    renderPanel();
+
+    await waitFor(() => expect(approveButton()).toBeTruthy());
+    expect(approveButton().disabled).toBe(false);
+    expect(document.body.textContent).not.toContain('곧 결정할 수 있습니다');
   });
 });

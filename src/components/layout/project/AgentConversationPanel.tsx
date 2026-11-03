@@ -1637,6 +1637,24 @@ function AgentConversationPanel({
                 key={activeApproval.approvalId}
                 approval={activeApproval}
                 isBusy={decideApprovalMutation.isPending}
+                /*
+                  `handleDecideApproval` 은 `isAssistantReplying` 이면 그냥 돌아간다. 그런데
+                  카드에 그 사실을 넘기지 않아서, 그동안 버튼이 **멀쩡히 활성으로 그려졌다.**
+                  눌러도 아무 일도 안 일어나고 안내도 없었다(#173).
+
+                  이 구간은 길지 않다. 승인을 보는 조회(10초 주기)가 태스크 폴링(2초, 뒤에는
+                  5초)보다 먼저 승인을 집으면 생기는 틈이고, `WAITING_APPROVAL` 은 폴링을
+                  멈추는 상태라 다음 주기에 곧 풀린다 — 길어야 한 주기다.
+
+                  그래서 **보낼 수 있게 푸는 대신 잠그고 이유를 말한다.** 응답 상태를 무시하고
+                  보내려면 도는 폴링을 중단시켜야 하는데, 그 중단이 일으키는 상태 되돌림과
+                  경쟁하게 된다 — 조용히 무시하던 문제를 조용히 어긋나는 문제로 바꾸는 셈이다.
+                */
+                blockedReason={
+                  isAssistantReplying && !decideApprovalMutation.isPending
+                    ? '진행 중인 작업 상태를 확인하는 중입니다. 곧 결정할 수 있습니다.'
+                    : null
+                }
                 onApprove={(payload) => handleDecideApproval('approve', payload)}
                 onReject={(option) => handleDecideApproval('reject', undefined, option)}
               />
