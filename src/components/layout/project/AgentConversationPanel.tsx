@@ -1518,6 +1518,18 @@ function AgentConversationPanel({
     setAlertNavigation(null);
   };
 
+  /*
+    지금 보이는 카드가 방금 결정을 보낸 그 카드인가(#173).
+
+    결정 요청은 이어 달리는 폴링이 끝날 때까지 처리 중이다. 그 사이 승인 조회가 **다음 승인**을
+    먼저 집으면 새 카드가 뜨는데, 처리 중을 그대로 넘기면 아직 누르지 않은 카드가 "처리 중"
+    으로 보인다 — 이미 보낸 것처럼 읽힌다. "처리 중" 은 보낸 카드에만 쓰고, 나머지는
+    `blockedReason` 으로 잠근다.
+  */
+  const isDecidingActiveApproval =
+    decideApprovalMutation.isPending &&
+    decideApprovalMutation.variables?.approvalId === activeApproval?.approvalId;
+
   const handleDecideApproval = (
     action: 'approve' | 'reject',
     payload?: Record<string, string>,
@@ -1636,7 +1648,30 @@ function AgentConversationPanel({
               <AgentApprovalCard
                 key={activeApproval.approvalId}
                 approval={activeApproval}
-                isBusy={decideApprovalMutation.isPending}
+                isBusy={isDecidingActiveApproval}
+                /*
+                  `handleDecideApproval` 은 `isAssistantReplying` 이면 그냥 돌아간다. 그런데
+                  카드에 그 사실을 넘기지 않아서, 그동안 버튼이 **멀쩡히 활성으로 그려졌다.**
+                  눌러도 아무 일도 안 일어나고 안내도 없었다(#173).
+
+                  이 구간은 길지 않다. 승인을 보는 조회(10초 주기)가 태스크 폴링(2초, 뒤에는
+                  5초)보다 먼저 승인을 집으면 생기는 틈이고, `WAITING_APPROVAL` 은 폴링을
+                  멈추는 상태라 다음 주기에 곧 풀린다 — 길어야 한 주기다.
+
+                  그래서 **보낼 수 있게 푸는 대신 잠그고 이유를 말한다.** 응답 상태를 무시하고
+                  보내려면 도는 폴링을 중단시켜야 하는데, 그 중단이 일으키는 상태 되돌림과
+                  경쟁하게 된다 — 조용히 무시하던 문제를 조용히 어긋나는 문제로 바꾸는 셈이다.
+
+                  잠그는 조건은 `handleDecideApproval` 이 돌아가는 조건과 같다. 하나라도 어긋나면
+                  그 틈에서 다시 조용히 무시된다. 결정을 보낸 뒤 이어 달리는 동안 뜬 새 카드도
+                  여기서 잠긴다(`isDecidingActiveApproval` 참고).
+                */
+                blockedReason={
+                  (decideApprovalMutation.isPending || isAssistantReplying) &&
+                  !isDecidingActiveApproval
+                    ? '진행 중인 작업 상태를 확인하는 중입니다. 곧 결정할 수 있습니다.'
+                    : null
+                }
                 onApprove={(payload) => handleDecideApproval('approve', payload)}
                 onReject={(option) => handleDecideApproval('reject', undefined, option)}
               />
