@@ -19,6 +19,8 @@ import { DRAFT_STASH_KEY } from '@/lib/composerDraft';
 
 const postConversationMessageCreate = vi.fn();
 const pollAgentTask = vi.fn();
+const postAgentTaskInput = vi.fn();
+const postApprovalApprove = vi.fn();
 
 /*
   승인 카드를 띄우려면 두 조회가 같은 승인을 돌려줘야 한다. 테스트마다 갈아끼울 수 있게
@@ -39,7 +41,7 @@ vi.mock('@/api/chat', () => ({
 
 vi.mock('@/api/agent', () => ({
   pollAgentTask: (...a: unknown[]) => pollAgentTask(...a),
-  postAgentTaskInput: vi.fn(),
+  postAgentTaskInput: (...a: unknown[]) => postAgentTaskInput(...a),
   postAgentTaskRetry: vi.fn(),
   postAgentTaskCancel: vi.fn(),
   AgentPollTimeoutError: class AgentPollTimeoutError extends Error {},
@@ -56,7 +58,7 @@ vi.mock('@/api/agent', () => ({
 }));
 
 vi.mock('@/api/approvals', () => ({
-  postApprovalApprove: vi.fn(),
+  postApprovalApprove: (...a: unknown[]) => postApprovalApprove(...a),
   postApprovalReject: vi.fn(),
   getProjectApprovalList: vi.fn(async () => []),
   useApprovalDetailQuery: () => ({ data: approvalFixture }),
@@ -73,7 +75,7 @@ function renderPanel(props: Record<string, unknown> = {}) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return render(
+  const tree = () => (
     <QueryClientProvider client={client}>
       <AgentConversationPanel
         projectId={42}
@@ -83,8 +85,11 @@ function renderPanel(props: Record<string, unknown> = {}) {
         onConversationCreated={() => {}}
         {...props}
       />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+  const result = render(tree());
+  // 같은 client 로 다시 그린다. 조회가 새 값을 돌려줘 화면이 다시 그려지는 순간을 흉내 낸다
+  return { ...result, rerenderPanel: () => result.rerender(tree()) };
 }
 
 function composer(): HTMLTextAreaElement {
@@ -233,5 +238,72 @@ describe('승인 카드는 누를 수 없을 때 그렇게 보인다 (#173)', ()
     await waitFor(() => expect(approveButton()).toBeTruthy());
     expect(approveButton().disabled).toBe(false);
     expect(document.body.textContent).not.toContain('곧 결정할 수 있습니다');
+  });
+
+  function sendButton(): HTMLButtonElement {
+    const el = document.querySelector<HTMLButtonElement>('button[aria-label="전송"]');
+    if (!el) throw new Error('전송 버튼을 찾지 못했습니다');
+    return el;
+  }
+
+  it('되묻기에 답하고 기다리는 동안에도 승인 버튼이 잠기고 이유가 보인다', async () => {
+    approvalFixture = PENDING_APPROVAL;
+    postConversationMessageCreate.mockResolvedValue({ taskId: 'task-1' });
+    // 첫 폴링은 되묻기로 끝난다. 답한 뒤의 폴링은 끝나지 않게 둬서 응답 대기를 남긴다
+    pollAgentTask
+      .mockResolvedValueOnce({
+        taskId: 'task-1',
+        status: 'WAITING_INPUT',
+        clarification: null,
+        pendingApprovalId: null,
+      })
+      .mockReturnValueOnce(new Promise(() => {}));
+
+    renderPanel();
+    fireEvent.change(composer(), { target: { value: '고쳐줘' } });
+    fireEvent.click(sendButton());
+
+    // 되물은 상태에서는 응답 대기가 풀려 있으니 승인 버튼이 눌린다
+    await waitFor(() =>
+      expect(document.body.textContent).toContain('에이전트가 답을 기다리고 있습니다'),
+    );
+    expect(approveButton().disabled).toBe(false);
+
+    fireEvent.change(composer(), { target: { value: '네' } });
+    fireEvent.click(sendButton());
+
+    // 새 메시지가 아니라 되묻기의 답으로 나갔다. 이 경로를 보는 테스트다
+    await waitFor(() => expect(postAgentTaskInput).toHaveBeenCalledWith('task-1', { value: '네' }));
+    expect(postConversationMessageCreate).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => expect(approveButton().disabled).toBe(true));
+    expect(document.body.textContent).toContain('곧 결정할 수 있습니다');
+  });
+
+  /*
+    승인을 보내면 그 결정의 폴링이 끝날 때까지 결정 요청이 처리 중이다. 누른 카드는 그 즉시
+    사라진다(결정한 승인은 목록에서 뺀다). 그 사이 승인 조회가 **다음 승인**을 먼저 집으면 새
+    카드가 뜨는데, 예전에는 처리 중 상태를 그대로 받아 아직 누르지도 않은 카드가 "처리 중"
+    으로 보였다. 이미 보낸 것처럼 읽힌다. 다른 두 경로처럼 잠그고 이유를 말해야 한다.
+  */
+  it('결정을 보내고 이어 달리는 동안 새로 뜬 승인 카드는 "처리 중" 이 아니라 잠긴 이유를 보인다', async () => {
+    approvalFixture = PENDING_APPROVAL;
+    // 결정 뒤 이어 달리는 폴링을 끝나지 않게 둔다. 그동안 결정 요청은 처리 중이다
+    pollAgentTask.mockReturnValue(new Promise(() => {}));
+
+    const { rerenderPanel } = renderPanel();
+    await waitFor(() => expect(approveButton().disabled).toBe(false));
+    fireEvent.click(approveButton());
+    await waitFor(() => expect(postApprovalApprove).toHaveBeenCalled());
+    expect(postApprovalApprove.mock.calls[0]?.[0]).toBe(7);
+
+    // 승인 조회가 이어 달리기보다 먼저 다음 승인을 집었다
+    approvalFixture = { ...PENDING_APPROVAL, approvalId: 8, summary: '다음 단계를 진행할까요?' };
+    rerenderPanel();
+
+    await waitFor(() => expect(document.body.textContent).toContain('다음 단계를 진행할까요?'));
+    expect(approveButton().textContent?.trim()).toBe('승인');
+    expect(approveButton().disabled).toBe(true);
+    expect(document.body.textContent).toContain('곧 결정할 수 있습니다');
   });
 });
