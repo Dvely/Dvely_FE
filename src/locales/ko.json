@@ -140,8 +140,8 @@
     },
     "contact": {
       "title": "추가 도움이 필요하신가요?",
-      "description": "문의 채널은 준비 중입니다. 정식 출시에 맞춰 열릴 예정입니다.",
-      "action": "문의 준비 중"
+      "description": "이용 중 막히는 점이나 오류는 support@qeploy.com 으로 알려 주세요.",
+      "action": "메일로 문의하기"
     }
   }
 }
