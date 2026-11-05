@@ -9,7 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TemplateRouteImport } from './routes/template'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as CallbackRouteImport } from './routes/callback'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -36,9 +38,19 @@ import { Route as AuthenticatedProjectSlugCodeRouteImport } from './routes/_auth
 import { Route as AuthenticatedProjectSlugApprovalsRouteImport } from './routes/_authenticated/project.$slug.approvals'
 import { Route as AuthenticatedProjectSlugAgentRouteImport } from './routes/_authenticated/project.$slug.agent'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TemplateRoute = TemplateRouteImport.update({
   id: '/template',
   path: '/template',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CallbackRoute = CallbackRouteImport.update({
@@ -180,7 +192,9 @@ const AuthenticatedProjectSlugAgentRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
+  '/privacy': typeof PrivacyRoute
   '/template': typeof TemplateRouteWithChildren
+  '/terms': typeof TermsRoute
   '/help': typeof AuthenticatedHelpRoute
   '/home': typeof AuthenticatedHomeRoute
   '/project': typeof AuthenticatedProjectRouteWithChildren
@@ -207,6 +221,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/help': typeof AuthenticatedHelpRoute
   '/home': typeof AuthenticatedHomeRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -233,7 +249,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/callback': typeof CallbackRoute
+  '/privacy': typeof PrivacyRoute
   '/template': typeof TemplateRouteWithChildren
+  '/terms': typeof TermsRoute
   '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/project': typeof AuthenticatedProjectRouteWithChildren
@@ -262,7 +280,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/callback'
+    | '/privacy'
     | '/template'
+    | '/terms'
     | '/help'
     | '/home'
     | '/project'
@@ -289,6 +309,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/callback'
+    | '/privacy'
+    | '/terms'
     | '/help'
     | '/home'
     | '/settings'
@@ -314,7 +336,9 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/callback'
+    | '/privacy'
     | '/template'
+    | '/terms'
     | '/_authenticated/help'
     | '/_authenticated/home'
     | '/_authenticated/project'
@@ -343,18 +367,34 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   CallbackRoute: typeof CallbackRoute
+  PrivacyRoute: typeof PrivacyRoute
   TemplateRoute: typeof TemplateRouteWithChildren
+  TermsRoute: typeof TermsRoute
   AuthAppCallbackRoute: typeof AuthAppCallbackRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/template': {
       id: '/template'
       path: '/template'
       fullPath: '/template'
       preLoaderRoute: typeof TemplateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/callback': {
@@ -623,7 +663,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   CallbackRoute: CallbackRoute,
+  PrivacyRoute: PrivacyRoute,
   TemplateRoute: TemplateRouteWithChildren,
+  TermsRoute: TermsRoute,
   AuthAppCallbackRoute: AuthAppCallbackRoute,
   AuthCallbackRoute: AuthCallbackRoute,
 }
