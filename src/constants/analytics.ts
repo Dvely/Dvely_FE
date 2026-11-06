@@ -22,4 +22,4 @@
   `VITE_GA_MEASUREMENT_ID` 가 빌드 환경에 있으면 그 값이 이긴다. 다른 속성으로 잠깐 돌려 볼 때
   쓴다 — 운영 배포 워크플로는 이 변수를 넘기지 않는다.
 */
-export const GA_MEASUREMENT_ID = '';
+export const GA_MEASUREMENT_ID = 'G-V1KCLNVSWW';
