@@ -80,6 +80,12 @@ function AgentSitePreviewPanel({
             href={previewUrl}
             target="_blank"
             rel="noopener noreferrer"
+            /*
+              프리뷰 주소에는 열람 토큰이 실린다. 지금은 같은 오리진이라 link_url 로 나가지 않지만,
+              게이트웨이를 다른 호스트로 옮기는 순간 외부 링크가 되어 토큰째 나간다 — 미리 막는다
+            */
+            data-ga-ignore
+            data-ga-label="프리뷰 새 탭에서 보기"
             className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[12px] font-medium text-[#334155] transition hover:bg-[#f8fafc]"
           >
             <ExternalLink className="size-3.5" />새 탭에서 보기

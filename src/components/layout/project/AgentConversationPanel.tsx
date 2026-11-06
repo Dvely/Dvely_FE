@@ -1986,7 +1986,10 @@ function MessageBubble({ message, logTaskId = null, onTaskLogExpand }: MessageBu
     기다리는 동안, 그리고 끝내 못 받았을 때. 한 번만 만들어야 셋이 어긋나지 않는다.
   */
   const plainText = (
-    <p className="whitespace-pre-wrap">{linkifyMessageContent(message.content, linkClassName)}</p>
+    // 대화 본문은 사용자가 쓴 말과 그것을 옮긴 답변이다. 안의 링크 글자·주소를 GA 로 보내지 않는다
+    <p data-ga-ignore className="whitespace-pre-wrap">
+      {linkifyMessageContent(message.content, linkClassName)}
+    </p>
   );
 
   return (

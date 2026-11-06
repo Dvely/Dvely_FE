@@ -315,7 +315,8 @@ function GithubRepositoryPicker({
                   연결할 저장소가 없습니다. 새로 만들기를 이용해 주세요.
                 </p>
               ) : (
-                <ul>
+                // 사용자의 저장소 이름·설명이 보이는 목록이다
+                <ul data-ga-ignore>
                   {repositories.map((repo) => {
                     const isSelected = connectedFullName === repo.fullName;
                     const isPrivate = repo.visibility === 'PRIVATE';
@@ -327,6 +328,7 @@ function GithubRepositoryPicker({
                           role="option"
                           aria-selected={isSelected}
                           disabled={isSubmitting}
+                          data-ga-label="저장소 선택"
                           onClick={() => void handleSelect(repo)}
                           className={cn(
                             'w-full rounded-lg px-3 py-2.5 text-left transition',

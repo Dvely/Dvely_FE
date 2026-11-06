@@ -256,6 +256,9 @@ function HomePromptHero() {
                       onClick={() => setProjectPickerOpen((prev) => !prev)}
                       aria-expanded={projectPickerOpen}
                       aria-haspopup="listbox"
+                      // 고른 뒤에는 프로젝트 이름이 글자로 보인다
+                      data-ga-ignore
+                      data-ga-label="프로젝트 선택 열기"
                       title={cloudButtonLabel}
                       className={cn(
                         'inline-flex h-8 max-w-[220px] items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition cursor-pointer',
