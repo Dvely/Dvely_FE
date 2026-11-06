@@ -140,8 +140,8 @@
     },
     "contact": {
       "title": "Still need help?",
-      "description": "Our support channel is being set up and will open at launch.",
-      "action": "Support coming soon"
+      "description": "Tell us what went wrong at support@qeploy.com.",
+      "action": "Email support"
     }
   }
 }

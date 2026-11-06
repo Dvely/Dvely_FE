@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { mailto } from '@/constants/contact';
 import {
   HELP_FAQ_IDS,
   HELP_QUICK_LINK_IDS,
@@ -211,15 +212,14 @@ function HelpPage() {
                 </p>
               </div>
             </div>
-            {/* 아직 운영하는 문의 주소가 없다. 열리지 않는 메일 창으로 보내지 않는다 */}
-            <span
-              aria-disabled="true"
-              title="문의 채널은 준비 중입니다"
-              className="inline-flex h-10 shrink-0 cursor-default items-center justify-center gap-2 rounded-xl border border-[#e2e8f0] bg-white px-4 text-[13px] font-semibold text-[#94a3b8] select-none"
+            {/* qeploy.com Email Routing 이 운영팀 메일함으로 전달한다(src/constants/contact.ts) */}
+            <a
+              href={mailto('support')}
+              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-[#e2e8f0] bg-white px-4 text-[13px] font-semibold text-[#334155] transition hover:bg-[#f1f5f9]"
             >
               <Mail className="size-4" strokeWidth={1.75} />
               {t('help.contact.action')}
-            </span>
+            </a>
           </div>
         </section>
       </div>
