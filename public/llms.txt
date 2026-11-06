@@ -46,4 +46,13 @@ Status: temporarily suspended since 2026-10-30. Sign-in, projects, deployments, 
 
 - [홈](https://qeploy.com/): 서비스 소개와 시작하기
 - [템플릿 갤러리](https://qeploy.com/template): 바로 시작할 수 있는 웹사이트 템플릿
+- [이용약관](https://qeploy.com/terms): 서비스 이용 조건. AI 사용료와 클라우드 비용은 이용자에게 직접 청구된다
+- [개인정보 처리방침](https://qeploy.com/privacy): 처리하는 개인정보 항목·보유 기간·국외 이전
 - [GitHub](https://github.com/Dvely): 개발 조직
+
+## 연락처
+
+- 일반 문의: contact@qeploy.com
+- 이용 문의·장애: support@qeploy.com
+- 개인정보: privacy@qeploy.com
+- 보안 취약점 제보: security@qeploy.com

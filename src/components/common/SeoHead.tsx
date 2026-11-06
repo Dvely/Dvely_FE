@@ -18,6 +18,8 @@ const DEFAULT_TITLE = 'Qeploy — 대화형 AI 웹서비스 빌드·배포 자�
 
 function titleFor(pathname: string): string {
   if (pathname === '/template') return '템플릿 갤러리 | Qeploy';
+  if (pathname === '/terms') return '이용약관 | Qeploy';
+  if (pathname === '/privacy') return '개인정보 처리방침 | Qeploy';
 
   // 템플릿 본문 컴포넌트를 여기서 import 하면 세 템플릿이 통째로 첫 번들에 실린다.
   // 상세 제목까지 맞추는 값어치가 그만 못해 공통 제목으로 둔다.
