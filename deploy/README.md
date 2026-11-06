@@ -76,6 +76,26 @@ Pages의 404로 끝난다. 백엔드를 다시 띄우면 `api.qeploy.com` 같은
 `status.json`의 `status`를 `"operational"`로 바꿔 한 번에 배포한다. `public/llms.txt`의
 "현재 상태" 절도 지운다.
 
+## 분석(Google Analytics 4)
+
+화면 전환(`page_view`)과 버튼·링크 클릭(`ui_click`)을 GA4로 보낸다(`src/lib/analytics.ts`).
+**운영 빌드이고, 로컬 호스트가 아니고, 측정 ID가 있을 때만** gtag.js를 붙인다. 하나라도
+아니면 스크립트도 받지 않는다.
+
+측정 ID는 공개 값이라 저장소 변수가 아니라 `src/constants/analytics.ts`의 `GA_MEASUREMENT_ID`에
+둔다. 그래서 켜고 끌 때 워크플로를 고치지 않는다 — 그 한 줄을 바꿔 `main`에 병합하면 된다.
+같은 파일에 GA 관리 화면에서 꺼야 할 **향상된 측정** 항목을 적어 두었다. 끄지 않으면 GA가
+주소의 query를 실은 이벤트를 따로 보낸다.
+
+개인정보 규칙:
+
+- 주소는 origin + pathname만 보낸다. `/callback?code=…&state=…`의 OAuth 코드가 넘어가지 않는다
+- 사용자가 쓴 글(대화, 프로젝트·저장소 이름, 배포 주소·도메인)이 버튼·링크 글자로 보이는 곳에는
+  `data-ga-ignore`를 단다. 그 안의 클릭은 이름을 `(ignored)`로 바꾸고 링크 주소를 빼고 보낸다
+- 그래도 이름이 필요한 버튼은 `data-ga-label="프로젝트 열기"`처럼 **고정 문자열**로 이름을 준다.
+  여기에 사용자 데이터를 바인딩하지 않는다
+- Google 신호·광고 개인화는 끈다
+
 ## 배포 검증
 
 워크플로가 마지막에 Pages 엣지(`185.199.108.153`)를 직접 때려 확인한다.

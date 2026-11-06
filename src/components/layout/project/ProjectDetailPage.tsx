@@ -182,6 +182,9 @@ function ProjectDetailPage({
                       href={currentUrlHref}
                       target="_blank"
                       rel="noopener noreferrer"
+                      // 사용자 사이트 주소(서브도메인·커스텀 도메인)가 글자이자 링크다
+                      data-ga-ignore
+                      data-ga-label="현재 URL 열기"
                       className="break-all text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]"
                     >
                       {currentUrlHref}
@@ -322,6 +325,8 @@ function ProjectDetailPage({
                           href={domainHref}
                           target="_blank"
                           rel="noopener noreferrer"
+                          data-ga-ignore
+                          data-ga-label="도메인 열기"
                           className="break-all text-[#7c3aed] underline underline-offset-2 hover:text-[#6d28d9]"
                         >
                           {overview?.domainSummary?.hostname}

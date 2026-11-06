@@ -165,7 +165,8 @@ function HomeProjectListPopover({
             ) : null}
 
             {!isLoading && !isError && projects.length > 0 ? (
-              <ul>
+              // 프로젝트 이름·배포 주소가 보이는 목록이다
+              <ul data-ga-ignore>
                 {projects.map((project) => {
                   const isSelected = selectedProjectId === project.projectId;
                   const displayName = formatProjectDisplayName(project.name, project.projectId);
@@ -177,6 +178,7 @@ function HomeProjectListPopover({
                         type="button"
                         role="option"
                         aria-selected={isSelected}
+                        data-ga-label="프로젝트 선택"
                         onClick={() => handleSelect(project)}
                         className={cn(
                           'w-full rounded-lg px-3 py-2.5 text-left transition',

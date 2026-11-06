@@ -516,6 +516,9 @@ function ProjectDomainsPage({ projectId }: ProjectDomainsPageProps) {
                           href={httpsUrl}
                           target="_blank"
                           rel="noreferrer"
+                          // 사용자가 연결한 도메인이 글자이자 링크다
+                          data-ga-ignore
+                          data-ga-label="연결된 도메인 열기"
                           className="mt-1 inline-block text-[12px] font-medium text-[#2563eb] hover:underline"
                         >
                           {httpsUrl}

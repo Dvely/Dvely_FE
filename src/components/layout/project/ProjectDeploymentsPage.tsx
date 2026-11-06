@@ -292,6 +292,9 @@ function ProjectDeploymentsPage({ projectId }: ProjectDeploymentsPageProps) {
                 <li key={item.historyId} className="rounded-xl border border-[#f1f5f9]">
                   <button
                     type="button"
+                    // 줄 안에 배포 주소와 실패 사유가 글자로 들어간다
+                    data-ga-ignore
+                    data-ga-label="배포 이력 펼치기"
                     onClick={() =>
                       setSelectedHistoryId((current) =>
                         current === item.historyId ? null : item.historyId,
