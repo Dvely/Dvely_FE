@@ -3,6 +3,7 @@ import AppRouterEffects from '@/components/auth/AppRouterEffects';
 import GitHubAppInstallPromptDialog from '@/components/auth/GitHubAppInstallPromptDialog';
 import NotFoundPage from '@/components/layout/NotFoundPage';
 import RouteErrorComponent from '@/components/common/RouteErrorComponent';
+import AnalyticsPageView from '@/components/common/AnalyticsPageView';
 import AppSidebar from '@/components/common/AppSidebar';
 import { AssetLoadFailureNotice } from '@/components/common/AssetLoadFailureNotice';
 import SeoHead from '@/components/common/SeoHead';
@@ -27,6 +28,8 @@ function RootComponent() {
     <>
       <AppRouterEffects />
       <SeoHead />
+      {/* SeoHead 뒤에 둔다 — 바뀐 제목을 읽어야 한다(AnalyticsPageView 주석 참고) */}
+      <AnalyticsPageView />
       <AssetLoadFailureNotice />
       <GitHubAppInstallPromptDialog />
       <ServiceSuspendedDialog />
