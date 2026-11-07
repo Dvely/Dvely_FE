@@ -56,6 +56,17 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    /*
+      폰트는 작아도 CSS 에 base64 로 넣지 않는다.
+
+      Pretendard 는 unicode-range 조각으로 나뉘어 있어(src/styles/pretendard.css) 4KB 미만
+      조각이 몇 개 생긴다. 기본값대로 인라인하면 그 조각들이 화면에 그 글자가 없어도
+      렌더링을 막는 첫 CSS 에 실려 내려간다 — 조각으로 나눈 이유가 거꾸로 된다.
+      나머지 자산은 vite 기본(4KB)을 따른다.
+    */
+    assetsInlineLimit: (filePath) => (/\.woff2?$/.test(filePath) ? false : undefined),
+  },
   server: {
     port: 5173,
     strictPort: true,
