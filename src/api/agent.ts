@@ -444,6 +444,32 @@ function useAgentTaskQuery(queryKey: unknown, taskId: string | null) {
   });
 }
 
+/** 프리뷰를 띄운 작업이 더 바뀌지 않는 상태 */
+const PREVIEW_OWNER_TASK_SETTLED = new Set(['DONE', 'CANCELLED']);
+const PREVIEW_OWNER_TASK_POLL_MS = 10_000;
+
+/**
+ * 프리뷰를 띄운 작업의 상태(#184). 프리뷰를 닫아도 되는지 가를 때만 쓴다(`derivePreviewCloseState`).
+ *
+ * `useAgentTaskQuery` 를 쓰지 않는다. 그쪽은 프리뷰가 생기면 멈추는데, 여기서 알아야 하는 것은
+ * 그 뒤의 일이다 — 승인을 기다리다 결정되면 닫기가 풀려야 한다. 승인 대기는 사람이 답할 때까지
+ * 몇 시간도 가므로 승인 조회와 같은 10초로 다시 본다.
+ *
+ * `FAILED` 에서도 멈추지 않는다. 다른 자리에서 재시도하면 그 작업이 이 컨테이너를 다시 쓴다.
+ */
+function usePreviewOwnerTaskQuery(taskId: string | null) {
+  return useQuery({
+    queryKey: ['agent-task', 'preview-owner', taskId],
+    queryFn: () => getAgentTask(taskId!),
+    enabled: typeof taskId === 'string' && taskId.length > 0,
+    retry: false,
+    refetchInterval: (query) =>
+      PREVIEW_OWNER_TASK_SETTLED.has(query.state.data?.status ?? '')
+        ? false
+        : PREVIEW_OWNER_TASK_POLL_MS,
+  });
+}
+
 /** 에이전트 태스크 이벤트 목록 조회 Query Hook */
 function useAgentTaskEventListQuery(
   queryKey: unknown,
@@ -492,6 +518,7 @@ export {
   postAgentTaskInput,
   postAgentTaskRetry,
   useAgentTaskQuery,
+  usePreviewOwnerTaskQuery,
   useApprovalTaskWatchQuery,
   useAgentTaskEventListQuery,
   useAgentTaskLogQuery,
