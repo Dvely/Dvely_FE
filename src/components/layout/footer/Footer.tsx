@@ -3,6 +3,7 @@ import instagramIcon from '@/assets/icons/instagram.svg';
 import youtubeIcon from '@/assets/icons/youtube.svg';
 import companyIcon from '@/assets/icons/company.svg';
 import qeployLogo from '@/assets/images/qeploy-logo-primary.svg';
+import { CONTACT_EMAILS, mailto } from '@/constants/contact';
 
 /*
   푸터의 링크는 대부분 목적지가 없는 상태였다.
@@ -33,7 +34,8 @@ const quickLinks = [
 
 type FooterItem =
   | { label: string; section: string }
-  | { label: string; to: string }
+  | { label: string; to: '/template' | '/terms' | '/privacy'; hash?: string }
+  | { label: string; href: string }
   | { label: string };
 
 const footerColumns: { title: string; items: FooterItem[] }[] = [
@@ -57,11 +59,21 @@ const footerColumns: { title: string; items: FooterItem[] }[] = [
   },
   {
     title: '회사',
-    items: [{ label: '채용' }, { label: '문의' }, { label: '보안' }, { label: '제휴' }],
+    items: [
+      { label: '채용' },
+      { label: '문의', href: mailto('contact') },
+      { label: '보안', href: mailto('security') },
+      { label: '제휴', href: mailto('contact') },
+    ],
   },
   {
     title: '약관',
-    items: [{ label: '이용약관' }, { label: '개인정보처리방침' }, { label: '쿠키 정책' }],
+    items: [
+      { label: '이용약관', to: '/terms' },
+      { label: '개인정보처리방침', to: '/privacy' },
+      // 쿠키는 처리방침의 "자동 수집 장치" 절에서 다룬다. 같은 내용을 두 곳에 두지 않는다
+      { label: '쿠키 정책', to: '/privacy', hash: 'cookies' },
+    ],
   },
 ];
 
@@ -81,9 +93,17 @@ function PendingItem({ label, className }: { label: string; className?: string }
 function ColumnItem({ item }: { item: FooterItem }) {
   if ('to' in item) {
     return (
-      <Link to={item.to} className="cursor-pointer text-left hover:text-[#0B0C12]">
+      <Link to={item.to} hash={item.hash} className="cursor-pointer text-left hover:text-[#0B0C12]">
         {item.label}
       </Link>
+    );
+  }
+
+  if ('href' in item) {
+    return (
+      <a href={item.href} className="cursor-pointer text-left hover:text-[#0B0C12]">
+        {item.label}
+      </a>
     );
   }
 
@@ -146,18 +166,36 @@ export default function Footer() {
 
         {/*
           사업자 정보 자리에 상호·대표자·고객센터·주소가 모두 지어낸 값으로 들어가
-          있었다. 운영 중인 회사처럼 읽히는 값이라, 실제 값이 생기기 전까지는
-          무엇이 아직 없는지를 말하는 쪽이 맞다.
+          있었다. 운영 중인 회사처럼 읽히는 값이라, 실제로 있는 것(약관·처리방침·연락
+          메일)만 적고 사업자 정보는 비워 둔다.
+
+          개인정보 처리방침은 다른 링크보다 눈에 띄게 둔다(개인정보 보호법 시행령 제31조).
         */}
         <div className="border-t border-[#0B0C12]/10 pt-7">
           <p className="typo-b5-rg text-[#6B6578]">
-            Qeploy는 현재 데모 단계의 서비스입니다. 사업자 정보·고객센터·약관은 정식 출시에 맞춰
-            공개될 예정이며, 지금 화면의 요금제와 이용 후기는 실제 데이터가 아닌 예시입니다.
+            Qeploy는 현재 데모 단계의 서비스입니다. 지금 화면의 요금제와 이용 후기는 실제 데이터가
+            아닌 예시입니다.
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-            <PendingItem label="이용약관" className="typo-b5-rg" />
-            <PendingItem label="개인정보처리방침" className="typo-b5-rg" />
-            <PendingItem label="쿠키 정책" className="typo-b5-rg" />
+          <div className="typo-b5-rg mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[#3D3A47]">
+            <Link to="/terms" className="hover:text-[#0B0C12]">
+              이용약관
+            </Link>
+            <Link to="/privacy" className="font-bold text-[#0B0C12] hover:underline">
+              개인정보처리방침
+            </Link>
+            <span className="h-[10px] w-px bg-[#0B0C12]/12" aria-hidden />
+            <span>
+              문의{' '}
+              <a href={mailto('contact')} className="hover:text-[#0B0C12]">
+                {CONTACT_EMAILS.contact}
+              </a>
+            </span>
+            <span>
+              이용 문의{' '}
+              <a href={mailto('support')} className="hover:text-[#0B0C12]">
+                {CONTACT_EMAILS.support}
+              </a>
+            </span>
           </div>
         </div>
 

@@ -14,7 +14,8 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "preview": "vite preview",
-    "typecheck": "tsr generate && tsc -p tsconfig.app.json --noEmit"
+    "typecheck": "tsr generate && tsc -p tsconfig.app.json --noEmit",
+    "fonts:generate": "node scripts/generate-pretendard-css.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.95.2",

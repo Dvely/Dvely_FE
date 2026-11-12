@@ -102,7 +102,8 @@ type MessageMarkdownProps = {
 
 function MessageMarkdown({ content, linkClassName }: MessageMarkdownProps) {
   return (
-    <div className={MARKDOWN_CLASS}>
+    // 본문 속 링크는 사용자가 넣은 말일 수 있다 — 글자·주소를 GA 로 보내지 않는다(src/lib/analytics.ts)
+    <div data-ga-ignore className={MARKDOWN_CLASS}>
       <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={buildComponents(linkClassName)}>
         {content}
       </ReactMarkdown>

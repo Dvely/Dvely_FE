@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import { useGitHubLogin } from '@/hooks/useGitHubLogin';
 import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
@@ -325,6 +325,25 @@ function HeroSection() {
               <ArrowRight className="size-4" />
             </button>
           </div>
+          {/* GitHub 로그인이 곧 가입이다. 누르기 전에 무엇에 동의하는지 보이게 둔다 */}
+          {!isLoggedIn ? (
+            <p
+              className={cn(
+                'mt-4 text-center text-[12px] leading-relaxed text-[#64748B] transition-all delay-200 duration-700',
+                showCopy ? 'opacity-100' : 'opacity-0',
+              )}
+            >
+              시작하면{' '}
+              <Link to="/terms" className="underline underline-offset-2 hover:text-[#334155]">
+                이용약관
+              </Link>
+              과{' '}
+              <Link to="/privacy" className="underline underline-offset-2 hover:text-[#334155]">
+                개인정보 처리방침
+              </Link>
+              에 동의하는 것으로 봅니다.
+            </p>
+          ) : null}
         </div>
       </div>
 

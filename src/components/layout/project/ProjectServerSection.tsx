@@ -310,6 +310,9 @@ function ProjectServerSection({ projectId }: { projectId: number }) {
                       href={safeUrl}
                       target="_blank"
                       rel="noreferrer"
+                      // 사용자 서버 주소(연결한 도메인일 수 있다)가 글자이자 링크다
+                      data-ga-ignore
+                      data-ga-label="서버 주소 열기"
                       className="break-all font-mono text-[12px] text-[#1d4ed8] underline underline-offset-2"
                     >
                       {safeUrl}

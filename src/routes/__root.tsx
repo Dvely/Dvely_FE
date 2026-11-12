@@ -3,6 +3,7 @@ import AppRouterEffects from '@/components/auth/AppRouterEffects';
 import GitHubAppInstallPromptDialog from '@/components/auth/GitHubAppInstallPromptDialog';
 import NotFoundPage from '@/components/layout/NotFoundPage';
 import RouteErrorComponent from '@/components/common/RouteErrorComponent';
+import AnalyticsPageView from '@/components/common/AnalyticsPageView';
 import AppSidebar from '@/components/common/AppSidebar';
 import { AssetLoadFailureNotice } from '@/components/common/AssetLoadFailureNotice';
 import SeoHead from '@/components/common/SeoHead';
@@ -19,14 +20,29 @@ export const Route = createRootRoute({
   errorComponent: RouteErrorComponent,
 });
 
+/**
+ * 로그인 없이 보는 공개 페이지. 앱 사이드바 없이 랜딩과 같은 틀로 띄운다.
+ * 여기 넣는 경로는 public/sitemap.xml 과 vite.config.ts 의 PUBLIC_SPA_PAGES 에도 있어야 한다.
+ */
+function isPublicPage(pathname: string): boolean {
+  return (
+    pathname === '/' ||
+    pathname.startsWith('/template') ||
+    pathname === '/terms' ||
+    pathname === '/privacy'
+  );
+}
+
 function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const showAppChrome = pathname !== '/' && !pathname.startsWith('/template');
+  const showAppChrome = !isPublicPage(pathname);
 
   return (
     <>
       <AppRouterEffects />
       <SeoHead />
+      {/* SeoHead 뒤에 둔다 — 바뀐 제목을 읽어야 한다(AnalyticsPageView 주석 참고) */}
+      <AnalyticsPageView />
       <AssetLoadFailureNotice />
       <GitHubAppInstallPromptDialog />
       <ServiceSuspendedDialog />
