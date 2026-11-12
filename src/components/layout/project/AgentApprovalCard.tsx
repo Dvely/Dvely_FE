@@ -11,6 +11,13 @@ import type { RejectOption } from '@/types/resultScope.type';
 type AgentApprovalCardProps = {
   approval: Approval;
   isBusy: boolean;
+  /**
+   * 지금은 누를 수 없는 이유. 값이 있으면 버튼을 잠그고 이 문장을 보여준다.
+   *
+   * 결정을 보내는 중(`isBusy`)과 다르다 — 그때는 사용자가 이미 눌렀고 기다리는 것이지만,
+   * 이쪽은 **아직 누를 수 없는** 상태다. 이유를 적지 않고 잠그면 고장과 구별되지 않는다.
+   */
+  blockedReason?: string | null;
   onApprove: (payload?: Record<string, string>) => void;
   onReject: (rejectOption?: RejectOption['option']) => void;
 };
@@ -41,7 +48,15 @@ function validateInputValue(input: ApprovalInput, raw: string): string | null {
   return null;
 }
 
-function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentApprovalCardProps) {
+function AgentApprovalCard({
+  approval,
+  isBusy,
+  blockedReason,
+  onApprove,
+  onReject,
+}: AgentApprovalCardProps) {
+  // 보내는 중이든 아직 못 누르든, 버튼은 똑같이 잠긴다. 다른 건 그 이유를 말해주는지다
+  const isLocked = isBusy || Boolean(blockedReason);
   const { input } = approval;
   const [value, setValue] = useState(input?.defaultValue ?? '');
   const [touched, setTouched] = useState(false);
@@ -194,7 +209,7 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
           approvalId={approval.approvalId}
           options={rejectOptions}
           selected={selectedOption}
-          disabled={isBusy}
+          disabled={isLocked}
           onSelect={setChosenOption}
         />
       ) : null}
@@ -210,7 +225,7 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
           <input
             id={`approval-input-${approval.approvalId}`}
             value={value}
-            disabled={isBusy}
+            disabled={isLocked}
             maxLength={input.maxLength ?? undefined}
             onChange={(event) => setValue(event.target.value)}
             onBlur={() => setTouched(true)}
@@ -235,10 +250,16 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
         </div>
       ) : null}
 
+      {blockedReason ? (
+        <p className="mt-3 text-[12px] leading-relaxed text-[#64748b]" role="status">
+          {blockedReason}
+        </p>
+      ) : null}
+
       <div className="mt-3 flex gap-2">
         <button
           type="button"
-          disabled={isBusy}
+          disabled={isLocked}
           onClick={() => onReject(isResultApproval ? selectedOption : undefined)}
           className="h-8 rounded-lg border border-[#ddd6fe] bg-white px-3 text-[12px] font-semibold text-[#64748b] disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -246,7 +267,7 @@ function AgentApprovalCard({ approval, isBusy, onApprove, onReject }: AgentAppro
         </button>
         <button
           type="button"
-          disabled={isBusy}
+          disabled={isLocked}
           onClick={handleApprove}
           className="h-8 rounded-lg bg-[#0f172a] px-3 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
