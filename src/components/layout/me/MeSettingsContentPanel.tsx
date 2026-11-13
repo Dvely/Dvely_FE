@@ -3,6 +3,7 @@ import MeAccountSettingsPanel from '@/components/layout/me/MeAccountSettingsPane
 import MeAiCredentialsPanel from '@/components/layout/me/MeAiCredentialsPanel';
 import MeApiTokensPanel from '@/components/layout/me/MeApiTokensPanel';
 import MeCloudConnectionsPanel from '@/components/layout/me/MeCloudConnectionsPanel';
+import MeDeviceSharesPanel from '@/components/layout/me/MeDeviceSharesPanel';
 import MeGeneralSettingsPanel from '@/components/layout/me/MeGeneralSettingsPanel';
 import MeSettingsPlaceholderPanel from '@/components/layout/me/MeSettingsPlaceholderPanel';
 import type { MeSettingsSectionId } from '@/components/layout/me/meSettingsNav';
@@ -11,9 +12,15 @@ type MeSettingsContentPanelProps = {
   activeSection: MeSettingsSectionId;
   /** 등록을 마쳤을 때. 돌아간 자리에서 보여줄 한 줄을 함께 넘긴다 */
   onSetupComplete?: (notice: string) => void;
+  /** 한 절이 다른 절로 보낼 때(공유 안내 → 토큰 발급) */
+  onSectionChange?: (section: MeSettingsSectionId) => void;
 };
 
-function MeSettingsContentPanel({ activeSection, onSetupComplete }: MeSettingsContentPanelProps) {
+function MeSettingsContentPanel({
+  activeSection,
+  onSetupComplete,
+  onSectionChange,
+}: MeSettingsContentPanelProps) {
   const { t } = useTranslation();
   const title = t(`me.nav.items.${activeSection}`);
 
@@ -46,6 +53,8 @@ function MeSettingsContentPanel({ activeSection, onSetupComplete }: MeSettingsCo
     );
   } else if (activeSection === 'api-tokens') {
     panel = <MeApiTokensPanel />;
+  } else if (activeSection === 'device-shares') {
+    panel = <MeDeviceSharesPanel onOpenSection={onSectionChange} />;
   }
 
   return (
