@@ -74,7 +74,11 @@ function MeSettingsShell({
         ) : null}
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-8 sm:py-8 lg:pt-8">
-          <MeSettingsContentPanel activeSection={activeSection} onSetupComplete={onSetupComplete} />
+          <MeSettingsContentPanel
+            activeSection={activeSection}
+            onSetupComplete={onSetupComplete}
+            onSectionChange={setActiveSection}
+          />
         </div>
       </div>
     </div>

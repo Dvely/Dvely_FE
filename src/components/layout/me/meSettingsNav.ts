@@ -5,7 +5,7 @@ import {
   Terminal,
   HelpCircle,
   LayoutGrid,
-  Monitor,
+  ScreenShare,
   User,
   SlidersHorizontal,
 } from 'lucide-react';
@@ -14,7 +14,7 @@ export type MeSettingsSectionId =
   | 'account'
   | 'general'
   | 'personalization'
-  | 'my-computer'
+  | 'device-shares'
   | 'cloud-browser'
   | 'ai-credentials'
   | 'api-tokens';
@@ -45,7 +45,7 @@ export const meSettingsNavGroups: MeSettingsNavGroup[] = [
     items: [
       { id: 'ai-credentials', icon: KeyRound },
       { id: 'api-tokens', icon: Terminal },
-      { id: 'my-computer', icon: Monitor },
+      { id: 'device-shares', icon: ScreenShare },
       { id: 'cloud-browser', icon: Cloud },
     ],
   },
