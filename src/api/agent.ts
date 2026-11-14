@@ -105,11 +105,6 @@ async function postAgentDecision(params: PostAgentDecisionReqType) {
     .catch(errorResponse());
 }
 
-/** 에이전트 세션 종료 API DELETE */
-async function deleteAgentSession() {
-  return Http.instance.delete(`${endpoint}/session`).then(succesResponse).catch(errorResponse());
-}
-
 /** 에이전트 태스크 상태 조회 API GET */
 /**
  * 이 대화에서 아직 안 끝난 태스크를 묻는다.
@@ -507,7 +502,6 @@ export {
   getAiProviderList,
   useAiProviderListQuery,
   postAgentDecision,
-  deleteAgentSession,
   getAgentTask,
   getAgentTaskStatus,
   pollAgentTask,
