@@ -28,7 +28,11 @@ import {
   useProjectPreviewQuery,
 } from '@/api/preview';
 import { refreshUserInfoInBackground } from '@/api/user';
-import { composeApiErrorMessage, dispatchApiErrorAction } from '@/lib/apiErrorGuide';
+import {
+  composeApiErrorMessage,
+  dispatchApiErrorAction,
+  findApiErrorGuide,
+} from '@/lib/apiErrorGuide';
 import { derivePreviewCloseState } from '@/lib/previewClose';
 import { agentReturnPath } from '@/lib/setupReturn';
 import {
@@ -56,6 +60,7 @@ import CloudConnectGuidePanel from '@/components/layout/project/CloudConnectGuid
 import GithubRepositoryPicker from '@/components/layout/project/GithubRepositoryPicker';
 import ProjectCodeExplorerPanel from '@/components/layout/project/ProjectCodeExplorerPanel';
 import { useHorizontalPanelResize } from '@/hooks/useHorizontalPanelResize';
+import { useLeaveForSetup } from '@/hooks/useLeaveForSetup';
 import { cn } from '@/lib/utils';
 
 /** 태스크 종료 후 배포 완료를 지켜보는 시간 */
@@ -308,6 +313,13 @@ function ProjectAgentPage({ projectId, project, returnedConversation }: ProjectA
     previewTaskStatus: previewOwnerTask?.status,
   });
   const closePreviewMutation = useClosePreviewMutation('project-agent-page', projectId);
+  /*
+    상한에 걸리면 설정 > 프리뷰로 보낸다(#184). 하나를 닫으면 이 대화로 돌아온다 — 적던 말도
+    맡겨 두고 간다(대화 패널의 오류 안내와 같은 길).
+  */
+  const leaveForSetup = useLeaveForSetup(
+    agentReturnPath(projectId, resolvedConversationId, isNewConversation),
+  );
 
   /*
     "연결했어요" 를 누르면 서버에 다시 확인시킨다.
@@ -357,6 +369,22 @@ function ProjectAgentPage({ projectId, project, returnedConversation }: ProjectA
     closePreviewMutation.reset();
     provisionPreviewMutation.mutate({ force: false });
   };
+
+  /*
+    실패 화면이 띄우기 오류를 보여 줄 때만 그 다음 행동을 단다. 서버가 적은 실패 이유
+    (projectPreview.failureReason)가 앞서면 그 문장이 보이므로 달지 않는다.
+  */
+  const provisionNavigation = projectPreview?.failureReason?.trim()
+    ? null
+    : findApiErrorGuide(provisionPreviewMutation.error)?.action;
+  const previewFailureAction =
+    provisionNavigation?.kind === 'navigate'
+      ? {
+          label: provisionNavigation.label,
+          onClick: () =>
+            leaveForSetup({ to: provisionNavigation.to, search: provisionNavigation.search }),
+        }
+      : null;
 
   const handleClosePreview = () => {
     if (!activePreviewSessionId) return;
@@ -724,6 +752,15 @@ function ProjectAgentPage({ projectId, project, returnedConversation }: ProjectA
             closeError={
               closePreviewMutation.error ? composeApiErrorMessage(closePreviewMutation.error) : ''
             }
+            rebuildError={
+              // 버리고 새로 빌드가 409(작업이 쓰는 중)로 거절되면 프리뷰는 그대로 떠 있다
+              previewUrl &&
+              provisionPreviewMutation.variables?.force === true &&
+              provisionPreviewMutation.error
+                ? composeApiErrorMessage(provisionPreviewMutation.error)
+                : ''
+            }
+            failureAction={previewFailureAction}
             onClosePreview={handleClosePreview}
             frameKey={previewFrameKey}
             isLoading={(isPreviewLoading || isPreviewAccessLoading) && !previewUrl}

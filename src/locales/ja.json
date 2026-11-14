@@ -27,6 +27,7 @@
         "personalization": "パーソナライズ",
         "ai-credentials": "AI API キー",
         "api-tokens": "アクセストークン (MCP)",
+        "previews": "プレビュー",
         "device-shares": "デバイス画面共有",
         "cloud-browser": "クラウド接続"
       }
