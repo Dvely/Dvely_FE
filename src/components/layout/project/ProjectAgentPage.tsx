@@ -23,11 +23,13 @@ import {
 } from '@/api/projects';
 import {
   postProjectPreviewSession,
+  useClosePreviewMutation,
   usePreviewAccessQuery,
   useProjectPreviewQuery,
 } from '@/api/preview';
 import { refreshUserInfoInBackground } from '@/api/user';
 import { composeApiErrorMessage, dispatchApiErrorAction } from '@/lib/apiErrorGuide';
+import { derivePreviewCloseState } from '@/lib/previewClose';
 import { agentReturnPath } from '@/lib/setupReturn';
 import {
   postProjectRepositoryReqSchema,
@@ -48,7 +50,7 @@ import {
 } from '@/components/layout/project/agentPreview.utils';
 import AgentChatListPanel from '@/components/layout/project/AgentChatListPanel';
 import AgentConversationPanel from '@/components/layout/project/AgentConversationPanel';
-import { postAgentTaskInput } from '@/api/agent';
+import { postAgentTaskInput, usePreviewOwnerTaskQuery } from '@/api/agent';
 import AgentSitePreviewPanel from '@/components/layout/project/AgentSitePreviewPanel';
 import CloudConnectGuidePanel from '@/components/layout/project/CloudConnectGuidePanel';
 import GithubRepositoryPicker from '@/components/layout/project/GithubRepositoryPicker';
@@ -292,6 +294,22 @@ function ProjectAgentPage({ projectId, project, returnedConversation }: ProjectA
   );
 
   /*
+    닫아도 되는지는 이 프리뷰를 띄운 작업의 상태로 가른다(#184).
+
+    이 자리의 세션은 사용자가 띄운 프로젝트 프리뷰일 수도, 에이전트 작업이 띄운 것일 수도 있다
+    (서버가 둘 중 가장 최근 것을 준다). 작업이 띄운 것이면 그 컨테이너에 승인을 기다리는
+    작업물이 있을 수 있어서, 닫는 API 가 상태를 보지 않는 대신 여기서 본다.
+  */
+  const previewTaskId = activePreviewSessionId ? projectPreview?.taskId?.trim() || null : null;
+  const { data: previewOwnerTask } = usePreviewOwnerTaskQuery(previewTaskId);
+  const previewCloseState = derivePreviewCloseState({
+    isAgentTaskActive,
+    previewTaskId,
+    previewTaskStatus: previewOwnerTask?.status,
+  });
+  const closePreviewMutation = useClosePreviewMutation('project-agent-page', projectId);
+
+  /*
     "연결했어요" 를 누르면 서버에 다시 확인시킨다.
 
     보내는 값은 쓰이지 않는다 — 재시도 신호일 뿐이다. 연결이 아직이면 서버가 같은
@@ -335,7 +353,15 @@ function ProjectAgentPage({ projectId, project, returnedConversation }: ProjectA
     setRightPanelView('preview');
     setPreviewFrameKey((key) => key + 1);
     setDidReattachPreview(false);
+    // 앞서 닫다 실패한 문장이 새 프리뷰 위에 남지 않게 한다
+    closePreviewMutation.reset();
     provisionPreviewMutation.mutate({ force: false });
+  };
+
+  const handleClosePreview = () => {
+    if (!activePreviewSessionId) return;
+    setDidReattachPreview(false);
+    closePreviewMutation.mutate(activePreviewSessionId);
   };
 
   /*
@@ -351,6 +377,7 @@ function ProjectAgentPage({ projectId, project, returnedConversation }: ProjectA
   const handleForceRebuildPreview = () => {
     setPreviewFrameKey((key) => key + 1);
     setDidReattachPreview(false);
+    closePreviewMutation.reset();
     provisionPreviewMutation.mutate({ force: true });
   };
 
@@ -692,6 +719,12 @@ function ProjectAgentPage({ projectId, project, returnedConversation }: ProjectA
             previewUrl={previewUrl}
             didReattach={didReattachPreview}
             onForceRebuild={handleForceRebuildPreview}
+            closeState={previewCloseState}
+            isClosingPreview={closePreviewMutation.isPending}
+            closeError={
+              closePreviewMutation.error ? composeApiErrorMessage(closePreviewMutation.error) : ''
+            }
+            onClosePreview={handleClosePreview}
             frameKey={previewFrameKey}
             isLoading={(isPreviewLoading || isPreviewAccessLoading) && !previewUrl}
             onLoadPreview={handleLoadPreview}

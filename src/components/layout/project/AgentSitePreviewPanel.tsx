@@ -1,6 +1,8 @@
-import { ExternalLink, RotateCcw } from 'lucide-react';
+import { useState } from 'react';
+import { ExternalLink, RotateCcw, X } from 'lucide-react';
 import { extractApiErrorMessage } from '@/utils/response';
 import type { AgentPreviewPhase } from '@/components/layout/project/agentPreview.utils';
+import { PREVIEW_CLOSE_LABEL, type PreviewCloseState } from '@/lib/previewClose';
 
 type AgentSitePreviewPanelProps = {
   phase: AgentPreviewPhase;
@@ -14,6 +16,13 @@ type AgentSitePreviewPanelProps = {
   onLoadPreview: () => void;
   /** 떠 있던 컨테이너를 버리고 처음부터 다시 짓는다. 멀쩡한 프리뷰도 죽는다 */
   onForceRebuild: () => void;
+  /** 지금 닫아도 되는지. 잠겼으면 그 이유를 버튼 옆에 보여준다(`derivePreviewCloseState`) */
+  closeState: PreviewCloseState;
+  isClosingPreview: boolean;
+  /** 닫기가 실패했을 때 보여줄 문장. 없으면 빈 문자열 */
+  closeError: string;
+  /** 컨테이너를 끈다. 되돌릴 수 없으므로 확인을 받은 뒤에만 부른다 */
+  onClosePreview: () => void;
 };
 
 function PreviewSkeleton() {
@@ -40,7 +49,19 @@ function AgentSitePreviewPanel({
   failureReason,
   onLoadPreview,
   onForceRebuild,
+  closeState,
+  isClosingPreview,
+  closeError,
+  onClosePreview,
 }: AgentSitePreviewPanelProps) {
+  /*
+    닫기 확인을 연 프리뷰 주소. 주소가 바뀌면(다시 띄움·토큰 회전) 확인이 저절로 걷힌다 —
+    다른 프리뷰를 두고 연 확인이 새 프리뷰 위에 남아 있으면 엉뚱한 것을 닫게 된다.
+  */
+  const [confirmingCloseUrl, setConfirmingCloseUrl] = useState<string | null>(null);
+  const isConfirmingClose = confirmingCloseUrl !== null && confirmingCloseUrl === previewUrl;
+  const closeBlockedReason = closeState.kind === 'blocked' ? closeState.reason : null;
+
   if (isLoading || isProvisioning) {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
@@ -67,11 +88,21 @@ function AgentSitePreviewPanel({
     */
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex items-center justify-end gap-2 border-b border-[#e2e8f0] bg-white px-4 py-2">
+        <div className="flex flex-wrap items-center justify-end gap-2 border-b border-[#e2e8f0] bg-white px-4 py-2">
+          {/*
+            잠근 이유는 버튼 옆에 그대로 적는다. 이유 없이 잠그면 고장과 구별되지 않는다(#173 과 같은 원칙).
+          */}
+          {closeBlockedReason ? (
+            <p className="mr-auto text-[12px] leading-relaxed text-[#64748b]" role="status">
+              {closeBlockedReason}
+            </p>
+          ) : null}
           <button
             type="button"
             onClick={onLoadPreview}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[12px] font-medium text-[#334155] transition hover:bg-[#f8fafc]"
+            // 닫는 동안 다시 띄우면 닫히는 세션에 도로 붙거나 새로 띄우는 것과 엇갈린다
+            disabled={isClosingPreview}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[12px] font-medium text-[#334155] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <RotateCcw className="size-3.5" />
             다시 띄우기
@@ -90,7 +121,64 @@ function AgentSitePreviewPanel({
           >
             <ExternalLink className="size-3.5" />새 탭에서 보기
           </a>
+          <button
+            type="button"
+            onClick={() => setConfirmingCloseUrl(previewUrl)}
+            disabled={closeBlockedReason !== null || isClosingPreview || isConfirmingClose}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[12px] font-medium text-[#b91c1c] transition hover:bg-[#fef2f2] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <X className="size-3.5" />
+            {isClosingPreview ? '닫는 중' : PREVIEW_CLOSE_LABEL}
+          </button>
         </div>
+        {/*
+          닫기 전에 무엇을 잃는지 말한다(#184).
+
+          되돌릴 수 없다. 컨테이너가 꺼지면 새 탭으로 열어 둔 주소까지 죽고, 다시 보려면 처음부터
+          빌드해야 한다(수십 초에서 수 분). 작업이 띄운 프리뷰면 잃는 것이 더 있을 수 있어
+          `closeState.warning` 을 덧붙인다.
+        */}
+        {isConfirmingClose ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#fecaca] bg-[#fef2f2] px-4 py-2">
+            <div className="flex min-w-0 flex-col gap-1">
+              <p className="text-[12px] leading-relaxed text-[#991b1b]">
+                프리뷰를 닫으면 컨테이너가 꺼지고, 지금 주소는 새 탭에서 연 것까지 더 이상 열리지
+                않습니다. 다시 보려면 &quot;미리보기 불러오기&quot;로 preview 브랜치를 처음부터 다시
+                빌드해야 합니다.
+              </p>
+              {closeState.kind === 'allowed' && closeState.warning ? (
+                <p className="text-[12px] leading-relaxed text-[#991b1b]">{closeState.warning}</p>
+              ) : null}
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmingCloseUrl(null)}
+                className="cursor-pointer rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#64748b] transition hover:bg-[#f8fafc]"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmingCloseUrl(null);
+                  onClosePreview();
+                }}
+                className="cursor-pointer rounded-lg bg-[#b91c1c] px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-[#991b1b]"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {closeError ? (
+          <p
+            className="border-b border-[#fecaca] bg-[#fef2f2] px-4 py-2 text-[12px] leading-relaxed text-[#991b1b]"
+            role="alert"
+          >
+            {closeError}
+          </p>
+        ) : null}
         {/*
           다시 붙기만 하고 끝났을 때의 안내다.
 

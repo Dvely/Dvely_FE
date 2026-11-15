@@ -1,5 +1,5 @@
 import Http from '@/utils/httpClients';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { errorResponse, succesResponse } from '@/utils/response';
 import type { ApiResponse } from '@/types/response.type';
 import {
@@ -217,8 +217,31 @@ function useProjectPreviewQuery(queryKey: unknown, projectId: number, isAgentTas
   });
 }
 
+/**
+ * 프리뷰 닫기(#184). 컨테이너가 꺼지고 그 주소는 더 이상 열리지 않는다.
+ *
+ * 성공이든 실패든 프로젝트 프리뷰를 다시 읽는다. 다시 읽지 않으면 화면에 **죽은 프레임**이
+ * 남는다 — 다른 오리진이라 404 도 onload 로 와서 화면은 그걸 모른다. 이미 닫혀 있어 404 가 와도
+ * 그 조회가 빈 상태로 돌려놓는다.
+ *
+ * 다시 읽기를 돌려줘서 그동안 mutation 을 붙들어 둔다. 먼저 풀면 닫힌 프레임이 잠깐 비친다.
+ */
+function useClosePreviewMutation(queryKey: unknown, projectId: number) {
+  if (!queryKey) throw new Error('queryKey is required');
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (sessionId: string) => deletePreviewSession(sessionId),
+    onSettled: () =>
+      queryClient.invalidateQueries({
+        queryKey: ['project-preview-session', queryKey, projectId],
+      }),
+  });
+}
+
 export {
   deletePreviewSession,
+  useClosePreviewMutation,
   getPreviewSessionStatus,
   getPreviewSessionLogs,
   getProjectPreviewSession,
