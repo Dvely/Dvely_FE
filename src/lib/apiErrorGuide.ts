@@ -4,6 +4,9 @@ import {
 } from '@/constants/authEvents';
 import { PREVIEW_CLOSE_LABEL } from '@/lib/previewClose';
 import { ACTIVE_RUN_LIMIT_EXCEEDED_CODE, PREVIEW_LIMIT_EXCEEDED_CODE } from '@/lib/runLimit';
+
+/** 작업이 쓰는 프리뷰라 닫지 않았을 때 서버가 보내는 코드(BE #650, 409) */
+const PREVIEW_IN_USE_CODE = 'PREVIEW_IN_USE';
 import { extractApiErrorCode, extractApiErrorMessage } from '@/utils/response';
 
 /**
@@ -118,19 +121,34 @@ const API_ERROR_GUIDE: Record<string, ApiErrorGuide> = {
   },
   [PREVIEW_LIMIT_EXCEEDED_CODE]: {
     /*
-      닫는 자리를 알려 준다. 서버 문장은 "쓰지 않는 프리뷰를 닫거나…" 까지만 말하고 어디서
-      닫는지는 말하지 않는다.
+      닫는 자리로 보낸다. 서버 문장은 "쓰지 않는 프리뷰를 닫거나…" 까지만 말하고 어디서 닫는지는
+      말하지 않는다.
 
-      한 곳으로 보내지 못하는 이유: 상한은 다른 프로젝트의 프리뷰까지 함께 세는데, 내 프리뷰가
-      어느 프로젝트에 떠 있는지 알려 주는 API 가 없다. 그래서 어느 프로젝트로 보낼지 화면이 모른다.
-
-      이 화면에서 상한에 걸렸다면 막고 있는 프리뷰는 **다른 프로젝트**에 있다 — 이 프로젝트에 떠
-      있는 것이 있으면 서버는 상한을 세기 전에 그쪽에 도로 붙인다("버리고 새로 빌드"는 그것을
-      먼저 닫고 센다).
+      상한은 다른 프로젝트의 프리뷰까지 함께 센다. 이 화면에서 상한에 걸렸다면 막고 있는 프리뷰는
+      **다른 프로젝트**에 있다 — 이 프로젝트에 떠 있는 것이 있으면 서버는 상한을 세기 전에 그쪽에
+      도로 붙인다("버리고 새로 빌드"는 그것을 먼저 닫고 센다). 그래서 이 프로젝트가 아니라 내
+      프리뷰를 모두 보여 주는 설정 > 프리뷰(BE #651 목록)로 보낸다.
 
       버튼 이름은 버튼과 같은 상수를 쓴다. #163 에서 여기 적은 안내가 **없는 버튼**을 가리켰다(#184).
     */
-    hint: `프리뷰는 프로젝트마다 그 프로젝트의 프리뷰 화면에서 "${PREVIEW_CLOSE_LABEL}"로 닫을 수 있습니다. 다른 프로젝트에 떠 있는 프리뷰도 함께 셉니다.`,
+    hint: `설정 > 프리뷰에서 다른 프로젝트에 떠 있는 것까지 모두 보고 "${PREVIEW_CLOSE_LABEL}"로 닫을 수 있습니다.`,
+    action: {
+      kind: 'navigate',
+      to: '/settings',
+      search: { section: 'previews' },
+      label: '떠 있는 프리뷰 보기',
+    },
+  },
+  [PREVIEW_IN_USE_CODE]: {
+    /*
+      진행 중이거나 결정을 기다리는 작업이 쓰는 프리뷰라 서버가 닫지 않았다(BE #650). 서버 문장이
+      이유와 할 일("결과 승인을 먼저 결정해 주세요" 등)을 이미 말한다.
+
+      화면이 보탤 것은 **요청이 어떻게 됐는지** 다. 프리뷰 닫기·버리고 새로 빌드·모두 닫기 어디서
+      와도 아무것도 닫히지 않았다 — "버리고 새로 빌드" 라면 새로 짓지도 않았다. 컨테이너를 지우는
+      동작이라, 됐는지 안 됐는지 모르면 사용자가 작업물이 사라졌다고 오해한다.
+    */
+    hint: '아무것도 닫지 않았습니다. 프리뷰와 그 안의 작업물은 그대로 있습니다.',
   },
   PREVIEW_ENVIRONMENT_UNAVAILABLE: {
     // 서버 쪽 Docker 문제라 사용자가 고칠 수 있는 게 없다. 재시도 외에는
@@ -184,6 +202,7 @@ function dispatchApiErrorAction(error: unknown): boolean {
 export {
   API_ERROR_GUIDE,
   GITHUB_APP_REAUTHORIZATION_REQUIRED_CODE,
+  PREVIEW_IN_USE_CODE,
   composeApiErrorMessage,
   dispatchApiErrorAction,
   findApiErrorGuide,

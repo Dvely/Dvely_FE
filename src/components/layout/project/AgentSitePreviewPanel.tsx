@@ -2,7 +2,11 @@ import { useState } from 'react';
 import { ExternalLink, RotateCcw, X } from 'lucide-react';
 import { extractApiErrorMessage } from '@/utils/response';
 import type { AgentPreviewPhase } from '@/components/layout/project/agentPreview.utils';
-import { PREVIEW_CLOSE_LABEL, type PreviewCloseState } from '@/lib/previewClose';
+import {
+  PREVIEW_CLOSE_CONSEQUENCE,
+  PREVIEW_CLOSE_LABEL,
+  type PreviewCloseState,
+} from '@/lib/previewClose';
 
 type AgentSitePreviewPanelProps = {
   phase: AgentPreviewPhase;
@@ -21,6 +25,13 @@ type AgentSitePreviewPanelProps = {
   isClosingPreview: boolean;
   /** 닫기가 실패했을 때 보여줄 문장. 없으면 빈 문자열 */
   closeError: string;
+  /**
+   * 프리뷰가 떠 있는 채로 다시 띄우기·버리고 새로 빌드가 실패했을 때의 문장. 없으면 빈 문자열.
+   * 떠 있는 동안에는 아래 실패 화면(failureReason)이 그려지지 않아, 여기 따로 보여 준다
+   */
+  rebuildError?: string;
+  /** 실패 화면에서 다음 행동으로 보낼 곳(상한 → 설정 > 프리뷰). 없으면 버튼을 그리지 않는다 */
+  failureAction?: { label: string; onClick: () => void } | null;
   /** 컨테이너를 끈다. 되돌릴 수 없으므로 확인을 받은 뒤에만 부른다 */
   onClosePreview: () => void;
 };
@@ -52,6 +63,8 @@ function AgentSitePreviewPanel({
   closeState,
   isClosingPreview,
   closeError,
+  rebuildError = '',
+  failureAction = null,
   onClosePreview,
 }: AgentSitePreviewPanelProps) {
   /*
@@ -142,9 +155,7 @@ function AgentSitePreviewPanel({
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#fecaca] bg-[#fef2f2] px-4 py-2">
             <div className="flex min-w-0 flex-col gap-1">
               <p className="text-[12px] leading-relaxed text-[#991b1b]">
-                프리뷰를 닫으면 컨테이너가 꺼지고, 지금 주소는 새 탭에서 연 것까지 더 이상 열리지
-                않습니다. 다시 보려면 &quot;미리보기 불러오기&quot;로 preview 브랜치를 처음부터 다시
-                빌드해야 합니다.
+                {PREVIEW_CLOSE_CONSEQUENCE}
               </p>
               {closeState.kind === 'allowed' && closeState.warning ? (
                 <p className="text-[12px] leading-relaxed text-[#991b1b]">{closeState.warning}</p>
@@ -171,12 +182,12 @@ function AgentSitePreviewPanel({
             </div>
           </div>
         ) : null}
-        {closeError ? (
+        {closeError || rebuildError ? (
           <p
-            className="border-b border-[#fecaca] bg-[#fef2f2] px-4 py-2 text-[12px] leading-relaxed text-[#991b1b]"
+            className="border-b border-[#fecaca] bg-[#fef2f2] px-4 py-2 text-[12px] leading-relaxed whitespace-pre-line text-[#991b1b]"
             role="alert"
           >
-            {closeError}
+            {closeError || rebuildError}
           </p>
         ) : null}
         {/*
@@ -198,11 +209,17 @@ function AgentSitePreviewPanel({
               이미 떠 있는 컨테이너에 다시 연결했습니다 — 새로 빌드하지 않았습니다. 저장소를 막
               연결했거나 그 뒤로 코드가 바뀌었다면 아직 옛 화면입니다.
             </p>
+            {/*
+              버리는 것도 닫는 것이다 — 서버는 이 프로젝트에 떠 있는 것을 모두 닫고 새로 짓는다.
+              닫기가 잠긴 이유(작업이 쓰는 중)가 그대로 이 버튼에도 해당한다. 잠근 이유는 위
+              도구줄에 이미 적혀 있다
+            */}
             <button
               type="button"
               onClick={onForceRebuild}
+              disabled={closeBlockedReason !== null || isClosingPreview}
               title="떠 있는 컨테이너를 버리고 preview 브랜치를 처음부터 다시 빌드합니다"
-              className="shrink-0 cursor-pointer rounded-lg border border-[#f59e0b] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#92400e] transition hover:bg-[#fffbeb]"
+              className="shrink-0 cursor-pointer rounded-lg border border-[#f59e0b] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#92400e] transition hover:bg-[#fffbeb] disabled:cursor-not-allowed disabled:opacity-50"
             >
               버리고 새로 빌드
             </button>
@@ -237,7 +254,7 @@ function AgentSitePreviewPanel({
   return (
     <div className="flex flex-1 items-center justify-center p-8">
       <div className="max-w-md text-center">
-        <p className="text-[15px] font-semibold leading-relaxed text-[#334155]">
+        <p className="text-[15px] font-semibold leading-relaxed whitespace-pre-line text-[#334155]">
           {trimmedFailure ? trimmedFailure : '아직 띄워 둔 프리뷰가 없습니다.'}
         </p>
         {trimmedFailure ? null : (
@@ -245,13 +262,24 @@ function AgentSitePreviewPanel({
             미리보기 불러오기를 누르면 preview 브랜치를 컨테이너로 띄웁니다.
           </p>
         )}
-        <button
-          type="button"
-          onClick={onLoadPreview}
-          className="mt-4 inline-flex h-9 cursor-pointer items-center rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white"
-        >
-          미리보기 불러오기
-        </button>
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          {trimmedFailure && failureAction ? (
+            <button
+              type="button"
+              onClick={failureAction.onClick}
+              className="inline-flex h-9 cursor-pointer items-center rounded-lg border border-[#e2e8f0] bg-white px-4 text-[13px] font-semibold text-[#334155] transition hover:bg-[#f8fafc]"
+            >
+              {failureAction.label}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onLoadPreview}
+            className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-[#0f172a] px-4 text-[13px] font-semibold text-white"
+          >
+            미리보기 불러오기
+          </button>
+        </div>
       </div>
     </div>
   );

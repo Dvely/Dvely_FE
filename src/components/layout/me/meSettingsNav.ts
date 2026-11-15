@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   Cloud,
+  Container,
   KeyRound,
   Terminal,
   HelpCircle,
@@ -14,6 +15,7 @@ export type MeSettingsSectionId =
   | 'account'
   | 'general'
   | 'personalization'
+  | 'previews'
   | 'device-shares'
   | 'cloud-browser'
   | 'ai-credentials'
@@ -45,6 +47,7 @@ export const meSettingsNavGroups: MeSettingsNavGroup[] = [
     items: [
       { id: 'ai-credentials', icon: KeyRound },
       { id: 'api-tokens', icon: Terminal },
+      { id: 'previews', icon: Container },
       { id: 'device-shares', icon: ScreenShare },
       { id: 'cloud-browser', icon: Cloud },
     ],

@@ -5,6 +5,7 @@ import MeApiTokensPanel from '@/components/layout/me/MeApiTokensPanel';
 import MeCloudConnectionsPanel from '@/components/layout/me/MeCloudConnectionsPanel';
 import MeDeviceSharesPanel from '@/components/layout/me/MeDeviceSharesPanel';
 import MeGeneralSettingsPanel from '@/components/layout/me/MeGeneralSettingsPanel';
+import MePreviewSessionsPanel from '@/components/layout/me/MePreviewSessionsPanel';
 import MeSettingsPlaceholderPanel from '@/components/layout/me/MeSettingsPlaceholderPanel';
 import type { MeSettingsSectionId } from '@/components/layout/me/meSettingsNav';
 
@@ -14,12 +15,15 @@ type MeSettingsContentPanelProps = {
   onSetupComplete?: (notice: string) => void;
   /** 한 절이 다른 절로 보낼 때(공유 안내 → 토큰 발급) */
   onSectionChange?: (section: MeSettingsSectionId) => void;
+  /** 설정 밖 화면으로 옮길 때(프리뷰 → 프로젝트). 창으로 떠 있으면 닫는다 */
+  onLeave?: () => void;
 };
 
 function MeSettingsContentPanel({
   activeSection,
   onSetupComplete,
   onSectionChange,
+  onLeave,
 }: MeSettingsContentPanelProps) {
   const { t } = useTranslation();
   const title = t(`me.nav.items.${activeSection}`);
@@ -53,6 +57,8 @@ function MeSettingsContentPanel({
     );
   } else if (activeSection === 'api-tokens') {
     panel = <MeApiTokensPanel />;
+  } else if (activeSection === 'previews') {
+    panel = <MePreviewSessionsPanel onClosed={onSetupComplete} onLeave={onLeave} />;
   } else if (activeSection === 'device-shares') {
     panel = <MeDeviceSharesPanel onOpenSection={onSectionChange} />;
   }

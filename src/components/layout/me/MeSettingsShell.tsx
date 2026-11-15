@@ -78,6 +78,7 @@ function MeSettingsShell({
             activeSection={activeSection}
             onSetupComplete={onSetupComplete}
             onSectionChange={setActiveSection}
+            onLeave={onClose}
           />
         </div>
       </div>

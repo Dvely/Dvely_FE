@@ -19,6 +19,21 @@ const KNOWN_SECTIONS = new Set<string>(
   meSettingsNavGroups.flatMap((group) => group.items.map((item) => item.id)),
 );
 
+/**
+ * 돌아가기 띠의 문장. 프리뷰는 "등록" 이 아니라 닫으러 온 것이다 — 프로젝트에서 동시 프리뷰
+ * 상한에 걸려 넘어왔다(#184). 하나를 닫으면 자리가 생기므로 그때 돌려보낸다.
+ */
+function returnBarMessage(section: MeSettingsSectionId | undefined, isReturning: boolean) {
+  if (section === 'previews') {
+    return isReturning
+      ? '프리뷰를 닫았습니다. 하던 곳으로 돌아갑니다…'
+      : '프리뷰를 하나 닫으면 하던 곳으로 자동으로 돌아갑니다.';
+  }
+  return isReturning
+    ? '등록을 마쳤습니다. 하던 곳으로 돌아갑니다…'
+    : '등록을 마치면 하던 곳으로 자동으로 돌아갑니다.';
+}
+
 function MeSettingsPage({ initialSection, returnTo }: MeSettingsPageProps) {
   const router = useRouter();
   const section =
@@ -49,14 +64,7 @@ function MeSettingsPage({ initialSection, returnTo }: MeSettingsPageProps) {
   return (
     <div className="mx-auto w-full max-w-[1080px] px-4 py-6 sm:px-6">
       {returnTo ? (
-        <SetupReturnBar
-          returnTo={returnTo}
-          message={
-            isReturning
-              ? '등록을 마쳤습니다. 하던 곳으로 돌아갑니다…'
-              : '등록을 마치면 하던 곳으로 자동으로 돌아갑니다.'
-          }
-        />
+        <SetupReturnBar returnTo={returnTo} message={returnBarMessage(section, isReturning)} />
       ) : null}
       <MeSettingsShell
         variant="page"

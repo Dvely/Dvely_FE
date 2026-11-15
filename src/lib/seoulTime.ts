@@ -133,5 +133,6 @@ export {
   formatSeoulHourMinute,
   seoulDayKey,
   seoulRelativeDayLabel,
+  toSeoulDate,
   withSeoulOffsetIfMissing,
 };

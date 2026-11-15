@@ -3,6 +3,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { errorResponse, succesResponse } from '@/utils/response';
 import type { ApiResponse } from '@/types/response.type';
 import {
+  closeAllPreviewSessionsResSchema,
+  getPreviewSessionListResSchema,
+  type CloseAllPreviewSessionsResType,
+  type GetPreviewSessionListResType,
+} from '@/types/previewSession.type';
+import {
   getPreviewSessionLogsResSchema,
   getPreviewSessionStatusResSchema,
   getProjectPreviewSessionParamsSchema,
@@ -51,11 +57,64 @@ function emptyProjectPreviewSession(projectId: number): GetProjectPreviewSession
   });
 }
 
-/** Preview 세션 종료 API DELETE */
+/**
+ * Preview 세션 종료 API DELETE.
+ *
+ * 진행 중이거나 결정을 기다리는 작업이 쓰는 프리뷰는 서버가 닫지 않고 409 `PREVIEW_IN_USE` 를
+ * 준다(BE #650). 준비 중(`PROVISIONING`)이거나 이미 닫힌 것은 404 다.
+ */
 async function deletePreviewSession(sessionId: string) {
   return Http.instance
     .delete(`/preview-sessions/${sessionId}`)
     .then(succesResponse)
+    .catch(errorResponse());
+}
+
+/**
+ * 내 프리뷰 목록을 다시 읽는 간격.
+ *
+ * 닫을 수 있는지는 작업 상태에 달려 있다 — 승인을 기다리던 작업이 결정되면 잠금이 풀린다. 그
+ * 변화는 다른 화면(대화의 승인 카드)에서 일어나므로 목록이 스스로 다시 읽어야 한다. 떠 있는 것이
+ * 없으면 멈춘다. 서버는 이 목록에 Docker 를 부르지 않아(DB 만 읽는다) 자주 읽어도 싸다.
+ */
+const PREVIEW_SESSION_LIST_POLL_MS = 10_000;
+
+const PREVIEW_SESSION_LIST_KEY = ['preview-session-list'] as const;
+
+/** 내 프리뷰 목록 GET(BE #651). 살아 있는 것(ACTIVE·PROVISIONING)만, 오래 안 본 것부터 */
+async function getPreviewSessionList(): Promise<GetPreviewSessionListResType> {
+  return Http.instance
+    .get<ApiResponse<GetPreviewSessionListResType>>('/preview-sessions')
+    .then((response) => {
+      const body = succesResponse<ApiResponse<GetPreviewSessionListResType>>(response);
+      return getPreviewSessionListResSchema.parse(unwrapApiData(body));
+    })
+    .catch(errorResponse());
+}
+
+function usePreviewSessionListQuery() {
+  return useQuery({
+    queryKey: PREVIEW_SESSION_LIST_KEY,
+    queryFn: getPreviewSessionList,
+    retry: false,
+    refetchInterval: (query) =>
+      (query.state.data?.items.length ?? 0) > 0 ? PREVIEW_SESSION_LIST_POLL_MS : false,
+  });
+}
+
+/**
+ * 닫을 수 있는 내 프리뷰를 모두 닫는다(`DELETE /agent/session`).
+ *
+ * 작업이 쓰는 것은 서버가 남기고 `kept` 로 알려 준다(BE #650). 남긴 것만 있으면 409
+ * `PREVIEW_IN_USE`, 열린 것이 하나도 없으면 404 다.
+ */
+async function closeAllPreviewSessions(): Promise<CloseAllPreviewSessionsResType> {
+  return Http.instance
+    .delete<ApiResponse<CloseAllPreviewSessionsResType>>('/agent/session')
+    .then((response) => {
+      const body = succesResponse<ApiResponse<CloseAllPreviewSessionsResType>>(response);
+      return closeAllPreviewSessionsResSchema.parse(unwrapApiData(body));
+    })
     .catch(errorResponse());
 }
 
@@ -232,15 +291,27 @@ function useClosePreviewMutation(queryKey: unknown, projectId: number) {
 
   return useMutation({
     mutationFn: (sessionId: string) => deletePreviewSession(sessionId),
-    onSettled: () =>
-      queryClient.invalidateQueries({
+    onSettled: () => {
+      /*
+        409(작업이 쓰고 있음)였다면 화면의 잠금이 늦은 것이다 — 작업 상태를 바로 다시 읽어 이유를
+        보여 준다. 설정의 내 프리뷰 목록도 같은 것을 보여 주므로 함께 맞춘다.
+      */
+      void queryClient.invalidateQueries({ queryKey: ['agent-task', 'preview-owner'] });
+      void queryClient.invalidateQueries({ queryKey: PREVIEW_SESSION_LIST_KEY });
+      return queryClient.invalidateQueries({
         queryKey: ['project-preview-session', queryKey, projectId],
-      }),
+      });
+    },
   });
 }
 
 export {
+  PREVIEW_SESSION_LIST_KEY,
+  PREVIEW_SESSION_LIST_POLL_MS,
+  closeAllPreviewSessions,
   deletePreviewSession,
+  getPreviewSessionList,
+  usePreviewSessionListQuery,
   useClosePreviewMutation,
   getPreviewSessionStatus,
   getPreviewSessionLogs,

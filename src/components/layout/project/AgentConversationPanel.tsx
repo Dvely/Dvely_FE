@@ -1358,15 +1358,17 @@ function AgentConversationPanel({
   });
 
   const isSending = sendMessageMutation.isPending;
-  const isInputLocked =
-    hasNoByokProvider ||
-    isSending ||
-    isAssistantReplying ||
-    submitInputMutation.isPending ||
-    retryMutation.isPending;
-
   // 세 경로 모두 mutationFn 안에서 태스크가 끝날 때까지 폴링하므로, 이 값이 참인 동안이 곧 작업 구간이다
-  const isAgentTaskActive = isInputLocked || decideApprovalMutation.isPending;
+  const isTaskInFlight =
+    isSending || isAssistantReplying || submitInputMutation.isPending || retryMutation.isPending;
+  const isInputLocked = hasNoByokProvider || isTaskInFlight;
+
+  /*
+    키가 없어 입력을 막은 것은 작업이 아니다. 예전에는 입력 잠금을 그대로 썼는데, 그러면 키를
+    등록하지 않은 사용자의 프로젝트 화면이 "에이전트 작업이 컨테이너를 쓰는 중" 으로 프리뷰 닫기를
+    잠갔다(#184 로컬 실측). 그 사용자도 직접 띄운 프리뷰로 상한에 걸린다.
+  */
+  const isAgentTaskActive = isTaskInFlight || decideApprovalMutation.isPending;
 
   useEffect(() => {
     onAgentTaskActiveChange?.(isAgentTaskActive);
