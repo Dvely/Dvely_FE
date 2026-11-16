@@ -366,6 +366,38 @@ const githubRepositorySchema = z.object({
  */
 const getGithubRepositoryListResSchema = z.array(githubRepositorySchema);
 
+/**
+ * 프로젝트 삭제를 막는, 사용자 AWS 계정에 아직 살아 있는 자원 하나(BE #595).
+ *
+ * `type` 은 지금 `SERVER`·`DATABASE`·`DEPLOYMENT` 셋이지만 열린 문자열로 받는다. 닫힌 enum 이면 서버가
+ * 종류를 늘리는 순간 응답 전체가 파싱에 실패해, 막힌 이유를 하나도 보여 주지 못한다.
+ *
+ * 나머지 필드에는 기본값(`.prefault`)을 두지 않는다. 서버(record)는 null 까지 늘 보내므로, 빠졌다면 계약이 어긋난 것이다.
+ */
+const projectDeletionLiveResourceSchema = z.object({
+  /** SERVER(EC2·EIP) | DATABASE(RDS·Docker DB) | DEPLOYMENT(대기·진행 중인 배포) */
+  type: z.string(),
+  /** Qeploy 안의 식별자(서버·DB·배포 이력 번호) */
+  id: z.number(),
+  /** 속한 프로젝트 */
+  projectId: z.number().nullable(),
+  /** 사람이 알아볼 이름(인스턴스 id, `RDS MYSQL` 같은 DB 방식·엔진, 배포 제목). 없으면 null */
+  label: z.string().nullable(),
+  /** Qeploy 가 기록한 상태 */
+  status: z.string(),
+});
+
+/**
+ * GET /projects/{projectId}/deletion 프로젝트 삭제 가능 여부(BE #595).
+ * 삭제 실패(409 `PROJECT_DELETION_BLOCKED`)의 `data` 도 같은 모양이다.
+ */
+const getProjectDeletionCheckResSchema = z.object({
+  /** liveResources 가 비어 있으면 true */
+  deletable: z.boolean(),
+  /** 먼저 정리해야 하는 자원 */
+  liveResources: z.array(projectDeletionLiveResourceSchema),
+});
+
 /** 프로젝트 목록 항목 */
 type ProjectListItem = z.infer<typeof projectListItemSchema>;
 /** GET /projects 프로젝트 목록 조회 응답 */
@@ -374,6 +406,10 @@ type GetProjectListResType = z.infer<typeof getProjectListResSchema>;
 type GetProjectDetailParamsType = z.infer<typeof getProjectDetailParamsSchema>;
 /** GET /projects/{projectId} 프로젝트 상세 조회 응답 */
 type GetProjectDetailResType = z.infer<typeof getProjectDetailResSchema>;
+/** 프로젝트 삭제를 막는 자원 하나 */
+type ProjectDeletionLiveResource = z.infer<typeof projectDeletionLiveResourceSchema>;
+/** GET /projects/{projectId}/deletion 프로젝트 삭제 가능 여부 응답 */
+type GetProjectDeletionCheckResType = z.infer<typeof getProjectDeletionCheckResSchema>;
 /** DELETE /projects/{projectId} 프로젝트 삭제 요청 (path + query) */
 type DeleteProjectParamsType = z.infer<typeof deleteProjectParamsSchema>;
 /** PATCH /projects/{projectId} 프로젝트 수정 요청 */
@@ -417,6 +453,8 @@ export {
   getProjectDetailParamsSchema,
   getProjectDetailResSchema,
   deleteProjectParamsSchema,
+  projectDeletionLiveResourceSchema,
+  getProjectDeletionCheckResSchema,
   patchProjectReqSchema,
   postProjectCreateReqSchema,
   postProjectCreateResSchema,
@@ -441,6 +479,8 @@ export {
   type GetProjectDetailParamsType,
   type GetProjectDetailResType,
   type DeleteProjectParamsType,
+  type ProjectDeletionLiveResource,
+  type GetProjectDeletionCheckResType,
   type PatchProjectReqType,
   type PostProjectCreateReqType,
   type PostProjectCreateResType,
