@@ -5,6 +5,7 @@ import type { ApiResponse } from '@/types/response.type';
 import type { DeployStatus } from '@/types/common.enum';
 import {
   deleteProjectParamsSchema,
+  getProjectDeletionCheckResSchema,
   getProjectDetailParamsSchema,
   getProjectDetailResSchema,
   getProjectListResSchema,
@@ -19,6 +20,7 @@ import {
   postProjectRepositoryReqSchema,
   postProjectRepositoryResSchema,
   type DeleteProjectParamsType,
+  type GetProjectDeletionCheckResType,
   type GetProjectDetailResType,
   type GetProjectListResType,
   type GetGithubRepositoryListResType,
@@ -224,6 +226,24 @@ async function patchProject(projectId: number, params: PatchProjectReqType) {
     .then((response) => {
       const body = succesResponse<ApiResponse<GetProjectDetailResType>>(response);
       return getProjectDetailResSchema.parse(body.data);
+    })
+    .catch(errorResponse());
+}
+
+/**
+ * 프로젝트 삭제 가능 여부 API GET (BE #595).
+ *
+ * 이 프로젝트로 만든 서버·DB 가 사용자 AWS 에 살아 있거나 배포가 진행 중이면 `deletable` 이 false 이고,
+ * 그 목록이 `liveResources` 에 온다. 서버는 DB 만 읽으므로 몇 번을 불러도 된다.
+ */
+async function getProjectDeletionCheck(projectId: number) {
+  const { projectId: id } = getProjectDetailParamsSchema.parse({ projectId });
+
+  return Http.instance
+    .get<ApiResponse<GetProjectDeletionCheckResType>>(`${endpoint}/${id}/deletion`)
+    .then((response) => {
+      const body = succesResponse<ApiResponse<GetProjectDeletionCheckResType>>(response);
+      return getProjectDeletionCheckResSchema.parse(body.data);
     })
     .catch(errorResponse());
 }
@@ -529,6 +549,21 @@ function useProjectDetailBundleQuery(queryKey: unknown, projectId: number) {
   });
 }
 
+/**
+ * 프로젝트 삭제 가능 여부. 삭제 확인 단계에 들어갈 때만 부른다(`enabled`).
+ * 캐시하지 않는다 — 인프라 탭에서 서버를 끄고 돌아오면 바로 새 목록을 봐야 한다.
+ */
+function useProjectDeletionCheckQuery(projectId: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ['project-deletion-check', projectId],
+    queryFn: () => getProjectDeletionCheck(projectId),
+    enabled,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  });
+}
+
 /** 프로젝트 삭제 Mutation Hook */
 function useDeleteProjectMutation() {
   const queryClient = useQueryClient();
@@ -554,6 +589,7 @@ export {
   deleteProjectRepository,
   patchProject,
   deleteProject,
+  getProjectDeletionCheck,
   getProjectChatSettings,
   patchProjectChatSettings,
   getProjectInfrastructureSettings,
@@ -576,4 +612,5 @@ export {
   useProjectRepositoryHealthQuery,
   useProjectDetailBundleQuery,
   useDeleteProjectMutation,
+  useProjectDeletionCheckQuery,
 };

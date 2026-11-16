@@ -2,9 +2,18 @@ import { useCallback, useEffect, useId, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { X } from 'lucide-react';
-import { patchProject, useDeleteProjectMutation } from '@/api/projects';
+import {
+  patchProject,
+  useDeleteProjectMutation,
+  useProjectDeletionCheckQuery,
+} from '@/api/projects';
 import { formatProjectDisplayName } from '@/components/layout/project/agentChat.utils';
 import { Input } from '@/components/ui/input';
+import {
+  describeLiveResource,
+  isProjectDeletionBlocked,
+  projectDeletionBlockedSummary,
+} from '@/lib/projectDeletion';
 type ProjectSettingsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -30,6 +39,16 @@ function ProjectSettingsDialog({
 
   const deleteProjectMutation = useDeleteProjectMutation();
   const isDeleting = deleteProjectMutation.isPending;
+
+  // 삭제 확인 단계에 들어가면 AWS 에 남은 자원을 먼저 본다(#186, BE #595). 이 프로젝트로 만든 서버·DB 가
+  // 살아 있으면 서버가 삭제를 막는다 — 지우면 끌 길이 없는데 요금은 계속 나가기 때문이다.
+  const deletionCheck = useProjectDeletionCheckQuery(projectId, open && isDeleteConfirming);
+  const liveResources = deletionCheck.data?.liveResources ?? [];
+  const isCheckingDeletion = isDeleteConfirming && deletionCheck.isFetching;
+  const isDeletionBlocked = isDeleteConfirming && deletionCheck.data?.deletable === false;
+  const canCleanUpInInfra = liveResources.some(
+    (resource) => describeLiveResource(resource).cleanupInInfra,
+  );
 
   const displayName = formatProjectDisplayName(projectName, projectId);
   const trimmedName = name.trim();
@@ -75,6 +94,8 @@ function ProjectSettingsDialog({
       return;
     }
 
+    if (isCheckingDeletion || isDeletionBlocked) return;
+
     setDeleteError(null);
 
     deleteProjectMutation.mutate(
@@ -85,10 +106,24 @@ function ProjectSettingsDialog({
           void navigate({ to: '/project' });
         },
         onError: (error) => {
-          setDeleteError(error instanceof Error ? error.message : '삭제하지 못했습니다.');
+          const message = error instanceof Error ? error.message : '삭제하지 못했습니다.';
+          if (!isProjectDeletionBlocked(error)) {
+            setDeleteError(message);
+            return;
+          }
+          // 확인 창을 연 사이 배포가 시작된 경우 등. 아무것도 지워지지 않았다(GitHub 저장소도 그대로).
+          // 오류 본문의 목록은 ApiError 로 바뀌며 버려지므로 다시 읽어 같은 안내를 띄운다.
+          void deletionCheck.refetch().then((result) => {
+            if (result.data?.deletable !== false) setDeleteError(message);
+          });
         },
       },
     );
+  };
+
+  const goToInfra = () => {
+    onOpenChange(false);
+    void navigate({ to: '/project/$slug/infra', params: { slug: String(projectId) } });
   };
 
   useEffect(() => {
@@ -188,7 +223,69 @@ function ProjectSettingsDialog({
               삭제하면 되돌릴 수 없어요. 필요한 데이터는 미리 백업해 주세요.
             </p>
 
-            {isDeleteConfirming ? (
+            {isDeleteConfirming && isCheckingDeletion && !deletionCheck.data ? (
+              <p className="mt-4 rounded-lg bg-[#f8fafc] px-3 py-2.5 text-xs text-[#64748b]">
+                남아 있는 AWS 자원을 확인하고 있어요…
+              </p>
+            ) : null}
+
+            {isDeletionBlocked ? (
+              <div
+                role="alert"
+                className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-xs text-amber-900"
+              >
+                <p className="leading-relaxed">
+                  {projectDeletionBlockedSummary(liveResources.length)}
+                </p>
+                <ul className="mt-3 max-h-60 space-y-2 overflow-y-auto">
+                  {liveResources.map((resource) => {
+                    const view = describeLiveResource(resource);
+                    return (
+                      <li
+                        key={`${resource.type}-${resource.id}`}
+                        className="rounded-md bg-white/80 px-2.5 py-2"
+                      >
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="font-medium text-[#0f172a]">{view.kind}</span>
+                          <span className="shrink-0 text-[11px] text-amber-800">{view.status}</span>
+                        </div>
+                        <p className="mt-0.5 truncate text-[11px] text-[#475569]">{view.name}</p>
+                        <p className="mt-1 text-[11px] leading-relaxed text-[#64748b]">
+                          {view.action}
+                        </p>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="mt-3 flex gap-2">
+                  {canCleanUpInInfra ? (
+                    <button
+                      type="button"
+                      onClick={goToInfra}
+                      className="h-9 flex-1 rounded-lg bg-[#0f172a] text-xs font-medium text-white hover:bg-[#1e293b]"
+                    >
+                      인프라 탭으로 가기
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => void deletionCheck.refetch()}
+                    disabled={deletionCheck.isFetching}
+                    className="h-9 flex-1 rounded-lg border border-amber-300 bg-white text-xs font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+                  >
+                    {deletionCheck.isFetching ? '확인 중…' : '다시 확인'}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {isDeleteConfirming && deletionCheck.isError ? (
+              <p className="mt-2 text-xs leading-relaxed text-[#64748b]">
+                남은 AWS 자원을 확인하지 못했어요. 삭제를 누르면 서버가 한 번 더 확인해요.
+              </p>
+            ) : null}
+
+            {isDeleteConfirming && (deletionCheck.data?.deletable || deletionCheck.isError) ? (
               <p className="mt-4 rounded-lg bg-red-50 px-3 py-2.5 text-xs leading-relaxed text-red-700">
                 <strong className="font-semibold">{displayName}</strong> 프로젝트를 삭제할까요? 아래
                 버튼을 눌러 주세요.
@@ -217,7 +314,7 @@ function ProjectSettingsDialog({
               ) : null}
               <button
                 type="button"
-                disabled={isDeleting}
+                disabled={isDeleting || isCheckingDeletion || isDeletionBlocked}
                 onClick={handleDelete}
                 className={`h-10 rounded-lg text-sm font-medium disabled:opacity-50 ${
                   isDeleteConfirming
@@ -225,7 +322,13 @@ function ProjectSettingsDialog({
                     : 'w-full border border-red-200 text-red-600 hover:bg-red-50'
                 }`}
               >
-                {isDeleting ? '삭제 중…' : isDeleteConfirming ? '삭제할게요' : '삭제하기'}
+                {isDeleting
+                  ? '삭제 중…'
+                  : isCheckingDeletion
+                    ? '확인 중…'
+                    : isDeleteConfirming
+                      ? '삭제할게요'
+                      : '삭제하기'}
               </button>
             </div>
           </section>
