@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { DeviceShare } from '@/types/deviceShare.type';
+import type { ShareFeedback } from '@/types/shareFeedback.type';
 import { ApiError } from '@/utils/response';
 
 /*
@@ -29,6 +30,27 @@ vi.mock('@/api/deviceShares', () => ({
     isFetching: false,
     refetch,
   }),
+}));
+
+let feedbackState: { data: ShareFeedback[]; isError: boolean; error: unknown } = {
+  data: [],
+  isError: false,
+  error: null,
+};
+const feedbackPoll: boolean[] = [];
+const patchShareFeedbackStatus = vi.fn();
+const postShareFeedbackFixed = vi.fn();
+
+vi.mock('@/api/shareFeedback', () => ({
+  useShareFeedbackListQuery: ({ poll }: { poll: boolean }) => {
+    feedbackPoll.push(poll);
+    return { ...feedbackState, isLoading: false, refetch: vi.fn() };
+  },
+  useShareFeedbackDetailQuery: () => ({ data: undefined, isError: false }),
+  useShareFeedbackPromptQuery: () => ({ data: undefined, isError: false }),
+  useShareFeedbackImageQuery: () => ({ data: undefined, isError: true, isLoading: false }),
+  patchShareFeedbackStatus: (...a: unknown[]) => patchShareFeedbackStatus(...a),
+  postShareFeedbackFixed: (...a: unknown[]) => postShareFeedbackFixed(...a),
 }));
 
 const { default: MeDeviceSharesPanel } = await import('@/components/layout/me/MeDeviceSharesPanel');
@@ -63,13 +85,35 @@ function renderPanel(props: Parameters<typeof MeDeviceSharesPanel>[0] = {}) {
 
 beforeEach(() => {
   listState = { data: [], isError: false, error: null };
+  feedbackState = { data: [], isError: false, error: null };
+  feedbackPoll.length = 0;
 });
 
 afterEach(() => {
   cleanup();
   deleteDeviceShare.mockReset();
   refetch.mockReset();
+  patchShareFeedbackStatus.mockReset();
+  postShareFeedbackFixed.mockReset();
 });
+
+function feedback(overrides: Partial<ShareFeedback> = {}): ShareFeedback {
+  return {
+    feedbackId: 21,
+    shareId: 1,
+    kind: 'WEB',
+    status: 'NEW',
+    authorRole: 'GUEST',
+    authorName: '민지',
+    screenLabel: '/settings',
+    label: '<button> "저장"',
+    component: 'SaveButton',
+    body: '저장 버튼이 너무 작아요',
+    createdAt: '2026-11-13T20:50:00+09:00',
+    updatedAt: '2026-11-13T20:50:00+09:00',
+    ...overrides,
+  };
+}
 
 describe('MeDeviceSharesPanel', () => {
   it('살아 있는 링크는 위에, 끝난 링크는 접힌 목록에 그린다', () => {
@@ -180,5 +224,96 @@ describe('MeDeviceSharesPanel', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '액세스 토큰 (MCP)' }));
     expect(onOpenSection).toHaveBeenCalledWith('api-tokens');
+  });
+});
+
+/*
+  짚기 피드백(#210). 링크의 "새 피드백" 이 받기 전 탭으로 보내고, 받기·고침 표시가 서버의 바뀌는 길
+  대로 API 를 부르는지 본다. 손님 글은 텍스트로만 그린다.
+*/
+describe('짚기 피드백', () => {
+  it('살아 있는 링크가 있으면 다시 읽고, 받기 전이 있는 링크에 "새 피드백" 을 단다', () => {
+    listState.data = [share()];
+    feedbackState.data = [
+      feedback(),
+      feedback({ feedbackId: 22 }),
+      feedback({ feedbackId: 23, status: 'ACCEPTED' }),
+    ];
+    renderPanel();
+
+    expect(feedbackPoll.at(-1)).toBe(true);
+    const chip = screen.getByRole('button', { name: '새 피드백 2' });
+    fireEvent.click(chip);
+    expect(screen.getByRole('tab', { name: /받기 전/ }).getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('끝난 링크뿐이면 다시 읽지 않는다', () => {
+    listState.data = [share({ status: 'EXPIRED' })];
+    renderPanel();
+    expect(feedbackPoll.at(-1)).toBe(false);
+  });
+
+  it('받기 전이 있으면 그 탭부터 보이고, 받기를 누르면 ACCEPTED 로 바꾼다', async () => {
+    listState.data = [share()];
+    feedbackState.data = [feedback()];
+    patchShareFeedbackStatus.mockResolvedValue({});
+    renderPanel();
+
+    const section = document.getElementById('share-feedback')!;
+    expect(within(section).getByText('저장 버튼이 너무 작아요')).toBeTruthy();
+    expect(within(section).getByText(/받기 전에는 나가지 않습니다/)).toBeTruthy();
+    fireEvent.click(within(section).getByRole('button', { name: '받기' }));
+
+    await waitFor(() => expect(patchShareFeedbackStatus).toHaveBeenCalledWith(21, 'ACCEPTED'));
+    expect(
+      await within(section).findByText(/코딩 에이전트\(MCP\)·CLI 가 읽을 수 있습니다/),
+    ).toBeTruthy();
+  });
+
+  it('받은 것은 메모와 함께 고침으로 표시한다', async () => {
+    listState.data = [share()];
+    feedbackState.data = [feedback({ status: 'ACCEPTED' })];
+    postShareFeedbackFixed.mockResolvedValue({});
+    renderPanel();
+
+    const section = document.getElementById('share-feedback')!;
+    expect(within(section).getByRole('tab', { name: /받음/ }).getAttribute('aria-selected')).toBe(
+      'true',
+    );
+    fireEvent.click(within(section).getByRole('button', { name: '고침 표시' }));
+    fireEvent.change(within(section).getByLabelText(/무엇을 바꿨는지/), {
+      target: { value: '패딩을 16px 로 늘렸습니다' },
+    });
+    fireEvent.click(within(section).getByRole('button', { name: '고쳤다고 표시' }));
+
+    await waitFor(() =>
+      expect(postShareFeedbackFixed).toHaveBeenCalledWith(21, '패딩을 16px 로 늘렸습니다'),
+    );
+  });
+
+  it('상태가 그 사이 바뀌어 409 가 오면 서버 문장을 보인다', async () => {
+    listState.data = [share()];
+    feedbackState.data = [feedback()];
+    patchShareFeedbackStatus.mockRejectedValue(
+      new ApiError(
+        '지금 상태(받음)에서는 받음(으)로 바꿀 수 없습니다.',
+        'DEVICE_SHARE_FEEDBACK_INVALID_TRANSITION',
+      ),
+    );
+    renderPanel();
+
+    const section = document.getElementById('share-feedback')!;
+    fireEvent.click(within(section).getByRole('button', { name: '받기' }));
+    expect(await within(section).findByText(/바꿀 수 없습니다/)).toBeTruthy();
+  });
+
+  it('손님 글은 HTML 이 아니라 글자로 그린다', () => {
+    listState.data = [share()];
+    feedbackState.data = [feedback({ body: '<img src=x onerror="alert(1)">더 크게' })];
+    renderPanel();
+
+    const section = document.getElementById('share-feedback')!;
+    expect(within(section).getByText('<img src=x onerror="alert(1)">더 크게')).toBeTruthy();
+    expect(section.querySelector('img[src="x"]')).toBeNull();
   });
 });
