@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight, Globe, MonitorSmartphone, RefreshCw, Smartphone } from 'lucide-react';
 import { deleteDeviceShare, useDeviceShareListQuery } from '@/api/deviceShares';
+import { useShareFeedbackListQuery } from '@/api/shareFeedback';
 import CommandBlock from '@/components/common/CommandBlock';
+import MeShareFeedbackSection from '@/components/layout/me/MeShareFeedbackSection';
 import type { MeSettingsSectionId } from '@/components/layout/me/meSettingsNav';
 import { composeApiErrorMessage } from '@/lib/apiErrorGuide';
 import { DEVICE_SHARE_GUIDES } from '@/lib/deviceShareGuide';
@@ -18,6 +20,7 @@ import {
   type DeviceShare,
   type DeviceShareKind,
 } from '@/types/deviceShare.type';
+import { countFeedback, type FeedbackStatus } from '@/types/shareFeedback.type';
 
 /** 남은 시간을 다시 적는 간격. 분 단위로만 적으므로 30초면 늦어도 반 박자다 */
 const CLOCK_TICK_MS = 30_000;
@@ -43,6 +46,9 @@ function KindBadge({ kind }: { kind: string }) {
 type LiveShareRowProps = {
   share: DeviceShare;
   now: number;
+  /** 이 링크로 들어와 받기 전인 짚기 피드백 수 */
+  newFeedback: number;
+  onShowFeedback: () => void;
   confirming: boolean;
   pending: boolean;
   onAskEnd: () => void;
@@ -53,6 +59,8 @@ type LiveShareRowProps = {
 function LiveShareRow({
   share,
   now,
+  newFeedback,
+  onShowFeedback,
   confirming,
   pending,
   onAskEnd,
@@ -79,6 +87,15 @@ function LiveShareRow({
                 기기 연결 끊김
               </span>
             )}
+            {newFeedback > 0 ? (
+              <button
+                type="button"
+                onClick={onShowFeedback}
+                className="inline-flex items-center gap-1 rounded-full bg-[#fef3c7] px-2 py-0.5 text-[11px] font-semibold text-[#92400e] transition hover:bg-[#fde68a]"
+              >
+                새 피드백 {newFeedback}
+              </button>
+            ) : null}
           </div>
           {/* 사용자가 공유한 주소·앱 이름. 사용자 글이 보이는 자리라 analytics 규칙대로 표시한다 */}
           <p className="mt-1 text-[13px] break-all text-[#0f172a]" data-ga-ignore>
@@ -189,6 +206,7 @@ function MeDeviceSharesPanel({ onOpenSection }: MeDeviceSharesPanelProps) {
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [guideKind, setGuideKind] = useState<DeviceShareKind>('WEB');
+  const [feedbackTab, setFeedbackTab] = useState<FeedbackStatus | null>(null);
 
   /*
     남은 시간·만료 판정에 쓰는 지금. 렌더 중에 Date.now() 를 부르지 않고(같은 입력에 다른
@@ -198,6 +216,24 @@ function MeDeviceSharesPanel({ onOpenSection }: MeDeviceSharesPanelProps) {
   const now = Math.max(tick, dataUpdatedAt);
   const { live, ended } = useMemo(() => splitDeviceShares(shares, now), [shares, now]);
   const hasLive = live.length > 0;
+
+  // 짚기 피드백(#210). 살아 있는 링크가 있으면 링크 목록처럼 10초마다 다시 읽는다
+  const feedback = useShareFeedbackListQuery({ poll: hasLive });
+  const feedbackItems = useMemo(() => feedback.data ?? [], [feedback.data]);
+  const { byStatus, newByShare } = useMemo(() => countFeedback(feedbackItems), [feedbackItems]);
+  const shareLabels = useMemo(
+    () => new Map(shares.map((share) => [share.shareId, share.targetLabel] as const)),
+    [shares],
+  );
+  // 고르지 않았으면 할 일(받기 전)이 있는 탭부터 보인다
+  const activeFeedbackTab: FeedbackStatus =
+    feedbackTab ?? ((byStatus.NEW ?? 0) > 0 ? 'NEW' : 'ACCEPTED');
+  const showNewFeedback = useCallback(() => {
+    setFeedbackTab('NEW');
+    document
+      .getElementById('share-feedback')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   useEffect(() => {
     if (!hasLive) return;
@@ -317,6 +353,8 @@ function MeDeviceSharesPanel({ onOpenSection }: MeDeviceSharesPanelProps) {
                 key={share.shareId}
                 share={share}
                 now={now}
+                newFeedback={newByShare[share.shareId] ?? 0}
+                onShowFeedback={showNewFeedback}
                 confirming={confirmingId === share.shareId}
                 pending={endMutation.isPending}
                 onAskEnd={() => {
@@ -330,6 +368,17 @@ function MeDeviceSharesPanel({ onOpenSection }: MeDeviceSharesPanelProps) {
           )}
         </ul>
       )}
+
+      <MeShareFeedbackSection
+        items={feedbackItems}
+        shareLabels={shareLabels}
+        isLoading={feedback.isLoading}
+        isError={feedback.isError}
+        error={feedback.error}
+        onRetry={() => void feedback.refetch()}
+        tab={activeFeedbackTab}
+        onTab={setFeedbackTab}
+      />
 
       {ended.length > 0 ? (
         <details className="group rounded-2xl border border-[#e2e8f0] bg-white">
