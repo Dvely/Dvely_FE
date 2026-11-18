@@ -103,9 +103,37 @@ const getServerLogsResSchema = z.object({
 /** GET /projects/{projectId}/servers 응답 */
 const getProjectServerListResSchema = z.array(provisionedServerSchema);
 
-/** POST /projects/{projectId}/servers 요청. instanceType 을 비우면 서버가 t3.micro 를 쓴다 */
+/**
+ * 배포 형태. NATIVE 는 jar 를 `java -jar` 로 띄우고, DOCKER 는 저장소 루트의 Dockerfile 로
+ * 이미지를 만들어 `docker run` 한다. 서버는 값이 없으면 NATIVE 로 만든다.
+ *
+ * 응답 쪽 status 와 달리 닫은 enum 이다 — 이건 **우리가 보내는 값**이고, 서버가 모르는
+ * 값을 받으면 400 으로 돌려준다. 보내기 전에 여기서 걸리는 편이 낫다.
+ */
+const serverDeployModeSchema = z.enum(['NATIVE', 'DOCKER']);
+
+/**
+ * 번들 DB 엔진. 값이 있으면 **같은 EC2 안에** 이 DB 컨테이너가 함께 뜨고 앱이 그 DB 로
+ * 배선된다(RDS 없이 앱+DB 한 인스턴스). DOCKER 배포에서만 유효하고, NATIVE 와 함께
+ * 보내면 서버가 거절한다.
+ */
+const bundledDbEngineSchema = z.enum(['MYSQL', 'POSTGRESQL']);
+
+/**
+ * POST /projects/{projectId}/servers 요청. instanceType 을 비우면 서버가 t3.micro 를 쓴다.
+ *
+ * 이 스키마는 보내기 전에 `parse` 를 거치므로 **여기 없는 필드는 조용히 떨어진다.**
+ * 그래서 계약에 있는 필드를 빠뜨리면 화면이 고른 값이 서버에 닿지 않고, 서버는 기본값으로
+ * 만든다 — `deployMode` 가 그랬다(화면에 선택지가 없었고, 넣어도 떨어졌을 것이다).
+ *
+ * 계약에는 프론트 컨테이너용 `frontendRepo`·`frontendDir`·`apiPathPrefix`·`webOnly` 도 있다.
+ * 그쪽은 "EC2 에 프론트 nginx 를 함께/단독으로 띄우는" 별개 기능이라 이 화면이 아직 고르게
+ * 하지 않는다. 즉 **이 스키마는 계약 전부가 아니다** — 프론트 서버를 열 때 함께 늘려야 한다.
+ */
 const postProjectServerReqSchema = z.object({
   instanceType: z.string().optional(),
+  deployMode: serverDeployModeSchema.optional(),
+  bundledDbEngine: bundledDbEngineSchema.optional(),
 });
 
 /**
@@ -127,6 +155,8 @@ const postProjectServerResSchema = z.object({
 type ServerStatus = z.infer<typeof serverStatusSchema>;
 type ProvisionedServer = z.infer<typeof provisionedServerSchema>;
 type GetProjectServerListResType = z.infer<typeof getProjectServerListResSchema>;
+type ServerDeployMode = z.infer<typeof serverDeployModeSchema>;
+type BundledDbEngine = z.infer<typeof bundledDbEngineSchema>;
 type PostProjectServerReqType = z.infer<typeof postProjectServerReqSchema>;
 type PostProjectServerResType = z.infer<typeof postProjectServerResSchema>;
 type ServerLogSource = z.infer<typeof serverLogSourceSchema>;
@@ -136,6 +166,8 @@ export {
   serverStatusSchema,
   provisionedServerSchema,
   getProjectServerListResSchema,
+  serverDeployModeSchema,
+  bundledDbEngineSchema,
   postProjectServerReqSchema,
   postProjectServerResSchema,
   serverLogSourceSchema,
@@ -143,6 +175,8 @@ export {
   type ServerStatus,
   type ProvisionedServer,
   type GetProjectServerListResType,
+  type ServerDeployMode,
+  type BundledDbEngine,
   type PostProjectServerReqType,
   type PostProjectServerResType,
   type ServerLogSource,
