@@ -335,8 +335,8 @@ describe('짚기 피드백', () => {
     const section = document.getElementById('share-feedback')!;
     fireEvent.click(within(section).getByRole('button', { name: '자세히' }));
     expect(within(section).getByText('짚은 곳 2개')).toBeTruthy();
-    expect(within(section).getByText('①')).toBeTruthy();
-    expect(within(section).getByText('②')).toBeTruthy();
+    expect(within(section).getByLabelText('① 곳')).toBeTruthy();
+    expect(within(section).getByLabelText('② 곳')).toBeTruthy();
     expect(within(section).getByText('컴포넌트 ProfileForm')).toBeTruthy();
     // ②의 그림은 mark=2 로, 번호 그린 화면은 annotated 로 따로 받는다
     expect(imageCalls).toContainEqual([21, 'crop', true, 2]);

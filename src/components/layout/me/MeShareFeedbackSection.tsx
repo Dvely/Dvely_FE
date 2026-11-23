@@ -326,26 +326,28 @@ function FeedbackCard({ item, shareLabel, open, onToggle, onNotice }: CardProps)
                 {marks.map((m) => (
                   <li
                     key={m.n}
-                    className="flex min-w-0 items-center gap-2 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-2"
+                    className="flex min-w-0 flex-col gap-2 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-2"
                   >
-                    <span
-                      className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#7c3aed] text-[13px] font-bold text-white"
-                      aria-label={`${m.n}번째 곳`}
-                    >
-                      {markNumber(m.n)}
-                    </span>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span
+                        className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#7c3aed] text-[11px] font-bold text-white"
+                        aria-label={`${markNumber(m.n)} 곳`}
+                      >
+                        {m.n}
+                      </span>
+                      <span className="min-w-0 text-[12px] break-words text-[#334155]">
+                        {m.label ?? '짚은 자리'}
+                      </span>
+                    </div>
                     {m.hasCrop ? (
                       <FeedbackImage
                         feedbackId={item.feedbackId}
                         kind="crop"
                         mark={m.n}
                         alt={`${markNumber(m.n)} 짚은 곳: ${m.label ?? '짚은 자리'}`}
-                        className="h-12 w-20 shrink-0"
+                        className="max-h-32 w-full"
                       />
                     ) : null}
-                    <span className="min-w-0 text-[12px] break-words text-[#334155]">
-                      {m.label ?? '짚은 자리'}
-                    </span>
                   </li>
                 ))}
               </ol>
@@ -362,6 +364,10 @@ function FeedbackCard({ item, shareLabel, open, onToggle, onNotice }: CardProps)
                   </figcaption>
                 </figure>
               ) : null}
+              <p className="text-[11px] text-[#94a3b8]">
+                아래 요소·컴포넌트·소스 후보는 ①의 것입니다. 곳마다의 후보는 에이전트용 프롬프트에
+                모두 담깁니다.
+              </p>
             </div>
           ) : null}
 
