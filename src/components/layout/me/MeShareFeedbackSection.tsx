@@ -20,6 +20,7 @@ import {
   feedbackActions,
   feedbackStatusLabel,
   hintReasonLabel,
+  markNumber,
   noteLabel,
   type FeedbackStatus,
   type ShareFeedback,
@@ -47,15 +48,22 @@ function formatMoment(value: string) {
 function FeedbackImage({
   feedbackId,
   kind,
+  mark,
   alt,
   className,
 }: {
   feedbackId: number;
-  kind: 'crop' | 'screen';
+  kind: 'crop' | 'screen' | 'annotated';
+  /** 여러 곳일 때 ②부터의 잘라 낸 그림(`crop` 에만) */
+  mark?: number;
   alt: string;
   className?: string;
 }) {
-  const { data: url, isError, isLoading } = useShareFeedbackImageQuery(feedbackId, kind, true);
+  const {
+    data: url,
+    isError,
+    isLoading,
+  } = useShareFeedbackImageQuery(feedbackId, kind, true, mark);
 
   if (isError) {
     return (
@@ -119,12 +127,12 @@ function FeedbackCard({ item, shareLabel, open, onToggle, onNotice }: CardProps)
       refresh();
       onNotice(
         action === 'accept'
-          ? `피드백 #${item.feedbackId} 을 받았습니다. 이제 코딩 에이전트(MCP)·CLI 가 읽을 수 있습니다.`
+          ? `#${item.feedbackId} 피드백을 받았습니다. 이제 코딩 에이전트(MCP)·CLI 가 읽을 수 있습니다.`
           : action === 'dismiss'
-            ? `피드백 #${item.feedbackId} 을 받지 않았습니다. 에이전트에게 나가지 않습니다.`
+            ? `#${item.feedbackId} 피드백을 받지 않았습니다. 에이전트에게 나가지 않습니다.`
             : action === 'fixed'
-              ? `피드백 #${item.feedbackId} 을 고침으로 표시했습니다. 짚은 사람의 화면에 알림이 갑니다.`
-              : `피드백 #${item.feedbackId} 을 확인함으로 닫았습니다.`,
+              ? `#${item.feedbackId} 피드백을 고침으로 표시했습니다. 짚은 사람의 화면에 알림이 갑니다.`
+              : `#${item.feedbackId} 피드백을 확인함으로 닫았습니다.`,
       );
     },
     onError: (error) => {
@@ -138,6 +146,9 @@ function FeedbackCard({ item, shareLabel, open, onToggle, onNotice }: CardProps)
   const isNew = item.status === 'NEW';
   const element = detail.data?.element;
   const components = element?.components ?? [];
+  // 여러 곳(①②…)일 때만 목록을 그린다. 한 곳이면 지금처럼 위 그림과 요소·소스 후보로 충분하다
+  const marks = detail.data?.marks ?? [];
+  const multi = marks.length > 1;
   const hints = element?.sourceHints ?? [];
   const noteLength = Array.from(note.trim()).length;
 
@@ -306,6 +317,58 @@ function FeedbackCard({ item, shareLabel, open, onToggle, onNotice }: CardProps)
             <p className="text-[12px] text-[#b91c1c]">
               {composeApiErrorMessage(detail.error, '자세한 내용을 불러오지 못했습니다.')}
             </p>
+          ) : null}
+
+          {multi ? (
+            <div className="flex flex-col gap-2" data-ga-ignore>
+              <p className="text-[12px] font-semibold text-[#0f172a]">짚은 곳 {marks.length}개</p>
+              <ol className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {marks.map((m) => (
+                  <li
+                    key={m.n}
+                    className="flex min-w-0 flex-col gap-2 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-2"
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span
+                        className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#7c3aed] text-[11px] font-bold text-white"
+                        aria-label={`${markNumber(m.n)} 곳`}
+                      >
+                        {m.n}
+                      </span>
+                      <span className="min-w-0 text-[12px] break-words text-[#334155]">
+                        {m.label ?? '짚은 자리'}
+                      </span>
+                    </div>
+                    {m.hasCrop ? (
+                      <FeedbackImage
+                        feedbackId={item.feedbackId}
+                        kind="crop"
+                        mark={m.n}
+                        alt={`${markNumber(m.n)} 짚은 곳: ${m.label ?? '짚은 자리'}`}
+                        className="max-h-32 w-full"
+                      />
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+              {detail.data?.hasAnnotated ? (
+                <figure className="flex flex-col gap-1">
+                  <FeedbackImage
+                    feedbackId={item.feedbackId}
+                    kind="annotated"
+                    alt="짚은 곳마다 번호를 그린 화면"
+                    className="max-h-[420px] w-full"
+                  />
+                  <figcaption className="text-[11px] text-[#94a3b8]">
+                    번호는 에이전트용 프롬프트의 ①②… 와 같습니다.
+                  </figcaption>
+                </figure>
+              ) : null}
+              <p className="text-[11px] text-[#94a3b8]">
+                아래 요소·컴포넌트·소스 후보는 ①의 것입니다. 곳마다의 후보는 에이전트용 프롬프트에
+                모두 담깁니다.
+              </p>
+            </div>
           ) : null}
 
           {element?.element?.selector || element?.element?.id ? (

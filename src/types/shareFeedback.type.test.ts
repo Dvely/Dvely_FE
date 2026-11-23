@@ -8,6 +8,7 @@ import {
   feedbackStatusLabel,
   getShareFeedbackDetailResSchema,
   getShareFeedbackListResSchema,
+  markNumber,
   noteLabel,
   postShareFeedbackFixedReqSchema,
 } from '@/types/shareFeedback.type';
@@ -78,6 +79,35 @@ describe('짚기 피드백 응답', () => {
     });
     expect(detail.element).toBeNull();
     expect(detail.notes).toEqual([]);
+    // 여러 곳(#694 PR-5)을 모르는 옛 서버의 응답도 한 곳짜리로 읽는다
+    expect(detail.marks).toEqual([]);
+    expect(detail.hasAnnotated).toBe(false);
+  });
+
+  it('여러 곳 ①② 의 짚은 곳 목록과 번호 그린 화면 여부를 읽는다', () => {
+    const detail = getShareFeedbackDetailResSchema.parse({
+      feedback: { feedbackId: 30, label: '① <button> "저장" 외 1곳' },
+      element: null,
+      hasCrop: true,
+      hasScreen: true,
+      hasAnnotated: true,
+      marks: [
+        { n: 1, label: '<button> "저장"', hasCrop: true },
+        { n: 2, label: '컴포넌트 ProfileForm', hasCrop: false, extra: 'x' },
+      ],
+    });
+    expect(detail.hasAnnotated).toBe(true);
+    expect(detail.marks).toEqual([
+      { n: 1, label: '<button> "저장"', hasCrop: true },
+      { n: 2, label: '컴포넌트 ProfileForm', hasCrop: false },
+    ]);
+  });
+
+  it('곳 번호는 프롬프트와 같은 글자(①~⑳)로 쓴다', () => {
+    expect(markNumber(1)).toBe('①');
+    expect(markNumber(5)).toBe('⑤');
+    expect(markNumber(20)).toBe('⑳');
+    expect(markNumber(21)).toBe('21');
   });
 });
 

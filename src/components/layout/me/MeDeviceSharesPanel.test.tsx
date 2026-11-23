@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { DeviceShare } from '@/types/deviceShare.type';
-import type { ShareFeedback } from '@/types/shareFeedback.type';
+import type { ShareFeedback, ShareFeedbackDetail } from '@/types/shareFeedback.type';
 import { ApiError } from '@/utils/response';
 
 /*
@@ -38,6 +38,8 @@ let feedbackState: { data: ShareFeedback[]; isError: boolean; error: unknown } =
   error: null,
 };
 const feedbackPoll: boolean[] = [];
+let detailData: ShareFeedbackDetail | undefined;
+const imageCalls: unknown[][] = [];
 const patchShareFeedbackStatus = vi.fn();
 const postShareFeedbackFixed = vi.fn();
 
@@ -46,9 +48,12 @@ vi.mock('@/api/shareFeedback', () => ({
     feedbackPoll.push(poll);
     return { ...feedbackState, isLoading: false, refetch: vi.fn() };
   },
-  useShareFeedbackDetailQuery: () => ({ data: undefined, isError: false }),
+  useShareFeedbackDetailQuery: () => ({ data: detailData, isError: false }),
   useShareFeedbackPromptQuery: () => ({ data: undefined, isError: false }),
-  useShareFeedbackImageQuery: () => ({ data: undefined, isError: true, isLoading: false }),
+  useShareFeedbackImageQuery: (...a: unknown[]) => {
+    imageCalls.push(a);
+    return { data: undefined, isError: true, isLoading: false };
+  },
   patchShareFeedbackStatus: (...a: unknown[]) => patchShareFeedbackStatus(...a),
   postShareFeedbackFixed: (...a: unknown[]) => postShareFeedbackFixed(...a),
 }));
@@ -87,6 +92,8 @@ beforeEach(() => {
   listState = { data: [], isError: false, error: null };
   feedbackState = { data: [], isError: false, error: null };
   feedbackPoll.length = 0;
+  detailData = undefined;
+  imageCalls.length = 0;
 });
 
 afterEach(() => {
@@ -305,6 +312,56 @@ describe('짚기 피드백', () => {
     const section = document.getElementById('share-feedback')!;
     fireEvent.click(within(section).getByRole('button', { name: '받기' }));
     expect(await within(section).findByText(/바꿀 수 없습니다/)).toBeTruthy();
+  });
+
+  it('여러 곳 피드백을 펼치면 ①② 와 곳마다 잘라 낸 그림·번호 그린 화면을 보인다', () => {
+    listState.data = [share()];
+    const item = feedback({ status: 'ACCEPTED', label: '① <button> "저장" 외 1곳' });
+    feedbackState.data = [item];
+    detailData = {
+      feedback: item,
+      element: null,
+      notes: [],
+      hasCrop: true,
+      hasScreen: true,
+      hasAnnotated: true,
+      marks: [
+        { n: 1, label: '<button> "저장"', hasCrop: true },
+        { n: 2, label: '컴포넌트 ProfileForm', hasCrop: true },
+      ],
+    };
+    renderPanel();
+
+    const section = document.getElementById('share-feedback')!;
+    fireEvent.click(within(section).getByRole('button', { name: '자세히' }));
+    expect(within(section).getByText('짚은 곳 2개')).toBeTruthy();
+    expect(within(section).getByLabelText('① 곳')).toBeTruthy();
+    expect(within(section).getByLabelText('② 곳')).toBeTruthy();
+    expect(within(section).getByText('컴포넌트 ProfileForm')).toBeTruthy();
+    // ②의 그림은 mark=2 로, 번호 그린 화면은 annotated 로 따로 받는다
+    expect(imageCalls).toContainEqual([21, 'crop', true, 2]);
+    expect(imageCalls.some((a) => a[1] === 'annotated')).toBe(true);
+  });
+
+  it('한 곳짜리 피드백은 짚은 곳 목록을 그리지 않는다', () => {
+    listState.data = [share()];
+    const item = feedback({ status: 'ACCEPTED' });
+    feedbackState.data = [item];
+    detailData = {
+      feedback: item,
+      element: null,
+      notes: [],
+      hasCrop: true,
+      hasScreen: true,
+      hasAnnotated: false,
+      marks: [{ n: 1, label: '<button> "저장"', hasCrop: true }],
+    };
+    renderPanel();
+
+    const section = document.getElementById('share-feedback')!;
+    fireEvent.click(within(section).getByRole('button', { name: '자세히' }));
+    expect(within(section).queryByText(/짚은 곳 \d개/)).toBeNull();
+    expect(imageCalls.some((a) => a[1] === 'annotated')).toBe(false);
   });
 
   it('손님 글은 HTML 이 아니라 글자로 그린다', () => {
