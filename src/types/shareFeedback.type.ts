@@ -79,12 +79,25 @@ const feedbackElementSchema = z
   .nullable()
   .prefault(null);
 
+/**
+ * 짚은 곳 하나(①②…, BE #694 PR-5). 한 곳짜리 피드백이면 하나다.
+ * `label` 은 그 곳에서 고른 범위의 이름, `hasCrop` 은 `image?kind=crop&mark=n` 이 있는지.
+ */
+const feedbackMarkSchema = z.object({
+  n: z.number().prefault(0),
+  label: z.string().nullable().prefault(null),
+  hasCrop: z.boolean().prefault(false),
+});
+
 const getShareFeedbackDetailResSchema = z.object({
   feedback: shareFeedbackSchema,
   element: feedbackElementSchema,
   notes: z.array(feedbackNoteSchema).prefault([]),
   hasCrop: z.boolean().prefault(false),
   hasScreen: z.boolean().prefault(false),
+  /** 짚은 곳마다 테두리·번호를 그린 화면이 있는지(`image?kind=annotated`, 여러 곳일 때). 옛 서버는 보내지 않는다 */
+  hasAnnotated: z.boolean().prefault(false),
+  marks: z.array(feedbackMarkSchema).prefault([]),
 });
 
 const getShareFeedbackPromptResSchema = z.object({ markdown: z.string().prefault('') });
@@ -103,6 +116,7 @@ const postShareFeedbackFixedReqSchema = z.object({
 type ShareFeedback = z.infer<typeof shareFeedbackSchema>;
 type ShareFeedbackDetail = z.infer<typeof getShareFeedbackDetailResSchema>;
 type FeedbackNote = z.infer<typeof feedbackNoteSchema>;
+type FeedbackMark = z.infer<typeof feedbackMarkSchema>;
 type GetShareFeedbackListResType = z.infer<typeof getShareFeedbackListResSchema>;
 
 const STATUS_LABELS: Record<FeedbackStatus, string> = {
@@ -112,6 +126,11 @@ const STATUS_LABELS: Record<FeedbackStatus, string> = {
   CONFIRMED: '확인함',
   DISMISSED: '받지 않음',
 };
+
+/** 짚은 곳 번호를 프롬프트·번호 그린 화면과 같은 글자로(①~⑳). 범위 밖이면 숫자 그대로 */
+function markNumber(n: number) {
+  return n >= 1 && n <= 20 ? String.fromCharCode(0x2460 + n - 1) : String(n);
+}
 
 function feedbackStatusLabel(status: string) {
   return (STATUS_LABELS as Record<string, string>)[status] ?? status;
@@ -208,11 +227,13 @@ export {
   getShareFeedbackListResSchema,
   getShareFeedbackPromptResSchema,
   hintReasonLabel,
+  markNumber,
   noteLabel,
   patchShareFeedbackReqSchema,
   postShareFeedbackFixedReqSchema,
   shareFeedbackSchema,
   type FeedbackAction,
+  type FeedbackMark,
   type FeedbackNote,
   type FeedbackStatus,
   type GetShareFeedbackListResType,

@@ -97,9 +97,17 @@ function useShareFeedbackPromptQuery(feedbackId: number, enabled: boolean) {
  * 실행·탭 전환과 엇갈려, 캐시에서 다시 그릴 때 이미 치운 URL 을 가리켰다. 잘라 낸 것은 수 KB,
  * 화면도 1MiB 이하라 문자열로 들고 있어도 된다.
  */
-async function getShareFeedbackImage(feedbackId: number, kind: 'crop' | 'screen') {
+/** `annotated` 는 짚은 곳마다 번호를 그린 화면(여러 곳일 때). `mark` 는 ②부터의 잘라 낸 그림(`crop` 에만) */
+type ShareFeedbackImageKind = 'crop' | 'screen' | 'annotated';
+
+async function getShareFeedbackImage(
+  feedbackId: number,
+  kind: ShareFeedbackImageKind,
+  mark?: number,
+) {
+  const params = kind === 'crop' && mark && mark > 1 ? { kind, mark } : { kind };
   return Http.instance
-    .get<Blob>(`${endpoint}/${feedbackId}/image`, { params: { kind }, responseType: 'blob' })
+    .get<Blob>(`${endpoint}/${feedbackId}/image`, { params, responseType: 'blob' })
     .then((response) => {
       const blob = response.data;
       if (!(blob instanceof Blob) || !blob.type.startsWith('image/jpeg')) {
@@ -119,10 +127,16 @@ function blobToDataUrl(blob: Blob) {
   });
 }
 
-function useShareFeedbackImageQuery(feedbackId: number, kind: 'crop' | 'screen', enabled: boolean) {
+function useShareFeedbackImageQuery(
+  feedbackId: number,
+  kind: ShareFeedbackImageKind,
+  enabled: boolean,
+  mark?: number,
+) {
+  const n = kind === 'crop' && mark && mark > 1 ? mark : 1;
   return useQuery({
-    queryKey: ['share-feedback-image', feedbackId, kind],
-    queryFn: () => getShareFeedbackImage(feedbackId, kind),
+    queryKey: ['share-feedback-image', feedbackId, kind, n],
+    queryFn: () => getShareFeedbackImage(feedbackId, kind, n),
     enabled,
     retry: false,
     // 한 번 저장된 이미지는 바뀌지 않는다
