@@ -162,8 +162,9 @@ export function PreviewPinOverlay({ bridge, marks, setMarks, onExit }: PreviewPi
             }`}
             style={boxStyle(bounds)}
           >
-            <span className="absolute -top-3 -left-3 flex size-6 items-center justify-center rounded-full bg-[#7c3aed] text-[13px] font-semibold text-white shadow">
-              {circled(index + 1)}
+            {/* 배지는 이미 원이라 안에는 숫자만 쓴다(①을 넣으면 원이 겹친다) */}
+            <span className="absolute -top-3 -left-3 flex size-6 items-center justify-center rounded-full bg-[#7c3aed] text-[12px] font-bold text-white shadow">
+              {index + 1}
             </span>
           </div>
         );
