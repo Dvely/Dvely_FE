@@ -3,6 +3,7 @@ import type { PreviewPinBridge } from '@/components/layout/project/usePreviewPin
 import {
   DRAG_THRESHOLD_PX,
   MAX_PREVIEW_PINS,
+  chosenPeers,
   circled,
   markBounds,
   markLabel,
@@ -49,12 +50,22 @@ export function PreviewPinOverlay({ bridge, marks, setMarks, onExit }: PreviewPi
         list.map((mark, i) => {
           if (i !== list.length - 1) return mark;
           const size = scopesOf(mark.result).length;
-          return size ? { ...mark, scope: Math.max(0, Math.min(size - 1, index)) } : mark;
+          if (!size) return mark;
+          const scope = Math.max(0, Math.min(size - 1, index));
+          // 같은 것 모두는 고른 칸의 것이다. 같은 것이 없는 칸으로 옮기면 꺼진다
+          return { ...mark, scope, peers: mark.peers && Boolean(scopesOf(mark.result)[scope]?.peers) };
         }),
       );
     },
     [setMarks],
   );
+
+  /** §15.3·§15.8: 같은 것 모두 토글(고른 칸에 같은 것이 있을 때만) */
+  const togglePeers = useCallback(() => {
+    setMarks((list) =>
+      list.map((mark, i) => (i === list.length - 1 && chosenPeers(mark) ? { ...mark, peers: !mark.peers } : mark)),
+    );
+  }, [setMarks]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -66,11 +77,21 @@ export function PreviewPinOverlay({ bridge, marks, setMarks, onExit }: PreviewPi
       if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown') && activeMark) {
         event.preventDefault();
         setScope(activeMark.scope + (event.key === 'ArrowUp' ? 1 : -1));
+        return;
+      }
+      // 같은 것 모두: 글 칸 밖에서 A(§15.8)
+      const target = event.target as HTMLElement | null;
+      const typing = target && (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT' || target.isContentEditable);
+      if (!typing && !event.altKey && !event.ctrlKey && !event.metaKey && (event.key === 'a' || event.key === 'A')) {
+        if (activeMark && chosenPeers(activeMark)) {
+          event.preventDefault();
+          togglePeers();
+        }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [activeMark, onExit, setScope]);
+  }, [activeMark, onExit, setScope, togglePeers]);
 
   // 휠은 프리뷰 스크롤로 넘긴다. React 의 onWheel 은 수동(passive)이라 기본 동작을 막지 못해 직접 단다
   const { scroll } = bridge;
@@ -170,6 +191,17 @@ export function PreviewPinOverlay({ bridge, marks, setMarks, onExit }: PreviewPi
         );
       })}
 
+      {activeMark && activeMark.peers && !activeMark.stale
+        ? (chosenPeers(activeMark)?.bounds ?? []).map((peer, index) => (
+            <div
+              key={`peer-${index}`}
+              aria-hidden="true"
+              className="pointer-events-none absolute rounded-[3px] border-2 border-dashed border-[#7c3aed]/80"
+              style={boxStyle(peer)}
+            />
+          ))
+        : null}
+
       {isDragging && dragRect ? (
         <div
           aria-hidden="true"
@@ -202,6 +234,21 @@ export function PreviewPinOverlay({ bridge, marks, setMarks, onExit }: PreviewPi
                 {scopeLabel(scope)}
               </button>
             ))}
+            {chosenPeers(activeMark) ? (
+              <button
+                type="button"
+                aria-pressed={Boolean(activeMark.peers)}
+                onClick={togglePeers}
+                title="이 모양 전부를 고르기(A)"
+                className={`ml-1 cursor-pointer rounded-lg border border-dashed px-2.5 py-1 text-[12px] transition ${
+                  activeMark.peers
+                    ? 'border-solid border-[#7c3aed] bg-[#7c3aed] font-semibold text-white'
+                    : 'border-[#a78bfa] text-[#5b21b6] hover:bg-[#f5f3ff]'
+                }`}
+              >
+                같은 것 {chosenPeers(activeMark)?.count}개{activeMark.peers ? ' 모두' : ''}
+              </button>
+            ) : null}
           </div>
         ) : null}
         <p className="rounded-full bg-[#0f172a]/85 px-3 py-1.5 text-center text-[12px] text-white">

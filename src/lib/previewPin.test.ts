@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  chosenPeers,
   circled,
   markBounds,
   markLabel,
@@ -88,5 +89,43 @@ describe('보낼 모양', () => {
     expect(toPinPayload([mark({ scope: 1 }), mark({ ref: 'p2', result: null, waiting: true })])).toEqual([
       { result: button, scope: 1 },
     ]);
+  });
+});
+
+describe('같은 것 모두 · 고칠 글 (§15.3 · §15.7)', () => {
+  const cards = {
+    probeId: 'p3',
+    ok: true,
+    element: { type: 'button', text: '고르기', bounds: { x: 0.3, y: 0.4, w: 0.05, h: 0.04 } },
+    scopes: [
+      { kind: 'text', type: 'text', text: '고르기', bounds: { x: 0.31, y: 0.41, w: 0.03, h: 0.02 } },
+      { kind: 'element', type: 'button', text: '고르기', bounds: { x: 0.3, y: 0.4, w: 0.05, h: 0.04 } },
+      {
+        kind: 'group',
+        type: 'li',
+        selector: 'li.plan-card',
+        bounds: { x: 0.25, y: 0.2, w: 0.2, h: 0.3 },
+        peers: { count: 3, bounds: [{ x: 0.02, y: 0.2, w: 0.2, h: 0.3 }, { x: 0.5, y: 0.2, w: 2, h: 0.3 }] },
+      },
+      { kind: 'screen', type: 'screen', bounds: { x: 0, y: 0, w: 1, h: 1 } },
+    ],
+    defaultScope: 1,
+  };
+
+  it('문장 칸은 글자로 부른다', () => {
+    expect(scopeLabel({ kind: 'text', text: '팀원을 3명까지 초대할 수 있습니다.' })).toBe('글자 "팀원을 3명까지 초대할 수 있습니다."');
+    expect(markLabel(mark({ result: cards, scope: 0 }))).toBe('글자 "고르기"');
+  });
+
+  it('같은 것 모두를 켜면 이름 앞에 수를 달고, 고른 칸에 같은 것이 없으면 켜도 붙지 않는다', () => {
+    expect(markLabel(mark({ result: cards, scope: 2, peers: true }))).toBe('같은 것 3개 모두 · 항목');
+    expect(markLabel(mark({ result: cards, scope: 2, peers: false }))).toBe('항목');
+    expect(markLabel(mark({ result: cards, scope: 1, peers: true }))).toBe('<button> "고르기"');
+    expect(chosenPeers(mark({ result: cards, scope: 2 }))?.bounds).toHaveLength(1);
+  });
+
+  it('보낼 때 같은 것 모두는 고른 칸에 같은 것이 있을 때만 싣는다', () => {
+    expect(toPinPayload([mark({ result: cards, scope: 2, peers: true })])[0]).toEqual({ result: cards, scope: 2, peers: true });
+    expect(toPinPayload([mark({ result: cards, scope: 1, peers: true })])[0]).toEqual({ result: cards, scope: 1 });
   });
 });
