@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import AgentSitePreviewPanel from '@/components/layout/project/AgentSitePreviewPanel';
 
 /*
@@ -178,5 +178,74 @@ describe('상한에 걸렸을 때 (#184)', () => {
     renderFailure();
 
     expect(document.body.textContent).not.toMatch(/떠 있는 프리뷰 보기/);
+  });
+});
+
+describe('프리뷰에서 짚기 (#211)', () => {
+  /*
+    happy-dom 의 about:blank iframe 은 창(contentWindow)이 없다. 브리지 쪽 창을 가짜로 끼워 넣고, 문서가 뜬 것(load)으로
+    다시 인사하게 한다.
+  */
+  function renderWithPin(active = false) {
+    const onActiveChange = vi.fn();
+    const setMarks = vi.fn();
+    renderReady({ pin: { marks: [], setMarks, active, onActiveChange } });
+    const frame = document.querySelector('iframe') as HTMLIFrameElement;
+    const bridgeWindow = { postMessage: vi.fn() } as unknown as Window;
+    Object.defineProperty(frame, 'contentWindow', { configurable: true, get: () => bridgeWindow });
+    fireEvent.load(frame);
+    return { onActiveChange, setMarks, frame, bridgeWindow };
+  }
+
+  const pinButton = () => buttonNamed(/^짚기/);
+
+  function sendFrom(source: Window | null, data: unknown) {
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', { data, source }));
+    });
+  }
+
+  it('브리지가 답하기 전에는 짚기를 켤 수 없다', () => {
+    renderWithPin();
+
+    expect(pinButton().disabled).toBe(true);
+  });
+
+  it('그 iframe 의 창이 ready 를 보내면 켤 수 있고, 다른 창이 보낸 ready 는 듣지 않는다', () => {
+    const { bridgeWindow, onActiveChange } = renderWithPin();
+    // 문서가 뜨면 인사한다. 불투명 오리진이라 받는 쪽 이름은 '*' 다
+    expect(bridgeWindow.postMessage).toHaveBeenCalledWith({ qeploy: 'pin', v: 1, type: 'hello' }, '*');
+
+    sendFrom(window, { qeploy: 'pin', v: 1, type: 'ready', caps: [] });
+    expect(pinButton().disabled).toBe(true);
+
+    sendFrom(bridgeWindow, { qeploy: 'pin', v: 1, type: 'ready', caps: ['point'] });
+    expect(pinButton().disabled).toBe(false);
+
+    fireEvent.click(pinButton());
+    expect(onActiveChange).toHaveBeenCalledWith(true);
+  });
+
+  it('짚기 모드면 iframe 위에 덮개를 깐다', () => {
+    const { bridgeWindow } = renderWithPin(true);
+    expect(document.querySelector('[data-testid="preview-pin-overlay"]')).toBeNull();
+
+    sendFrom(bridgeWindow, { qeploy: 'pin', v: 1, type: 'ready', caps: ['point'] });
+
+    expect(document.querySelector('[data-testid="preview-pin-overlay"]')).not.toBeNull();
+    expect(document.body.textContent).toMatch(/고칠 곳을 누르세요/);
+  });
+
+  it('1.5초 안에 답이 없으면 짚을 수 없다고 말한다', () => {
+    vi.useFakeTimers();
+    try {
+      renderWithPin();
+      act(() => {
+        vi.advanceTimersByTime(1600);
+      });
+      expect(pinButton().title).toMatch(/짚을 수 없습니다/);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

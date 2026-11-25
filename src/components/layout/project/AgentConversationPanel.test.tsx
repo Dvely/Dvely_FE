@@ -307,3 +307,74 @@ describe('승인 카드는 누를 수 없을 때 그렇게 보인다 (#173)', ()
     expect(document.body.textContent).toContain('곧 결정할 수 있습니다');
   });
 });
+
+/*
+  #211. 프리뷰에서 짚은 곳은 입력창 위 칩으로 보이고, 다음 메시지와 함께 간다. 서버가 받으면 칩을 비운다 — 남겨 두면
+  다음 메시지에 또 붙는다. 답을 기다리는 곳이 있으면 보내지 않는다(번호가 밀린다).
+*/
+describe('프리뷰에서 짚은 곳을 메시지에 붙인다 (#211)', () => {
+  const result = {
+    probeId: 'p1',
+    ok: true,
+    element: { type: 'button', text: '저장' },
+    scopes: [
+      { kind: 'element', type: 'button', text: '저장', bounds: { x: 0.2, y: 0.2, w: 0.1, h: 0.05 } },
+      { kind: 'group', type: 'form', id: 'profile', bounds: { x: 0, y: 0.1, w: 1, h: 0.3 } },
+    ],
+    defaultScope: 0,
+  };
+  const pinned = { ref: 'p1', result, scope: 1, waiting: false, stale: false };
+
+  function sendButton() {
+    const send = document.querySelector<HTMLButtonElement>('button[aria-label="전송"]');
+    if (!send) throw new Error('전송 버튼을 찾지 못했습니다');
+    return send;
+  }
+
+  it('칩을 보이고, 보내면 결과 그대로와 고른 칸이 가고, 서버가 받으면 비운다', async () => {
+    postConversationMessageCreate.mockResolvedValue({ taskId: '' });
+    const onPreviewPinsSent = vi.fn();
+    renderPanel({ previewPins: [pinned], onPreviewPinsSent });
+
+    expect(document.body.textContent).toMatch(/① 폼 #profile/);
+
+    fireEvent.change(composer(), { target: { value: '이걸 더 넓게' } });
+    fireEvent.click(sendButton());
+
+    await waitFor(() => expect(postConversationMessageCreate).toHaveBeenCalled());
+    expect(postConversationMessageCreate.mock.calls[0][1]).toMatchObject({
+      content: '이걸 더 넓게',
+      pins: [{ result, scope: 1 }],
+    });
+    await waitFor(() => expect(onPreviewPinsSent).toHaveBeenCalled());
+  });
+
+  it('답을 기다리는 곳이 있으면 보내지 않는다', () => {
+    renderPanel({ previewPins: [{ ref: 'p2', result: null, scope: 0, waiting: true, stale: false }] });
+
+    fireEvent.change(composer(), { target: { value: '이것도' } });
+
+    expect(sendButton().disabled).toBe(true);
+    expect(document.body.textContent).toMatch(/① 찾는 중/);
+  });
+
+  it('칩의 × 로 뺀다', () => {
+    const onRemovePreviewPin = vi.fn();
+    renderPanel({ previewPins: [pinned], onRemovePreviewPin });
+
+    fireEvent.click(document.querySelector('button[aria-label="① 빼기"]') as HTMLButtonElement);
+
+    expect(onRemovePreviewPin).toHaveBeenCalledWith('p1');
+  });
+
+  it('짚은 곳이 없으면 지금처럼 글만 보낸다', async () => {
+    postConversationMessageCreate.mockResolvedValue({ taskId: '' });
+    renderPanel();
+
+    fireEvent.change(composer(), { target: { value: '고쳐줘' } });
+    fireEvent.click(sendButton());
+
+    await waitFor(() => expect(postConversationMessageCreate).toHaveBeenCalled());
+    expect(postConversationMessageCreate.mock.calls[0][1]).not.toHaveProperty('pins');
+  });
+});

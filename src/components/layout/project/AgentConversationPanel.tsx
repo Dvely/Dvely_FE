@@ -10,7 +10,8 @@ import {
   type KeyboardEvent,
 } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, SendHorizontal } from 'lucide-react';
+import { CheckCircle2, SendHorizontal, X } from 'lucide-react';
+import { circled, markLabel, toPinPayload, type PreviewPinMark } from '@/lib/previewPin';
 import {
   postConversationMessageCreate,
   postProjectConversationCreate,
@@ -75,7 +76,7 @@ import {
   findCardCoveredMessageId,
   toMessageTone,
 } from '@/components/layout/project/chatMessageKind.utils';
-import type { ConversationMessage } from '@/types/chat.type';
+import type { ConversationMessage, PostConversationMessageCreateReqType } from '@/types/chat.type';
 import AgentTaskLogHistory from '@/components/layout/project/AgentTaskLogHistory';
 import { findTaskLogAnchors } from '@/lib/agentTaskLog';
 
@@ -147,7 +148,24 @@ type AgentConversationPanelProps = {
   onAgentTaskActiveChange?: (isActive: boolean) => void;
   /** 배포 중이면 서버가 완료 안내를 나중에 덧붙이므로 메시지를 계속 다시 읽는다 */
   isDeployInFlight?: boolean;
+  /**
+   * 프리뷰에서 짚은 곳(#211, 설계 §16.5). 입력창 위 칩으로 보이고 다음 메시지와 함께 간다. 짚기는 프리뷰 패널이 하고
+   * 상태는 페이지가 갖는다
+   */
+  previewPins?: PreviewPinMark[];
+  onRemovePreviewPin?: (ref: string) => void;
+  /** 짚은 곳이 메시지와 함께 서버에 닿았다 — 칩을 비운다 */
+  onPreviewPinsSent?: () => void;
 };
+
+type PinPayload = NonNullable<PostConversationMessageCreateReqType['pins']>[number];
+
+/** 보낼 것. 짚은 곳이 없으면 글만 넘겨도 된다(홈 프롬프트·되묻기 답 되돌리기) */
+type SendInput = string | { content: string; pins: PinPayload[]; pinLabels: { position: number; label: string }[] };
+
+function readSendInput(input: SendInput) {
+  return typeof input === 'string' ? { content: input, pins: [] as PinPayload[], pinLabels: [] } : input;
+}
 
 // 태스크 상태를 사람이 읽을 문구로 옮기던 formatAgentTaskReply 는 없앴다.
 // 서버가 모든 종료 상태를 chat_messages 에 남기므로 FE 가 같은 사건을 다시 서술하면
@@ -287,6 +305,9 @@ function AgentConversationPanel({
   onConversationActivity,
   onAgentTaskActiveChange,
   isDeployInFlight = false,
+  previewPins,
+  onRemovePreviewPin,
+  onPreviewPinsSent,
   onCloudConnectRequired,
   restoreToken = 0,
   canRestoreDraft = true,
@@ -654,7 +675,8 @@ function AgentConversationPanel({
   }, [projectId, conversationId, canRestoreDraft]);
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async (input: SendInput) => {
+      const { content, pins } = readSendInput(input);
       let targetConversationId = conversationId;
 
       if (isNewConversation || targetConversationId === null) {
@@ -676,7 +698,11 @@ function AgentConversationPanel({
       const createdMessage = await postConversationMessageCreate(targetConversationId, {
         content,
         aiProvider: selectedProvider,
+        // 짚은 곳은 서버에 닿은 뒤에만 칩에서 지운다(onSuccess). 400 이면 아무것도 저장되지 않는다
+        ...(pins.length ? { pins } : {}),
       });
+      // 서버가 받았다. 작업이 끝날 때까지 기다리지 않고 칩을 비운다 — 남겨 두면 다음 메시지에 또 붙는다
+      if (pins.length) onPreviewPinsSent?.();
 
       const taskId = createdMessage.taskId?.trim() || '';
       if (!taskId) {
@@ -725,9 +751,10 @@ function AgentConversationPanel({
         pendingApprovalId,
       };
     },
-    onMutate: (content) => {
+    onMutate: (input) => {
+      const { content, pinLabels } = readSendInput(input);
       const draftConversationId = conversationId ?? 0;
-      const userMessage = createLocalMessage(draftConversationId, 'user', content);
+      const userMessage = createLocalMessage(draftConversationId, 'user', content, { pins: pinLabels });
       setOverlayMessages((prev) => {
         const next = [...mergeConversationMessages(serverMessages ?? [], prev), userMessage];
         writeSessionMessages(draftConversationId, next);
@@ -743,7 +770,7 @@ function AgentConversationPanel({
       setAnsweredClarification(null);
       return { content, userMessage, draftConversationId };
     },
-    onSuccess: (result, _content, context) => {
+    onSuccess: (result, _input, context) => {
       const targetConversationId = result.conversationId;
 
       if (context?.userMessage && context.draftConversationId !== targetConversationId) {
@@ -791,7 +818,8 @@ function AgentConversationPanel({
       setRunningTaskId(null);
       onConversationActivity?.(targetConversationId);
     },
-    onError: (error, content, context) => {
+    onError: (error, input, context) => {
+      const { content } = readSendInput(input);
       /*
         상한까지 기다렸지만 작업은 아직 돈다 — 실패가 아니다. 오류 알림을 띄우면
         성공할 작업을 실패로 오해하게 된다. 조용히 알리고 물러난다. 결과는 서버가
@@ -1504,7 +1532,17 @@ function AgentConversationPanel({
       return;
     }
 
-    sendMessageMutation.mutate(content);
+    const marks = previewPins ?? [];
+    if (marks.some((mark) => mark.waiting)) return;
+    sendMessageMutation.mutate(
+      marks.length
+        ? {
+            content,
+            pins: toPinPayload(marks),
+            pinLabels: marks.map((mark, index) => ({ position: index + 1, label: markLabel(mark) })),
+          }
+        : content,
+    );
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -1843,6 +1881,35 @@ function AgentConversationPanel({
             </button>
           ))}
         </div>
+        {previewPins && previewPins.length > 0 ? (
+          /*
+            프리뷰에서 짚은 곳(#211). 다음 메시지와 함께 간다. 되묻기에 답하는 중에는 붙지 않는다 — 답은 그 질문의 것이다.
+            글에 ①② 를 쓰면 에이전트도 같은 번호로 읽는다.
+          */
+          <div className="mb-2 flex flex-wrap items-center gap-1.5" aria-label="프리뷰에서 짚은 곳">
+            {previewPins.map((mark, index) => (
+              <span
+                key={mark.ref}
+                className="inline-flex max-w-full items-center gap-1 rounded-full border border-[#c4b5fd] bg-[#f5f3ff] py-1 pr-1 pl-2.5 text-[11px] font-semibold text-[#5b21b6]"
+              >
+                <span className="truncate">
+                  {circled(index + 1)} {markLabel(mark)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onRemovePreviewPin?.(mark.ref)}
+                  aria-label={`${circled(index + 1)} 빼기`}
+                  className="flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-full text-[#7c3aed] transition hover:bg-[#ede9fe]"
+                >
+                  <X className="size-3" />
+                </button>
+              </span>
+            ))}
+            {awaitingInputTaskId ? (
+              <span className="text-[11px] text-[#94a3b8]">질문에 답한 뒤 다음 메시지에 붙습니다</span>
+            ) : null}
+          </div>
+        ) : null}
         <div className="flex items-end gap-2 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 focus-within:border-[#a5b4fc] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#6366f1]/15">
           <textarea
             rows={2}
@@ -1863,7 +1930,7 @@ function AgentConversationPanel({
           />
           <button
             type="button"
-            disabled={!input.trim() || isInputLocked}
+            disabled={!input.trim() || isInputLocked || Boolean(previewPins?.some((mark) => mark.waiting))}
             onClick={handleSend}
             className="mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#7c3aed] text-white transition hover:bg-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="전송"
@@ -2066,6 +2133,18 @@ function MessageBubble({ message, logTaskId = null, onTaskLogExpand }: MessageBu
         ) : (
           plainText
         )}
+        {isUser && message.pins.length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-1" aria-label="프리뷰에서 짚은 곳">
+            {message.pins.map((pin) => (
+              <span
+                key={pin.position}
+                className="max-w-full truncate rounded-full border border-[#c4b5fd] bg-white/70 px-2 py-0.5 text-[11px] font-medium text-[#5b21b6]"
+              >
+                {circled(pin.position)} {pin.label}
+              </span>
+            ))}
+          </div>
+        ) : null}
         {isAssistant && logTaskId ? (
           <AgentTaskLogHistory taskId={logTaskId} onExpand={onTaskLogExpand} />
         ) : null}

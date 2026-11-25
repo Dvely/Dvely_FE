@@ -6,6 +6,8 @@ let localMessageId = -1;
 type CreateLocalMessageOptions = {
   tokenCount?: number;
   taskId?: string | null;
+  /** 함께 보낸 프리뷰 짚은 곳(#211). 서버 응답이 오기 전 말풍선에도 칩을 그린다 */
+  pins?: { position: number; label: string }[];
 };
 
 export function createLocalMessage(
@@ -29,6 +31,7 @@ export function createLocalMessage(
     // 서버가 붙이는 값이다. 화면이 만든 임시 메시지에는 종류가 없고, 없으면
     // 지금까지와 똑같은 평범한 줄로 그려진다
     kind: null,
+    pins: options.pins ?? [],
   };
 }
 

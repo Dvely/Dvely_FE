@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ExternalLink, RotateCcw, X } from 'lucide-react';
+import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { Crosshair, ExternalLink, RotateCcw, X } from 'lucide-react';
 import { extractApiErrorMessage } from '@/utils/response';
 import type { AgentPreviewPhase } from '@/components/layout/project/agentPreview.utils';
 import {
@@ -7,6 +7,9 @@ import {
   PREVIEW_CLOSE_LABEL,
   type PreviewCloseState,
 } from '@/lib/previewClose';
+import type { PreviewPinMark } from '@/lib/previewPin';
+import { PreviewPinOverlay } from '@/components/layout/project/PreviewPinLayer';
+import { usePreviewPinBridge } from '@/components/layout/project/usePreviewPinBridge';
 
 type AgentSitePreviewPanelProps = {
   phase: AgentPreviewPhase;
@@ -34,6 +37,16 @@ type AgentSitePreviewPanelProps = {
   failureAction?: { label: string; onClick: () => void } | null;
   /** 컨테이너를 끈다. 되돌릴 수 없으므로 확인을 받은 뒤에만 부른다 */
   onClosePreview: () => void;
+  /**
+   * 프리뷰에서 짚기(#211, 설계 §16.5). 짚은 곳은 대화 입력창의 칩이 되므로 상태는 페이지가 갖는다. 없으면 짚기 버튼을
+   * 그리지 않는다
+   */
+  pin?: {
+    marks: PreviewPinMark[];
+    setMarks: Dispatch<SetStateAction<PreviewPinMark[]>>;
+    active: boolean;
+    onActiveChange: (active: boolean) => void;
+  };
 };
 
 function PreviewSkeleton() {
@@ -66,7 +79,15 @@ function AgentSitePreviewPanel({
   rebuildError = '',
   failureAction = null,
   onClosePreview,
+  pin,
 }: AgentSitePreviewPanelProps) {
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [ownMarks, setOwnMarks] = useState<PreviewPinMark[]>([]);
+  const pinMarks = pin?.marks ?? ownMarks;
+  const setPinMarks = pin?.setMarks ?? setOwnMarks;
+  const bridge = usePreviewPinBridge({ iframeRef, frameKey, previewUrl, setMarks: setPinMarks });
+  const canPin = Boolean(pin) && bridge.status === 'ready';
+  const isPinning = Boolean(pin?.active) && canPin;
   /*
     닫기 확인을 연 프리뷰 주소. 주소가 바뀌면(다시 띄움·토큰 회전) 확인이 저절로 걷힌다 —
     다른 프리뷰를 두고 연 확인이 새 프리뷰 위에 남아 있으면 엉뚱한 것을 닫게 된다.
@@ -109,6 +130,30 @@ function AgentSitePreviewPanel({
             <p className="mr-auto text-[12px] leading-relaxed text-[#64748b]" role="status">
               {closeBlockedReason}
             </p>
+          ) : null}
+          {pin ? (
+            <button
+              type="button"
+              aria-pressed={isPinning}
+              onClick={() => pin.onActiveChange(!isPinning)}
+              disabled={!canPin}
+              title={
+                bridge.status === 'unavailable'
+                  ? '이 프리뷰에서는 짚을 수 없습니다 — 다시 띄우기를 눌러 보세요'
+                  : bridge.status === 'pending'
+                    ? '프리뷰를 확인하는 중입니다'
+                    : '프리뷰에서 고칠 곳을 짚어 대화에 붙입니다'
+              }
+              data-ga-label="프리뷰 짚기"
+              className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                isPinning
+                  ? 'border-[#7c3aed] bg-[#7c3aed] text-white hover:bg-[#6d28d9]'
+                  : 'border-[#e2e8f0] bg-white text-[#334155] hover:bg-[#f8fafc]'
+              }`}
+            >
+              <Crosshair className="size-3.5" />
+              {isPinning ? '짚기 끝내기' : '짚기'}
+            </button>
           ) : null}
           <button
             type="button"
@@ -238,13 +283,28 @@ function AgentSitePreviewPanel({
           401 → 빈 화면이 된다. 불투명 오리진이라 **그 실패를 여기서 감지할 수도 없다.**
           근본 해소는 프리뷰 전용 오리진 분리이고 서버 쪽 백로그다.
         */}
-        <iframe
-          key={frameKey}
-          src={previewUrl}
-          title="사이트 미리보기"
-          referrerPolicy="no-referrer"
-          className="min-h-0 flex-1 border-0 bg-white"
-        />
+        {/*
+          짚기(#211): 덮개는 iframe 위에만 깐다. 이 동안 앱은 누름을 받지 않고, 휠은 브리지로 넘겨 프리뷰를 스크롤한다.
+          브리지의 답은 이 iframe 의 창에서 온 것만 받는다(usePreviewPinBridge).
+        */}
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <iframe
+            ref={iframeRef}
+            key={frameKey}
+            src={previewUrl}
+            title="사이트 미리보기"
+            referrerPolicy="no-referrer"
+            className="min-h-0 flex-1 border-0 bg-white"
+          />
+          {isPinning && pin ? (
+            <PreviewPinOverlay
+              bridge={bridge}
+              marks={pinMarks}
+              setMarks={setPinMarks}
+              onExit={() => pin.onActiveChange(false)}
+            />
+          ) : null}
+        </div>
       </div>
     );
   }

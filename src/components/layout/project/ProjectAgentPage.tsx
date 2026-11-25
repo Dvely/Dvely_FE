@@ -56,6 +56,7 @@ import AgentChatListPanel from '@/components/layout/project/AgentChatListPanel';
 import AgentConversationPanel from '@/components/layout/project/AgentConversationPanel';
 import { postAgentTaskInput, usePreviewOwnerTaskQuery } from '@/api/agent';
 import AgentSitePreviewPanel from '@/components/layout/project/AgentSitePreviewPanel';
+import type { PreviewPinMark } from '@/lib/previewPin';
 import CloudConnectGuidePanel from '@/components/layout/project/CloudConnectGuidePanel';
 import GithubRepositoryPicker from '@/components/layout/project/GithubRepositoryPicker';
 import ProjectCodeExplorerPanel from '@/components/layout/project/ProjectCodeExplorerPanel';
@@ -98,6 +99,12 @@ function ProjectAgentPage({ projectId, project, returnedConversation }: ProjectA
   const [rightPanelView, setRightPanelView] = useState<RightPanelView>('preview');
   const [mobilePane, setMobilePane] = useState<MobilePane>('chat');
   const [previewFrameKey, setPreviewFrameKey] = useState(0);
+  /*
+    프리뷰에서 짚은 곳(#211). 짚기는 프리뷰 패널이 하고 칩은 대화 입력창에 보이므로 여기서 갖는다. 대화를 바꿔도 남는다 —
+    짚은 것은 프리뷰의 곳이지 대화의 것이 아니다.
+  */
+  const [previewPins, setPreviewPins] = useState<PreviewPinMark[]>([]);
+  const [isPinningPreview, setIsPinningPreview] = useState(false);
   /*
     클라우드 연결이 없어서 멈춘 배포.
 
@@ -589,6 +596,12 @@ function ProjectAgentPage({ projectId, project, returnedConversation }: ProjectA
             canRestoreDraft={!isResolvingConversation}
             onAgentTaskActiveChange={handleAgentTaskActiveChange}
             isDeployInFlight={isDeployInFlight}
+            previewPins={previewPins}
+            onRemovePreviewPin={(ref) => setPreviewPins((marks) => marks.filter((mark) => mark.ref !== ref))}
+            onPreviewPinsSent={() => {
+              setPreviewPins([]);
+              setIsPinningPreview(false);
+            }}
           />
         )}
         <div
@@ -777,6 +790,12 @@ function ProjectAgentPage({ projectId, project, returnedConversation }: ProjectA
             isProvisioning={
               projectPreview?.status === 'PROVISIONING' || provisionPreviewMutation.isPending
             }
+            pin={{
+              marks: previewPins,
+              setMarks: setPreviewPins,
+              active: isPinningPreview,
+              onActiveChange: setIsPinningPreview,
+            }}
           />
         )}
       </section>
