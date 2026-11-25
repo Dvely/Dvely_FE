@@ -124,6 +124,15 @@ const conversationMessageSchema = z.object({
    * 떨어뜨린다. 사용자 메시지와 이 필드 이전에 쌓인 줄은 null 이다.
    */
   kind: z.string().nullable().prefault(null),
+  /**
+   * 사용자가 이 메시지와 함께 서버 프리뷰에서 짚은 곳(BE #575). 번호(①~⑤) 순서이고, 없으면 빈 목록이다.
+   * 옛 서버는 이 필드를 보내지 않으므로 빈 목록으로 받는다.
+   */
+  pins: z
+    .array(z.object({ position: z.number().int(), label: z.string() }))
+    .nullable()
+    .prefault([])
+    .transform((value) => value ?? []),
 });
 
 /**
@@ -157,6 +166,19 @@ const postConversationMessageCreateReqSchema = z.object({
    * 채운다(`GET /agent/ai-providers`). 여기에 적어두면 두 벌이 된다.
    */
   aiProvider: z.string().min(1),
+  /**
+   * 프리뷰에서 짚은 곳(선택, 5개까지 — 순서대로 ①~⑤). `result` 는 프리뷰 문서의 짚기 브리지가 낸 결과 그대로이고,
+   * 서버가 다시 검사한다(BE #575, 설계 §16.6). 형식이 틀린 것이 하나라도 있으면 400 이고 아무것도 저장되지 않는다.
+   */
+  pins: z
+    .array(
+      z.object({
+        result: z.record(z.string(), z.unknown()),
+        scope: z.number().int().nonnegative().optional(),
+      }),
+    )
+    .max(5)
+    .optional(),
 });
 
 /**

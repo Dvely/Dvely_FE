@@ -16,6 +16,7 @@ function message(
     createdAt: '2026-10-29T14:00:00+09:00',
     taskId: null,
     kind: null,
+    pins: [],
     ...overrides,
   };
 }
