@@ -33,6 +33,8 @@ export type PinScope = {
   component?: string;
   members?: number;
   bounds?: PinBounds;
+  /** §15.3: 같은 모양 형제의 수(2 이상)와 화면 안의 테두리 */
+  peers?: { count: number; bounds?: PinBounds[] };
 };
 
 /** 브리지가 낸 짚기 결과 중 화면이 읽는 부분. 나머지 필드는 그대로 서버로 간다 */
@@ -52,6 +54,8 @@ export type PreviewPinMark = {
   result: PinResult | null;
   /** 고른 사다리 칸 */
   scope: number;
+  /** 고른 칸의 "같은 것 모두"(그 칸에 peers 가 있을 때만 뜻이 있다) */
+  peers?: boolean;
   /** 답을 기다리는 중 */
   waiting: boolean;
   /** 짚은 뒤 프리뷰가 스크롤·새로고침돼 테두리가 그 자리를 가리키지 않는다 */
@@ -186,6 +190,10 @@ export function scopeLabel(scope: PinScope): string {
     case 'element':
       label = elementLabel(scope) ?? '요소';
       break;
+    case 'text':
+      // §15.7: 짚은 문장(고칠 글)
+      label = scope.text ? `글자 "${scope.text}"` : '글자';
+      break;
     case 'component':
       label = scope.component ? `컴포넌트 ${scope.component}` : named(groupWord(scope.type), scope);
       break;
@@ -201,14 +209,22 @@ export function scopesOf(result: PinResult | null): PinScope[] {
   return result.scopes.filter((scope): scope is PinScope => Boolean(scope) && typeof scope.kind === 'string');
 }
 
+/** 고른 칸의 같은 것(있을 때만) */
+export function chosenPeers(mark: PreviewPinMark): { count: number; bounds: PinBounds[] } | null {
+  const peers = scopesOf(mark.result)[mark.scope]?.peers;
+  if (!peers || !Number.isInteger(peers.count) || peers.count < 2) return null;
+  return { count: peers.count, bounds: (peers.bounds ?? []).map(cleanBounds).filter((b): b is PinBounds => b !== null) };
+}
+
 /** 고른 범위의 이름(서버 placeLabel 과 같은 뜻). 칩·말풍선에 보인다 */
 export function markLabel(mark: PreviewPinMark): string {
   if (mark.waiting) return '찾는 중…';
   if (!mark.result) return '짚지 못함';
   const scopes = scopesOf(mark.result);
   const chosen = scopes[mark.scope];
-  if (chosen && chosen.kind !== 'element') return scopeLabel(chosen);
-  return elementLabel(mark.result.element) ?? '빈 곳';
+  const name = chosen && chosen.kind !== 'element' ? scopeLabel(chosen) : (elementLabel(mark.result.element) ?? '빈 곳');
+  const peers = mark.peers ? chosenPeers(mark) : null;
+  return peers ? `같은 것 ${peers.count}개 모두 · ${name}` : name;
 }
 
 /** 지금 고른 칸의 테두리. 칸에 테두리가 없으면 요소의 것 */
@@ -218,8 +234,14 @@ export function markBounds(mark: PreviewPinMark): PinBounds | null {
 }
 
 /** 서버로 보낼 모양. 답을 못 받은 곳은 보내지 않는다 */
-export function toPinPayload(marks: PreviewPinMark[]): { result: Record<string, unknown>; scope?: number }[] {
+export function toPinPayload(
+  marks: PreviewPinMark[],
+): { result: Record<string, unknown>; scope?: number; peers?: boolean }[] {
   return marks
     .filter((mark) => mark.result && mark.result.ok !== undefined)
-    .map((mark) => ({ result: mark.result as Record<string, unknown>, scope: mark.scope }));
+    .map((mark) => ({
+      result: mark.result as Record<string, unknown>,
+      scope: mark.scope,
+      ...(mark.peers && chosenPeers(mark) ? { peers: true } : {}),
+    }));
 }

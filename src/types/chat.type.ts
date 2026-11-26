@@ -175,6 +175,8 @@ const postConversationMessageCreateReqSchema = z.object({
       z.object({
         result: z.record(z.string(), z.unknown()),
         scope: z.number().int().nonnegative().optional(),
+        /** 고른 칸의 "같은 것 모두"(§15.3) */
+        peers: z.boolean().optional(),
       }),
     )
     .max(5)
