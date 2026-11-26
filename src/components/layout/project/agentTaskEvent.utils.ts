@@ -8,6 +8,10 @@ import type { AgentTaskEvent } from '@/types/agent.type';
  * **type 으로 분기하지 않는다.** 서버가 종류를 계속 늘리기로 했으므로, 모르는 type 이
  * 와도 화면은 그것을 그냥 한 줄로 그리고 지나가야 한다. 대신 서버가 같이 보내주는
  * `status` 와 `stepIndex`/`stepTotal` 로 판단한다 — 이 둘은 종류가 늘어도 뜻이 안 바뀐다.
+ *
+ * 예외는 하나, **묶기**다. 코딩 에이전트가 도는 동안 한 일(#600)은 서버가 `CODING_` 으로
+ * 시작하는 type 으로 보낸다. 한 실행에 수십 줄이라 그대로 두면 타임라인을 밀어내므로 그
+ * 갈래만 이어진 것끼리 묶어 접는다. 묶지 못해도(모르는 type) 줄은 그대로 그려진다.
  */
 
 /**
@@ -53,6 +57,38 @@ function findStepProgress(events: AgentTaskEvent[]): { index: number; total: num
   return null;
 }
 
+/** 코딩 에이전트가 도는 동안 한 일 한 줄인가(#600). `CODING_` 갈래 전체 — 새 종류가 늘어도 묶인다 */
+function isActivityEvent(event: AgentTaskEvent): boolean {
+  return event.type.startsWith('CODING_');
+}
+
+/** 타임라인의 한 자리. 한 일이 이어지면 한 묶음이 된다 */
+type TimelineItem =
+  | { kind: 'event'; event: AgentTaskEvent }
+  | { kind: 'activity'; key: number; events: AgentTaskEvent[] };
+
+/**
+ * 이어진 한 일을 묶는다. 사이에 다른 이벤트가 끼면 새 묶음이다 — 단계가 바뀐 뒤의 한 일을
+ * 앞 단계의 것과 섞지 않는다. 묶음 열쇠는 첫 줄의 eventId 라 줄이 더 와도 바뀌지 않는다
+ * (펼쳐 둔 것이 새 줄에 접히지 않는다).
+ */
+function groupTimelineEvents(events: AgentTaskEvent[]): TimelineItem[] {
+  const items: TimelineItem[] = [];
+  for (const event of events) {
+    const last = items.at(-1);
+    if (isActivityEvent(event)) {
+      if (last?.kind === 'activity') {
+        last.events.push(event);
+      } else {
+        items.push({ kind: 'activity', key: event.eventId, events: [event] });
+      }
+    } else {
+      items.push({ kind: 'event', event });
+    }
+  }
+  return items;
+}
+
 /** 화면에 그릴 이벤트. 문장이 없는 것은 사용자에게 보여줄 게 없다 */
 function selectVisibleEvents(events: AgentTaskEvent[]): AgentTaskEvent[] {
   return events.filter((event) => Boolean(event.message?.trim()));
@@ -66,4 +102,13 @@ function formatElapsed(seconds: number): string {
   return rest === 0 ? `${minutes}분째` : `${minutes}분 ${rest}초째`;
 }
 
-export { findAgentTypeIcon, findStepProgress, formatElapsed, isFailureEvent, selectVisibleEvents };
+export {
+  findAgentTypeIcon,
+  findStepProgress,
+  formatElapsed,
+  groupTimelineEvents,
+  isActivityEvent,
+  isFailureEvent,
+  selectVisibleEvents,
+};
+export type { TimelineItem };

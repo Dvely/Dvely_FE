@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { CircleAlert } from 'lucide-react';
+import { ChevronDown, ChevronRight, CircleAlert } from 'lucide-react';
 import type { AgentTaskEvent } from '@/types/agent.type';
 import {
   findAgentTypeIcon,
   findStepProgress,
   formatElapsed,
+  groupTimelineEvents,
   isFailureEvent,
   selectVisibleEvents,
 } from '@/components/layout/project/agentTaskEvent.utils';
@@ -23,6 +24,15 @@ import { formatSeoulHourMinute } from '@/lib/seoulTime';
 
 /** 이만큼 지나야 경과를 보여준다. 1초부터 세면 정상 속도의 작업에도 초시계가 붙는다 */
 const QUIET_SECONDS_BEFORE_ELAPSED = 10;
+
+/**
+ * 한 일 묶음에서 늘 보이는 끝 줄 수(#600).
+ *
+ * "지금 무엇을 하는가" 에는 마지막 몇 줄이면 된다. 앞의 줄은 접어 두고 몇 개인지만 말한다
+ * — 새 앱을 처음부터 만들면 한 실행에 수십 줄이라, 다 펼치면 계획·승인 줄이 화면 밖으로 밀린다.
+ * 하나만 접히는 경우는 접는 단추가 그 줄보다 자리를 더 먹으니 접지 않는다.
+ */
+const ACTIVITY_TAIL = 3;
 
 /**
  * 이 줄이 뜬 뒤로 얼마나 조용했는지.
@@ -68,7 +78,67 @@ function AgentTaskTimeline({ events, live = true }: AgentTaskTimelineProps) {
   const hasFailed = lastEvent != null && isFailureEvent(lastEvent);
   const step = findStepProgress(events);
 
+  const [openGroups, setOpenGroups] = useState<ReadonlySet<number>>(() => new Set());
+
   if (visibleEvents.length === 0) return null;
+
+  function toggleGroup(key: number) {
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function renderLine(event: AgentTaskEvent) {
+    const isLast = event.eventId === lastEvent?.eventId;
+    const isFailure = isFailureEvent(event);
+    const AgentIcon = findAgentTypeIcon(event.agentType);
+
+    return (
+      <li
+        key={event.eventId}
+        className={`flex gap-2 text-[12px] leading-relaxed ${
+          isFailure ? 'text-[#dc2626]' : isLast ? 'text-[#334155]' : 'text-[#64748b]'
+        }`}
+      >
+        <span className="shrink-0 font-mono text-[11px] text-[#cbd5e1]">
+          {formatSeoulHourMinute(event.createdAt)}
+        </span>
+        {/*
+          단계 아이콘. 모르는 종류면 점으로 떨어진다 — 줄 시작이 늘 같은 폭이라야
+          문장이 들쭉날쭉하지 않는다
+        */}
+        <span className="mt-0.5 flex size-3.5 shrink-0 items-center justify-center">
+          {isFailure ? (
+            <CircleAlert className="size-3.5" />
+          ) : AgentIcon ? (
+            <AgentIcon className="size-3.5 text-[#a78bfa]" />
+          ) : (
+            <span className="size-1 rounded-full bg-[#cbd5e1]" />
+          )}
+        </span>
+        {/* 긴 경로는 서버가 앞을 잘라 보낸다. 줄이 넘치면 마우스를 올려 전체를 본다 */}
+        <span className="min-w-0 break-all" title={event.message ?? undefined}>
+          {event.message}
+          {/*
+            마지막 줄에만 붙는 표시가 "지금 이걸 하고 있다"를 말한다. 몇 분 걸리는
+            단계에서 이게 없으면 같은 화면이 멈춘 것과 구분되지 않는다
+          */}
+          {live && isLast && !hasFailed ? (
+            <>
+              <span
+                aria-hidden="true"
+                className="ml-1.5 inline-block size-1.5 animate-pulse rounded-full bg-[#7c3aed] align-middle"
+              />
+              <ElapsedSinceMount key={event.eventId} />
+            </>
+          ) : null}
+        </span>
+      </li>
+    );
+  }
 
   return (
     <div className={live ? 'mb-2' : undefined}>
@@ -116,52 +186,33 @@ function AgentTaskTimeline({ events, live = true }: AgentTaskTimelineProps) {
       ) : null}
 
       <ol className="flex flex-col gap-1">
-        {visibleEvents.map((event) => {
-          const isLast = event.eventId === lastEvent?.eventId;
-          const isFailure = isFailureEvent(event);
-          const AgentIcon = findAgentTypeIcon(event.agentType);
+        {groupTimelineEvents(visibleEvents).map((item) => {
+          if (item.kind === 'event') return renderLine(item.event);
 
-          return (
-            <li
-              key={event.eventId}
-              className={`flex gap-2 text-[12px] leading-relaxed ${
-                isFailure ? 'text-[#dc2626]' : isLast ? 'text-[#334155]' : 'text-[#64748b]'
-              }`}
-            >
-              <span className="shrink-0 font-mono text-[11px] text-[#cbd5e1]">
-                {formatSeoulHourMinute(event.createdAt)}
+          const hidden = item.events.length - ACTIVITY_TAIL;
+          if (hidden <= 1) return item.events.map(renderLine);
+
+          const isOpen = openGroups.has(item.key);
+          const shown = isOpen ? item.events : item.events.slice(-ACTIVITY_TAIL);
+          const Chevron = isOpen ? ChevronDown : ChevronRight;
+          return [
+            <li key={`activity-${item.key}`} className="flex gap-2 text-[12px] leading-relaxed">
+              {/* 시각 칸만큼 비워 줄 시작을 맞춘다 */}
+              <span aria-hidden="true" className="shrink-0 font-mono text-[11px] text-transparent">
+                00:00
               </span>
-              {/*
-                단계 아이콘. 모르는 종류면 점으로 떨어진다 — 줄 시작이 늘 같은 폭이라야
-                문장이 들쭉날쭉하지 않는다
-              */}
-              <span className="mt-0.5 flex size-3.5 shrink-0 items-center justify-center">
-                {isFailure ? (
-                  <CircleAlert className="size-3.5" />
-                ) : AgentIcon ? (
-                  <AgentIcon className="size-3.5 text-[#a78bfa]" />
-                ) : (
-                  <span className="size-1 rounded-full bg-[#cbd5e1]" />
-                )}
-              </span>
-              <span className="min-w-0 break-all">
-                {event.message}
-                {/*
-                  마지막 줄에만 붙는 표시가 "지금 이걸 하고 있다"를 말한다. 몇 분 걸리는
-                  단계에서 이게 없으면 같은 화면이 멈춘 것과 구분되지 않는다
-                */}
-                {live && isLast && !hasFailed ? (
-                  <>
-                    <span
-                      aria-hidden="true"
-                      className="ml-1.5 inline-block size-1.5 animate-pulse rounded-full bg-[#7c3aed] align-middle"
-                    />
-                    <ElapsedSinceMount key={event.eventId} />
-                  </>
-                ) : null}
-              </span>
-            </li>
-          );
+              <button
+                type="button"
+                aria-expanded={isOpen}
+                onClick={() => toggleGroup(item.key)}
+                className="flex items-center gap-1 text-[#7c3aed] hover:underline"
+              >
+                <Chevron className="size-3.5" />
+                {isOpen ? '앞의 활동 접기' : `앞의 활동 ${hidden}개 보기`}
+              </button>
+            </li>,
+            ...shown.map(renderLine),
+          ];
         })}
       </ol>
     </div>
